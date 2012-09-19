@@ -1,0 +1,520 @@
+/*  EMBEDDED C (file "DML073.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML073.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS SUM, AVG, MAX ON JOINED TABLE           */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language -         */
+/*        X3.135-1989, 8.10, GR 9 c)                             */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char EMPNO1[4];
+  long HOUR1;
+  long HOUR2;
+  long GRD1;
+  long GRD2;
+  long AVG1;
+  long AVG2;
+  long SUM1;
+  long CNT1;
+  long MAX1;
+  long MIN1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+    long ifpass;
+    long lpcnt;
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml073.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0393 ********************/
+
+
+printf("\n                   TEST0393          \n");
+printf("       SUM, MAX on Cartesian product\n");
+printf("       Reference: ANSI X3.135-1989 5.8\n");
+printf("                                   5.20  GR 2b\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("            SELECT SUM(HOURS), MAX(HOURS)\n");
+printf("            INTO :HOUR1, :HOUR2\n");
+printf("            FROM  STAFF, WORKS;\n");
+
+   EXEC SQL SELECT SUM(HOURS), MAX(HOURS)
+            INTO :HOUR1, :HOUR2
+            FROM  STAFF, WORKS;
+
+printf("The correct answer is:\n");
+printf("        2320, 80\n");
+printf("Your answer is:\n");
+printf("        %ld, %ld\n", HOUR1, HOUR2);
+if (HOUR1 == 2320 && HOUR2 == 80)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0393','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0393','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0393 ********************/
+
+
+
+
+/******************** BEGIN TEST0394 ********************/
+
+
+printf("\n                   TEST0394          \n");
+printf(" AVG, MIN on joined table with WHERE without GROUP\n");
+printf("   Reference: ANSI X3.135-1989 5.8 5.21\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("            SELECT AVG(HOURS), MIN(HOURS)\n");
+printf("            INTO :HOUR1, :HOUR2\n");
+printf("            FROM  STAFF, WORKS\n");
+printf("            WHERE STAFF.EMPNUM = 'E2'\n");
+printf("                  AND STAFF.EMPNUM = WORKS.EMPNUM;\n");
+
+   EXEC SQL SELECT AVG(HOURS), MIN(HOURS)
+            INTO :HOUR1, :HOUR2
+            FROM  STAFF, WORKS
+            WHERE STAFF.EMPNUM = 'E2'
+                  AND STAFF.EMPNUM = WORKS.EMPNUM;
+
+printf("The correct answer is:\n");
+printf("        60, 40\n");
+printf("Your answer is:\n");
+printf("        %ld, %ld\n", HOUR1, HOUR2);
+if (HOUR1 == 60 && HOUR2 == 40)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0394','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0394','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0394 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0395 ********************/
+
+
+printf("\n                   TEST0395          \n");
+printf("SUM, MIN on joined table with GROUP without WHERE\n");
+printf("   Reference: ANSI X3.135-1989 5.8  5.22\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("            DECLARE JUPITER CURSOR FOR \n");
+printf("            SELECT STAFF.EMPNUM, SUM(HOURS), MIN(HOURS)\n");
+printf("            FROM  STAFF, WORKS\n");
+printf("            GROUP BY STAFF.EMPNUM\n");
+printf("            ORDER BY 1;\n");
+printf("\n");
+
+   EXEC SQL DECLARE JUPITER CURSOR FOR 
+            SELECT STAFF.EMPNUM, SUM(HOURS), MIN(HOURS)
+            FROM  STAFF, WORKS
+            GROUP BY STAFF.EMPNUM
+            ORDER BY 1;
+
+printf("The correct answer is:\n");
+printf("        E1, 464, 12\n");
+printf("        E2, 464, 12\n");
+printf("        E3, 464, 12\n");
+printf("        E4, 464, 12\n");
+printf("        E5, 464, 12\n");
+printf("Your answer is:\n");
+ifpass = 1;
+EXEC SQL OPEN JUPITER;  
+EXEC SQL FETCH JUPITER INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if (HOUR1 != 464 || HOUR2 != 12 || strncmp(EMPNO1, "E1", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH JUPITER INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if (HOUR1 != 464 || HOUR2 != 12 || strncmp(EMPNO1, "E2", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH JUPITER INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if (HOUR1 != 464 || HOUR2 != 12 || strncmp(EMPNO1, "E3", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH JUPITER INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if (HOUR1 != 464 || HOUR2 != 12 || strncmp(EMPNO1, "E4", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH JUPITER INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if (HOUR1 != 464 || HOUR2 != 12 || strncmp(EMPNO1, "E5", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH JUPITER INTO :EMPNO1, :HOUR1, :HOUR2;
+if (SQLCODE != 0)
+EXEC SQL CLOSE JUPITER;
+if (ifpass == 1)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0395','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0395','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0395 ********************/
+
+
+
+
+/******************** BEGIN TEST0396 ********************/
+
+
+printf("\n                   TEST0396          \n");
+printf("SUM, MIN on joined table with WHERE,GROUP BY,HAVING\n");
+printf("   Reference: ANSI X3.135-1989 5.8 5.21 5.22 5.23\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("            DECLARE VENUS CURSOR FOR\n");
+printf("            SELECT STAFF.EMPNUM, AVG(HOURS), MIN(HOURS)\n");
+printf("            FROM  STAFF, WORKS\n");
+printf("            WHERE STAFF.EMPNUM IN ('E1','E4','E3') AND\n");
+printf("                  STAFF.EMPNUM = WORKS.EMPNUM\n");
+printf("            GROUP BY STAFF.EMPNUM\n");
+printf("            HAVING COUNT(*) > 1\n");
+printf("            ORDER BY 1;\n");
+printf("\n");
+
+   EXEC SQL DECLARE VENUS CURSOR FOR
+            SELECT STAFF.EMPNUM, AVG(HOURS), MIN(HOURS)
+            FROM  STAFF, WORKS
+            WHERE STAFF.EMPNUM IN ('E1','E4','E3') AND
+                  STAFF.EMPNUM = WORKS.EMPNUM
+            GROUP BY STAFF.EMPNUM
+            HAVING COUNT(*) > 1
+            ORDER BY 1;
+
+printf("The correct answer is:\n");
+printf("        E1, 30 or 31, 12\n");
+printf("        E4, 46 or 47, 20\n");
+printf("Your answer is:\n");
+ifpass = 1;
+EXEC SQL OPEN VENUS;
+EXEC SQL FETCH VENUS INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if(HOUR1 < 30 || HOUR1 > 31 || HOUR2 != 12 || strncmp(EMPNO1, "E1", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH VENUS INTO :EMPNO1, :HOUR1, :HOUR2;
+printf("        %s, %ld, %ld\n", EMPNO1, HOUR1, HOUR2);
+if(HOUR1 < 46 || HOUR1 > 47 || HOUR2 != 20 || strncmp(EMPNO1, "E4", 2) != 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL FETCH VENUS INTO :EMPNO1, :HOUR1, :HOUR2;
+if (SQLCODE == 0)
+   {
+       ifpass = 0;
+   }
+EXEC SQL CLOSE VENUS;
+if(ifpass == 1)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0396','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0396','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0396 ********************/
+
+
+
+
+/******************** BEGIN TEST0417 ********************/
+
+
+printf("\n                   TEST0417          \n");
+printf("  Cartesian product GROUP BY 2 columns with NULLs\n");
+printf("   Reference: ANSI X3.135-1989 5.22 GR 2) 3)\n");
+printf("                               5.11 GR 7)\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("            DECLARE PLUTO CURSOR FOR\n");
+printf("            SELECT MAX(STAFF1.GRADE), SUM(STAFF1.GRADE)\n");
+printf("            FROM STAFF1, STAFF\n");
+printf("            GROUP BY STAFF1.CITY, STAFF.CITY;\n");
+printf("\n");
+
+ifpass = 0;
+
+   EXEC SQL DELETE FROM STAFF1;
+          
+   EXEC SQL INSERT INTO STAFF
+            VALUES ('E6', 'David', 17, NULL);
+          
+   EXEC SQL INSERT INTO STAFF
+            VALUES ('E7', 'Tony', 18, NULL);
+
+   EXEC SQL INSERT INTO STAFF1
+            SELECT * FROM STAFF;
+   
+   EXEC SQL DECLARE PLUTO CURSOR FOR
+            SELECT MAX(STAFF1.GRADE), SUM(STAFF1.GRADE)
+            FROM STAFF1, STAFF
+            GROUP BY STAFF1.CITY, STAFF.CITY;
+
+printf("For groups containing MAX(GRADE) = 18,\n");
+printf("the correct answer is:\n");
+printf("        18, 35\n");
+printf("        18, 70\n");
+printf("        18, 70\n");
+printf("        18, 70\n");
+printf("Your answer is:\n");
+   EXEC SQL OPEN PLUTO;
+
+for (lpcnt = 1; lpcnt < 20; lpcnt++)
+  {
+      GRD1 = 0;
+      EXEC SQL FETCH PLUTO INTO :GRD1, :GRD2;
+      if (GRD1 == 18 && GRD2 == 35)
+         {
+             ifpass = ifpass + 1;
+             printf("        %ld, %ld\n", GRD1, GRD2);
+         }
+      if (GRD1 == 18 && GRD2 == 70)
+         {
+             ifpass = ifpass + 100;
+             printf("        %ld, %ld\n", GRD1, GRD2);
+         }
+
+   }
+EXEC SQL CLOSE PLUTO;
+EXEC SQL ROLLBACK WORK;
+if(ifpass == 301)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0417','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0417','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0417 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0418 ********************/
+
+
+printf("\n                   TEST0418          \n");
+printf("  AVG, SUM, COUNT on Cartesian product with NULL\n");
+printf("      Reference: ANSI X3.135-1989 5.8  GR 2)\n");
+printf("                                  5.9  GR 1)\n");
+printf("                                  5.11 GR 7)\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("         SELECT AVG(T1.COL4), AVG(T1.COL4 + T2.COL4),\n");
+printf("                SUM(T2.COL4), COUNT(DISTINCT T1.COL4)\n");
+printf("         INTO :AVG1, :AVG2, :SUM1, :CNT1\n");
+printf("         FROM VTABLE T1, VTABLE T2;\n");
+printf("\n");
+
+EXEC SQL SELECT AVG(T1.COL4), AVG(T1.COL4 + T2.COL4),
+                SUM(T2.COL4), COUNT(DISTINCT T1.COL4)
+         INTO :AVG1, :AVG2, :SUM1, :CNT1
+         FROM VTABLE T1, VTABLE T2;
+
+printf("The correct answer is:\n");
+printf("        147 or 148, 295 or 296, 1772, 3\n");
+printf("Your answer is:\n");
+printf("        %ld,  %ld, %ld, %ld\n", AVG1, AVG2, SUM1, CNT1);
+ifpass = 1;
+if (CNT1 != 3 || SUM1 != 1772)
+   {
+      ifpass = 0;
+   }
+if (AVG1 < 147 || AVG1 > 148)
+   {
+      ifpass = 0;
+   }
+if (AVG2 < 295 || AVG2 > 296)
+   {
+      ifpass = 0;
+   }
+if(ifpass == 1)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0418','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0418','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0418 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0419 ********************/
+
+
+printf("\n                   TEST0419          \n");
+printf("      SUM,MAX,MIN on joined table view \n");
+printf("      Reference: ANSI X3.135-1989 5.8  GR 2)\n");
+printf("                                  6.9  GR 1)\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("         SELECT SUM(COST), MAX(COST), MIN(COST)\n");
+printf("         INTO :SUM1, :MAX1, :MIN1\n");
+printf("         FROM STAFF_WORKS_DESIGN;\n");
+printf("\n");
+
+EXEC SQL SELECT SUM(COST), MAX(COST), MIN(COST)
+         INTO :SUM1, :MAX1, :MIN1
+         FROM STAFF_WORKS_DESIGN;
+
+printf("The correct answer is:\n");
+printf("        3488,   960,  288\n");
+printf("Your answer is:\n");
+printf("        %ld,  %ld, %ld\n", SUM1, MAX1, MIN1);
+ifpass = 1;
+if (SUM1 != 3488)
+   {
+      ifpass = 0;
+   }
+if (MAX1 != 960)
+   {
+      ifpass = 0;
+   }
+if (MIN1 != 288)
+   {
+      ifpass = 0;
+   }
+if(ifpass == 1)
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0419','pass','PC');
+}
+else
+{
+  printf("\n\n   dml073.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0419','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0419 ********************/
+
+
+
+
+
+
+exit(errcnt);
+}

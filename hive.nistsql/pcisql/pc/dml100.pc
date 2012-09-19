@@ -1,0 +1,523 @@
+/*  EMBEDDED C (file "DML100.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/07/29 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML100.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests the operation of SET TRANSACTION READ     */
+/*  ONLY and SET TRANSACTION READ WRITE in Transitional SQL.     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    F# 11 -- Transaction isolation                             */
+/*    14.1 -- <set transaction statement>                        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+float flt1;
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml100.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0587 ********************/
+flag = 1;
+
+     printf("                  TEST0587 \n");
+     printf("   SET TR READ ONLY / READ WRITE (static)\n");
+     printf("References:\n");
+     printf("    F# 11 -- Transaction isolation\n");
+     printf("    14.1 -- <set transaction statement>\n");
+     printf("    13.6 GR.1 -- Invalid transaction state\n");
+     printf("    13.7 GR.1 -- Invalid transaction state\n");
+     printf("    13.8 GR.1 -- Invalid transaction state\n");
+     printf("    13.9 GR.1 -- Invalid transaction state\n");
+     printf("    13.10 GR.1 -- Invalid transaction state\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Make very sure there is no transaction outstanding */
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+/* Subtest one:  try schema manipulation in read-only transaction */
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE SLACK (SLACK_FACTOR FLOAT);\n");
+EXEC SQL CREATE TABLE SLACK (SLACK_FACTOR FLOAT);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Subtest two:  after rollback, should be read-write again */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+/* Checking termination of uninitiated transaction */
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE SLACK (SLACK_FACTOR FLOAT);\n");
+EXEC SQL CREATE TABLE SLACK (SLACK_FACTOR FLOAT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Subtest three:  try INSERT in read-only transaction */
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SLACK VALUES (2.4);\n");
+EXEC SQL INSERT INTO SLACK VALUES (2.4);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+/* Checking termination of uninitiated transaction */
+CHCKOK ();
+printf("\n");
+
+/* Subtest four:  legal DML followed by illegal transaction statement */
+
+printf("INSERT INTO SLACK VALUES (2.4);\n");
+EXEC SQL INSERT INTO SLACK VALUES (2.4);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SLACK VALUES (2.0);\n");
+EXEC SQL INSERT INTO SLACK VALUES (2.0);
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Subtest five:  try positioned DML in read-only transaction */
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10011 CURSOR FOR\n");
+printf("  SELECT SLACK_FACTOR FROM SLACK;\n\n");
+EXEC SQL DECLARE C10011 CURSOR FOR
+  SELECT SLACK_FACTOR FROM SLACK;
+
+printf("OPEN C10011;\n");
+EXEC SQL OPEN C10011;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C10011 INTO :flt1;\n");
+EXEC SQL FETCH C10011 INTO :flt1;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE SLACK\n");
+printf("  SET SLACK_FACTOR = 4.8\n");
+printf("  WHERE CURRENT OF C10011;\n");
+EXEC SQL UPDATE SLACK
+  SET SLACK_FACTOR = 4.8
+  WHERE CURRENT OF C10011;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C10011;\n");
+EXEC SQL CLOSE C10011;
+
+printf("OPEN C10011;\n");
+EXEC SQL OPEN C10011;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C10011 INTO :flt1;\n");
+EXEC SQL FETCH C10011 INTO :flt1;
+CHCKOK ();
+printf("\n");
+
+printf("DELETE FROM SLACK\n");
+printf("  WHERE CURRENT OF C10011;\n");
+EXEC SQL DELETE FROM SLACK
+  WHERE CURRENT OF C10011;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Subtest six:  try searched update in read-only transaction, */
+/* followed by illegal attempt at changing transaction state */
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE SLACK\n");
+printf("  SET SLACK_FACTOR = 5.0\n");
+printf("  WHERE SLACK_FACTOR < 5.0;\n");
+EXEC SQL UPDATE SLACK
+  SET SLACK_FACTOR = 5.0
+  WHERE SLACK_FACTOR < 5.0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("SET TRANSACTION READ WRITE;\n");
+EXEC SQL SET TRANSACTION READ WRITE;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("UPDATE SLACK\n");
+printf("  SET SLACK_FACTOR = 5.0\n");
+printf("  WHERE SLACK_FACTOR < 5.0;\n");
+EXEC SQL UPDATE SLACK
+  SET SLACK_FACTOR = 5.0
+  WHERE SLACK_FACTOR < 5.0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+/* Checking termination of uninitiated transaction */
+CHCKOK ();
+printf("\n");
+
+/* Subtest seven:  try searched delete in read-only transaction */
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("DELETE FROM SLACK\n");
+printf("  WHERE SLACK_FACTOR < 5.0;\n");
+EXEC SQL DELETE FROM SLACK
+  WHERE SLACK_FACTOR < 5.0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+/* Checking termination of uninitiated transaction */
+CHCKOK ();
+printf("\n");
+
+/* Subtest eight:  like subtest four but with explicit read-write */
+
+printf("SET TRANSACTION READ WRITE;\n");
+EXEC SQL SET TRANSACTION READ WRITE;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SLACK VALUES (2.4);\n");
+EXEC SQL INSERT INTO SLACK VALUES (2.4);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SLACK VALUES (2.0);\n");
+EXEC SQL INSERT INTO SLACK VALUES (2.0);
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Subtest nine:  yet another illegal transaction statement */
+
+printf("SELECT COUNT(*) INTO :int1 FROM HU.ECCO;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.ECCO;
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* Subtest ten:  legal delete, legal drop after all those bad transactions */
+
+printf("DELETE FROM SLACK;\n");
+EXEC SQL DELETE FROM SLACK;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION READ WRITE;\n");
+EXEC SQL SET TRANSACTION READ WRITE;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE SLACK CASCADE;\n");
+EXEC SQL DROP TABLE SLACK CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0587','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml100.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0587','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0587 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

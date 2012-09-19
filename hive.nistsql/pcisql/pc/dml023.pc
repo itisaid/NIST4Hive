@@ -1,0 +1,431 @@
+/*  EMBEDDED C (file "DML023.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/02/10 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML023.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE COMPARISON PREDICATE FOR SQL.       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                SECTION 5.11 <comparison predicate>            */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char     PNO1[4];
+     char     EMPNO2[4];
+     long    GRADE1;
+     long    ii;
+     short indic1;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+     long    i;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml023.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0103 ********************/
+
+printf("                   TEST0103\n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR1\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Subquery with comparison operator '='. \n");
+printf ("*** SELECT PNUM \n");
+printf ("*** FROM PROJ \n");
+printf ("*** WHERE PROJ.CITY = \n");
+printf ("***    (SELECT STAFF.CITY \n");
+printf ("***     FROM STAFF \n");
+printf ("***     WHERE EMPNUM = 'E1') \n");
+
+EXEC SQL DECLARE S1 CURSOR FOR
+          SELECT PNUM
+          FROM PROJ
+          WHERE PROJ.CITY =
+             (SELECT STAFF.CITY
+              FROM STAFF
+              WHERE EMPNUM = 'E1');
+EXEC SQL OPEN S1;
+i = 0;
+if (SQLCODE == 0)
+     printf ("EMPNUM \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S1 INTO
+               :EMPNO2;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s\n",EMPNO2);
+          }
+     }
+EXEC SQL CLOSE S1;
+
+if (i == 3)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0103','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0103','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0103 ********************/
+/******************** BEGIN TEST0104 ********************/
+ 
+printf("                   TEST0104\n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR1\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** The results of subquery are more than one value. \n");
+printf ("*** SELECT PNUM \n");
+printf ("*** FROM PROJ \n");
+printf ("*** WHERE PROJ.CITY = \n");
+printf ("***    (SELECT STAFF.CITY \n");
+printf ("***     FROM STAFF \n");
+printf ("***     WHERE EMPNUM > 'E1') \n");
+i = 0;
+strcpy(PNO1,"0");
+EXEC SQL DECLARE S2 CURSOR FOR
+          SELECT PNUM
+          FROM PROJ
+          WHERE PROJ.CITY =
+             (SELECT STAFF.CITY
+              FROM STAFF
+              WHERE EMPNUM > 'E1');
+EXEC SQL OPEN S2;
+
+EXEC SQL FETCH S2 INTO :PNO1;
+printf(" sqlcode = %ld , PNO1 = %s \n",SQLCODE,PNO1);
+
+if (SQLCODE < 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0104','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0104','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0104 ********************/
+/******************** BEGIN TEST0105 ********************/
+ 
+printf("                   TEST0105\n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR2\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** The results of subquery is empty. \n");
+printf ("*** SELECT COUNT(*)    \n");
+printf ("*** FROM   STAFF \n");
+printf ("*** WHERE  STAFF.CITY =  \n");
+printf ("***     (SELECT PROJ.CITY \n");
+printf ("***         FROM   PROJ \n");
+printf ("***         WHERE  PNUM > 'P7') \n");
+
+ii = -1;
+i = -1;
+EXEC SQL SELECT COUNT(*)
+          INTO :ii
+          FROM   STAFF
+          WHERE  STAFF.CITY =
+          (SELECT PROJ.CITY
+           FROM   PROJ
+           WHERE  PNUM > 'P7');
+i = ii;
+EXEC SQL SELECT COUNT(*)
+          INTO :ii
+          FROM   STAFF
+          WHERE  NOT (STAFF.CITY =
+                    (SELECT PROJ.CITY
+                     FROM   PROJ
+                     WHERE  PNUM > 'P7'));
+
+printf("     sqlcode = %ld, i = %ld, ii = %ld\n",SQLCODE,i,ii);
+if (i == 0 && ii == 0 && SQLCODE >= 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0105','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0105','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0105 ********************/
+/******************** BEGIN TEST0106 ********************/
+ 
+printf("                   TEST0106\n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR3\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** SELECT PNUM \n");
+printf ("*** FROM PROJ \n");
+printf ("*** WHERE CITY <> 'Deale' \n");
+i = 0;
+EXEC SQL DECLARE S4 CURSOR FOR
+          SELECT PNUM
+          FROM PROJ
+          WHERE CITY <> 'Deale';
+EXEC SQL OPEN S4;
+
+if (SQLCODE == 0)
+     printf ("PNUM \n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S4 INTO
+               :PNO1;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s\n",PNO1);
+          }
+     }
+EXEC SQL CLOSE S4;
+
+if (i == 3)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0106','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0106','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0106 ********************/
+/******************** BEGIN TEST0107 ********************/
+ 
+printf("                   TEST0107\n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR5\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** SELECT COUNT(*) \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  EMPNUM = 'E1' \n");
+printf (" same as  \n");
+printf ("*** SELECT COUNT(*) \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  EMPNUM = 'E1' AND EMPNUM = 'E1 ' \n");
+
+EXEC SQL SELECT COUNT(*)
+          INTO :ii
+          FROM WORKS
+          WHERE EMPNUM = 'E1';
+i = ii;
+
+EXEC SQL SELECT COUNT(*)
+          INTO :ii
+          FROM WORKS
+          WHERE EMPNUM = 'E1' AND EMPNUM = 'E1 ';
+
+printf("  sqlcode = %ld, i = %ld, ii = %ld\n",SQLCODE,i,ii);
+if (SQLCODE >= 0 && i == 6 && ii == 6)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0107','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0107','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0107 ********************/
+/******************** BEGIN TEST0180 ********************/
+ 
+printf("                   TEST0180   \n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR7\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+i = 0;
+
+EXEC SQL UPDATE STAFF
+         SET    GRADE = NULL
+         WHERE  EMPNUM='E1' OR EMPNUM='E3' OR EMPNUM='E5';
+
+EXEC SQL DECLARE XX CURSOR 
+     FOR SELECT EMPNUM,GRADE
+         FROM   STAFF
+         ORDER  BY GRADE,EMPNUM;
+EXEC SQL OPEN XX;
+
+GRADE1 = 0;
+
+for (ii=1;ii<10;ii++)
+{
+EXEC SQL FETCH XX INTO :EMPNO2,:GRADE1:indic1;
+if (indic1 == -1)
+  {
+  printf(" indic1 = %d \n",indic1);
+  GRADE1 =  -1;
+  }
+if (SQLCODE == 0)
+  {
+   i = ii;
+   printf(" empnum = %s; grade = %ld \n",EMPNO2,GRADE1);
+  }
+}
+
+EXEC SQL ROLLBACK WORK;
+
+if (i==5 && (strncmp(EMPNO2,"E4",2)==0 || strncmp(EMPNO2,"E5",2)==0))
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0180','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0180','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0180 ********************/
+/******************** BEGIN TEST0181 ********************/
+ 
+printf("                   TEST0181   \n");
+printf(" Reference ANSI X3.135-1989 5.11 <comp. predicate> GR7\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+i = 0;
+
+EXEC SQL UPDATE STAFF
+         SET    GRADE = NULL
+         WHERE  EMPNUM='E1' OR EMPNUM='E3' OR EMPNUM='E5';
+
+EXEC SQL DECLARE XXX CURSOR 
+     FOR SELECT DISTINCT GRADE
+         FROM   STAFF
+         ORDER  BY GRADE;
+EXEC SQL OPEN XXX;
+
+GRADE1 = 0;
+
+for (ii=1;ii<10;ii++)
+{
+EXEC SQL FETCH XXX INTO :GRADE1:indic1;
+if (indic1 == -1)
+  {
+  printf(" indic1 = %d \n",indic1);
+  GRADE1 =  -1;
+  }
+if (SQLCODE == 0)
+  {
+   i = ii;
+   printf(" GRADE1 = %ld \n",GRADE1);
+  }
+}
+
+EXEC SQL ROLLBACK WORK;
+
+if (i == 3 && (GRADE1 == -1 || GRADE1 == 12))
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0181','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml023.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0181','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0181 ********************/
+
+exit(errcnt);
+
+}

@@ -1,0 +1,250 @@
+/*  EMBEDDED C (file "ISI008.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/07/12 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  ISI008.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine makes a nominal check to insure that the fields */
+/*  in INFORMATION_SCHEMA which are supposed to be VARCHAR       */
+/*  really are.  This test is only relevant in C, PL/I, and      */
+/*  MUMPS.                                                       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      21 Information Schema and Definition Schema              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long oldlen;
+long newlen;
+varchar cname[41];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+long flag2;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, isi008.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0575 ********************/
+flag = 1;
+flag2 = 1;
+
+     printf("                  TEST0575 \n");
+     printf("       VARCHAR in INFORMATION_SCHEMA\n");
+     printf("         Reference FIPS PUB 127-2,\n");
+     printf("  ANSI SQL-92 21 Information Schema and Definition Schema\n");
+     printf("              6.1 <data type>\n");
+     printf("              12.4 Calls to a <procedure>\n");
+     printf("              9  Data assignment rules\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("Note:  This test will PASS if there is conclusive\n");
+printf("evidence that VARCHAR is being supported.  If there\n");
+printf("is not, it will be NOGO, since one might argue that\n");
+printf("the blanks are being added before the data reaches\n");
+printf("the INFORMATION_SCHEMA.  However, a NOGO result is\n");
+printf("worthy of investigation.\n\n");
+     
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* I initialize the length variables to help find problems */
+/* in translating this into PL/I or MUMPS.                 */
+
+     oldlen = -1;
+
+printf("DECLARE VCCRSR CURSOR FOR\n");
+printf("  SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS;\n");
+
+EXEC SQL DECLARE VCCRSR CURSOR FOR
+  SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS;
+
+printf("\n");
+
+printf("OPEN VCCRSR;\n");
+EXEC SQL OPEN VCCRSR;
+
+CHCKOK ();
+printf("\n");
+
+printf("FETCH VCCRSR INTO :cname;\n");
+EXEC SQL FETCH VCCRSR INTO :cname;
+cname[40] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+/* Non-translatable function call */
+printf("oldlen = strlen (cname);\n");
+oldlen = strlen (cname);
+printf("'%s'  Length = %ld\n\n", cname, oldlen);
+
+printf("Now we loop over the remaining rows and make\n");
+printf("sure every value does not have the same length.\n\n");
+
+newlen = -2;
+P100:
+EXEC SQL FETCH VCCRSR INTO :cname;
+if (SQLCODE == 0)
+{
+  cname[40] = '\0';
+  /* Non-translatable function call */
+  newlen = strlen (cname);
+  printf("'%s'  Length = %ld\n", cname, newlen);
+  /* Nested conditional may also need translation changes */
+  if (newlen != oldlen)
+    flag2 = 0;
+  goto P100;
+}
+
+if (flag2 == 1)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0575','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       isi008.pc  *** nogo *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0575','nogo','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0575 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

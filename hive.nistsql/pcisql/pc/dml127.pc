@@ -1,0 +1,1042 @@
+/*  EMBEDDED C (file "DML127.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/7/11 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML127.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS feature 12 (GET DIAGNOSTICS).        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+short smint1;
+char yorn[2];
+char cmd[16];
+char st[6];
+char co[12];
+char sco[12];
+char nl1[2];
+char nl2[2];
+char nl3[2];
+char nl4[2];
+char nl5[2];
+char mtxt[51];
+long mlen;
+long omlen;
+char olds[6];
+char cns[3];
+char snam[7];
+char tnam[6];
+char csrnam[7];
+EXEC SQL END DECLARE SECTION;
+int odsflg;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml127.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0665 ********************/
+flag = 1;
+
+     printf("                  TEST0665 \n");
+     printf("    Diagnostics:  statement information\n");
+     printf("References:\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    18.1 -- <get diagnostics statement>\n");
+     printf("    18.1 GR.1.b -- MORE\n");
+     printf("    18.1 GR.1.c -- COMMAND_FUNCTION\n");
+     printf("    18.1 GR.1.e -- ROW_COUNT\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* COMMAND_FUNCTION and DYNAMIC_FUNCTION are tested elsewhere */
+
+/* It is difficult to check the values of NUMBER and MORE because */
+/* there may be an arbitrary number of implementation-defined     */
+/* warnings given with each statement.                            */
+
+printf("SELECT COUNT(*) INTO :int1 FROM HU.ECCO;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.ECCO;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+strcpy (yorn, "x");
+strcpy (cmd, "xxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :int1 = NUMBER,\n");
+printf("  :yorn = MORE, :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :int1 = NUMBER,
+  :yorn = MORE, :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("int1 should be > 0; its value is %ld\n", int1);
+printf ("yorn should be Y or N; its value is %s\n", yorn);
+printf ("cmd should be 'SELECT         '; its value is %s\n\n", cmd);
+if (int1 <= 0)
+  flag = 0;
+if (strcmp (yorn, "Y") != 0 && strcmp (yorn, "N") != 0)
+  flag = 0;
+if (strcmp (cmd, "SELECT         ") != 0)
+  flag = 0;
+
+/* Mass firings and layoffs. */
+
+printf("DELETE FROM HU.STAFF WHERE GRADE < 13;\n");
+EXEC SQL DELETE FROM HU.STAFF WHERE GRADE < 13;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+strcpy (yorn, "x");
+strcpy (cmd, "xxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION,\n");
+printf("  :int2 = ROW_COUNT,\n");
+printf("  :yorn = MORE, \n");
+printf("  :int1 = NUMBER;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION,
+  :int2 = ROW_COUNT,
+  :yorn = MORE, 
+  :int1 = NUMBER;
+CHCKOK ();
+printf ("int1 should be > 0; its value is %ld\n", int1);
+printf ("yorn should be Y or N; its value is %s\n", yorn);
+printf ("cmd should be 'DELETE WHERE   '; its value is %s\n", cmd);
+printf ("int2 should be 3; its value is %ld\n\n", int2);
+if (int1 <= 0 || int2 != 3)
+  flag = 0;
+if (strcmp (yorn, "Y") != 0 && strcmp (yorn, "N") != 0)
+  flag = 0;
+if (strcmp (cmd, "DELETE WHERE   ") != 0)
+  flag = 0;
+
+/* Pay cuts, benefits reductions. */
+
+printf("UPDATE HU.STAFF SET GRADE = GRADE - 1;\n");
+EXEC SQL UPDATE HU.STAFF SET GRADE = GRADE - 1;
+CHCKOK ();
+printf("\n");
+
+smint1 = -1;
+int2 = -1;
+strcpy (yorn, "x");
+strcpy (cmd, "xxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :smint1 = NUMBER,\n");
+printf("  :yorn = MORE, :cmd = COMMAND_FUNCTION,\n");
+printf("  :int2 = ROW_COUNT;\n");
+EXEC SQL GET DIAGNOSTICS :smint1 = NUMBER,
+  :yorn = MORE, :cmd = COMMAND_FUNCTION,
+  :int2 = ROW_COUNT;
+CHCKOK ();
+printf ("smint1 should be > 0; its value is %d\n", smint1);
+printf ("yorn should be Y or N; its value is %s\n", yorn);
+printf ("cmd should be 'UPDATE WHERE   '; its value is %s\n", cmd);
+printf ("int2 should be 2; its value is %ld\n\n", int2);
+if (smint1 <= 0 || int2 != 2)
+  flag = 0;
+if (strcmp (yorn, "Y") != 0 && strcmp (yorn, "N") != 0)
+  flag = 0;
+if (strcmp (cmd, "UPDATE WHERE   ") != 0)
+  flag = 0;
+
+/* Simultaneous hiring of cheap labor. */
+
+printf("INSERT INTO HU.STAFF\n");
+printf("  SELECT PNUM, 'Temp Worker', 4, CITY FROM HU.PROJ;\n");
+EXEC SQL INSERT INTO HU.STAFF
+  SELECT PNUM, 'Temp Worker', 4, CITY FROM HU.PROJ;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+strcpy (yorn, "x");
+strcpy (cmd, "xxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :int1 = NUMBER,\n");
+printf("  :yorn = MORE, :cmd = COMMAND_FUNCTION,\n");
+printf("  :int2 = ROW_COUNT;\n");
+EXEC SQL GET DIAGNOSTICS :int1 = NUMBER,
+  :yorn = MORE, :cmd = COMMAND_FUNCTION,
+  :int2 = ROW_COUNT;
+CHCKOK ();
+printf ("int1 should be > 0; its value is %ld\n", int1);
+printf ("yorn should be Y or N; its value is %s\n", yorn);
+printf ("cmd should be 'INSERT         '; its value is %s\n", cmd);
+printf ("int2 should be 6; its value is %ld\n\n", int2);
+if (int1 <= 0 || int2 != 6)
+  flag = 0;
+if (strcmp (yorn, "Y") != 0 && strcmp (yorn, "N") != 0)
+  flag = 0;
+if (strcmp (cmd, "INSERT         ") != 0)
+  flag = 0;
+
+/* Destruction of evidence. */
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0665','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml127.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0665','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0665 *********************/
+/******************** BEGIN TEST0666 ********************/
+flag = 1;
+
+     printf("                  TEST0666 \n");
+     printf("    Diagnostics:  condition information\n");
+     printf("References:\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    18.1 -- <get diagnostics statement>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Multiple conditions are tested elsewhere */
+
+/* Subtest 1:  boring select. */
+
+printf("SELECT COUNT(*) INTO :int1 FROM HU.ECCO;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.ECCO;
+strcpy (olds, SQLSTATE);
+CHCKOK ();
+printf("\n");
+odsflg = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  odsflg = 1;
+
+smint1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (nl1, "x");
+strcpy (nl2, "x");
+strcpy (nl3, "x");
+strcpy (nl4, "x");
+strcpy (nl5, "x");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :smint1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,\n");
+printf("  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :smint1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,
+  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("smint1 should be 1; its value is %d\n", smint1);
+if (smint1 != 1)
+  flag = 0;
+/* Verify RETURNED_SQLSTATE matches SELECT's SQLSTATE */
+printf ("st should be %s; its value is %s\n", olds, st);
+if (strcmp (st, olds) != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+
+if (odsflg == 1)
+  goto P198;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+goto P199;
+P198:
+printf ("sco should NOT be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") == 0)
+  flag = 0;
+
+P199:
+/* 0-length strings enforced in the VARCHAR test. */
+/* Blanks expected here for fixed-length character string */
+printf ("nl1 should be ' '; its value is '%s'\n", nl1);
+if (strcmp (nl1, " ") != 0)
+  flag = 0;
+printf ("nl2 should be ' '; its value is '%s'\n", nl2);
+if (strcmp (nl2, " ") != 0)
+  flag = 0;
+printf ("nl3 should be ' '; its value is '%s'\n", nl3);
+if (strcmp (nl3, " ") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("nl5 should be ' '; its value is '%s'\n", nl5);
+if (strcmp (nl5, " ") != 0)
+  flag = 0;
+
+/* Can't test much about these:  18.1 GR.3.k */
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+/* Subtest 2:  data exception -- division by zero */
+
+int1 = 0;
+printf ("int1 = 0\n");
+printf("INSERT INTO HU.STAFF VALUES (\n");
+printf("  '000', 'Loser', 1 / :int1, 'Baltimore');\n");
+EXEC SQL INSERT INTO HU.STAFF VALUES (
+  '000', 'Loser', 1 / :int1, 'Baltimore');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 22012; its value is %s\n\n", SQLSTATE);
+if (strcmp (SQLSTATE, "22012") != 0)
+  flag = 0;
+
+int1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (nl1, "x");
+strcpy (nl2, "x");
+strcpy (nl3, "x");
+strcpy (nl4, "x");
+strcpy (nl5, "x");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,\n");
+printf("  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,
+  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should be 1; its value is %ld\n", int1);
+if (int1 != 1)
+  flag = 0;
+printf ("st should be 22012; its value is %s\n", st);
+if (strcmp (st, "22012") != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+printf ("nl1 should be ' '; its value is '%s'\n", nl1);
+if (strcmp (nl1, " ") != 0)
+  flag = 0;
+printf ("nl2 should be ' '; its value is '%s'\n", nl2);
+if (strcmp (nl2, " ") != 0)
+  flag = 0;
+printf ("nl3 should be ' '; its value is '%s'\n", nl3);
+if (strcmp (nl3, " ") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("nl5 should be ' '; its value is '%s'\n", nl5);
+if (strcmp (nl5, " ") != 0)
+  flag = 0;
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+/* Intentional duplication:  condition info should not have changed */
+
+int1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (nl1, "x");
+strcpy (nl2, "x");
+strcpy (nl3, "x");
+strcpy (nl4, "x");
+strcpy (nl5, "x");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,\n");
+printf("  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,
+  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should be 1; its value is %ld\n", int1);
+if (int1 != 1)
+  flag = 0;
+printf ("st should be 22012; its value is %s\n", st);
+if (strcmp (st, "22012") != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+printf ("nl1 should be ' '; its value is '%s'\n", nl1);
+if (strcmp (nl1, " ") != 0)
+  flag = 0;
+printf ("nl2 should be ' '; its value is '%s'\n", nl2);
+if (strcmp (nl2, " ") != 0)
+  flag = 0;
+printf ("nl3 should be ' '; its value is '%s'\n", nl3);
+if (strcmp (nl3, " ") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("nl5 should be ' '; its value is '%s'\n", nl5);
+if (strcmp (nl5, " ") != 0)
+  flag = 0;
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+/* Subtest 3:  column constraint violation */
+/* 18.1 GR.3.f */
+/* Insert non-unique EMPNUM into HU.STAFF */
+
+printf("INSERT INTO HU.STAFF VALUES (\n");
+printf("  'E1', 'Bart', 10, 'Annapolis');\n");
+EXEC SQL INSERT INTO HU.STAFF VALUES (
+  'E1', 'Bart', 10, 'Annapolis');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+strcpy (olds, SQLSTATE);
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+odsflg = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+{
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+  odsflg = 1;
+}
+printf ("\n");
+
+int1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (cns, "xx");
+strcpy (snam, "xxxxxx");
+strcpy (tnam, "xxxxx");
+strcpy (nl4, "x");
+strcpy (nl5, "x");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+int2 = 1;
+printf ("int2 = 1\n");
+printf("GET DIAGNOSTICS EXCEPTION :int2\n");
+printf("  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :cns = CONSTRAINT_SCHEMA, :snam = SCHEMA_NAME,\n");
+printf("  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :tnam = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION :int2
+  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :cns = CONSTRAINT_SCHEMA, :snam = SCHEMA_NAME,
+  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :tnam = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should be 1; its value is %ld\n", int1);
+if (int1 != 1)
+  flag = 0;
+printf ("st should be %s; its value is %s\n", olds, st);
+if (strcmp (st, olds) != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+
+if (odsflg == 1)
+  goto P197;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+goto P196;
+P197:
+printf ("sco should NOT be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") == 0)
+  flag = 0;
+
+P196:
+printf ("cns should be 'HU'; its value is '%s'\n", cns);
+if (strcmp (cns, "HU") != 0)
+  flag = 0;
+printf ("snam should be 'HU    '; its value is '%s'\n", snam);
+if (strcmp (snam, "HU    ") != 0)
+  flag = 0;
+printf ("tnam should be 'STAFF'; its value is '%s'\n", tnam);
+if (strcmp (tnam, "STAFF") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("nl5 should be ' '; its value is '%s'\n", nl5);
+if (strcmp (nl5, " ") != 0)
+  flag = 0;
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+/* Subtest 4:  invalid cursor state */
+/* 18.1 GR.3.h */
+
+printf("DECLARE C12721 CURSOR FOR\n");
+printf("  SELECT EMPNUM FROM HU.WORKS;\n");
+EXEC SQL DECLARE C12721 CURSOR FOR
+  SELECT EMPNUM FROM HU.WORKS;
+printf("\n");
+
+printf("CLOSE C12721;\n");
+EXEC SQL CLOSE C12721;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+strcpy (olds, SQLSTATE);
+printf ("SQLSTATE should be 24000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "24000", 5) != 0)
+  flag = 0;
+odsflg = 0;
+if (strncmp (NORMSQ, "24000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+{
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+  odsflg = 1;
+}
+printf ("\n");
+
+int1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (nl1, "x");
+strcpy (nl2, "x");
+strcpy (nl3, "x");
+strcpy (nl4, "x");
+strcpy (csrnam, "xxxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,\n");
+printf("  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :csrnam = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,
+  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :csrnam = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should be 1; its value is %ld\n", int1);
+if (int1 != 1)
+  flag = 0;
+printf ("st should be %s; its value is %s\n", olds, st);
+if (strcmp (st, olds) != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+
+if (odsflg == 1)
+  goto P195;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+goto P194;
+P195:
+printf ("sco should NOT be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") == 0)
+  flag = 0;
+
+P194:
+printf ("nl1 should be ' '; its value is '%s'\n", nl1);
+if (strcmp (nl1, " ") != 0)
+  flag = 0;
+printf ("nl2 should be ' '; its value is '%s'\n", nl2);
+if (strcmp (nl2, " ") != 0)
+  flag = 0;
+printf ("nl3 should be ' '; its value is '%s'\n", nl3);
+if (strcmp (nl3, " ") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("csrnam should be 'C12721'; its value is '%s'\n", csrnam);
+if (strcmp (csrnam, "C12721") != 0)
+  flag = 0;
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+/* Subtest 5: with check option violation */
+/* 18.1 GR.3.i */
+
+printf("INSERT INTO WCOV VALUES (0);\n");
+EXEC SQL INSERT INTO WCOV VALUES (0);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+strcpy (olds, SQLSTATE);
+printf ("SQLSTATE should be 44000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "44000", 5) != 0)
+  flag = 0;
+odsflg = 0;
+if (strncmp (NORMSQ, "44000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+{
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+  odsflg = 1;
+}
+printf ("\n");
+
+int1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (nl1, "x");
+strcpy (snam, "xxxxxx");
+strcpy (tnam, "xxxxx");
+strcpy (nl4, "x");
+strcpy (nl5, "x");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :nl1 = CONSTRAINT_SCHEMA, :snam = SCHEMA_NAME,\n");
+printf("  :tnam = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :nl1 = CONSTRAINT_SCHEMA, :snam = SCHEMA_NAME,
+  :tnam = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :nl5 = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should be 1; its value is %ld\n", int1);
+if (int1 != 1)
+  flag = 0;
+printf ("st should be %s; its value is %s\n", olds, st);
+if (strcmp (st, olds) != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+
+if (odsflg == 1)
+  goto P193;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+goto P192;
+P193:
+printf ("sco should NOT be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") == 0)
+  flag = 0;
+
+P192:
+printf ("nl1 should be ' '; its value is '%s'\n", nl1);
+if (strcmp (nl1, " ") != 0)
+  flag = 0;
+printf ("snam should be 'FLATER'; its value is '%s'\n", snam);
+if (strcmp (snam, "FLATER") != 0)
+  flag = 0;
+printf ("tnam should be 'WCOV '; its value is '%s'\n", tnam);
+if (strcmp (tnam, "WCOV ") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("nl5 should be ' '; its value is '%s'\n", nl5);
+if (strcmp (nl5, " ") != 0)
+  flag = 0;
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+/* Subtest 6:  cursor operation conflict (18.1 GR.3.e) */
+
+printf("DECLARE C12722 CURSOR FOR\n");
+printf("  SELECT GRADE FROM HU.STAFF;\n\n");
+EXEC SQL DECLARE C12722 CURSOR FOR
+  SELECT GRADE FROM HU.STAFF;
+
+printf("OPEN C12722;\n");
+EXEC SQL OPEN C12722;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C12722 INTO :int1;\n");
+EXEC SQL FETCH C12722 INTO :int1;
+CHCKOK ();
+printf("int1 is %ld\n\n", int1);
+
+printf("DELETE FROM HU.STAFF WHERE CURRENT OF C12722;\n");
+EXEC SQL DELETE FROM HU.STAFF WHERE CURRENT OF C12722;
+CHCKOK ();
+printf("\n");
+
+printf("DELETE FROM HU.STAFF;\n");
+EXEC SQL DELETE FROM HU.STAFF;
+printf ("SQLCODE should be >= 0 (not 100); its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 01001; its value is %s\n\n", SQLSTATE);
+strcpy (olds, SQLSTATE);
+if (SQLCODE < 0 || SQLCODE == 100 || strcmp (SQLSTATE, "01001") != 0)
+  flag = 0;
+
+int1 = -1;
+strcpy (st, "xxxxx");
+strcpy (co, "xxxxxxxxxxx");
+strcpy (sco, "xxxxxxxxxxx");
+strcpy (nl1, "x");
+strcpy (nl2, "x");
+strcpy (nl3, "x");
+strcpy (nl4, "x");
+strcpy (csrnam, "xxxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+mlen = -1;
+omlen = -1;
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,\n");
+printf("  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,\n");
+printf("  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,\n");
+printf("  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,\n");
+printf("  :csrnam = CURSOR_NAME, :mtxt = MESSAGE_TEXT,\n");
+printf("  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :int1 = CONDITION_NUMBER, :st = RETURNED_SQLSTATE,
+  :co = CLASS_ORIGIN, :sco = SUBCLASS_ORIGIN,
+  :nl1 = CONSTRAINT_SCHEMA, :nl2 = SCHEMA_NAME,
+  :nl3 = TABLE_NAME, :nl4 = COLUMN_NAME,
+  :csrnam = CURSOR_NAME, :mtxt = MESSAGE_TEXT,
+  :mlen = MESSAGE_LENGTH, :omlen = MESSAGE_OCTET_LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should be 1; its value is %ld\n", int1);
+if (int1 != 1)
+  flag = 0;
+printf ("st should be %s; its value is %s\n", olds, st);
+if (strcmp (st, olds) != 0)
+  flag = 0;
+printf ("co should be 'ISO 9075   '; its value is %s\n", co);
+if (strcmp (co, "ISO 9075   ") != 0)
+  flag = 0;
+printf ("sco should be 'ISO 9075   '; its value is %s\n", sco);
+if (strcmp (sco, "ISO 9075   ") != 0)
+  flag = 0;
+printf ("nl1 should be ' '; its value is '%s'\n", nl1);
+if (strcmp (nl1, " ") != 0)
+  flag = 0;
+printf ("nl2 should be ' '; its value is '%s'\n", nl2);
+if (strcmp (nl2, " ") != 0)
+  flag = 0;
+printf ("nl3 should be ' '; its value is '%s'\n", nl3);
+if (strcmp (nl3, " ") != 0)
+  flag = 0;
+printf ("nl4 should be ' '; its value is '%s'\n", nl4);
+if (strcmp (nl4, " ") != 0)
+  flag = 0;
+printf ("csrnam should be 'C12722'; its value is '%s'\n", csrnam);
+if (strcmp (csrnam, "C12722") != 0)
+  flag = 0;
+
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("mlen should be >= 0; its value is %ld\n", mlen);
+printf ("omlen should be >= 0; its value is %ld\n\n", omlen);
+if (mlen < 0 || omlen < 0)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0666','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml127.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0666','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0666 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

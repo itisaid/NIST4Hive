@@ -1,0 +1,111 @@
+! ----------------------------------------------------------------------
+!                     IDENTIFICATION SECTION                  
+!                         Embedded C
+! ----------------------------------------------------------------------
+!
+sub *.* /59-byte ID/
+/59-byte ID/___________________________________________________________/
+!
+! Document version of TEd used, for audit purposes.
+!
+sub *.* /TEd Version #/ -m
+"TEd Version #"TEd Version $ver"
+! 
+! ----------------------------------------------------------------------
+!                     MAINTENANCE SECTION                  
+! ----------------------------------------------------------------------
+!
+! Use the  -t  option on TEd to apply the official maintenance file.
+! Then use a second  -t  option on TEd to apply this file.
+!      OR     
+! Insert the entire maintenance file in this position.
+!
+!
+! ----------------------------------------------------------------------
+!                     LOGIN SECTION                  
+! ----------------------------------------------------------------------
+!
+! The login problem is solved here:
+! If passwords are system-login passwords, then no changes are necessary.
+! For other implementations, changes may be needed.
+!
+! The call to AUTHID may be replaced with some implementor-defined syntax.
+! For example, you may choose to code:
+! ins< *.pc /AUTHID(uid)/
+!            EXEC SQL SET DEFAULT MODE ANSI;
+! rep *.pc /AUTHID(uid)/
+!            EXEC SQL CONNECT :uid IDENTIFIED BY :uid;
+!            EXEC SQL SET ISOLATION TO SERIALIZABLE;
+!
+! Other changes to establish the ANSI-standard environment would be coded here.
+!
+!
+! ----------------------------------------------------------------------
+!                     IMPLEMENTOR-DEFINED SECTION                  
+! ----------------------------------------------------------------------
+!
+! Install implementor-defined data type for indicator variable
+! For example, to change data type to "long", code:
+!            sub *.pc /indic/
+!            /short/long/
+!
+! Modify dml063 to declare vendor-reserved key words
+! For example, to declare UPDATE a vendor-reserved key word, code: 
+!            del *dml063.pc /char UPDATE[4]/
+!            del *dml063.pc /:UPDATE/,UPDATE)/
+!
+! Install vendor-supplied extensions to demonstrate FIPS Flagging:
+! (Replace the underscores with vendor-supplied extensions.)
+!
+sub *{flg005,xop709}.pc //
+/SUBSTR(EMPNAME,1,3) = 'Ali'/____________________/
+/ABS(GRADE) = 12/_________________/
+!
+! Change 18-character AUTHORIZATION ID to max supported in this DBMS/OS:
+!            sub *.* /CANWEPARSELENGTH18/
+!            /CANWEPARSELENGTH18/WECANPARSE12/
+!
+! ----------------------------------------------------------------------
+!                     APPROVED CHANGES SECTION
+! ----------------------------------------------------------------------
+!
+! Include here any changes approved by NIST for this validation:
+!
+! For example, to lengthen concurrency test #0230 (according to documentation),
+!   to allow interleaving for a DBMS using "burst" mode CPU allocation:
+!            sub *mp?001.{p,s}* /keymax/ -i
+!            /50/300/
+!
+!
+! ----------------------------------------------------------------------
+!                     SYNTAX DEFICIENCIES SECTION                  
+! ----------------------------------------------------------------------
+!
+!
+! If a program cannot be executed because the precompiler issues 
+!   a fatal syntax error message for a minor deficiency which is not
+!   the purpose of the test case, propose a change to NIST.  
+! A syntax change should be made to allow an SQL implementation 
+!   to demonstrate functionality, i.e. semantic conformance.
+! A global change will be counted as a single deficiency.
+!  
+! For example, to replace the SQLCODE declaration,
+!          ins< *.pc /<stdio.h>/
+!          #define SQLCODE sqlca.sqlcode
+!          rep *.pc /*long*SQLCODE*/ -p
+!          EXEC SQL INCLUDE SQLCA;
+!
+! ----------------------------------------------------------------------
+!                     DELETED TESTS SECTION                  
+! ----------------------------------------------------------------------
+!
+! If a program cannot be executed because the precompiler issues
+!   a fatal syntax error message for one of the tests, either propose a
+!   change to NIST or delete the entire test so that the rest of the tests
+!   in the program may execute.  If this test is required, and not a FIPS
+!   Flagger test, it will appear as a deficiency on REPORT 4.
+!
+! For example, to remove test number 278, code
+!            del *dml061.pc /BEGIN TEST0278/END TEST0278/
+!
+!

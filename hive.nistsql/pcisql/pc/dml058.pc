@@ -1,0 +1,490 @@
+/*  EMBEDDED C (file "DML058.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/04/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML058.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE COMMIT,ROLLBACK AND UPDATE STATEMENT*/
+/*  IN THE LANGUAGE OF SQL.  THE FORMAT:                         */
+/*                COMMIT WORK                                    */
+/*                                                               */
+/*                ROLLBACK WORK                                  */
+/*                                                               */
+/*                UPDATE <table name>                            */
+/*                SET  <set clause:searched>[{,<set clause>}...] */
+/*                [WHERE <search condition>]                     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                   SECTION 6.6 <unique constraint definition>  */
+/*                   SECTION 8.7  <insert statement>             */
+/*                   SECTION 8.10 <select statement>             */
+/*                   SECTION 8.12 <update statement: searched>   */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          long jj;
+          long i;
+          long ii;
+          char city1[16];
+          char tuser1[111];
+          char tuser2[111];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long iii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml058.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0251 ********************/
+
+
+printf("\n                     TEST0251             \n");
+printf("                     COMMIT  WORK     \n");
+printf("      reference X3.135-1989 section 8.2 General Rules. 3\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("                  DELETE FROM STAFF1;\n");
+printf("\n");
+printf("                  INSERT INTO STAFF1\n");
+printf("                  SELECT  * FROM STAFF;\n");
+printf("\n");
+printf("                  SELECT COUNT(*) INTO :ii\n");
+printf("                  FROM STAFF1;\n");
+printf("\n");
+printf("                  INSERT INTO STAFF1\n");
+printf("                  VALUES ('E9','Tom',50,'London');\n");
+printf("\n");
+printf("                  UPDATE STAFF1\n");
+printf("                  SET GRADE = 40\n");
+printf("                  WHERE EMPNUM = 'E2';\n");
+printf("                  COMMIT WORK;\n");
+printf("\n");
+printf("                  DELETE FROM STAFF1;\n");
+printf("                  ROLLBACK WORK; \n");
+printf("\n");
+printf("                  SELECT COUNT(*) INTO :i\n");
+printf("                  FROM STAFF1\n");
+printf("                  WHERE GRADE > 12;\n");
+
+
+ii = 0;
+i = 0;
+         EXEC SQL DELETE FROM STAFF1;
+         EXEC SQL INSERT INTO STAFF1
+                  SELECT  * FROM STAFF;
+         EXEC SQL SELECT COUNT(*) INTO :ii
+                  FROM STAFF1;
+         EXEC SQL INSERT INTO STAFF1
+                  VALUES ('E9','Tom',50,'London');
+         EXEC SQL UPDATE STAFF1
+                  SET GRADE = 40
+                  WHERE EMPNUM = 'E2';
+         EXEC SQL COMMIT WORK;
+         EXEC SQL DELETE FROM STAFF1;
+         EXEC SQL ROLLBACK WORK; 
+         EXEC SQL SELECT COUNT(*) INTO :i
+                  FROM STAFF1
+                  WHERE GRADE > 12;
+         EXEC SQL DELETE FROM STAFF1;
+printf(" The correct answer is :\n");
+printf("           ii is 5\n");
+printf("           i is 4\n");
+printf(" Your answer is :\n");
+printf("           ii is %ld\n",ii);
+printf("           i is %ld\n",i);
+        if (ii == 5 && i == 4)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0251','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0251','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml058.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0251 ***********/
+
+
+/******************** BEGIN TEST0252 ********************/
+
+
+printf("\n                     TEST0252             \n");
+printf("                     ROLLBACK WORK     \n");
+printf("      reference X3.135-1989 section 8.9 Gerneral Rules 1\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         DELETE FROM STAFF1;\n");
+printf("\n");
+printf("         INSERT INTO STAFF1\n");
+printf("         SELECT * FROM STAFF;\n");
+printf("         COMMIT WORK;\n");
+printf("\n");
+printf("         UPDATE STAFF1\n");
+printf("         SET EMPNUM = 'E9'\n");
+printf("         WHERE EMPNUM = 'E1';\n");
+printf("\n");
+printf("         ROLLBACK WORK;\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :i\n");
+printf("         FROM STAFF1\n");
+printf("         WHERE EMPNUM = 'E1';\n");
+i = 0;
+EXEC SQL DELETE FROM STAFF1;
+EXEC SQL INSERT INTO STAFF1
+         SELECT * FROM STAFF;
+EXEC SQL COMMIT WORK;
+EXEC SQL INSERT INTO STAFF1
+         VALUES ('E10','Tom',50,'London');
+EXEC SQL UPDATE STAFF1
+         SET GRADE = 40
+         WHERE EMPNUM = 'E1';
+EXEC SQL DELETE FROM STAFF1
+         WHERE EMPNUM = 'E2';
+EXEC SQL ROLLBACK WORK;
+EXEC SQL SELECT SUM(GRADE) INTO :i
+         FROM STAFF1;
+EXEC SQL DELETE FROM STAFF1;
+printf(" The correct answer is :\n");
+printf("           i is 60\n");
+printf(" Your answer is :\n");
+printf("           i is %ld\n",i);
+        if (i == 60)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0252','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0252','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml058.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0252 ***********/
+
+
+
+
+
+
+
+/*   EXEC SQL CREATE TABLE UPUNIQ (NUMKEY DECIMAL(3) UNIQUE,   */
+/*                                 COL2   CHAR(2));            */
+
+/*   See INSERTs in program BASETAB.PC        */
+/*      INSERT INTO UPUNIQ VALUES(1,'A')         */
+/*      INSERT INTO UPUNIQ VALUES(2,'B')         */
+/*      INSERT INTO UPUNIQ VALUES(3,'C')         */
+/*      INSERT INTO UPUNIQ VALUES(4,'D')         */
+/*      INSERT INTO UPUNIQ VALUES(6,'F')         */
+/*      INSERT INTO UPUNIQ VALUES(8,'H')         */
+
+/******************** BEGIN TEST0253 ********************/
+
+     printf("\n                  TEST0253             \n");
+     printf("           update (key=key+1) workaround     \n");
+     printf("   reference X3.135-1989 section 8.12, 6.6 GR. 2)\n"); 
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* Comment -- This test does not requires deferred integrity   */
+/*      constraint checking, but has the same effect as        */
+/*            SET NUMKEY = NUMKEY + 1                          */
+
+printf("\n");
+printf("     DECLARE SUN CURSOR  \n");
+printf("       FOR SELECT NUMKEY FROM UPUNIQ\n");
+printf("       ORDER BY NUMKEY DESC;\n");
+printf("\n");
+printf("     FETCH SUN INTO :jj;\n");
+printf("\n");
+printf("     UPDATE UPUNIQ\n");
+printf("           SET NUMKEY = :jj + 1 \n");
+printf("           WHERE NUMKEY = :jj;\n");
+printf("\n");
+     EXEC SQL DECLARE SUN CURSOR  
+       FOR SELECT NUMKEY FROM UPUNIQ
+       ORDER BY NUMKEY DESC;
+    
+     EXEC SQL OPEN SUN;
+
+for (i = 0; i < 10; i++)
+   {
+     EXEC SQL FETCH SUN INTO :jj;
+     EXEC SQL UPDATE UPUNIQ
+           SET NUMKEY = :jj + 1 
+           WHERE NUMKEY = :jj;
+   }
+     EXEC SQL CLOSE SUN;
+     i = 0;
+     ii = 0;
+     EXEC SQL SELECT MAX(NUMKEY), MIN(NUMKEY)
+           INTO   :i,:ii
+           FROM   UPUNIQ;
+     printf(" The max numkey in table UPUNIQ is %ld. \n",i);
+     printf(" The min numkey in table UPUNIQ is %ld. \n",ii);
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (i == 9 && ii == 2)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0253','pass','PC');
+     }
+     else
+     {
+       printf("\n\n     dml058.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0253','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+     printf("====================================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0253 ********************/
+
+/******************** BEGIN TEST0254 ********************/
+
+
+printf("\n                     TEST0254             \n");
+printf("                     UPDATE -COLUMN SPEC.     \n");
+printf("      reference X3.135-1989 section 8.12, 5.9\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         UPDATE PROJ1\n");
+printf("         SET  CITY = PTYPE;\n");
+printf("\n");
+printf("         SELECT CITY INTO :city1\n");
+printf("         FROM PROJ1\n");
+printf("         WHERE PNUM = 'P1';\n");
+iii = -1;
+strcpy(city1,"NV");
+EXEC SQL DELETE FROM PROJ1;
+EXEC SQL INSERT INTO PROJ1
+         SELECT * FROM PROJ;
+EXEC SQL UPDATE PROJ1
+         SET  CITY = PTYPE;
+iii = SQLCODE;
+EXEC SQL SELECT CITY INTO :city1
+         FROM PROJ1
+         WHERE PNUM = 'P1';
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("           iii is 0\n");
+printf("           city1 = Design\n");
+printf(" Your answer is :\n");
+printf("           iii is %ld\n",iii);
+printf("           city1 = %s\n",city1);
+ if (strncmp(city1,"Design",6) == 0 && iii == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0254','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0254','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml058.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0254 ***********/
+
+
+
+
+
+
+/******************** BEGIN TEST0255 ********************/
+/* For INSERT, UPDATE                                   */
+
+
+printf("\n                     TEST0255             \n");
+printf("                USER <value specification>.     \n");
+printf("      reference X3.135-1989 section 8.7,8.12 & 5.6\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("\n");
+printf("        INSERT INTO T4\n");
+printf("        VALUES (USER,100,'good','luck');\n");
+printf("\n");
+printf("        SELECT STR110 INTO :tuser1 FROM T4\n");
+printf("        WHERE NUM6 = 100;\n");
+printf("\n");
+printf("        INSERT INTO T4\n");
+printf("        VALUES ('Hello',101,'good','luck');\n");
+printf("\n");
+printf("        UPDATE T4\n");
+printf("        SET STR110 = USER\n");
+printf("        WHERE NUM6 = 101;\n");
+printf("\n");
+printf("        SELECT STR110 INTO :tuser2 FROM T4\n");
+printf("        WHERE NUM6 = 101;\n");
+EXEC SQL DELETE FROM T4;
+EXEC SQL INSERT INTO T4
+        VALUES (USER,100,'good','luck');
+EXEC SQL SELECT STR110 INTO :tuser1 FROM T4
+        WHERE NUM6 = 100;
+EXEC SQL INSERT INTO T4
+        VALUES ('Hello',101,'good','luck');
+EXEC SQL UPDATE T4
+        SET STR110 = USER
+        WHERE NUM6 = 101;
+EXEC SQL SELECT STR110 INTO :tuser2 FROM T4
+        WHERE NUM6 = 101;
+printf(" The correct answer is :\n");
+printf("           tuser1 = HU\n");
+printf("           tuser2 = HU\n");
+printf(" Your answer is :\n");
+printf("           tuser1 = %s\n",tuser1);
+printf("           tuser2 = %s\n",tuser2);
+EXEC SQL ROLLBACK WORK;
+ if (strncmp(tuser1,"HU",2) == 0 && strncmp(tuser2,"HU",2) == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0255','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0255','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml058.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0255 ***********/
+
+
+
+
+/******************** BEGIN TEST0256 ********************/
+/* For WHERE                                            */
+
+
+printf("\n                     TEST0256             \n");
+printf("                  USER in WHERE clause.     \n");
+printf("      reference X3.135-1989 section 8.7,8.12 \n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        INSERT INTO T4\n");
+printf("        VALUES ('HU',100,'good','luck');\n");
+printf("\n");
+printf("        SELECT STR110 INTO :tuser1 FROM T4\n");
+printf("        WHERE STR110 = USER;\n");
+printf("\n");
+printf("        INSERT INTO T4\n");
+printf("        VALUES ('Hello',101,'good','luck');\n");
+printf("\n");
+printf("        DELETE FROM T4\n");
+printf("        WHERE STR110 = USER;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :ii FROM T4\n");
+printf("        WHERE STR110 LIKE '%%HU%%';\n");
+ii = -1;
+EXEC SQL DELETE FROM T4;
+EXEC SQL INSERT INTO T4
+        VALUES ('HU',100,'good','luck');
+EXEC SQL SELECT STR110 INTO :tuser1 FROM T4
+        WHERE STR110 = USER;
+EXEC SQL INSERT INTO T4
+        VALUES ('Hello',101,'good','luck');
+EXEC SQL DELETE FROM T4
+        WHERE STR110 = USER;
+EXEC SQL SELECT COUNT(*) INTO :ii FROM T4
+        WHERE STR110 LIKE '%HU%';
+printf(" The correct answer is :\n");
+printf("           tuser1 = HU\n");
+printf("           ii = 0\n");
+printf(" Your answer is :\n");
+printf("           tuser1 = %s\n",tuser1);
+printf("           ii = %ld\n",ii);
+EXEC SQL ROLLBACK WORK;
+ if (strncmp(tuser1,"HU",2) == 0 && ii == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0256','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0256','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml058.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0256 ***********/
+
+
+
+exit(errcnt);
+
+}
+

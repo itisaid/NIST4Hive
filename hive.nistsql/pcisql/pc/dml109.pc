@@ -1,0 +1,1049 @@
+/*  EMBEDDED C (file "DML109.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/11/17 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML109.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests more DATETIME features in Transitional    */
+/*  SQL.  This is the dynamic version of DML108.                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml109.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0618 ********************/
+flag = 1;
+
+     printf("                  TEST0618 \n");
+     printf("     DATETIME with predicates, set fns (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 5, 20\n");
+     printf("    COR1 7.1 <row value constructor>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE TEMPS ('      ||
+       '  ENTERED  TIMESTAMP,'     ||
+       '  START    DATE,'          ||
+       '  APPT     INTERVAL DAY,'  ||
+       '  HOUR_IN  TIME,'          ||
+       '  HOUR_OUT TIME,'          ||
+       '  LUNCH    INTERVAL HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW SUBQ1 AS'                  ||
+       '  SELECT MIN (HOUR_IN) AS TOO_EARLY,'  ||
+       '  MAX (ALL START) AS LATEST,'          ||
+       '  AVG (LUNCH) AS AVGLUNCH,'            ||
+       '  AVG (DISTINCT LUNCH) AS D_AVGLUNCH,' ||
+       '  SUM (APPT) AS SUMAPPT'               ||
+       '  FROM TEMPS'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMPS VALUES ('                      ||
+       '  TIMESTAMP ''1993-11-10 12:25:14'','            ||
+       '  DATE ''1993-11-12'','                          ||
+       '  INTERVAL ''4'' DAY,'                           ||
+       '  TIME ''08:30:00'','                            ||
+       '  TIME ''16:30:00'','                            ||
+       '  INTERVAL ''1:00'' HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMPS VALUES ('                      ||
+       '  TIMESTAMP ''1993-11-10 13:15:14'','            ||
+       '  DATE ''1993-11-15'','                          ||
+       '  INTERVAL ''5'' DAY,'                           ||
+       '  TIME ''08:30:00'','                            ||
+       '  TIME ''17:30:00'','                            ||
+       '  INTERVAL ''0:30'' HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMPS VALUES ('                      ||
+       '  TIMESTAMP ''1993-11-17 09:56:48'','            ||
+       '  DATE ''1994-11-18'','                          ||
+       '  INTERVAL ''3'' DAY,'                           ||
+       '  TIME ''09:00:00'','                            ||
+       '  TIME ''17:00:00'','                            ||
+       '  INTERVAL ''1:00'' HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+/* = <> < > <= >= */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'  ||
+       '  LUNCH < INTERVAL ''1:00'' HOUR TO MINUTE'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10911 FROM :longst;\n");
+EXEC SQL PREPARE S10911 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10911 CURSOR FOR S10911;\n");
+EXEC SQL DECLARE C10911 CURSOR FOR S10911;
+printf("\n");
+
+printf("OPEN C10911;\n");
+EXEC SQL OPEN C10911;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10911 INTO :int1;\n");
+EXEC SQL FETCH C10911 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10911;\n");
+EXEC SQL CLOSE C10911;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'  ||
+       '  LUNCH <= INTERVAL ''1:00'' HOUR TO MINUTE'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10912 FROM :longst;\n");
+EXEC SQL PREPARE S10912 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10912 CURSOR FOR S10912;\n");
+EXEC SQL DECLARE C10912 CURSOR FOR S10912;
+printf("\n");
+
+printf("OPEN C10912;\n");
+EXEC SQL OPEN C10912;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10912 INTO :int1;\n");
+EXEC SQL FETCH C10912 INTO :int1;
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+printf("CLOSE C10912;\n");
+EXEC SQL CLOSE C10912;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  START <> DATE ''1993-11-15'' AND' ||
+       '  START <> DATE ''1993-11-12'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10913 FROM :longst;\n");
+EXEC SQL PREPARE S10913 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10913 CURSOR FOR S10913;\n");
+EXEC SQL DECLARE C10913 CURSOR FOR S10913;
+printf("\n");
+
+printf("OPEN C10913;\n");
+EXEC SQL OPEN C10913;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10913 INTO :int1;\n");
+EXEC SQL FETCH C10913 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10913;\n");
+EXEC SQL CLOSE C10913;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  START = DATE ''1993-11-15'' OR'   ||
+       '  START = DATE ''1993-11-12'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10914 FROM :longst;\n");
+EXEC SQL PREPARE S10914 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10914 CURSOR FOR S10914;\n");
+EXEC SQL DECLARE C10914 CURSOR FOR S10914;
+printf("\n");
+
+printf("OPEN C10914;\n");
+EXEC SQL OPEN C10914;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10914 INTO :int1;\n");
+EXEC SQL FETCH C10914 INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C10914;\n");
+EXEC SQL CLOSE C10914;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  HOUR_OUT > TIME ''17:00:00'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10915 FROM :longst;\n");
+EXEC SQL PREPARE S10915 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10915 CURSOR FOR S10915;\n");
+EXEC SQL DECLARE C10915 CURSOR FOR S10915;
+printf("\n");
+
+printf("OPEN C10915;\n");
+EXEC SQL OPEN C10915;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10915 INTO :int1;\n");
+EXEC SQL FETCH C10915 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10915;\n");
+EXEC SQL CLOSE C10915;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  HOUR_OUT >= TIME ''17:00:00'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10916 FROM :longst;\n");
+EXEC SQL PREPARE S10916 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10916 CURSOR FOR S10916;\n");
+EXEC SQL DECLARE C10916 CURSOR FOR S10916;
+printf("\n");
+
+printf("OPEN C10916;\n");
+EXEC SQL OPEN C10916;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10916 INTO :int1;\n");
+EXEC SQL FETCH C10916 INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C10916;\n");
+EXEC SQL CLOSE C10916;
+CHCKOK ();
+printf("\n");
+
+/* BETWEEN */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  ENTERED BETWEEN'                  ||
+       '  TIMESTAMP ''1993-11-10 00:00:00'' AND' ||
+       '  TIMESTAMP ''1993-11-10 23:59:59'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10917 FROM :longst;\n");
+EXEC SQL PREPARE S10917 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10917 CURSOR FOR S10917;\n");
+EXEC SQL DECLARE C10917 CURSOR FOR S10917;
+printf("\n");
+
+printf("OPEN C10917;\n");
+EXEC SQL OPEN C10917;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10917 INTO :int1;\n");
+EXEC SQL FETCH C10917 INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C10917;\n");
+EXEC SQL CLOSE C10917;
+CHCKOK ();
+printf("\n");
+
+/* IN */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  HOUR_OUT IN'                      ||
+       '  (SELECT HOUR_IN + INTERVAL ''8'' HOUR' ||
+       '  FROM TEMPS)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10918 FROM :longst;\n");
+EXEC SQL PREPARE S10918 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10918 CURSOR FOR S10918;\n");
+EXEC SQL DECLARE C10918 CURSOR FOR S10918;
+printf("\n");
+
+printf("OPEN C10918;\n");
+EXEC SQL OPEN C10918;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10918 INTO :int1;\n");
+EXEC SQL FETCH C10918 INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C10918;\n");
+EXEC SQL CLOSE C10918;
+CHCKOK ();
+printf("\n");
+
+/* IS NULL -- see test 0621 */
+
+/* OVERLAPS (tested once already in DML106-7) */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  (START, APPT) OVERLAPS'           ||
+       '  (DATE ''1993-11-14'','  ||
+       '  INTERVAL ''2'' DAY)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10919 FROM :longst;\n");
+EXEC SQL PREPARE S10919 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10919 CURSOR FOR S10919;\n");
+EXEC SQL DECLARE C10919 CURSOR FOR S10919;
+printf("\n");
+
+printf("OPEN C10919;\n");
+EXEC SQL OPEN C10919;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10919 INTO :int1;\n");
+EXEC SQL FETCH C10919 INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C10919;\n");
+EXEC SQL CLOSE C10919;
+CHCKOK ();
+printf("\n");
+
+/* ALL, SOME, ANY qualifiers (brief test) */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  HOUR_OUT = ANY'                   ||
+       '  (SELECT HOUR_IN + INTERVAL ''8'' HOUR' ||
+       '  FROM TEMPS)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091A FROM :longst;\n");
+EXEC SQL PREPARE S1091A FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091A CURSOR FOR S1091A;\n");
+EXEC SQL DECLARE C1091A CURSOR FOR S1091A;
+printf("\n");
+
+printf("OPEN C1091A;\n");
+EXEC SQL OPEN C1091A;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091A INTO :int1;\n");
+EXEC SQL FETCH C1091A INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C1091A;\n");
+EXEC SQL CLOSE C1091A;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  EXTRACT (YEAR FROM ENTERED) <> SOME' ||
+       '  (SELECT EXTRACT (YEAR FROM START)'   ||
+       '  FROM TEMPS)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091B FROM :longst;\n");
+EXEC SQL PREPARE S1091B FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091B CURSOR FOR S1091B;\n");
+EXEC SQL DECLARE C1091B CURSOR FOR S1091B;
+printf("\n");
+
+printf("OPEN C1091B;\n");
+EXEC SQL OPEN C1091B;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091B INTO :int1;\n");
+EXEC SQL FETCH C1091B INTO :int1;
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+printf("CLOSE C1091B;\n");
+EXEC SQL CLOSE C1091B;
+CHCKOK ();
+printf("\n");
+
+/* The following query would be helpful in finding errors in */
+/* the data.                                                 */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  EXTRACT (YEAR FROM START) <> ALL' ||
+       '  (SELECT EXTRACT (YEAR FROM ENTERED)'   ||
+       '  FROM TEMPS)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091C FROM :longst;\n");
+EXEC SQL PREPARE S1091C FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091C CURSOR FOR S1091C;\n");
+EXEC SQL DECLARE C1091C CURSOR FOR S1091C;
+printf("\n");
+
+printf("OPEN C1091C;\n");
+EXEC SQL OPEN C1091C;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091C INTO :int1;\n");
+EXEC SQL FETCH C1091C INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C1091C;\n");
+EXEC SQL CLOSE C1091C;
+CHCKOK ();
+printf("\n");
+
+/* Set Functions */
+
+/* Find the most insanely early hour of the morning that anybody */
+/* has to work                                                   */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EXTRACT (HOUR FROM TOO_EARLY)'      ||
+       '  * 100 + EXTRACT (MINUTE FROM TOO_EARLY)' ||
+       '  FROM SUBQ1'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091D FROM :longst;\n");
+EXEC SQL PREPARE S1091D FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091D CURSOR FOR S1091D;\n");
+EXEC SQL DECLARE C1091D CURSOR FOR S1091D;
+printf("\n");
+
+printf("OPEN C1091D;\n");
+EXEC SQL OPEN C1091D;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091D INTO :int1;\n");
+EXEC SQL FETCH C1091D INTO :int1;
+CHCKOK ();
+printf("int1 should be 830; its value is %ld\n\n", int1);
+if (int1 != 830)
+  flag = 0;
+
+printf("CLOSE C1091D;\n");
+EXEC SQL CLOSE C1091D;
+CHCKOK ();
+printf("\n");
+
+/* Find the start date of the latest-starting appointment */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EXTRACT (YEAR FROM LATEST),'    ||
+       '  EXTRACT (MONTH FROM LATEST) * 100 +' ||
+       '  EXTRACT (DAY FROM LATEST)'           ||
+       '  FROM SUBQ1'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091E FROM :longst;\n");
+EXEC SQL PREPARE S1091E FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091E CURSOR FOR S1091E;\n");
+EXEC SQL DECLARE C1091E CURSOR FOR S1091E;
+printf("\n");
+
+printf("OPEN C1091E;\n");
+EXEC SQL OPEN C1091E;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C1091E INTO :int1, :int2;\n");
+EXEC SQL FETCH C1091E INTO :int1, :int2;
+CHCKOK ();
+printf("int1 should be 1994; its value is %ld\n", int1);
+if (int1 != 1994)
+  flag = 0;
+printf("int2 should be 1118; its value is %ld\n\n", int2);
+if (int2 != 1118)
+  flag = 0;
+
+printf("CLOSE C1091E;\n");
+EXEC SQL CLOSE C1091E;
+CHCKOK ();
+printf("\n");
+
+/* Find the average lunch period. */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EXTRACT (HOUR FROM AVGLUNCH)'      ||
+       '  * 100 + EXTRACT (MINUTE FROM AVGLUNCH)' ||
+       '  FROM SUBQ1'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091F FROM :longst;\n");
+EXEC SQL PREPARE S1091F FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091F CURSOR FOR S1091F;\n");
+EXEC SQL DECLARE C1091F CURSOR FOR S1091F;
+printf("\n");
+
+printf("OPEN C1091F;\n");
+EXEC SQL OPEN C1091F;
+CHCKOK ();
+printf("\n");
+
+/* Numeric truncation might result in a 49 here.  4.4.1 says that */
+/* the choice of whether to truncate or round is implementation-  */
+/* defined.                                                       */
+
+int1 = -1;
+printf("FETCH C1091F INTO :int1;\n");
+EXEC SQL FETCH C1091F INTO :int1;
+CHCKOK ();
+printf("int1 should be 50; its value is %ld\n\n", int1);
+if (int1 == 49)
+{
+  printf ("Numeric truncation is allowed.  49 is OK.\n\n");
+}
+if (int1 != 50 && int1 != 49)
+  flag = 0;
+
+printf("CLOSE C1091F;\n");
+EXEC SQL CLOSE C1091F;
+CHCKOK ();
+printf("\n");
+
+/* Test DISTINCT */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EXTRACT (HOUR FROM D_AVGLUNCH)'      ||
+       '  * 100 + EXTRACT (MINUTE FROM D_AVGLUNCH)' ||
+       '  FROM SUBQ1'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091G FROM :longst;\n");
+EXEC SQL PREPARE S1091G FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091G CURSOR FOR S1091G;\n");
+EXEC SQL DECLARE C1091G CURSOR FOR S1091G;
+printf("\n");
+
+printf("OPEN C1091G;\n");
+EXEC SQL OPEN C1091G;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091G INTO :int1;\n");
+EXEC SQL FETCH C1091G INTO :int1;
+CHCKOK ();
+printf("int1 should be 45; its value is %ld\n\n", int1);
+if (int1 != 45)
+  flag = 0;
+
+printf("CLOSE C1091G;\n");
+EXEC SQL CLOSE C1091G;
+CHCKOK ();
+printf("\n");
+
+/* Find total number of days appointed */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EXTRACT (DAY FROM SUMAPPT)'    ||
+       '  FROM SUBQ1'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1091H FROM :longst;\n");
+EXEC SQL PREPARE S1091H FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091H CURSOR FOR S1091H;\n");
+EXEC SQL DECLARE C1091H CURSOR FOR S1091H;
+printf("\n");
+
+printf("OPEN C1091H;\n");
+EXEC SQL OPEN C1091H;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091H INTO :int1;\n");
+EXEC SQL FETCH C1091H INTO :int1;
+CHCKOK ();
+printf("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+printf("CLOSE C1091H;\n");
+EXEC SQL CLOSE C1091H;
+CHCKOK ();
+printf("\n");
+
+/* Finally, COUNT */
+
+printf("dstmt=\"SELECT COUNT (DISTINCT LUNCH) FROM TEMPS\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT (DISTINCT LUNCH) FROM TEMPS          ");
+
+printf("PREPARE S1091I FROM :dstmt;\n");
+EXEC SQL PREPARE S1091I FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C1091I CURSOR FOR S1091I;\n");
+EXEC SQL DECLARE C1091I CURSOR FOR S1091I;
+printf("\n");
+
+printf("OPEN C1091I;\n");
+EXEC SQL OPEN C1091I;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C1091I INTO :int1;\n");
+EXEC SQL FETCH C1091I INTO :int1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C1091I;\n");
+EXEC SQL CLOSE C1091I;
+CHCKOK ();
+printf("\n");
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE TEMPS CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE TEMPS CASCADE                          ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0618','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml109.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0618','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0618 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

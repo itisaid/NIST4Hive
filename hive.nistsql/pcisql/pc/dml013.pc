@@ -1,0 +1,497 @@
+/*  EMBEDDED C (file "DML013.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML013.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SET FUNCTION SPECIFICATION IN       */
+/*  COMMON ELEMENTS OF THE SQL LANGUAGE.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.8 <set function specification>      */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char EMPNO1[4];
+        long i;
+        long NULL1;
+        short indic1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml013.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0039 ********************/
+
+    printf("            TEST0039 - TEST0044 \n");
+    i = 0;
+    printf("         Set Function Specification   \n");
+    printf("Reference X3.135-1989 section 5.8 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0039     \n");
+    printf("    Reference 5.8 General Rules 1)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+
+    printf("   *** INSERT INTO WORKS VALUES('E5','P5',NULL) \n");
+    printf("   *** SELECT COUNT(DISTINCT HOURS) \n");
+    printf("   ***   INTO :i  \n");
+    printf("   ***   FROM WORKS \n\n");
+    EXEC SQL INSERT INTO WORKS
+             VALUES('E5','P5',NULL);
+
+    EXEC SQL SELECT COUNT(DISTINCT HOURS)
+         INTO   :i
+         FROM   WORKS;
+
+    EXEC SQL ROLLBACK WORK;
+
+    printf("      Test COUNT DISTINCT function i=%ld \n\n",i);
+    printf("      the correct answer should be i=4 \n");
+    if (i==4)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0039','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0039','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0039 ********************/
+
+/******************** BEGIN TEST0167 ********************/
+
+
+    i = 0;
+    printf("                 TEST0167                \n");
+    printf("   Reference 5.8 General Rules 2)\n\n");
+    printf("   - - - - - - - - - - - - - - - - - - - - \n\n");
+
+    printf("   *** INSERT INTO WORKS VALUES('E5','P5',NULL) \n");
+    printf("   *** SELECT SUM(ALL HOURS) \n");
+    printf("   ***   INTO :i  \n");
+    printf("   ***   FROM WORKS \n\n");
+
+    EXEC SQL INSERT INTO WORKS
+             VALUES('E5','P5',NULL);
+
+    EXEC SQL SELECT SUM(ALL HOURS)
+         INTO   :i
+         FROM   WORKS;
+
+    EXEC SQL ROLLBACK WORK;
+
+    printf("      Test SUM ALL function i=%ld \n\n",i);
+    printf("      the correct answer should be i=464 \n");
+    if (i==464)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0167','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0167','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n=================================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0167 ********************/
+
+/******************** BEGIN TEST0168 ********************/
+
+    i = 0;
+    printf("                 TEST0168           \n");
+    printf("   Reference 5.8 General Rules 2)\n");
+    printf("   - - - - - - - - - - - - - - - - - - - \n\n");
+
+    printf("   *** INSERT INTO WORKS VALUES('E5','P5',NULL) \n");
+    printf("   *** SELECT SUM(HOURS) \n");
+    printf("   ***   INTO :i  \n");
+    printf("   ***   FROM WORKS \n\n");
+
+    EXEC SQL INSERT INTO WORKS
+             VALUES('E5','P5',NULL);
+
+    EXEC SQL SELECT SUM(HOURS)
+         INTO   :i
+         FROM   WORKS;
+
+    EXEC SQL ROLLBACK WORK;
+
+    printf("      Test SUM function i=%ld \n\n",i);
+    printf("      the correct answer should be i=464 \n");
+    if (i==464)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0168','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0168','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n==============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0168 ********************/
+
+/******************** BEGIN TEST0169 ********************/
+
+    i = 0;
+
+    printf("                  TEST0169       \n");
+    printf("    Reference 5.8 General Rules 4b\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - -\n\n");
+    printf("   *** INSERT INTO WORKS VALUES('E5','P5',NULL) \n");
+    printf("   *** SELECT COUNT(*) \n");
+    printf("   ***   INTO :i  \n");
+    printf("   ***   FROM WORKS \n\n");
+
+    EXEC SQL INSERT INTO WORKS
+             VALUES('E5','P5',NULL);
+
+    EXEC SQL SELECT COUNT(*)
+         INTO   :i
+         FROM   WORKS;
+
+    EXEC SQL ROLLBACK WORK;
+
+    printf("      Test COUNT * function i=%ld \n\n",i);
+    printf("      the correct answer should be i=13 \n");
+    if (i==13)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0169','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0169','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n=============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0169 ********************/
+
+/******************** BEGIN TEST0040 ********************/
+
+    i = 0;
+    printf("                 TEST0040        \n");
+    printf("   Reference 5.8 General Rules 2) \n");
+    printf("   - - - - - - - - - - - - - - - - - - - \n\n");
+    printf("   *** SELECT SUM(HOURS) \n");
+    printf("   *** INTO   :i \n");
+    printf("   *** FROM   WORKS \n");
+    printf("   *** WHERE  PNUM='P2' \n");
+
+    EXEC SQL SELECT SUM(HOURS)
+         INTO   :i
+         FROM   WORKS
+         WHERE  PNUM='P2';
+    printf("      Test SUM function i=%ld \n\n",i);
+    printf("      the correct answer should be i=140 \n");
+    if (i==140)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0040','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0040','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n================================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0040 ********************/
+
+/******************** BEGIN TEST0170 ********************/
+
+    i = 0;
+    printf("                TEST0170     \n");
+    printf("   Reference 5.8 General Rules 2) \n");
+    printf("   - - - - - - - - - - - - - - - - - - - \n\n");
+    printf("   *** SELECT SUM(DISTINCT HOURS) \n");
+    printf("   *** INTO   :i \n");
+    printf("   *** FROM   WORKS \n");
+    printf("   *** WHERE  PNUM='P2' \n");
+
+    EXEC SQL SELECT SUM (DISTINCT HOURS)
+         INTO   :i
+         FROM   WORKS
+         WHERE  PNUM='P2';
+    printf("      Test SUM DISTINCT function i=%ld \n\n",i);
+    printf("      the correct answer should be i=100 \n");
+    if (i==100)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0170','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0170','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0170 ********************/
+
+/******************** BEGIN TEST0171 ********************/
+
+    i = 0;
+    printf("                   TEST0171     \n");
+    printf("   Reference 5.8, 5.9, 5.25, 8.10 \n");
+    printf("   - - - - - - - - - - - - - - - - - - - \n\n");
+    printf("   *** SELECT SUM(HOURS)+10 \n");
+    printf("   *** INTO   :i \n");
+    printf("   *** FROM   WORKS \n");
+    printf("   *** WHERE  PNUM='P2' \n");
+
+    EXEC SQL SELECT SUM(HOURS)+10
+         INTO   :i
+         FROM   WORKS
+         WHERE  PNUM='P2';
+    printf("      Test SUM function + some value i=%ld \n\n",i);
+    printf("      the correct answer should be i=150 \n");
+    if (i==150)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0171','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0171','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n================================================\n\n");
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0171 ********************/
+
+/******************** BEGIN TEST0041 ********************/
+    printf("                TEST0041     \n");
+    printf("   Reference 5.8 General Rules 4) d)\n\n");
+    printf("   - - - - - - - - - - - - - - - - - - - -  \n\n");
+    printf("   *** SELECT EMPNUM \n");
+    printf("   *** FROM   STAFF  \n");
+    printf("   *** WHERE  GRADE = \n");
+    printf("   ***       (SELECT MAX(GRADE) \n");
+    printf("   ***        FROM STAFF) \n");
+    printf("   *** ORDER BY EMPNUM \n");
+
+    EXEC SQL DECLARE X CURSOR
+         FOR SELECT EMPNUM
+         FROM   STAFF
+         WHERE  GRADE =
+               (SELECT MAX( GRADE )
+            FROM   STAFF )
+        ORDER BY EMPNUM;
+
+    strcpy(EMPNO1,"  ");
+    EXEC SQL OPEN X;
+    EXEC SQL FETCH X INTO :EMPNO1;
+    printf("      Test MAX function EMPNO1=%s \n\n",EMPNO1);
+    printf("      the correct answer should be EMPNO1=E3 \n");
+    if (strncmp(EMPNO1,"E3",2) == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0041','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0041','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n==============================================\n\n");
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0041 ********************/
+
+/******************** BEGIN TEST0042 ********************/
+    printf("                  TEST0042     \n");
+    printf("   Reference 5.8 General Rules 4) d)  \n");
+    printf("   - - - - - - - - - - - - - - - - -   \n\n");
+    printf("   *** SELECT EMPNUM \n");
+    printf("   *** INTO   :EMPNO1 \n");
+    printf("   *** FROM   STAFF   \n");
+    printf("   *** WHERE  GRADE = \n");
+    printf("             (SELECT MIN(GRADE) FROM STAFF) \n");
+
+    strcpy(EMPNO1,"  ");
+
+    EXEC SQL SELECT EMPNUM
+         INTO   :EMPNO1
+         FROM   STAFF
+         WHERE  GRADE =
+               (SELECT MIN(GRADE) FROM STAFF);
+    printf("      Test MIN function EMPNO1=%s \n\n",EMPNO1);
+    printf("      the correct answer should be EMPNO1=E2 \n");
+    if (strncmp(EMPNO1,"E2",2) == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0042','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0042','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n================================================\n\n");
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0042 ********************/
+
+/******************** BEGIN TEST0043 ********************/
+
+    i = 0;
+    printf("                 TEST0043      \n");
+    printf("   Reference 5.8 General Rules 4) f) \n");
+    printf("   - - - - - - - - - - - - - - - - -  \n\n");
+    printf("   *** SELECT AVG(GRADE) \n");
+    printf("   *** INTO   :i \n");
+    printf("   *** FROM   STAFF \n");
+
+    EXEC SQL SELECT AVG(GRADE)
+         INTO   :i
+         FROM   STAFF;
+    printf("      Test AVG function i=%ld \n\n",i);
+    printf("      the correct answer should be i=12 \n");
+    if (i==12)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0043','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0043','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n=================================================\n\n");
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0043 ********************/
+
+/******************** BEGIN TEST0044 ********************/
+    printf("                TEST0044    \n");
+    printf("   Reference 5.8 General Rules 4) c) \n");
+    printf("   - - - - - - - - - - - - - - - - -  \n");
+/*  EXEC SQL CREATE TABLE TEMP_S ( ...... )           */
+
+    EXEC SQL DELETE FROM TEMP_S;
+
+    indic1 = 0;
+
+    EXEC SQL SELECT AVG(GRADE)
+         INTO   :NULL1:indic1
+         FROM   TEMP_S;
+
+    printf("The answer should be indic1 < 0, indic1 = %d\n\n",indic1);
+    if ( indic1 < 0 )
+      {
+      printf("\n               *** pass *** \n");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0044','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml013.pc  *** fail *** \n");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0044','fail','PC');
+          errcnt = errcnt + 1;
+      }
+ 
+    printf("=================================================\n\n");
+
+    printf("\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0044 ********************/
+
+    exit(errcnt);
+}

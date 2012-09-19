@@ -1,0 +1,518 @@
+/*  EMBEDDED C (file "DML181.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-16 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML181.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+varchar naam1[374];
+varchar naam2[374];
+float flt1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml181.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0894 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0894\n");
+     printf("    FIPS sizing, length of column lists >= 750\n");
+     printf("References:\n");
+     printf("FIPS 16.6 -- Sizing #29, Length of UNIQUE columns\n");
+     printf("FIPS 16.6 -- Sizing #31, Length of GROUP BY column list\n");
+     printf("FIPS 16.6 -- Sizing #33, Length of ORDER BY column list\n");
+     printf("FIPS 16.6 -- Sizing #35, Length of FOREIGN KEY column list\n");
+     printf("FIPS 16.6 -- Sizing #40, Length of JOIN column list\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* 746 chars + 4 for the columns = 750 */
+/* 2 columns, 373 chars each */
+
+printf("CREATE TABLE LONG_NAMED_PEOPLE (\n");
+printf("  FIRSTNAME VARCHAR (373),\n");
+printf("  LASTNAME VARCHAR (373),\n");
+printf("  AGE INT,\n");
+printf("  PRIMARY KEY (FIRSTNAME, LASTNAME));\n");
+EXEC SQL CREATE TABLE LONG_NAMED_PEOPLE (
+  FIRSTNAME VARCHAR (373),
+  LASTNAME VARCHAR (373),
+  AGE INT,
+  PRIMARY KEY (FIRSTNAME, LASTNAME));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE ORDERS (\n");
+printf("  FIRSTNAME VARCHAR (373),\n");
+printf("  LASTNAME VARCHAR (373),\n");
+printf("  TITLE VARCHAR (80),\n");
+printf("  COST NUMERIC(5,2),\n");
+printf("  FOREIGN KEY (FIRSTNAME, LASTNAME)\n");
+printf("    REFERENCES LONG_NAMED_PEOPLE);\n");
+EXEC SQL CREATE TABLE ORDERS (
+  FIRSTNAME VARCHAR (373),
+  LASTNAME VARCHAR (373),
+  TITLE VARCHAR (80),
+  COST NUMERIC(5,2),
+  FOREIGN KEY (FIRSTNAME, LASTNAME)
+    REFERENCES LONG_NAMED_PEOPLE);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+/* PEOPLE_ORDERS (FIRSTNAME, LASTNAME, AGE, TITLE, COST) */
+
+printf("CREATE VIEW PEOPLE_ORDERS AS\n");
+printf("  SELECT * FROM LONG_NAMED_PEOPLE JOIN ORDERS\n");
+printf("  USING (FIRSTNAME, LASTNAME);\n");
+EXEC SQL CREATE VIEW PEOPLE_ORDERS AS
+  SELECT * FROM LONG_NAMED_PEOPLE JOIN ORDERS
+  USING (FIRSTNAME, LASTNAME);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO LONG_NAMED_PEOPLE VALUES (\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaa',\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbb',\n");
+printf("20);\n");
+EXEC SQL INSERT INTO LONG_NAMED_PEOPLE VALUES (
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaa',
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbb',
+20);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO LONG_NAMED_PEOPLE VALUES (\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccc',\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddd',\n");
+printf("25);\n");
+EXEC SQL INSERT INTO LONG_NAMED_PEOPLE VALUES (
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccc',
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddd',
+25);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORDERS VALUES (\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaa',\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbb',\n");
+printf("'Gidget Goes Skiing',\n");
+printf("29.95);\n");
+EXEC SQL INSERT INTO ORDERS VALUES (
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaa',
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbb',
+'Gidget Goes Skiing',
+29.95);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORDERS VALUES (\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'\n");
+printf("'aaaaaaaaaaaaaaaaaaaaaaaaa',\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'\n");
+printf("'bbbbbbbbbbbbbbbbbbbbbbbbb',\n");
+printf("'Barney Goes Hawaiian',\n");
+printf("19.95);\n");
+EXEC SQL INSERT INTO ORDERS VALUES (
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+'aaaaaaaaaaaaaaaaaaaaaaaaa',
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb'
+'bbbbbbbbbbbbbbbbbbbbbbbbb',
+'Barney Goes Hawaiian',
+19.95);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORDERS VALUES (\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'\n");
+printf("'ccccccccccccccccccccccccccccccc',\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'\n");
+printf("'ddddddddddddddddddddddddddddddd',\n");
+printf("'Invasion of the Smurfs',\n");
+printf("9.95);\n");
+EXEC SQL INSERT INTO ORDERS VALUES (
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccccccccccccccccccccccccccccc'
+'ccccccccccccccccccccccccccccccc',
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddddddddddddddddddddddddddddd'
+'ddddddddddddddddddddddddddddddd',
+'Invasion of the Smurfs',
+9.95);
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C0894 CURSOR FOR\n");
+printf("  SELECT FIRSTNAME, LASTNAME, AVG(COST)\n");
+printf("  FROM PEOPLE_ORDERS\n");
+printf("  GROUP BY LASTNAME, FIRSTNAME\n");
+printf("  ORDER BY LASTNAME, FIRSTNAME;\n\n");
+EXEC SQL DECLARE C0894 CURSOR FOR
+  SELECT FIRSTNAME, LASTNAME, AVG(COST)
+  FROM PEOPLE_ORDERS
+  GROUP BY LASTNAME, FIRSTNAME
+  ORDER BY LASTNAME, FIRSTNAME;
+
+printf("OPEN C0894;\n");
+EXEC SQL OPEN C0894;
+CHCKOK ();
+printf ("\n");
+
+strcpy (naam1, "xxx");
+strcpy (naam2, "xxx");
+flt1 = 0.0;
+printf("FETCH C0894 INTO :naam1, :naam2, :flt1;\n");
+EXEC SQL FETCH C0894 INTO :naam1, :naam2, :flt1;
+CHCKOK ();
+printf ("naam1 should be 'aaaa...'; its value is %s\n", naam1);
+for (int1=0; int1<373; int1=int1+1)
+{
+  if (naam1[int1] != 'a')
+  {
+    flag = 0;
+  }
+}
+printf ("naam2 should be 'bbbb...'; its value is %s\n", naam2);
+for (int1=0; int1<373; int1=int1+1)
+{
+  if (naam2[int1] != 'b')
+  {
+    flag = 0;
+  }
+}
+printf ("flt1 should be 24.95 +-0.01; its value is %f\n\n", flt1);
+if (flt1 < 24.94 || flt1 > 24.96)
+  flag = 0;
+
+strcpy (naam1, "xxx");
+strcpy (naam2, "xxx");
+flt1 = 0.0;
+printf("FETCH C0894 INTO :naam1, :naam2, :flt1;\n");
+EXEC SQL FETCH C0894 INTO :naam1, :naam2, :flt1;
+CHCKOK ();
+printf ("naam1 should be 'cccc...'; its value is %s\n", naam1);
+for (int1=0; int1<373; int1=int1+1)
+{
+  if (naam1[int1] != 'c')
+  {
+    flag = 0;
+  }
+}
+printf ("naam2 should be 'dddd...'; its value is %s\n", naam2);
+for (int1=0; int1<373; int1=int1+1)
+{
+  if (naam2[int1] != 'd')
+  {
+    flag = 0;
+  }
+}
+printf ("flt1 should be 9.95 +-0.01; its value is %f\n\n", flt1);
+if (flt1 < 9.94 || flt1 > 9.96)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE ORDERS CASCADE;\n");
+EXEC SQL DROP TABLE ORDERS CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE LONG_NAMED_PEOPLE CASCADE;\n");
+EXEC SQL DROP TABLE LONG_NAMED_PEOPLE CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0894','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml181.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0894','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0894 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

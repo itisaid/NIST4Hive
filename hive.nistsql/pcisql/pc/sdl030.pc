@@ -1,0 +1,363 @@
+/*  EMBEDDED C (file "SDL030.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/06/11 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL030.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      11.36  <grant statement>                                 */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     long tmpint;
+     char uid[19];
+     char uidx[19];
+     long tmpcnt;
+EXEC SQL END DECLARE SECTION;
+
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     ii;
+long     flag;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl030.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0464 ********************/
+flag = 1;
+
+     printf("                  TEST0464 \n");
+     printf("    Priv.violation: GRANT only SELECT to PUBLIC\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     tmpint = -99;
+     printf ("SELECT INTTEST INTO :tmpint FROM CUGINI.EE;\n");
+     EXEC SQL SELECT INTTEST
+       INTO :tmpint FROM CUGINI.EE;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("tmpint should be 0; its value is %ld\n", tmpint);
+
+     if (ii != 0 || tmpint != 0)
+       flag = 0;
+
+     printf ("INSERT INTO CUGINI.EE VALUES (9);\n");
+     EXEC SQL INSERT INTO CUGINI.EE
+       VALUES (9);
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("SELECT COUNT(*) FROM CUGINI.EE;\n");
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM CUGINI.EE;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 1; its value is %ld\n", tmpcnt);
+
+     if (ii != 0 || tmpcnt != 1)
+       flag = 0;
+
+     printf ("UPDATE CUGINI.EE\n");
+     printf (" SET INTTEST = 1;\n");
+     EXEC SQL UPDATE CUGINI.EE
+       SET INTTEST = 1;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("SELECT COUNT(*) FROM CUGINI.EE WHERE INTTEST = 1;\n");
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM CUGINI.EE WHERE INTTEST = 1;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 0; its value is %ld\n", tmpcnt);
+
+     if (ii != 0 || tmpcnt != 0)
+       flag = 0;
+
+     printf ("DELETE FROM CUGINI.EE;\n");
+     EXEC SQL DELETE FROM CUGINI.EE;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("SELECT COUNT(*) FROM CUGINI.EE;\n");
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM CUGINI.EE;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 1; its value is %ld\n", tmpcnt);
+
+     if (ii != 0 || tmpcnt != 1)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0464','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl030.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0464','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0464 *********************/
+
+/******************** BEGIN TEST0465 ********************/
+flag = 1;
+
+     printf("                  TEST0465 \n");
+     printf("    Priv.violation: GRANT only INSERT to PUBLIC\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("INSERT INTO CUGINI.FF VALUES (-99);\n");
+     EXEC SQL INSERT INTO CUGINI.FF
+       VALUES (-99);
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     tmpint = 0;
+     printf ("SELECT INTTEST INTO :tmpint FROM CUGINI.FF;\n");
+     EXEC SQL SELECT INTTEST INTO :tmpint FROM CUGINI.FF;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+     printf ("tmpint should NOT be -99; its value is %ld\n", tmpint);
+
+     if (ii >= 0 || tmpint == -99)
+       flag = 0;
+
+     printf ("UPDATE CUGINI.FF SET INTTEST = 1;\n");
+     EXEC SQL UPDATE CUGINI.FF
+       SET INTTEST = 1;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("DELETE FROM CUGINI.FF;\n");
+     EXEC SQL DELETE FROM CUGINI.FF;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0465','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl030.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0465','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0465 *********************/
+
+/******************** BEGIN TEST0466 ********************/
+flag = 1;
+
+     printf("                  TEST0466 \n");
+     printf("    Priv.violation: GRANT only UPDATE to PUBLIC\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("UPDATE CUGINI.GG\n");
+     printf (" SET C1 = 3;\n");
+     EXEC SQL UPDATE CUGINI.GG
+       SET C1 = 3;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("SELECT C1 INTO :tmpint FROM CUGINI.GG;\n");
+     tmpint = -1;
+     EXEC SQL SELECT C1
+       INTO :tmpint FROM CUGINI.GG;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+     printf ("tmpint should NOT be 1 or 3; its value is %ld\n", tmpint);
+
+     if (ii >= 0 || tmpint == 1 || tmpint == 3)
+       flag = 0;
+
+     printf ("INSERT INTO CUGINI.GG VALUES (-99);\n");
+     EXEC SQL INSERT INTO CUGINI.GG
+       VALUES (-99);
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("DELETE FROM CUGINI.GG;\n");
+     EXEC SQL DELETE FROM CUGINI.GG;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0466','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl030.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0466','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0466 *********************/
+
+/******************** BEGIN TEST0467 ********************/
+flag = 1;
+
+     printf("                  TEST0467 \n");
+     printf("    Priv.violation: GRANT only DELETE to PUBLIC\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("DELETE FROM CUGINI.HH;\n");
+     EXEC SQL DELETE FROM CUGINI.HH;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("INSERT INTO CUGINI.HH VALUES (99);\n");
+     EXEC SQL INSERT INTO CUGINI.HH
+       VALUES (99);
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     tmpint = -1;
+     printf ("SELECT SMALLTEST INTO :tmpint FROM CUGINI.HH;\n");
+     EXEC SQL SELECT SMALLTEST INTO :tmpint FROM CUGINI.HH;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+    printf ("tmpint should NOT be 2 or 99; its value is %ld\n", tmpint);
+
+     if (ii >= 0 || tmpint == 2 || tmpint == 99)
+       flag = 0;
+
+     printf ("UPDATE CUGINI.HH SET SMALLTEST = -99;\n");
+     EXEC SQL UPDATE CUGINI.HH
+       SET SMALLTEST = -99;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0467','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl030.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0467','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0467 *********************/
+
+     exit(errcnt);
+}

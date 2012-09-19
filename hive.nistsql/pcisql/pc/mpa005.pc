@@ -1,0 +1,279 @@
+/*  EMBEDDED C (file "MPA005.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE Halloween 1991 EMBEDDED C LANGUAGE                      */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPA005.PC                                                    */
+/*  WRITTEN BY: J Sullivan                                       */
+/*                                                               */
+/*  THIS PROGRAM IS PART A OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL - Phantom Read                  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*           SECTION  4.16 Transactions                          */
+/*                    Paragraph Two                              */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long getct;
+   long seqno;
+   char uid[19];
+   char uidx[19];
+   char CC[3];
+   long del1;
+   long del2;
+EXEC SQL END DECLARE SECTION;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+
+   long mpbtot;
+   long ii;
+   long iii;
+   long maxseq;
+   long batchk;
+   long code1;
+
+   long pauze;
+   long pauze2;
+   long pauze3;
+   long tranct;
+   long batchz;
+   long mpbins;
+   long testyp;
+
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpa005.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* how many test suite type MPB005s are being run? */
+   testyp = 1;
+/* transactions are inserted in multiples of the value of tranct */
+   tranct = 5;
+/* how much to pause betwee inserts */
+   pauze3 = 4;
+/* this many multiples (> 2) are inserted before deleting multiples */
+   batchz = 5;
+/* MPA005 will look for how many inserts from each test suite type? */
+   mpbins = 24;
+
+/* therefore, MPA005 will quit when count(*) from MP5_TT = mpbtot */
+/* and        MPA005 will restart seqno when it exceeds maxseq */
+   mpbtot = testyp * mpbins;
+   maxseq = tranct * batchz;
+
+/* concurrency tuning variables follow: */
+/* wait pauze units after inserting a batch */
+/* table MP5_TT is checked for completion every pauze2 batches */
+   pauze = 1;
+   pauze2 = 20;
+
+   EXEC SQL COMMIT WORK;
+/******************** BEGIN TEST0457 ********************/
+
+printf("\n                TEST0457 \n");
+printf(" Reference X3.135-1989 Section 4.16 Transactions      \n");
+printf("              Paragraph Two  -  Serializability       \n");
+printf("                Phantom Read\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf (" *** This program is part A of a two-part             \n");
+printf (" *** program (A & B) that tests for the concurrency   \n");
+printf (" *** of SQL.  Program A inserts and deletes multiples \n");
+printf (" *** of 5 rows between COMMITs while Program B reads. \n\n");
+printf (" *** MPA005 loops until all MPB005s complete.\n"); 
+ 
+/*                       -----Initialization----- */
+
+P100:
+   batchk = 0;
+   seqno = 1;
+   code1 = 0;
+   EXEC SQL DELETE FROM MP5_AA;
+   if (SQLCODE < 0)
+         code1 = 1;
+   EXEC SQL DELETE FROM MP5_AA_INDEX;
+   if (SQLCODE < 0)
+         code1 = 1;
+   EXEC SQL DELETE FROM MP5_TT;
+   if (SQLCODE < 0)
+         code1 = 1;
+   printf("MPA005: STOP if deadlock has occurred.\n");
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE < 0)
+         code1 = 1;
+   if (code1 == 0)
+         goto P110;
+   printf("MPA005: Problem initializing tables\n");
+   EXEC SQL ROLLBACK WORK;
+   goto P100;
+
+/*           -----Concurrent Transaction Loop----- */
+P110:
+/*           -----Delete a Batch */
+   /* seqno modulus maxseq */
+   if (seqno > maxseq)
+        seqno = seqno - maxseq;
+
+   /* delete a batch, a batch ahead */
+   del1 = seqno + tranct;
+   if (del1 > maxseq)
+        del1 = del1 - maxseq;
+   del2 = del1 + tranct -1;
+
+P111:
+   code1 = 0;
+   EXEC SQL DELETE FROM MP5_AA
+        WHERE ANUM BETWEEN :del1 AND :del2;
+   if (SQLCODE < 0)
+        code1 = 1;
+   EXEC SQL DELETE FROM MP5_AA_INDEX
+        WHERE ANUM BETWEEN :del1 AND :del2;
+   if (SQLCODE < 0)
+        code1 = 1;
+   if (code1 == 0)
+      {
+        EXEC SQL COMMIT WORK;
+      }
+   if (SQLCODE < 0)
+        code1 = 1;
+   if (code1 == 1)
+      {
+         printf("MPA005: Problems deleting from MP5_AA tables\n");
+         EXEC SQL ROLLBACK WORK;
+         goto P111;
+      }  
+
+P115:
+/*           -----Insert a Batch */
+   ii = 0;
+   code1 = 0;
+
+P120:
+   if (code1 != 0)
+        goto P125;
+   EXEC SQL INSERT INTO MP5_AA VALUES (:seqno);
+   if (SQLCODE != 0)
+        code1 = 1;
+   EXEC SQL INSERT INTO MP5_AA_INDEX VALUES (:seqno);
+   if (SQLCODE != 0)
+        code1 = 1;
+   iii = 0;
+
+   /* pause a little */
+P121:
+   EXEC SQL SELECT C1 INTO :CC FROM HU.ECCO;
+   iii = iii + 1;
+   if (iii < pauze3)
+         goto P121;
+   /* end of pause */
+
+P125:
+   seqno = seqno + 1;
+   ii = ii + 1;
+   if (ii < tranct)
+        goto P120;
+   if (code1 != 0)
+      {
+        EXEC SQL ROLLBACK WORK;
+        printf("MPA005: ROLLBACK due to nonzero SQLCODE (Deadlock?)\n");
+        goto P115;
+      }
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0)
+      {
+         printf ("MPA005: Cannot commit batch of INSERTs\n");
+         EXEC SQL ROLLBACK WORK;
+         goto P115;
+      }
+
+   /* pause a little */
+   ii = 0;
+P130:
+   EXEC SQL SELECT C1 INTO :CC FROM HU.ECCO;
+   EXEC SQL COMMIT WORK;
+   ii = ii + 1;
+   if (ii < pauze)
+         goto P130;
+   /* end of pause */
+
+/*                 -----Check for Completion----- */
+
+/* check for completion only after pauze2 times */
+   batchk = batchk + 1;
+   if (batchk < pauze2)
+         goto P110;
+   batchk = 0;
+
+/* check for completion */
+   getct = 0;
+   EXEC SQL SELECT COUNT(*) INTO :getct
+        FROM MP5_TT;
+   if (SQLCODE != 0)
+         getct = 0;
+   EXEC SQL COMMIT WORK;
+   if (getct < mpbtot)
+         goto P110;
+
+/*                           -----Evaluation----- */
+   EXEC SQL SELECT COUNT(DISTINCT TESTTYPE) 
+            INTO :getct FROM MP5_TT;
+   if (SQLCODE == 0 && getct < testyp)
+      {
+         printf("MPA005: Test suite types are missing from MP5_TT\n");
+         errcnt = errcnt + 1;
+       }
+   else
+       {
+         printf("MPA005: %ld test suite types found in MP5_TT\n", getct);
+         printf("MPA005 normal completion\n");
+       }
+
+   EXEC SQL DELETE FROM MP5_AA;
+   EXEC SQL DELETE FROM MP5_AA_INDEX;
+   EXEC SQL COMMIT WORK;
+/* NOTE that for debugging, MP5_TT still contains rows */
+
+/******************** END TEST0457 ********************/
+
+
+exit(errcnt);
+
+}

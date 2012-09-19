@@ -1,0 +1,60 @@
+/*  EMBEDDED C (file "DML116S.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/5/4 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML116S.PC                                                   */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS feature 18, multiple module support. */
+/*  It is not stand-alone, but must be linked to DML116.  Refer  */
+/*  to DML116 for details.                                       */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+/* date_time declaration */
+time_t cal;
+
+/* INSERT LANGUAGE-DEPENDENT DECLARATIONS HERE!!! */
+
+/* #3 TEd hook to remove C language declares */
+  extern int CHCKOK();
+/* You might need to remove these declare statements as required by */
+/* your compiler or SQL implementation */
+EXEC SQL BEGIN DECLARE SECTION;
+  extern long SQLCODE;
+  extern char SQLSTATE[6];
+EXEC SQL END DECLARE SECTION;
+/* #4 TEd hook to remove C language declares */
+
+void
+ctab ()
+{
+  printf("SQL Test Suite, V6.0, Embedded C, dml116s.pc\n");
+  printf("59-byte ID\n");
+  printf("TEd Version #\n");
+  /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+  printf("CREATE TABLE SHARE116 (\n");
+  printf("  EMPNUM CHAR(3), GRADE DECIMAL(4));\n");
+  EXEC SQL CREATE TABLE SHARE116 (
+    EMPNUM CHAR(3), GRADE DECIMAL(4));
+  CHCKOK ();
+  printf ("\n");
+}

@@ -1,0 +1,31 @@
+package org.apache.hadoop.hive.sql;
+
+public class SQLDefinition {
+
+  private static Pair[] pairs = new Pair[] {
+       $new_pair
+  };
+
+  public static Pair[] getPairs() {
+    return pairs;
+  }
+
+  public static class Pair {
+    public String name;
+    public String sql;
+
+    public Pair(String name, String sql) {
+      this.name = name;
+      this.sql = sql;
+    }
+
+    public String getName() {
+      return name;
+    }
+
+    public String getSql() {
+      return sql;
+    }
+
+  }
+}

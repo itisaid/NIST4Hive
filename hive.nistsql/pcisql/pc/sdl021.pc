@@ -1,0 +1,119 @@
+/*  EMBEDDED C (file "SDL021.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/09/06 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL021.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 6. Schema Definition Language         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     PNO1[4];
+     char     PNAME1[21];
+     char     USERID[20];
+     long     BUDGT1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     ii;
+     long     iii;
+
+
+
+main()
+{
+     strcpy(uid,"SULLIVAN");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl021.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("                     TEST0199       \n");
+     printf("         (GRANT violation test__DELETE) \n");
+     printf("Reference X3.135-89 section 6.10 <privilege def.> \n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL SELECT PNUM,PNAME,BUDGET
+           INTO   :PNO1,:PNAME1,:BUDGT1
+           FROM   HU.PROJ
+           WHERE  PNUM = 'P3';
+     printf("PNO1=%s, PNAME1=%s, BUDGT1=%ld",PNO1,PNAME1,BUDGT1);
+     ii=SQLCODE;
+
+     printf("\n\nSULLIVAN does not have privilege to DELETE : \n");
+     printf("*** EXEC SQL DELETE  \n");
+     printf("             FROM  HU.PROJ \n");
+     printf("             WHERE PNUM='P3' \n\n");
+
+/*  SULLIVAN does not have privilege to DELETE.     */
+
+     EXEC SQL DELETE
+           FROM HU.PROJ
+           WHERE PNUM='P3';
+
+     iii = SQLCODE;
+     printf(" \n ii = %ld;  iii = %ld \n",ii,iii);
+
+
+     printf("The answer should be iii<0, ii=0, PNO1=P3 & BUDGT1=30000\n");
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (iii < 0 && ii==0 && strncmp(PNO1,"P3",2)==0 && BUDGT1==30000)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0199','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl021.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0199','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+     EXEC SQL COMMIT WORK;
+     exit(errcnt);
+}
+

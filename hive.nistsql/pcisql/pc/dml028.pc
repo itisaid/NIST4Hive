@@ -1,0 +1,259 @@
+/*  EMBEDDED C (file "DML028.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/04/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML028.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE OPEN STATEMENT IN THE LANGUAGE OF   */
+/*  SQL.  THE FORMAT:                                            */
+/*                   OPEN <cursor name>                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char PNO1[4];
+          char EMPNO1[4];
+          char SCITY[16];
+          char PCITY[16];
+          long HOURS1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long i;
+          long ii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml028.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0126 ********************/
+
+     printf("\n                 TEST0126             \n");
+     printf("    OPEN, CLOSE, OPEN again to check. \n");
+     printf("reference X3.135-1989 section 8.8 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("   *** EXEC SQL DECLARE X CURSOR \n");
+     printf("   ***      FOR SELECT EMPNUM,HOURS \n");
+     printf("   ***          FROM   WORKS \n");
+     printf("   ***          ORDER  BY EMPNUM DESC,HOURS DESC \n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              ORDER  BY EMPNUM DESC,HOURS DESC;
+     EXEC SQL OPEN X;
+     
+     for (i=0;i<7;i++)
+     {
+     EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+     if (SQLCODE == 0)
+     printf("              EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+     }
+
+     EXEC SQL CLOSE X;
+
+     EXEC SQL OPEN X;
+
+     EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+
+     printf("After close and open again, the first row should be fetched.\n\n");
+     printf("              EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+     if (strncmp(EMPNO1,"E4",2) == 0 && HOURS1 == 80)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0126','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0126','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml028.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0126 ********************/
+/******************** BEGIN TEST0127 ********************/
+
+     printf("\n                TEST0127             \n");
+     printf(" OPEN two cursors at same time to check. \n");
+     printf("reference X3.135-1989 section 8.8 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("   *** EXEC SQL DECLARE Y CURSOR \n");
+     printf("   ***      FOR SELECT EMPNUM,PNUM\n");
+     printf("   ***          FROM   WORKS \n");
+     printf("   ***          ORDER  BY EMPNUM DESC,PNUM DESC \n");
+
+     EXEC SQL DECLARE Y CURSOR
+          FOR SELECT EMPNUM,PNUM
+              FROM   WORKS
+              ORDER  BY EMPNUM DESC,PNUM DESC;
+
+     EXEC SQL DECLARE Z CURSOR
+          FOR SELECT CITY
+              FROM   STAFF
+              WHERE  EMPNUM = :EMPNO1;
+
+     EXEC SQL DECLARE A CURSOR
+          FOR SELECT CITY
+              FROM   PROJ
+              WHERE  PNUM = :PNO1;
+
+     EXEC SQL OPEN Y;
+     
+     for (i=0;i<5;i++)
+       {
+        EXEC SQL FETCH Y INTO :EMPNO1,:PNO1;
+        printf("         EMPNO1=%s and PNO1=%s \n",EMPNO1,PNO1);
+
+        EXEC SQL OPEN Z;
+        EXEC SQL FETCH Z INTO :SCITY;
+        EXEC SQL CLOSE Z;
+
+        EXEC SQL OPEN A;
+        EXEC SQL FETCH A INTO :PCITY;
+        EXEC SQL CLOSE A;
+
+        printf(" STAFF.CITY = %s, PROJ.CITY =%s \n",SCITY,PCITY);
+       }
+
+     if (strncmp(EMPNO1,"E2",2)==0 && strncmp(PCITY,"Vienna",6)==0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0127','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0127','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml028.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0127 ********************/
+/******************** BEGIN TEST0128 ********************/
+ 
+     printf("\n                TEST0128             \n");
+     printf(" OPEN three cursors at same time to check. \n");
+     printf("reference X3.135-1989 section 8.8 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("   *** EXEC SQL DECLARE B CURSOR \n");
+     printf("   ***      FOR SELECT EMPNUM,PNUM\n");
+     printf("   ***          FROM   WORKS \n");
+     printf("   ***          ORDER  BY EMPNUM ASC,PNUM ASC \n");
+
+     EXEC SQL DECLARE B CURSOR
+          FOR SELECT EMPNUM,PNUM
+              FROM   WORKS
+              ORDER  BY EMPNUM ASC,PNUM ASC;
+
+
+     EXEC SQL DECLARE D CURSOR
+          FOR SELECT CITY
+              FROM   STAFF
+              WHERE  EMPNUM = :EMPNO1;
+
+     EXEC SQL DECLARE E CURSOR
+          FOR SELECT CITY
+              FROM   PROJ
+              WHERE  PNUM = :PNO1;
+
+     EXEC SQL OPEN B;
+     
+     for (i=0;i<5;i++)
+       {
+        EXEC SQL FETCH B INTO :EMPNO1,:PNO1;
+        printf("         EMPNO1=%s and PNO1=%s \n",EMPNO1,PNO1);
+
+        EXEC SQL OPEN D;
+        EXEC SQL OPEN E;
+
+        EXEC SQL FETCH D INTO :SCITY;
+
+        EXEC SQL FETCH E INTO :PCITY;
+
+        EXEC SQL CLOSE D;
+        EXEC SQL CLOSE E;
+
+        printf(" STAFF.CITY = %s, PROJ.CITY =%s \n",SCITY,PCITY);
+       }
+
+    if (strncmp(SCITY,"Deale",5)==0 && strncmp(PNO1,"P5",2)==0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0128','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0128','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml028.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0128 ********************/
+
+     exit(errcnt);
+
+}
+

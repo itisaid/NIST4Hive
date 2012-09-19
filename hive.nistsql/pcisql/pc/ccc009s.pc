@@ -1,0 +1,256 @@
+/*  EMBEDDED C (file "CCC009S.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1991/09/11 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC009S.PC                                                    */
+/*  WRITTEN BY: YOLANDA HERD                                     */
+/*                                                               */
+/*  THIS PROGRAM TESTS THE C STORAGE CLASS AND CLASS MODIFIER    */
+/*  COMBINATION.                                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+	
+long SQLCODE;
+int errflg;
+
+ccc009sub()
+{
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+/* BEGIN TEST0399 variables */ 
+  auto const long        ACLONG = 71;
+  auto const short       ACS = 31;
+  auto const double      ACDBLE = 6.1E7;
+  auto const float       ACFLT = -55.51;
+  auto const char        ACCHAR[2] = {'A', '\0'};
+  auto volatile long     AVLONG = 72;
+  auto volatile short    AVS = 32;
+  auto volatile double   AVDBLE = 6.2E7;
+  auto volatile float    AVFLT = -55.52;
+  auto volatile char     AVCHAR[2] = {'B', '\0'};
+  extern const long      ECLONG;
+  extern const short     ECS;
+  extern const double    ECDBLE;
+  extern const float     ECFLT;
+  extern const char      ECCHAR[2];
+  extern volatile long   EVLONG;
+  extern volatile short  EVS;
+  extern volatile double EVDBLE;
+  extern volatile float  EVFLT;
+  extern volatile char   EVCHAR[2];
+  static const long      SCLONG = 75;
+  static const short     SCS = 35;
+  static const double    SCDBLE = 6.6E7;
+  static const float     SCFLT = -55.55;
+  static const char      SCCHAR[2] = {'E', '\0'};
+  static volatile long   SVLONG = 76;
+  static volatile short  SVS = 36;
+  static volatile double SVDBLE = 6.7E7;
+  static volatile float  SVFLT = -55.56;
+  static volatile char   SVCHAR[2] = {'F', '\0'};
+/* END TEST0399 variables */
+
+
+char uid[19];
+char uidx[19];
+
+       long TLONG;
+       char TCHAR[2];
+       short TSHORT;
+       float TFLOAT;
+       double TDBLE;
+
+EXEC SQL END DECLARE SECTION;
+
+extern int errcnt;
+/* date_time declaration */
+time_t cal;
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc009s.pc\n");
+printf("59-byte ID\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+
+/******************** BEGIN TEST0399 ********************/
+
+
+printf("\n                    TEST0399             \n");
+printf(" C language storage class and class modifier combination\n");
+printf(" reference X3.168-1989 9.4 Format of <C variable definition>\n");
+printf(" -----------------------------------------------------------\n");
+printf("\n");
+printf("To pass: Visual Inspection  -30 declarations- not changed  \n");
+printf("!!! Capture Precompile output for visual inspection   !!!\n");
+printf("!!! Verify that variable declarations are not changed !!!\n");
+printf("!!! with respect to storage class and class modifiers !!!\n");
+printf("!!! then, if C compiler does not support variable     !!!\n");
+printf("!!! declarations, delete (with TEd) test case and its !!!\n");
+printf("!!! variable declarations.                            !!!\n");
+
+EXEC SQL DELETE FROM II;
+
+EXEC SQL DELETE FROM JJ;
+
+EXEC SQL DELETE FROM NEXTKEY;
+
+errflg = 0;
+
+EXEC SQL INSERT INTO NEXTKEY
+  VALUES(:ECLONG, :ECCHAR, :ECS);
+printf("SQLCODE(EC3) = %ld\n", SQLCODE);
+printf("ECLONG = %ld, ECCHAR = %s, ECS = %d\n",ECLONG,ECCHAR,ECS);
+if (SQLCODE != 0) errflg = 1;
+
+EXEC SQL INSERT INTO II
+  VALUES(:ECDBLE);
+printf("SQLCODE(EXD) = %ld\n", SQLCODE);
+printf("ECDBLE = %f\n",ECDBLE);
+if (SQLCODE != 0) errflg = 1;
+
+EXEC SQL INSERT INTO JJ
+  VALUES(:ECFLT);
+printf("SQLCODE(ECF) = %ld\n", SQLCODE);
+printf("ECFLT = %f\n",ECFLT);
+if (SQLCODE != 0) errflg = 1;
+
+/* We know what the values should be so we'll check them. */
+TLONG = TSHORT = 0;
+TDBLE = TFLOAT = 0;
+TCHAR[0] = '?';
+
+EXEC SQL SELECT * INTO :TLONG, :TCHAR, :TSHORT FROM NEXTKEY;
+EXEC SQL SELECT * INTO :TDBLE FROM II;
+EXEC SQL SELECT * INTO :TFLOAT FROM JJ;
+
+if (TLONG != 387 || TCHAR[0] != 'E' || TSHORT != 387)
+     errflg = 1;
+if (TDBLE < 386 || TDBLE > 388 || TFLOAT < 386 || TFLOAT > 388)
+     errflg = 1;
+
+EXEC SQL ROLLBACK WORK;
+
+if (errflg != 0)
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0399','fail','PC');
+          errcnt = errcnt + 1;
+    printf("\n\n       ccc009s.pc  *** fail ***     ");
+  }
+
+EXEC SQL COMMIT WORK;
+
+printf("If program aborts due to uninitialized variables after this point,\n");
+printf("  delete (with TEd) remaining code in this test case and rerun.\n");
+
+/*** begin code with uninitialized variables. ***/
+
+EXEC SQL INSERT INTO NEXTKEY
+  VALUES(:ACLONG, :ACCHAR, :ACS);
+printf("SQLCODE(AC3) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO II
+  VALUES(:ACDBLE);
+printf("SQLCODE(ACD) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO JJ
+  VALUES(:ACFLT);
+printf("SQLCODE(ACF) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO NEXTKEY
+  VALUES(:AVLONG, :AVCHAR, :AVS);
+printf("SQLCODE(AV3) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO II
+  VALUES(:AVDBLE);
+printf("SQLCODE(AVD) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO JJ
+  VALUES(:AVFLT);
+printf("SQLCODE(AVF) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO NEXTKEY
+  VALUES(:EVLONG, :EVCHAR, :EVS);
+printf("SQLCODE(EV3) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO II
+  VALUES(:EVDBLE);
+printf("SQLCODE(EVD) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO JJ
+  VALUES(:EVFLT);
+printf("SQLCODE(EVF) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO NEXTKEY
+  VALUES(:SCLONG, :SCCHAR, :SCS);
+printf("SQLCODE(SC3) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO II
+  VALUES(:SCDBLE);
+printf("SQLCODE(SCD) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO JJ
+  VALUES(:SCFLT);
+printf("SQLCODE(SCF) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO NEXTKEY
+  VALUES(:SVLONG, :SVCHAR, :SVS);
+printf("SQLCODE(SV3) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO II
+  VALUES(:SVDBLE);
+printf("SQLCODE(SVD) = %ld\n", SQLCODE);
+
+EXEC SQL INSERT INTO JJ
+  VALUES(:SVFLT);
+printf("SQLCODE(SVF) = %ld\n", SQLCODE);
+
+/***  end code with uninitialized variables. ***/
+
+printf(" No pass criteria, since visual inspection is required.\n");
+printf("\n================================================");
+
+EXEC SQL ROLLBACK WORK;
+
+/******************** END TEST0399 ********************/
+
+
+
+
+
+}
+

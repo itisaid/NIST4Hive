@@ -1,0 +1,664 @@
+/*  EMBEDDED C (file "DML099.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/07/19 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML099.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS sizing for Dynamic SQL character     */
+/*  strings and also tests feature 9 of Transitional SQL,        */
+/*  implicit numeric casting.  Features 1 and 3 are required as  */
+/*  part of "baseline" TSQL.                                     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*                   16.6 Sizing for database constructs         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long x1;
+long x2;
+long x3;
+short s1;
+float f1;
+  char part1[61];
+  char part2[61];
+  char part3[61];
+  char part4[61];
+  char str240[241];
+  char str241[241];
+     char dstmt[51];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml099.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0581 ********************/
+flag = 1;
+
+     printf("                  TEST0581 \n");
+     printf("Implicit numeric casting (feature 9) dynamic\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 3, 9\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE ICAST (C1 INT, C2 REAL, C3 DEC(6,2))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE ICAST (C1 INT, C2 REAL, C3 DEC(6,2)) ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO ICAST VALUES (.31416E+1, 3, .3141593E+1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO ICAST VALUES (.31416E+1,3,.3141593E+1)");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT C1, C2, C3 FROM ICAST\"\n");
+     strcpy (dstmt,
+     "SELECT C1, C2, C3 FROM ICAST                      ");
+
+printf("PREPARE IC1 FROM :dstmt\n");
+EXEC SQL PREPARE IC1 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE CIC1 CURSOR FOR IC1;\n");
+EXEC SQL DECLARE CIC1 CURSOR FOR IC1;
+
+printf("\n");
+
+printf("OPEN CIC1;\n");
+EXEC SQL OPEN CIC1;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+x3 = -1;
+
+printf("FETCH CIC1 INTO :x1, :x2, :x3;\n");
+EXEC SQL FETCH CIC1 INTO :x1, :x2, :x3;
+
+CHCKOK ();
+printf("x1 should be 3; its value is %ld\n", x1);
+printf("x2 should be 3; its value is %ld\n", x2);
+printf("x3 should be 3; its value is %ld\n\n", x3);
+
+if (x1 != 3 || x2 != 3 || x3 != 3)
+  flag = 0;
+
+/* The following <dynamic update statement: positioned> contains    */
+/* what is effectively a static reference to a table which will     */
+/* not exist at compile time and which is dynamically created above.*/
+
+printf("UPDATE ICAST\n");
+printf("  SET C1 = 5.2413E+0, C2 = 5.2413E+0, C3 = :f1\n");
+printf("  WHERE CURRENT OF CIC1;\n");
+
+f1 = 5.24;
+printf("f1 = 5.24\n");
+EXEC SQL UPDATE ICAST
+  SET C1 = 5.2413E+0, C2 = 5.2413E+0, C3 = :f1
+  WHERE CURRENT OF CIC1;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+f1 = -1;
+
+printf("CLOSE CIC1;\n");
+printf("OPEN CIC1;\n");
+printf("FETCH CIC1 INTO :f1, :x1, :x2;\n");
+
+EXEC SQL CLOSE CIC1;
+EXEC SQL OPEN CIC1;
+EXEC SQL FETCH CIC1 INTO :f1, :x1, :x2;
+x3 = 100 * f1;
+
+CHCKOK ();
+printf("f1*100 should be 500; its value is %ld\n", x3);
+printf("x1 should be 5; its value is %ld\n", x1);
+printf("x2 should be 5; its value is %ld\n\n", x2);
+
+if (x3 != 500 || x1 != 5 || x2 != 5)
+  flag = 0;
+
+/* Avoid possible cursor operation conflict */
+
+printf("CLOSE CIC1;\n");
+EXEC SQL CLOSE CIC1;
+
+f1 = 6.28;
+printf("dstmt=\"UPDATE ICAST SET C1 = ?, C2 = 6.29E+0, C3 = 6.29E+0\"\n");
+     strcpy (dstmt,
+     "UPDATE ICAST SET C1 = ?, C2 =6.29E+0, C3 = 6.29E+0");
+
+printf("PREPARE F1 FROM :dstmt;\n");
+EXEC SQL PREPARE F1 FROM :dstmt;
+
+printf("EXECUTE F1 USING :f1;\n");
+EXEC SQL EXECUTE F1 USING :f1;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+f1 = -1;
+
+printf("OPEN CIC1;\n");
+printf("FETCH CIC1 INTO :x1, :x2, :f1;\n");
+
+EXEC SQL OPEN CIC1;
+EXEC SQL FETCH CIC1 INTO :x1, :x2, :f1;
+x3 = 100 * f1;
+
+CHCKOK ();
+printf("x1 should be 6; its value is %ld\n", x1);
+printf("x2 should be 6; its value is %ld\n", x2);
+printf("f1 * 100 should be 628 or 629; its value is %ld\n\n", x3);
+
+if (x1 != 6 || x2 != 6 || x3 < 628 || x3 > 629)
+  flag = 0;
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE ICAST CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE ICAST CASCADE                          ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0581','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml099.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0581','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0581 *********************/
+/******************** BEGIN TEST0582 ********************/
+flag = 1;
+
+     printf("                  TEST0582 \n");
+     printf("Implicit numeric casting (feature 9) static\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 9\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE ICAST2\n");
+printf("  (C1 SMALLINT, C2 DOUBLE PRECISION, C3 NUMERIC(5,3));\n");
+EXEC SQL CREATE TABLE ICAST2
+  (C1 SMALLINT, C2 DOUBLE PRECISION, C3 NUMERIC(5,3));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO ICAST2 VALUES (.31416E+1, 3, .3141593E+1);\n");
+EXEC SQL INSERT INTO ICAST2 VALUES (.31416E+1, 3, .3141593E+1);
+
+CHCKOK ();
+printf("\n");
+
+f1 = -1;
+s1 = -1;
+x2 = -1;
+
+printf("SELECT C1, C2, C3 INTO :f1, :s1, :x2 FROM ICAST2;\n");
+EXEC SQL SELECT C1, C2, C3 INTO :f1, :s1, :x2 FROM ICAST2;
+x3 = f1 * 100;
+
+CHCKOK ();
+printf("f1 * 100 should be 300; its value is %ld\n", x3);
+printf("s1 should be 3; its value is %d\n", s1);
+printf("x2 should be 3; its value is %ld\n\n", x2);
+
+if (x3 != 300 || s1 != 3 || x2 != 3)
+  flag = 0;
+
+printf("DECLARE CIC2 CURSOR FOR\n");
+printf("  SELECT C1, C2, C3 FROM ICAST2;\n");
+
+EXEC SQL DECLARE CIC2 CURSOR FOR
+  SELECT C1, C2, C3 FROM ICAST2;
+
+printf("\n");
+
+printf("OPEN CIC2;\n");
+EXEC SQL OPEN CIC2;
+
+x1 = -1;
+x2 = -1;
+f1 = -1;
+
+printf("FETCH CIC2 INTO :x1, :x2, :f1;\n");
+EXEC SQL FETCH CIC2 INTO :x1, :x2, :f1;
+x3 = f1 * 100;
+
+CHCKOK ();
+printf("x1 should be 3; its value is %ld\n", x1);
+printf("x2 should be 3; its value is %ld\n", x2);
+printf("f1 * 100 should be 314; its value is %ld\n\n", x3);
+
+if (x1 != 3 || x2 != 3 || x3 != 314)
+  flag = 0;
+
+f1 = 5.24;
+printf("f1 = 5.24\n");
+printf("UPDATE ICAST2\n");
+printf("  SET C1 = :f1, C2 = 5, C3 = 5.2413E+0\n");
+printf("  WHERE CURRENT OF CIC2;\n");
+
+EXEC SQL UPDATE ICAST2
+  SET C1 = :f1, C2 = 5, C3 = 5.2413E+0
+  WHERE CURRENT OF CIC2;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+f1 = -1;
+
+printf("CLOSE CIC2;\n");
+printf("OPEN CIC2;\n");
+printf("FETCH CIC2 INTO :x1, :x2, :f1;\n");
+
+EXEC SQL CLOSE CIC2;
+EXEC SQL OPEN CIC2;
+EXEC SQL FETCH CIC2 INTO :x1, :x2, :f1;
+x3 = 100 * f1;
+
+CHCKOK ();
+printf("x1 should be 5; its value is %ld\n", x1);
+printf("x2 should be 5; its value is %ld\n", x2);
+printf("f1 * 100 should be 524; its value is %ld\n\n", x3);
+
+if (x1 != 5 || x2 != 5 || x3 != 524)
+  flag = 0;
+
+/* Avoid possible cursor operation conflict */
+
+printf("CLOSE CIC2;\n");
+EXEC SQL CLOSE CIC2;
+
+f1 = 7.03;
+printf("f1 = 7.03\n");
+printf("UPDATE ICAST2 SET C1 = 6.28E+0, C2 = 2.1E+0, C3 = :f1;\n");
+EXEC SQL UPDATE ICAST2 SET C1 = 6.28E+0, C2 = 2.1E+0, C3 = :f1;
+
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE ICAST2 SET C1 = C2, C3 = C3 + C2;\n");
+EXEC SQL UPDATE ICAST2 SET C1 = C2, C3 = C3 + C2;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+f1 = -1;
+
+printf("OPEN CIC2;\n");
+printf("FETCH CIC2 INTO :f1, :x1, :x2;\n");
+
+EXEC SQL OPEN CIC2;
+EXEC SQL FETCH CIC2 INTO :f1, :x1, :x2;
+x3 = 100 * f1;
+
+CHCKOK ();
+printf("f1 * 100 should be 200; its value is %ld\n", x3);
+printf("x1 should be 2; its value is %ld\n", x1);
+printf("x2 should be 9; its value is %ld\n\n", x2);
+
+if (x3 != 200 || x1 != 2 || x2 != 9)
+  flag = 0;
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("DROP TABLE ICAST2 CASCADE;\n");
+EXEC SQL DROP TABLE ICAST2 CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0582','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml099.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0582','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0582 *********************/
+/******************** BEGIN TEST0583 ********************/
+flag = 1;
+
+     printf("                  TEST0583 \n");
+     printf("  FIPS sizing, Dynamic SQL character strings\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 3\n");
+     printf("                   16.6 Sizing for database constructs\n");
+     printf("    Test 0222 (DML047)\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE T240 (STR240 CHAR (240))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE T240 (STR240 CHAR (240))             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+  strcpy(part1,"NOTE:  Additional SQL language is planned for later addenda ");
+  strcpy(part2,"to this standard.  Major topics under consideration for such");
+  strcpy(part3," addenda include deductive logic, Einsteinian relativity for");
+  strcpy(part4," datetime arithmetic, and real time constraints on joins ;->");
+  strcpy(str240,part1);
+  strcat(str240,part2);
+  strcat(str240,part3);
+  strcat(str240,part4);
+
+  printf("str240=%s \n\n",str240);
+
+printf("dstmt=\"INSERT INTO T240 VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO T240 VALUES (?)                       ");
+
+printf("PREPARE PT240 FROM :dstmt;\n");
+EXEC SQL PREPARE PT240 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE PT240 USING :str240;\n");
+EXEC SQL EXECUTE PT240 USING :str240;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM T240\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM T240                                ");
+
+printf("PREPARE UT240 FROM :dstmt;\n");
+EXEC SQL PREPARE UT240 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE CT240 CURSOR FOR UT240;\n");
+EXEC SQL DECLARE CT240 CURSOR FOR UT240;
+
+printf("\n");
+
+strcpy (str241, "xxxxxx");
+
+printf("OPEN CT240;\n");
+EXEC SQL OPEN CT240;
+
+CHCKOK ();
+printf("\n");
+
+printf("FETCH CT240 INTO :str241;\n");
+EXEC SQL FETCH CT240 INTO :str241;
+str241[240] = '\0';
+
+CHCKOK ();
+printf(" str241=%s \n",str241);
+printf("Should be identical to str240 above.\n\n");
+
+if (strncmp (str240, str241, 240) != 0)
+  flag = 0;
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE T240 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE T240 CASCADE                           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0583','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml099.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0583','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0583 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

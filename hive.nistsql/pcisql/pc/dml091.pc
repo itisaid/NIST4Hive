@@ -1,0 +1,393 @@
+/*  EMBEDDED C (file "DML091.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML091.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SQLSTATE STATUS CODE.               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     short c1;
+     char ch1[2];
+     char ch22[23];
+     double dbl1;
+     float f2;
+     long LONG1;
+EXEC SQL END DECLARE SECTION;
+long ii;
+double dbl22;
+double prevdb;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+flag = 1;
+
+printf("SQL Test Suite, V6.0, Embedded C, dml091.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0497 ********************/
+flag = 1;
+
+     printf("                  TEST0497 \n");
+     printf("SQLSTATE = 22003: data exception \n");
+     printf("(numeric value out of range)\n");
+     printf("Reference ANSI SQL-1992 section 9.2\n");
+     printf("  <store assignment>  GR 3k\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL DELETE FROM HU.P1;
+     EXEC SQL DELETE FROM FOUR_TYPES;
+
+     /* 9.2 Store assignment GR3k - exact numeric */
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("INSERT INTO HU.P1 VALUES (100000);\n");
+     EXEC SQL INSERT INTO HU.P1 VALUES (100000);
+     if (SQLCODE == 0)
+         goto P101;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P101:
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("INSERT INTO HU.P1 VALUES (-1000000);\n");
+     EXEC SQL INSERT INTO HU.P1 VALUES (-1000000);
+     if (SQLCODE == 0)
+         goto P111;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P111:
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("INSERT INTO HU.P1 VALUES (-9);\n");
+     EXEC SQL INSERT INTO HU.P1 VALUES (-9);
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("INSERT INTO HU.P1 VALUES (9);\n");
+     EXEC SQL INSERT INTO HU.P1 VALUES (9);
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("UPDATE HU.P1 SET NUMTEST = NUMTEST + 100000;\n");
+     EXEC SQL UPDATE HU.P1 SET NUMTEST = NUMTEST + 100000;
+     if (SQLCODE == 0)
+         goto P121;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P121:
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     c1 = 9999;
+     printf("UPDATE HU.P1 SET NUMTEST =\n");
+     printf("  ((1 + NUMTEST) * :c1 * :c1) WHERE NUMTEST = 100009 OR\n");
+     printf("  NUMTEST IN (SELECT GRADE - 4 FROM HU.STAFF);\n");
+     EXEC SQL UPDATE HU.P1 SET NUMTEST =
+       ((1 + NUMTEST) * :c1 * :c1) WHERE NUMTEST = 100009 OR
+       NUMTEST IN (SELECT GRADE - 4 FROM HU.STAFF);
+     if (SQLCODE == 0)
+         goto P131;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P131:
+     printf("\n");
+     printf("DECLARE RANCID CURSOR FOR\n");
+     printf("  SELECT NUMTEST FROM HU.P1;\n");
+     EXEC SQL DECLARE RANCID CURSOR FOR
+                SELECT NUMTEST FROM HU.P1;
+     strcpy (SQLSTATE, "x");
+     printf("OPEN RANCID;\n");
+     EXEC SQL OPEN RANCID;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+     printf("FETCH RANCID INTO :c1;\n");
+     EXEC SQL FETCH RANCID INTO :c1;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     SQLSTATE[5] = '\0';
+     printf("UPDATE HU.P1\n");
+     printf("SET NUMTEST = NUMTEST * 200000 WHERE CURRENT OF RANCID;\n");
+     EXEC SQL UPDATE HU.P1
+       SET NUMTEST = NUMTEST * 200000 WHERE CURRENT OF RANCID;
+     if (SQLCODE == 0)
+         goto P141;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+
+P141:   
+  /* 9.1 Retrieval assignment GR3k - exact numeric */
+
+     printf("\n");
+     printf("INSERT INTO FOUR_TYPES\n");
+     printf("   VALUES (1,'X',11112222.00,.000003E-25);\n");
+     EXEC SQL INSERT INTO FOUR_TYPES 
+                VALUES (1,'X',11112222.00,.000003E-25);
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("SELECT T_DECIMAL INTO :c1 FROM FOUR_TYPES\n");
+     printf("  WHERE T_CHAR = 'X';\n");
+     EXEC SQL SELECT T_DECIMAL INTO :c1 FROM FOUR_TYPES
+               WHERE T_CHAR = 'X';
+     if (SQLCODE == 0)
+         goto P152;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P152:
+     /* 6.12 <numeric value expression> GR 5a - division 5b */
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf("SELECT T_DECIMAL / .000000001 INTO :LONG1\n");
+     printf("  FROM FOUR_TYPES WHERE T_CHAR = 'X';\n");
+     EXEC SQL SELECT T_DECIMAL / .000000001 INTO :LONG1
+               FROM FOUR_TYPES WHERE T_CHAR = 'X';
+     if (SQLCODE == 0)
+         goto P161;
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P161:
+     /* 6.5 <set function spec> GR 2b iv - approximate numeric sum */
+     /* set up by inserting larger and larger values */
+     printf("\n");
+     dbl1 = -1024;
+     dbl22 = 1024;
+     printf("INSERT INTO FOUR_TYPES (T_REAL) VALUES (:dbl1);\n");
+     for (ii = 1; ii < 51; ii++)
+       {
+         prevdb = dbl1;
+         if (ii < 666)
+            dbl1 = dbl1 * dbl22;
+
+          /* If this multiplication causes a core dump, use TEd        */
+          /*  to decrease 666 to a carefully-chosen limit.  This will  */
+          /*  put a ceiling on the value of dbl1 and avoid core dump.  */
+          /* If the SELECT SUM(T_REAL) below does not overflow,        */
+          /*  then increase the number of inserts to a larger number.  */
+          /* A sample TEd change for both of these modifications is:   */
+          /*    sub *dml091.* /BEGIN TEST0497/END TEST0497/            */
+          /*    /666/12/                                               */
+          /*    /51/524/                                             */
+
+         printf("  where variable dbl1 = -1024 * (1024**%ld)\n",ii);
+         EXEC SQL INSERT INTO FOUR_TYPES (T_REAL) VALUES (:dbl1);
+         if (SQLCODE < 0)
+            {
+               /* reset dbl1 to value which worked before; halve factor */
+               dbl1 = prevdb;
+               dbl22 = dbl22 / 2;
+          printf("Will not insert, so dbl1 factor decreased to %f\n",dbl22);
+            }
+       }
+     strcpy (SQLSTATE, "x");
+     printf("SELECT SUM(T_REAL) INTO :f2 FROM FOUR_TYPES;\n");
+     EXEC SQL SELECT SUM(T_REAL) INTO :f2 FROM FOUR_TYPES;
+     if (SQLCODE == 0)
+       {
+         printf("You are failing needlessly.\n");
+         printf("Increase SUM(T_REAL) by performing more INSERTS.\n");
+         printf("Increase the value of ii in the preceding for loop.\n");
+       }
+     SQLSTATE[5] = '\0';
+     printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+
+P171:
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0497','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml091.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0497','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0497 *********************/
+
+     exit(errcnt);
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}

@@ -1,0 +1,351 @@
+/*  EMBEDDED C (file "DML171.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-09 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML171.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*  Code taken from DML147 test 0842                             */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char en[4];
+char ct[16];
+long sl;
+short indic1;
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml171.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0882 ********************/
+flag = 1;
+
+     printf("                  TEST0882\n");
+     printf("            More full outer join\n");
+     printf("References:\n");
+     printf("    F#40 -- Full outer join\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE STAFF66 (\n");
+printf("  SALARY   INTEGER,\n");
+printf("  EMPNAME CHAR(20),\n");
+printf("  GRADE   DECIMAL,\n");
+printf("  EMPNUM  CHAR(3));\n");
+EXEC SQL CREATE TABLE STAFF66 (
+  SALARY   INTEGER,
+  EMPNAME CHAR(20),
+  GRADE   DECIMAL,
+  EMPNUM  CHAR(3));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO STAFF66\n");
+printf("   SELECT GRADE*1000, EMPNAME, GRADE, EMPNUM\n");
+printf("   FROM HU.STAFF3 WHERE EMPNUM > 'E2';\n");
+EXEC SQL INSERT INTO STAFF66
+   SELECT GRADE*1000, EMPNAME, GRADE, EMPNUM
+   FROM HU.STAFF3 WHERE EMPNUM > 'E2';
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE HU.STAFF3 SET EMPNUM = 'E6' WHERE EMPNUM = 'E5';\n");
+EXEC SQL UPDATE HU.STAFF3 SET EMPNUM = 'E6' WHERE EMPNUM = 'E5';
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE HU.STAFF3 SET EMPNAME = 'Ali' WHERE GRADE = 12;\n");
+EXEC SQL UPDATE HU.STAFF3 SET EMPNAME = 'Ali' WHERE GRADE = 12;
+CHCKOK ();
+printf("\n");
+
+/* FULL OUTER JOIN of tables with unique data in the joined column */
+
+printf("DECLARE C14736 CURSOR FOR\n");
+printf("  SELECT EMPNUM, CITY, SALARY\n");
+printf("    FROM HU.STAFF3 FULL OUTER JOIN STAFF66 USING (EMPNUM)\n");
+printf("  ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C14736 CURSOR FOR
+  SELECT EMPNUM, CITY, SALARY
+    FROM HU.STAFF3 FULL OUTER JOIN STAFF66 USING (EMPNUM)
+  ORDER BY EMPNUM;
+
+printf("OPEN C14736;\n");
+EXEC SQL OPEN C14736;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E1 '; its value is '%s'\n", en);
+printf ("ct should be 'Deale          '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E1 ") != 0 || strcmp (ct, "Deale          ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E2 '; its value is '%s'\n", en);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E2 ") != 0 || strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = -1;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E3 ") != 0 || strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (sl != 13000 || indic1 != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = -1;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n", en);
+printf ("ct should be 'Deale          '; its value is '%s'\n", ct);
+printf ("sl should be 12000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E4 ") != 0 || strcmp (ct, "Deale          ") != 0)
+  flag = 0;
+if (sl != 12000 || indic1 != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct:indic1, :sl;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct:indic1, :sl;
+CHCKOK ();
+printf ("en should be 'E5 '; its value is '%s'\n", en);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E5 ") != 0)
+  flag = 0;
+if (sl != 13000 || indic1 != -1)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E6 '; its value is '%s'\n", en);
+printf ("ct should be 'Akron          '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E6 ") != 0 || strcmp (ct, "Akron          ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE STAFF66 CASCADE;\n");
+EXEC SQL DROP TABLE STAFF66 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0882','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml171.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0882','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0882 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

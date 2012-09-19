@@ -1,0 +1,378 @@
+/*  EMBEDDED C (file "DML008.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML008.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SELECT STATEMENT IN THE LANGUAGE OF */
+/*  SQL.  THE FORMAT:                                            */
+/*            SELECT [ ALL | DISTINCT ] <select list>            */
+/*            INTO   <select target list>                        */
+/*            <table expression>                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                SECTION 8.5 <delete statement: searched>       */
+/*                SECTION 8.7 <insert statement>                 */
+/*                SECTION 8.10 <select statement>                */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char PNO1[4];
+    char EMPNO1[4];
+    char CITY1[5];
+    short indic1;
+    short indic2;
+    long HOURS1;
+    long i;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml008.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0016 ********************/
+
+  printf("\n                  TEST0016             \n");
+  printf("        select more than one record \n");
+  printf("reference X3.135-1989 section 8.10 General Rules 2)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  
+  EXEC SQL SELECT ALL EMPNUM
+     INTO   :EMPNO1
+     FROM   WORKS
+     WHERE  HOURS=12;
+
+  printf("             EMPNO1=%s and HOURS=12 \n",EMPNO1);
+
+  printf("  sqlcode=%ld \n\n",SQLCODE);
+  printf("The answer should be sqlcode < 0.");
+  if (SQLCODE < 0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0016','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml008.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0016','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0016 ********************/
+
+/******************** BEGIN TEST0164 ********************/
+
+  printf("\n                   TEST0164             \n");
+  printf("  Make sure without [ALL | DISTINCT] same as ALL \n");
+  printf("reference X3.135-1989 section 8.10 General Rules 1)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  
+/*  8.10 General Rules 1) implied without [ALL | DISTINCT] same  */
+/*  as ALL. We can also refer to 5.25 GR 2)., 5.19 GR 1). and    */
+/*  5.21 GR 2).                                                  */
+
+  EXEC SQL SELECT EMPNUM
+     INTO   :EMPNO1
+     FROM   WORKS
+     WHERE  HOURS=12;
+
+  printf("             EMPNO1=%s and HOURS=12 \n",EMPNO1);
+
+  printf("  sqlcode=%ld \n\n",SQLCODE);
+  printf("The answer should be sqlcode < 0.");
+  if (SQLCODE < 0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0164','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml008.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0164','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0164 ********************/
+
+/******************** BEGIN TEST0017 ********************/
+
+  printf("\n                TEST0017             \n");
+  printf("        select distinct record \n");
+  printf("reference X3.135-1989 section 8.10 General Rules 1)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  
+  EXEC SQL SELECT DISTINCT EMPNUM
+     INTO   :EMPNO1
+     FROM   WORKS
+     WHERE  HOURS=12;
+
+  printf("             EMPNO1=%s and HOURS=12 \n",EMPNO1);
+  printf("  sqlcode=%ld \n\n",SQLCODE);
+  printf("The answer should be sqlcode = 0.");
+  if (SQLCODE == 0)
+    {
+    printf("\n\n               *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0017','pass','PC');
+    }
+  else
+    {
+    printf("\n\n     dml008.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0017','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0017 ********************/
+
+/******************** BEGIN TEST0018 ********************/
+
+  printf("\n                TEST0018             \n");
+  printf("        select an unexist record \n");
+  printf("reference X3.135-1989 section 8.10 General Rules 2)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT EMPNUM,PNUM
+     INTO   :EMPNO1,:PNO1
+     FROM   WORKS
+     WHERE  EMPNUM='E16';
+
+  printf("             sqlcode=%ld \n",SQLCODE);
+  printf("\nThe answer should be sqlcode = 100.");
+  if (SQLCODE == 100)
+    {
+    printf("\n\n                  *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0018','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml008.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0018','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0018 ********************/
+
+/******************** BEGIN TEST0019 ********************/
+
+  printf("\n                TEST0019             \n");
+  printf("        select an exist record \n");
+  printf("reference X3.135-1989 section 8.10 General Rules 3)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT EMPNUM,HOURS
+     INTO   :EMPNO1,:HOURS1
+     FROM   WORKS
+     WHERE  EMPNUM='E1' AND PNUM='P4';
+
+  printf("                  EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+  printf("  sqlcode=%ld \n\n",SQLCODE);
+  printf("The answer should be sqlcode = 0 & HOURS1 = 20.");
+  if (SQLCODE == 0 && HOURS1 == 20)
+    {
+    printf("\n\n                 *** pass ***  \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0019','pass','PC');
+    }
+  else
+    {
+    printf("\n\n       dml008.pc  *** fail ***  \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0019','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("==================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0019 ********************/
+
+/******************** BEGIN TEST0020 ********************/
+
+  
+  printf("\n                 TEST0020             \n");
+  printf("        select a NULL value record \n");
+  printf("reference X3.135-1989 section 8.10 General Rules 8)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO WORKS
+    VALUES('E18','P18',NULL);
+
+  EXEC SQL SELECT EMPNUM,HOURS
+     INTO   :EMPNO1,:HOURS1:indic2  
+     FROM   WORKS
+     WHERE  EMPNUM='E18' AND PNUM='P18';
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+
+  printf("              indic2=%d \n",indic2);
+  printf("\nThe answer should be indic2 = -1 & EMPNO1 = E18.");
+  if (indic2 == -1 && strncmp(EMPNO1,"E18",3) == 0)
+    {
+    printf("\n\n                  *** pass ***  \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0020','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml008.pc  *** fail ***  \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0020','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("==================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0020 ********************/
+
+/******************** BEGIN TEST0021 ********************/
+
+  
+  printf("\n                   TEST0021             \n");
+  printf("    select different length character values \n");
+  printf("reference X3.135-1989 section 8.10 Gen Rule 8, Case A \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY1:indic1  
+     FROM   STAFF
+     WHERE  EMPNUM='E5';
+
+  printf("           EMPNUM=E5 and CITY1=%s \n",CITY1);
+
+  printf("  indic1=%d \n\n",indic1);
+  printf("The answer should be indic1 = 15 ");
+
+  if (indic1 == 15 && SQLCODE >=0)
+    {
+    printf("\n 8.10 select statement GR 8) Case A)");
+    printf("\n              *** pass ***        \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0021','pass','PC');
+    }
+  else
+    {
+    printf("\n 8.10 select statement GR 8) Case A)");
+    printf("\n     dml008.pc  *** fail ***     \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0021','fail','PC');
+          errcnt = errcnt + 1;
+    }
+ printf("========================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+printf("\n\n");
+
+/******************** END TEST0021 ********************/
+/******************** BEGIN TEST0165 ********************/
+
+  printf("                    TEST0165  \n");
+
+  printf("    select different length character values  \n");
+  printf("Reference X3.135-1989 section 8.10 Gen Rule 8), Case B \n");
+  printf("\n  The answer should be CITY1 = Akro \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY1:indic1  
+     FROM   STAFF
+     WHERE  EMPNUM='E5';
+
+  printf("           EMPNUM=E5 and CITY1=%s \n",CITY1);
+
+  printf("  indic1=%d \n\n",indic1);
+
+  if (strcmp(CITY1,"Akro") == 0)
+    {
+    printf("\n 8.10 select statement GR 9) Case B)");
+    printf("\n                *** pass ***     \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0165','pass','PC');
+    }
+  else
+    {
+    printf("\n 8.10 select statement GR 9) Case B)");
+    printf("\n     dml008.pc  *** fail ***       \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0165','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+ printf("========================================================\n\n");
+
+  printf("\n\n");
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0165 ********************/
+
+  exit(errcnt);
+
+}

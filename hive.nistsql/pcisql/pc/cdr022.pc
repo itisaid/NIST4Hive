@@ -1,0 +1,186 @@
+/*  EMBEDDED C (file "CDR022.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/12/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR022.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENCE INTEGRITY CONSTRAINT FOR  */
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.6 <unique constraint definition>        */
+/*                <unique constraint definition>::=              */
+/*                        <unique specifition>(<unique column    */
+/*                        list>)                                 */
+/*                 <unique specifition>::= UNIQUE|PRIMARY KEY    */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*              <action> ::= REFERENCES[(<grant column lists>]   */
+/*                           SELECT|...                          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+
+long code1;
+
+main()
+
+{
+        strcpy(uid,"SULLIVAN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr022.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0380 **********************/
+/* This test inserts a row (E9,-,-) into    */
+/* FOREIGN KEY TABLE -- WORKS_P, this should be an ERROR.   */
+
+printf("\n                     TEST0380             \n");
+printf("              REFERENTIAL INTEGRITY    \n");
+printf("  SQL with Integrity Enhancement section 6.5,6.6,6.7,6.10\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("         INSERT INTO WORKS_P\n");
+printf("         VALUES ('E9','P2',20);\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count1 FROM WORKS_P\n");
+printf("         WHERE EMPNUM = 'E9';\n");
+printf("\n");
+count1 = -1;
+EXEC SQL INSERT INTO WORKS_P
+         VALUES ('E9','P2',20);
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM WORKS_P
+         WHERE EMPNUM = 'E9';
+EXEC SQL ROLLBACK WORK;
+printf("        The correct result is code1 not equal to 0\n");
+printf("                              count1 = 0\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              count1 = %ld\n",count1);
+        if (code1 != 0 && count1 == 0)
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0380','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0380','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr022.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0380 *********************/
+
+
+
+
+/******************** BEGIN TEST0381 ********************/
+/* This test for privelege REFERENCES test              */
+
+printf("\n                     TEST0381             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        UPDATE WORKS_P\n");
+printf("        SET EMPNUM='E9'\n");
+printf("        WHERE EMPNUM='E2';\n");
+printf("code1 = SQLCODE;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM WORKS_P\n");
+printf("        WHERE EMPNUM = 'E2';\n");
+EXEC SQL UPDATE WORKS_P
+        SET EMPNUM = 'E9'
+        WHERE EMPNUM = 'E2';
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM WORKS_P
+        WHERE EMPNUM = 'E2';
+EXEC SQL ROLLBACK WORK;
+printf("        The correct result is code1 not equal 0\n");
+printf("                              count1 = 2\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              count1 = %ld\n",count1);
+        if (code1 != 0 && count1 == 2)
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0381','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0381','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr022.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0381 **************************/
+
+     exit(errcnt);
+
+
+}

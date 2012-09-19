@@ -1,0 +1,110 @@
+/*  EMBEDDED C (file "SDL017.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/06/20 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL017.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE CREATE VIEW STATEMENT WHICH GIVE    */
+/*  DIFFERENT COLUNM NAMES AND HAVE THREE TABLES JOIN.           */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                    SECTION 6.9 <view definition>              */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     long i;
+     long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl017.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/* CREATE VIEW STAFF_WORKS_DESIGN (NAME,COST,PROJECT)  */
+/*  AS SELECT EMPNAME,HOURS*2*GRADE,PNAME              */
+/*     FROM   PROJ,STAFF,WORKS                         */
+/*     WHERE  STAFF.EMPNUM=WORKS.EMPNUM                */
+/*        AND WORKS.PNUM=PROJ.PNUM                     */
+/*        AND PTYPE='Design';                          */
+
+     
+     printf("                  TEST0153             \n");
+     printf("Reference X3.135-1989 section 6.9 General Rules\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     i = 0;
+     ii = 0;
+
+     EXEC SQL SELECT COUNT(*),SUM(COST)
+              INTO   :i, :ii
+              FROM   STAFF_WORKS_DESIGN;
+
+     printf(" i = %ld, ii = %ld  \n\n",i,ii);
+     
+     printf("The correct answer should be i=5 & ii=3488 \n");
+
+     if (SQLCODE >= 0 && i == 5 && ii == 3488)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0153','pass','PC');
+       printf("\n\n                 *** pass ***     \n");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0153','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       sdl017.pc  *** fail ***     \n");
+       }
+     printf("\n================================================\n\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+
+}
+

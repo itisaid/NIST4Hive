@@ -1,0 +1,2351 @@
+/*  EMBEDDED C (file "DML136.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/9/13 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML136.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This program tests multiple TSQL features together.          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+float flt1;
+char ch40[41];
+char st[6];
+char mtxt[51];
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml136.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0696 ********************/
+flag = 1;
+
+     printf("                  TEST0696 \n");
+     printf("Many TSQL features #5:  Video Game Scores\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("    F# 5 -- DATETIME data types\n");
+     printf("    F# 11 -- Transaction isolation\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    F# 14 -- Qualified * in select list\n");
+     printf("    F# 20 -- CAST functions\n");
+     printf("    F# 24 -- Keyword relaxations\n");
+     printf("    TC #2 5.3 6.10\n");
+     printf("    X3H2-94-015/DBL SOU-031, SQL-92 Errata:\n");
+     printf("      Casting Between Datetimes and Character Strings\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* Lowercase _keywords_ are Entry SQL */
+
+printf("Exec SQL Create Table FOOM (\n");
+printf("  PLAYER_NO Int,\n");
+printf("  LEVL Int,\n");
+printf("  PCT_BLOWN_UP Float,\n");
+printf("  TIME_TO_FINISH Interval Minute to Second);\n");
+Exec SQL Create Table FOOM (
+  PLAYER_NO Int,
+  LEVL Int,
+  PCT_BLOWN_UP Float,
+  TIME_TO_FINISH Interval Minute to Second);
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("Exec SQL Create Table SPLAT_EM (\n");
+printf("  PLAYER_NO Int,\n");
+printf("  MAX_LEVEL Int,\n");
+printf("  SCORE Decimal (6));\n");
+Exec SQL Create Table SPLAT_EM (
+  PLAYER_NO Int,
+  MAX_LEVEL Int,
+  SCORE Decimal (6));
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("CREATE VIEW FOOM_AVG\n");
+printf("  (PLAYER_NO, FOOM_SCORE1, FOOM_SCORE2) AS\n");
+printf("  SELECT PLAYER_NO,\n");
+printf("    AVG (PCT_BLOWN_UP),\n");
+printf("    1.0 / AVG (EXTRACT (SECOND FROM\n");
+printf("      CAST (TIME_TO_FINISH AS INTERVAL SECOND)))\n");
+printf("  FROM FOOM GROUP BY PLAYER_NO;\n");
+EXEC SQL CREATE VIEW FOOM_AVG
+  (PLAYER_NO, FOOM_SCORE1, FOOM_SCORE2) AS
+  SELECT PLAYER_NO,
+    AVG (PCT_BLOWN_UP),
+    1.0 / AVG (EXTRACT (SECOND FROM
+      CAST (TIME_TO_FINISH AS INTERVAL SECOND)))
+  FROM FOOM GROUP BY PLAYER_NO;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("CREATE VIEW SPLAT_AVG\n");
+printf("  (PLAYER_NO, SPLAT_SCORE) AS\n");
+printf("  SELECT PLAYER_NO, AVG (SCORE)\n");
+printf("  FROM SPLAT_EM GROUP BY PLAYER_NO;\n");
+EXEC SQL CREATE VIEW SPLAT_AVG
+  (PLAYER_NO, SPLAT_SCORE) AS
+  SELECT PLAYER_NO, AVG (SCORE)
+  FROM SPLAT_EM GROUP BY PLAYER_NO;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+/* This view is only here because of 7.9 SR.7.  Grumble.... */
+
+printf("CREATE VIEW MAXIMA\n");
+printf("  (MAX_FOOM_SCORE1, MAX_FOOM_SCORE2, MAX_SPLAT_SCORE) AS\n");
+printf("  SELECT MAX (FOOM_SCORE1), MAX (FOOM_SCORE2),\n");
+printf("  MAX (SPLAT_SCORE) FROM FOOM_AVG, SPLAT_AVG;\n");
+EXEC SQL CREATE VIEW MAXIMA
+  (MAX_FOOM_SCORE1, MAX_FOOM_SCORE2, MAX_SPLAT_SCORE) AS
+  SELECT MAX (FOOM_SCORE1), MAX (FOOM_SCORE2),
+  MAX (SPLAT_SCORE) FROM FOOM_AVG, SPLAT_AVG;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+/* The column PLAYER_NO is a common column of the joined table and */
+/* therefore is not included in <qualifier> <period> <asterisk>    */
+/* according to 7.9 SR.4                                           */
+
+printf("CREATE VIEW ALLSCORES\n");
+printf("  (PLAYER_NO, SPLAT_SCORE, FOOM_SCORE1, FOOM_SCORE2,\n");
+printf("  MAX_FOOM_SCORE1, MAX_FOOM_SCORE2, MAX_SPLAT_SCORE) AS\n");
+printf("  SELECT PLAYER_NO, SPLAT_AVG.*, FOOM_AVG.*, MAXIMA.*\n");
+printf("  FROM FOOM_AVG NATURAL JOIN SPLAT_AVG, MAXIMA;\n");
+EXEC SQL CREATE VIEW ALLSCORES
+  (PLAYER_NO, SPLAT_SCORE, FOOM_SCORE1, FOOM_SCORE2,
+  MAX_FOOM_SCORE1, MAX_FOOM_SCORE2, MAX_SPLAT_SCORE) AS
+  SELECT PLAYER_NO, SPLAT_AVG.*, FOOM_AVG.*, MAXIMA.*
+  FROM FOOM_AVG NATURAL JOIN SPLAT_AVG, MAXIMA;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+/* FOOM gets weighted more than SPLAT_EM.  With Intermediate */
+/* F# 47, this could be done with subqueries.                */
+
+printf("CREATE VIEW NORMALIZED_AVGS\n");
+printf("  (PLAYER_NO, GENERIC_AVG) AS\n");
+printf("  SELECT PLAYER_NO,\n");
+printf("    (SPLAT_SCORE / MAX_SPLAT_SCORE +\n");
+printf("     FOOM_SCORE1 / MAX_FOOM_SCORE1 +\n");
+printf("     FOOM_SCORE2 / MAX_FOOM_SCORE2) / 3.0\n");
+printf("  FROM ALLSCORES;\n");
+EXEC SQL CREATE VIEW NORMALIZED_AVGS
+  (PLAYER_NO, GENERIC_AVG) AS
+  SELECT PLAYER_NO,
+    (SPLAT_SCORE / MAX_SPLAT_SCORE +
+     FOOM_SCORE1 / MAX_FOOM_SCORE1 +
+     FOOM_SCORE2 / MAX_FOOM_SCORE2) / 3.0
+  FROM ALLSCORES;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("ALLOCATE DESCRIPTOR 'D13611' WITH MAX 4;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D13611' WITH MAX 4;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+if (strcmp (st, "07009") == 0) {
+  printf ("Received SQLSTATE 07009!\n");
+  printf ("This test must be rewritten by NIST (in the event of\n");
+  printf ("a validation) to accomodate implementation-defined\n");
+  printf ("limit on <occurrences>.\n");
+}
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+/* Poor man's describe input */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT PLAYER_NO, LEVL, PCT_BLOWN_UP,' ||
+       '  CAST (TIME_TO_FINISH AS CHAR (70))'  ||
+       '  FROM FOOM'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S13611 FROM :longst;\n");
+EXEC SQL PREPARE S13611 FROM :longst;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("DESCRIBE S13611 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL DESCRIBE S13611 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("dstmt=\"INSERT INTO FOOM VALUES (?, ?, ?, ?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO FOOM VALUES (?, ?, ?, ?)              ");
+
+printf("PREPARE S13612 FROM :dstmt;\n");
+EXEC SQL PREPARE S13612 FROM :dstmt;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+flt1 = 100.0;
+printf("SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+strcpy(ch40,"10:54                                   ");
+printf("SET DESCRIPTOR 'D13611' VALUE 4 LENGTH = 40, DATA = :ch40;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 4 LENGTH = 40, DATA = :ch40;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+/* Implicit descriptor cast from chars to intervals */
+
+printf("EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+flt1 = 98.0;
+printf("SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+strcpy(ch40,"09:48                                   ");
+printf("SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 2;
+printf("SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+flt1 = 96.5;
+printf("SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+strcpy(ch40,"22:10                                   ");
+printf("SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 2;
+printf("SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+flt1 = 54.1;
+printf("SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+strcpy(ch40,"15.22                                   ");
+printf("SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+/* Value 1 should still be 2 */
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+flt1 = 65.7;
+printf("SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+strcpy(ch40,"14:27                                   ");
+printf("SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 2;
+printf("SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 1 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+int1 = 1;
+printf("SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 2 DATA = :int1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+flt1 = 87.0;
+printf("SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 3 DATA = :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+strcpy(ch40,"16:09                                   ");
+printf("SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;\n");
+EXEC SQL SET DESCRIPTOR 'D13611' VALUE 4 DATA = :ch40;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';\n");
+EXEC SQL EXECUTE S13612 USING SQL DESCRIPTOR 'D13611';
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("INSERT INTO SPLAT_EM VALUES (1, 5, 10820);\n");
+EXEC SQL INSERT INTO SPLAT_EM VALUES (1, 5, 10820);
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("INSERT INTO SPLAT_EM VALUES (1, 6, 14220);\n");
+EXEC SQL INSERT INTO SPLAT_EM VALUES (1, 6, 14220);
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("INSERT INTO SPLAT_EM VALUES (2, 8, 58762);\n");
+EXEC SQL INSERT INTO SPLAT_EM VALUES (2, 8, 58762);
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("INSERT INTO SPLAT_EM VALUES (2, 8, 62900);\n");
+EXEC SQL INSERT INTO SPLAT_EM VALUES (2, 8, 62900);
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("INSERT INTO SPLAT_EM VALUES (2, 7, 40282);\n");
+EXEC SQL INSERT INTO SPLAT_EM VALUES (2, 7, 40282);
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf("\n");
+
+printf("DECLARE C13631 CURSOR FOR\n");
+printf("  SELECT * FROM NORMALIZED_AVGS\n");
+printf("  ORDER BY PLAYER_NO\n");
+printf("  FOR READ ONLY;\n\n");
+EXEC SQL DECLARE C13631 CURSOR FOR
+  SELECT * FROM NORMALIZED_AVGS
+  ORDER BY PLAYER_NO
+  FOR READ ONLY;
+
+printf("OPEN C13631;\n");
+EXEC SQL OPEN C13631;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+int1 = 5;
+flt1 = 5.0;
+printf("FETCH C13631 INTO :int1, :flt1;\n");
+EXEC SQL FETCH C13631 INTO :int1, :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("int1 should be 1; its value is %ld\n", int1);
+printf ("flt1 should be 0.74398 +- 0.0001; its value is %f\n\n", flt1);
+if (int1 != 1)
+  flag = 0;
+if (flt1 < 0.74388 || flt1 > 0.74408)
+  flag = 0;
+
+int1 = 5;
+flt1 = 5.0;
+printf("FETCH C13631 INTO :int1, :flt1;\n");
+EXEC SQL FETCH C13631 INTO :int1, :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("int1 should be 2; its value is %ld\n", int1);
+printf ("flt1 should be 0.87826 +- 0.0001; its value is %f\n\n", flt1);
+if (int1 != 2)
+  flag = 0;
+if (flt1 < 0.87816 || flt1 > 0.87836)
+  flag = 0;
+
+printf("FETCH C13631 INTO :int1, :flt1;\n");
+EXEC SQL FETCH C13631 INTO :int1, :flt1;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 02000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "02000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "02000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+
+printf("CLOSE C13631;\n");
+EXEC SQL CLOSE C13631;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("ROLLBACK;\n");
+EXEC SQL ROLLBACK;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("DROP TABLE FOOM CASCADE;\n");
+EXEC SQL DROP TABLE FOOM CASCADE;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("DROP TABLE SPLAT_EM CASCADE;\n");
+EXEC SQL DROP TABLE SPLAT_EM CASCADE;
+strcpy (st, "xxxxx");
+strcpy (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :st = RETURNED_SQLSTATE,\n");
+printf("  :mtxt = MESSAGE_TEXT;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :st = RETURNED_SQLSTATE,
+  :mtxt = MESSAGE_TEXT;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("st should be 00000; its value is %s\n", st);
+strcpy (SQLSTATE, st);
+NOSUBCLASS();
+if (strcmp (NORMSQ, "00000") != 0)
+  flag = 0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+mtxt[50] = '\0';
+printf ("mtxt should be meaningful or blank; its value is '%s'\n", mtxt);
+if (strcmp (mtxt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0696','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml136.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0696','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0696 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

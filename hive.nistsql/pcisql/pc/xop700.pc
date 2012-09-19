@@ -1,0 +1,538 @@
+/*  EMBEDDED C (file "XOP700.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/**********************************************************/
+/*                                                        */
+/*                  COMMENT SECTION                       */
+/*                                                        */
+/*  DATE 1994/04/19 EMBEDDED C LANGUAGE                   */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                 */
+/*                                                        */
+/*  XOP700.PC                                             */
+/*  WRITTEN BY: Elaine Pratt                              */
+/*                                                        */
+/*  Tests Defaults and Limits for Datatypes               */
+/*                                                        */
+/*  REFERENCES                                            */
+/*        X/Open CAE SQL                                  */
+/*        Section 3.2.2 Data Types                        */
+/*        Test Spec. in ../docs/X3.2.2.nr                 */
+/*                                                        */
+/*                 <embedded SQL C program>               */
+/*                                                        */
+/*  DATE PROGRAM LAST CHANGED   01/11/94                  */
+/*                                                        */
+/**********************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+long SQLCODE;
+EXEC SQL BEGIN DECLARE SECTION;
+char SQLSTATE[6];
+char in254[255];
+char col1[255];
+float real1;
+float real2;
+float real3;
+float real4;
+float f1;
+double f2;
+float r1;
+float r2;
+float r3;
+float r4;
+double real5;
+double real6;
+double real7;
+double real8;
+double r5;
+double r6;
+double r7;
+double r8;
+long int1;
+long int2;
+long int3;
+char uid[19];
+char uidx[19];
+short flag1;
+short flag2;
+short flag3;
+short flag4;
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long  errflg;
+
+
+main()
+{
+
+real1 = 0;
+real2 = 0;
+real3 = 0;
+real4 = 0;
+f1 = (float)0x8 / (float) 0x1000000;
+f2 = ((double) 0x2 / (double)0x1000000) / (double)0x1000000;
+r1 = 1E-38;
+r2 = -1E-38;
+r3 = 1E+38;
+r4 = -1E+38;
+real5 = 0;
+real6 = 0;
+real7 = 0;
+real8 = 0;
+r5 = 1E-38;
+r6 = -1E-38;
+r7 = 1E+38;
+r8 = -1E+38;
+int1 = 0;
+int2 = 0;
+flag1 = 0;
+flag2 = 0;
+flag3 = 0;
+flag4 = 0;
+
+strcpy(uid,"XOPEN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+        printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop700.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+errflg =0;
+/******************** BEGIN TEST0700 ********************/
+
+printf("\n                     TEST0700                 \n");
+printf("\n X/O,DEFAULTS and LIMITS for DATA TYPES \n");
+printf(" X/OPEN CAE SQL Sec. 3.2.2 \n");
+printf(" - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("### INSERT INTO CHAR_TEST VALUES(:in254);\n");
+printf("### INSERT INTO INT_TEST VALUES(-2147483647);\n");
+printf("###        INSERT INTO INT_TEST VALUES(2147483647);\n");
+printf("### INSERT INTO SMALL_TEST VALUES(-32767);\n");
+printf("###        INSERT INTO SMALL_TEST VALUES(32767);\n");
+printf("### INSERT INTO REAL_TEST VALUES('A',1E-38);\n");
+printf("###        INSERT INTO REAL_TEST VALUES('B',-1E-38);\n");
+printf("###        INSERT INTO REAL_TEST VALUES('C',1E+38);\n");
+printf("###        INSERT INTO REAL_TEST VALUES('D',-1E+38);\n");
+printf("### INSERT INTO REAL3_TEST VALUES(2097151,2097150,NULL);\n");
+printf("###        INSERT INTO REAL3_TEST VALUES(-2097151,\n");
+printf("###               -2097150,NULL);\n");
+printf("###        UPDATE REAL3_TEST SET COL3 = COL1 - COL2\n");
+printf("###               WHERE COL1 = 2097151;\n");
+printf("###        UPDATE REAL3_TEST SET COL3 = COL1 - COL2\n");
+printf("###               WHERE COL1 = -2097151;\n");
+printf("### INSERT INTO DOUB_TEST VALUES('A',1E-38);\n");
+printf("###        INSERT INTO DOUB_TEST VALUES('B',-1E-38);\n");
+printf("###        INSERT INTO DOUB_TEST VALUES('C',1E+38);\n");
+printf("###        INSERT INTO DOUB_TEST VALUES('D',-1E+38);\n");
+printf("### INSERT INTO DOUB3_TEST VALUES(140737488355327,\n");
+printf("###        140737488355326,NULL);\n");
+printf("###        INSERT INTO DOUB3_TEST VALUES\n");
+printf("###               (-140737488355327,-140737488355326,NULL);\n");
+printf("###        UPDATE DOUB3_TEST SET COL3 = COL1 - COL2\n");
+printf("###               WHERE COL1 = 140737488355327;\n");
+printf("###        UPDATE DOUB3_TEST SET COL3 = COL1 - COL2\n");
+printf("###               WHERE COL1 = -140737488355327;\n");
+printf("### INSERT INTO FLOAT_TEST VALUES('A',1E-38);\n");
+printf("###        INSERT INTO FLOAT_TEST VALUES('B',-1E-38);\n");
+printf("###        INSERT INTO FLOAT_TEST VALUES('C',1E+38);\n");
+printf("###        INSERT INTO FLOAT_TEST VALUES('D',-1E+38);\n");
+
+/* Clear the tables, used in this program, of any values */
+EXEC SQL DELETE FROM CHAR_TEST;
+EXEC SQL DELETE FROM INT_TEST;
+EXEC SQL DELETE FROM SMALL_TEST;
+EXEC SQL DELETE FROM REAL_TEST;
+EXEC SQL DELETE FROM REAL3_TEST;
+EXEC SQL DELETE FROM DOUB_TEST;
+EXEC SQL DELETE FROM DOUB3_TEST;
+EXEC SQL DELETE FROM FLOAT_TEST;
+
+EXEC SQL COMMIT WORK;
+
+/* Initialise host variable col1 */
+strcpy(col1,"                                                  ");
+
+/* Copy 254 character string into host variable in254 */
+strcpy(in254,"ohforamuseoffirethatwouldascendthebrightestheaveno");
+strcat(in254,"finventionakingdomforastageprincestoactandmonarchs");
+strcat(in254,"tobeholdtheswellingsceneohforamuseoffirethatwoulda");
+strcat(in254,"scendthebrightestheavenofinventionakingdomforastag");
+strcat(in254,"eprincestoactandmonarchstobeholdtheswellingsceneth");
+strcat(in254,"eend");
+
+/* Checks that a column CHAR(254) can hold a character */
+/* string of 254 length */
+/*     CREATE TABLE CHAR_TEST (COL1 CHAR(254)); */
+EXEC SQL INSERT INTO CHAR_TEST VALUES(:in254);
+
+EXEC SQL SELECT * INTO :col1 FROM CHAR_TEST; 
+if (strncmp(col1,in254,254) != 0) 
+   {
+   printf ("*** Problem found (TEST STEP NUMBER 1) ! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("col1 should be ohforamuseoffirethatwouldascendthebrightest\n");
+printf("heavenofinventionakingdomforastageprincestoactandmonarchst\n");
+printf("obeholdtheswellingsceneohforamuseoffirethatwouldascendtheb\n");
+printf("rightestheavenofinventionakingdomforastageprincestoactandm\n");
+printf("onarchstobeholdtheswellingscenetheend\n");
+printf("\ncol1 is        ");
+for (int3 = 0; int3 < 43; int3++) { 
+     printf("%c",col1[int3]);
+}
+     printf("\n");
+for (int3 = 43; int3 < 101; int3++) { 
+     printf("%c",col1[int3]);
+}
+     printf("\n");
+for (int3 = 101; int3 < 159; int3++) { 
+    printf("%c",col1[int3]);
+}
+    printf("\n");
+for (int3 = 159; int3 < 217; int3++) { 
+    printf("%c",col1[int3]);
+}
+    printf("\n");
+for (int3 = 217; int3 < 255; int3++) {
+    printf("%c",col1[int3]);
+}
+    printf("\n");
+
+EXEC SQL DELETE FROM CHAR_TEST;
+
+printf("\n\n=================================================\n");
+
+/* Checks that an INTEGER column can hold a value from */
+/* -2147483647 to 2147483647 */
+/*     CREATE TABLE INT_TEST (COL1 INTEGER); */
+EXEC SQL INSERT INTO INT_TEST VALUES(-2147483647);
+EXEC SQL SELECT COL1 INTO :int1 FROM INT_TEST;
+EXEC SQL DELETE FROM INT_TEST;
+
+EXEC SQL INSERT INTO INT_TEST VALUES(2147483647);
+EXEC SQL SELECT COL1 INTO :int2 FROM INT_TEST;
+
+if (int1 != -2147483647 || int2 != 2147483647)
+   {
+   printf ("*** Problem found (TEST STEP NUMBER 2) ! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("\n\nCOL1 should be -2147483647, then 2147483647 \n");
+printf("\n\nCOL1 is        %ld, then %ld \n",int1,int2);
+
+/* Initialise host variables */
+int1 = 0;
+int2 = 0;
+printf("\n\n=================================================\n");
+
+/* Checks that a SMALLINT column can hold a value from */
+/* -32767 to 32767 */
+/*     CREATE TABLE SMALL_TEST (COL1 SMALLINT); */
+EXEC SQL INSERT INTO SMALL_TEST VALUES(-32767);
+EXEC SQL SELECT COL1 INTO :int1 FROM SMALL_TEST;
+EXEC SQL DELETE FROM SMALL_TEST;
+
+EXEC SQL INSERT INTO SMALL_TEST VALUES(32767);
+EXEC SQL SELECT COL1 INTO :int2 FROM SMALL_TEST;
+
+if (int1 != -32767 || int2 != 32767)
+   {
+   printf ("*** Problem found (TEST STEP NUMBER 3) ! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("\n\nCOL1 should be -32767, then 32767 \n");
+printf("\n\nCOL1 is        %ld, then %ld \n",int1,int2);
+printf("\n\n=================================================\n");
+
+/* Checks that a REAL column can hold a value of zero, */
+/* 10-38 to 10+38 and -10-38 to -10+38 */
+/* CREATE TABLE REAL_TEST (REF CHAR(1),COL1 REAL);*/
+
+EXEC SQL INSERT INTO REAL_TEST VALUES('A',1E-38);
+EXEC SQL INSERT INTO REAL_TEST VALUES('B',-1E-38);
+EXEC SQL INSERT INTO REAL_TEST VALUES('C',1E+38);
+EXEC SQL INSERT INTO REAL_TEST VALUES('D',-1E+38);
+
+EXEC SQL SELECT COL1 INTO :real1 FROM REAL_TEST 
+  WHERE REF = 'A';
+EXEC SQL SELECT COL1 INTO :real2 FROM REAL_TEST 
+  WHERE REF = 'B';
+EXEC SQL SELECT COL1 INTO :real3 FROM REAL_TEST 
+  WHERE REF = 'C';
+EXEC SQL SELECT COL1 INTO :real4 FROM REAL_TEST 
+  WHERE REF = 'D';
+
+if ( !(1 - (real1 * r3) <= f1))
+   {
+   flag1 = 1;
+   }
+if ( !(1 - (real3 * r1) <= f1))
+   {
+   flag2 = 1;
+   }    
+if ( !(1 - (real2 * r4) <= f1))
+   {
+   flag3 = 1;
+   }
+if ( !(1 - (real4 * r2) <= f1))
+   {
+   flag4 = 1;
+   }
+if ( flag1 || flag2 || flag3 || flag4)
+   {
+   printf ("*** Problem found (TEST STEP NUMBER 4 ) ! *** \n");
+   errflg = errflg + 1;
+   }
+
+/* initialise flags */
+flag1 = 0;
+flag2 = 0;
+flag3 = 0;
+flag4 = 0;
+
+
+printf("\n\n=================================================\n");
+printf("\n\nCOL1 should be 1E-38, -1E-38, 1E+38, -1E+38 \n");
+printf("\n\nCOL1 is        %E, %E, %E, %E \n",real1,real2,real3,real4);
+printf("\n\n=================================================\n");
+
+/* Initialise host variables */
+real1 = 0;
+real2 = 0;
+real3 = 0;
+real4 = 0;
+
+/* Checks for successful manipulation of data in REAL */
+/* columns by the expression column1 - column2 */
+/*CREATE TABLE REAL3_TEST(COL1 REAL,COL2 REAL,COL3 REAL) */
+EXEC SQL INSERT INTO REAL3_TEST 
+  VALUES(2097151,2097150,NULL);
+EXEC SQL INSERT INTO REAL3_TEST 
+  VALUES(-2097151,-2097150,NULL);
+
+EXEC SQL UPDATE REAL3_TEST SET COL3 = COL1 - COL2 
+  WHERE COL1 = 2097151;
+EXEC SQL SELECT COL3 INTO :real1 FROM REAL3_TEST 
+  WHERE COL1 = 2097151;
+
+EXEC SQL UPDATE REAL3_TEST SET COL3 = COL1 - COL2 
+  WHERE COL1 = -2097151;
+EXEC SQL SELECT COL3 INTO :real2 FROM REAL3_TEST 
+  WHERE COL1 = -2097151;
+
+if (real1 != 1 || real2 != -1)
+   {
+   printf("*** Problem found (TEST STEP NUMBER 5)! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("\n\nCOL1 should be 1, then -1 \n");
+printf("\n\nCOL3 is        %.0f, then %.0f \n",real1,real2);
+printf("\n\n=================================================\n");
+
+/* Checks that a DOUBLE PRECISION column can hold values */
+/* of +10-38, -10-38, +10+38, -10+38 */
+/* CREATE TABLE DOUB_TEST(REF CHAR(1), */
+/* COL1 DOUBLE PRECISION) */
+
+EXEC SQL INSERT INTO DOUB_TEST VALUES('A',1E-38);
+EXEC SQL INSERT INTO DOUB_TEST VALUES('B',-1E-38);
+EXEC SQL INSERT INTO DOUB_TEST VALUES('C',1E+38);
+EXEC SQL INSERT INTO DOUB_TEST VALUES('D',-1E+38);
+
+EXEC SQL SELECT COL1 INTO :real5 FROM DOUB_TEST 
+  WHERE REF = 'A';
+EXEC SQL SELECT COL1 INTO :real6 FROM DOUB_TEST 
+  WHERE REF = 'B';
+EXEC SQL SELECT COL1 INTO :real7 FROM DOUB_TEST 
+  WHERE REF = 'C';
+EXEC SQL SELECT COL1 INTO :real8 FROM DOUB_TEST 
+  WHERE REF = 'D';
+
+if (!(1 - (real5 * r7) <= f2))
+   {
+   flag1 = 1;
+   }
+if (!(1 - (real7 * r5 ) <= f2))
+   {
+   flag2 = 1;
+   }
+if (!(1 - (real6 * r8) <= f2)) 
+   {
+   flag3 = 1;
+   }
+if (!(1 - (real8 * r6) <= f2)) 
+   {
+   flag4 = 1;
+   }
+if (flag1 || flag2 || flag3 || flag4)
+   {
+   printf("*** Problem found (TEST STEP NUMBER 6)! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("\n\nCOL1 should be 1E-38, -1E-38, 1E+38, -1E+38 \n");
+printf("\n\nCOL1 is        %E, %E, %E, %E \n",real5,real6,real7,real8);
+printf("\n\n=================================================\n");
+
+/* Initialise flags */
+flag1 = 0;
+flag2 = 0;
+flag3 = 0;
+flag4 = 0;
+
+/* Initialise host variables */
+real5 = 0;
+real6 = 0;
+real7 = 0;
+real8 = 0;
+
+/* Checks successful manipulation of double precision */
+/* data by the expression column1 - column2 */
+/* CREATE TABLE DOUB3_TEST (COL1 DOUBLE PRECISION,COL2 */
+/* DOUBLE PRECISION,COL3 DOUBLE PRECISION); */
+EXEC SQL INSERT INTO DOUB3_TEST 
+  VALUES(140737488355327,140737488355326,NULL);
+EXEC SQL INSERT INTO DOUB3_TEST 
+  VALUES(-140737488355327,-140737488355326,NULL);
+
+EXEC SQL UPDATE DOUB3_TEST SET COL3 = COL1 - COL2
+  WHERE COL1 = 140737488355327;
+EXEC SQL SELECT COL3 INTO :real5 FROM DOUB3_TEST
+  WHERE COL1 = 140737488355327;
+
+EXEC SQL UPDATE DOUB3_TEST SET COL3 = COL1 - COL2 
+  WHERE COL1 = -140737488355327;
+EXEC SQL SELECT COL3 INTO :real6 FROM DOUB3_TEST
+  WHERE COL1 = -140737488355327;
+
+if (real5 != 1 || real6 != -1)
+   {
+   printf("*** Problem found (TEST STEP NUMBER 7 )! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("\n\nCOL3 should be 1, and -1 \n");
+printf("\n\nCOL3 is        %.0f, and %.0f \n",real5,real6);
+printf("\n\n=================================================\n");
+
+/* Initialise host variables */
+real1 = 0;
+real2 = 0;
+real3 = 0;
+real4 = 0;
+
+/* Checks that a FLOAT column can hold values zero and */
+/* 10-38 to 10+38 */
+/*     CREATE TABLE FLOAT_TEST (REF CHAR(1),COL1 FLOAT); */
+
+EXEC SQL INSERT INTO FLOAT_TEST VALUES('A',1E-38);
+EXEC SQL INSERT INTO FLOAT_TEST VALUES('B',-1E-38);
+EXEC SQL INSERT INTO FLOAT_TEST VALUES('C',1E+38);
+EXEC SQL INSERT INTO FLOAT_TEST VALUES('D',-1E+38);
+
+EXEC SQL SELECT COL1 INTO :real1 FROM FLOAT_TEST 
+  WHERE REF = 'A';
+EXEC SQL SELECT COL1 INTO :real2 FROM FLOAT_TEST 
+  WHERE REF = 'B';
+EXEC SQL SELECT COL1 INTO :real3 FROM FLOAT_TEST 
+  WHERE REF = 'C';
+EXEC SQL SELECT COL1 INTO :real4 FROM FLOAT_TEST 
+  WHERE REF = 'D';
+
+if ( !(1 - (real1 * r3) <= f1))
+   {
+   flag1 = 1;
+   }
+if (!(1 - (real3 * r1) <= f1))
+   {
+   flag2 = 1;
+   }
+if  (!(1 - (real2 * r4) <= f1))
+   {
+   flag3 = 1;
+   }
+if (!(1 - (real4 * r2) <= f1))
+   {
+   flag4 = 1;
+   }
+if (flag1 || flag2 || flag3 || flag4)
+   {
+   printf ("*** Problem found (TEST STEP NUMBER 8 ) ! *** \n");
+   errflg = errflg + 1;
+   }
+printf("\n\n=================================================\n");
+printf("\n\nCOL1 should be 1E-38, -1E-38, 1E+38, -1E+38 \n");
+printf("\n\nCOL1 is        %E, %E, %E, %E \n",real1,real2,real3,real4);
+printf("\n\n=================================================\n");
+
+/* Clear the tables, used in this program, of any values */
+EXEC SQL DELETE FROM CHAR_TEST;
+EXEC SQL DELETE FROM INT_TEST;
+EXEC SQL DELETE FROM SMALL_TEST;
+EXEC SQL DELETE FROM REAL_TEST;
+EXEC SQL DELETE FROM REAL3_TEST; 
+EXEC SQL DELETE FROM DOUB_TEST;
+EXEC SQL DELETE FROM DOUB3_TEST;
+EXEC SQL DELETE FROM FLOAT_TEST;
+
+/* Display the number of errors encountered */
+printf("\nNumber of errors detected = %ld \n",errflg);
+printf("### maximum number of errors is 8 ###\n");
+
+if (errflg == 0)
+   {
+   EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0700','pass','PC');
+   printf("\n\n       xop700.pc      *** pass ***     ");
+   }
+else
+   {
+   EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0700','fail','PC');
+   errcnt = errcnt + 1;
+   printf("\n\n       xop700.pc      *** fail ***     ");
+   }
+
+
+printf("\n\n=================================================\n");
+printf("\n\n\n\n");
+                         
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0700 ********************/
+
+exit(errcnt);
+
+}
+

@@ -1,0 +1,334 @@
+/*  EMBEDDED C (file "DML004.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML004.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE FETCH STATEMENT IN THE LANGUAGE OF  */
+/*  SQL.  THE FORMAT:                                            */
+/*          FETCH <cursor name> INTO <fetch target list>         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                        SECTION 8.1 <close statement>          */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char EMPNO1[4];
+          char EMPNO2[4];
+          char PNAME1[5];
+          long HOURS1;
+          long i;
+          short indic1;
+          short indic2;
+char uid[19];
+char uidx[19];
+long SQLCODE;
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml004.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0008 ********************/
+
+     printf("\n                    TEST0008      \n");
+     printf("  FETCH < cursor name > INTO < fetch target list >\n");
+     printf("reference X3.135-1989 section 8.6 General Rules 2)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("   *** FOR SELECT EMPNUM,HOURS \n");
+     printf("   ***     FROM   WORKS \n");
+     printf("   ***     WHERE  PNUM='P8' \n");
+     printf("   ***     ORDER  BY EMPNUM DESC \n\n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P8'
+              ORDER  BY EMPNUM DESC;
+     EXEC SQL OPEN X;
+     
+     EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+     printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+
+     printf("          sqlcode=%ld \n\n", SQLCODE);
+     printf("The answer should be sqlcode = 100.");
+     if (SQLCODE == 100)
+       {
+       printf("\n\n                  *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0008','pass','PC');
+       }
+     else
+       {
+       printf("\n\n        dml004.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0008','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+
+     printf("\n==================================================");
+     printf("\n\n\n\n");
+
+
+/******************** END TEST0008 ********************/
+
+/******************** BEGIN TEST0009 ********************/
+
+
+     printf("\n                    TEST0009      \n");
+     printf("  FETCH < cursor name > INTO < fetch target list >\n");
+     printf("reference X3.135-1989 section 8.6 General Rules 8)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("   *** EXEC SQL INSERT INTO WORKS \n");
+     printf("   ***      VALUES('E9','P9',NULL) \n");
+     printf("   *** EXEC SQL DECLARE Y CURSOR ...... \n");
+     printf("   *** EXEC SQL FETCH Y INTO :EMPNO1,:HOURS1:indic1 \n");
+
+     EXEC SQL INSERT INTO WORKS
+          VALUES('E9','P9',NULL);
+
+     EXEC SQL SELECT EMPNUM
+              INTO   :EMPNO1
+              FROM   WORKS
+              WHERE  HOURS IS NULL;
+
+     printf("       EMPNUM should be 'E9', EMPNUM = %s \n",EMPNO1);
+     EXEC SQL DECLARE Y CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P9'
+              ORDER  BY EMPNUM DESC;
+     EXEC SQL OPEN Y;
+     
+     EXEC SQL FETCH Y INTO :EMPNO1,:HOURS1 :indic1;
+     printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+     printf("                indic1=%d \n",indic1);
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf("The answer should be indic1 = -1.");
+     if (indic1 == -1 && strncmp(EMPNO1,"E9",2) == 0)
+       {
+       printf("\n\n                   *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0009','pass','PC');
+       }
+     else
+       {
+       printf("\n\n         dml004.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0009','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+     printf("\n==================================================");
+
+     printf("\n\n\n\n");
+
+/******************** END TEST0009 ********************/
+
+/******************** BEGIN TEST0161 ********************/
+
+
+     printf("\n                    TEST0161      \n");
+     printf("  FETCH < cursor name > INTO < fetch target list >\n");
+     printf("reference X3.135-1989 section 8.6 General Rules 8)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("   *** EXEC SQL INSERT INTO WORKS \n");
+     printf("   ***      VALUES('E9','P9',NULL) \n");
+     printf("   *** EXEC SQL DECLARE YY CURSOR ...... \n");
+     printf("   *** EXEC SQL FETCH YY INTO :EMPNO1,:HOURS1 \n");
+
+     EXEC SQL INSERT INTO WORKS
+          VALUES('E9','P9',NULL);
+     EXEC SQL SELECT EMPNUM
+              INTO   :EMPNO1
+              FROM   WORKS
+              WHERE  HOURS IS NULL;
+
+     printf("       EMPNO1 should be 'E9', EMPNO1 = %s \n",EMPNO1);
+     EXEC SQL DECLARE YY CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P9'
+              ORDER  BY EMPNUM DESC;
+     EXEC SQL OPEN YY;
+     
+     strcpy(EMPNO2,"xxx");
+     HOURS1 = -5;
+
+     EXEC SQL FETCH YY INTO :EMPNO2,:HOURS1;
+     printf("                EMPNO2=%s and HOURS1=%ld \n",EMPNO2,HOURS1);
+     printf("     sqlcode should be < 0, sqlcode = %ld\n",SQLCODE);
+     i=SQLCODE;
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf("Fetch a null value without indicator should be wrong.\n");
+     if (i < 0 && strncmp(EMPNO1,"E9",2) == 0)
+       {
+       printf("\n\n                   *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0161','pass','PC');
+       }
+     else
+       {
+       printf("\n\n         dml004.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0161','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+     printf("\n==================================================");
+
+     printf("\n\n\n\n");
+
+/******************** END TEST0161 ********************/
+
+/******************** BEGIN TEST0162 ********************/
+
+     printf("\n                    TEST0162      \n");
+     printf("  FETCH < cursor name > INTO < fetch target list >\n");
+     printf(" Cross ref. section 5.6 [INDICATOR] option \n");
+     printf("reference X3.135-1989 section 8.6 General Rules 8)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("*** EXEC SQL INSERT INTO WORKS \n");
+     printf("***      VALUES('E9','P9',NULL) \n");
+     printf("*** EXEC SQL DECLARE YYY CURSOR ...... \n");
+     printf("*** EXEC SQL FETCH YYY INTO :EMPNO1,:HOURS1 INDICATOR :indic1\n");
+
+     EXEC SQL INSERT INTO WORKS
+          VALUES('E9','P9',NULL);
+
+     EXEC SQL SELECT EMPNUM
+              INTO   :EMPNO1
+              FROM   WORKS
+              WHERE  HOURS IS NULL;
+
+     printf("       EMPNUM should be 'E9', EMPNUM = %s \n",EMPNO1);
+     EXEC SQL DECLARE YYY CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P9'
+              ORDER  BY EMPNUM DESC;
+     EXEC SQL OPEN YYY;
+     
+     HOURS1 = 0;
+     indic1 = 0;
+     strcpy(EMPNO1,"  ");
+
+     EXEC SQL FETCH YYY INTO :EMPNO1,:HOURS1  INDICATOR :indic1;
+     printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+     printf("                indic1=%d \n",indic1);
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf("The answer should be indic1 = -1.");
+     if (indic1 == -1 && strncmp(EMPNO1,"E9",2) == 0)
+       {
+       printf("\n\n                   *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0162','pass','PC');
+       }
+     else
+       {
+       printf("\n\n         dml004.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0162','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+     printf("\n==================================================");
+
+     printf("\n\n\n\n");
+
+/******************** END TEST0162 ********************/
+
+/******************** BEGIN TEST0010 ********************/
+
+     printf("\n                    TEST0010      \n");
+     printf("  FETCH < cursor name > INTO < fetch target list >\n");
+     printf("reference X3.135-1989 section 8.6 General Rules 8)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     EXEC SQL DECLARE Z CURSOR
+          FOR SELECT PNAME
+              FROM   PROJ
+              WHERE  PTYPE='Code';
+     EXEC SQL OPEN Z;
+     
+     EXEC SQL FETCH Z INTO :PNAME1:indic2;
+     printf("                   PNAME1=%s \n",PNAME1);
+     printf("                   indic2=%d \n",indic2);
+
+     printf("\nThe answer should be indic2 = 20.");
+     if (indic2 == 20 && strncmp(PNAME1,"CALM",4) == 0)
+       {
+       printf("\n\n                     *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0010','pass','PC');
+       }
+     else
+       {
+       printf("\n\n           dml004.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0010','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("\n==================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0010 ********************/
+
+     exit(errcnt);
+
+}
+

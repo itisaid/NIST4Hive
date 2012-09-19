@@ -1,0 +1,142 @@
+/*  EMBEDDED C (file "CCC007.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC007.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*  THIS ROUTINE TESTS COMMON PLACEMENT OF SQL STATEMENTS        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.168-1989                          */
+/*                                                               */
+/*                 SECTION 9.4  <embedded SQL C program>         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        long cnt;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc007.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+
+/******************** BEGIN TEST0290 ********************/
+
+    printf("   Common placement of SQL statement\n");
+    printf("Reference X3.168-1989 section 4.2 GR \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0290     \n");
+    printf("    Reference 4.2 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf(" Call a function block\n");
+goto P110;
+printf(" This line should never be executed.\n");
+P110: EXEC SQL INSERT INTO STAFF
+               VALUES ('E6','Dave',15,'Tokyo');
+printf("\n"); EXEC SQL INSERT INTO STAFF(EMPNUM) VALUES('E7'); printf("\n");
+cnt = 0;
+if (strcmp(uid,"abc") != 0)
+  {
+    if (cnt != 1)
+     {
+       if (strcmp(uid,"xyz") == 0) 
+            printf("Never reach\n");
+       else 
+         {
+            EXEC SQL INSERT INTO STAFF
+                     VALUES('E8','Anna',20,'Paris');
+         }
+     }
+  }
+  while (cnt == 0)
+    {
+        EXEC SQL INSERT INTO STAFF
+                 VALUES ('E9','Hunt',50,'Chicago');
+        cnt = -1;
+    }
+gosql();
+printf(" Return from a function block\n");
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("          cnt = 9\n");
+printf(" Your answer is :\n");
+
+printf("        cnt = %ld\n",cnt);
+if (cnt == 9)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0290','pass','PC');
+      }
+    else
+      {
+      printf("\n     ccc007.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0290','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0290 ********************/
+
+
+
+exit(errcnt);
+}
+
+
+
+gosql()
+{
+printf("         SELECT COUNT(*) \n");
+printf("         INTO :cnt FROM STAFF;\n");
+printf("\n");
+EXEC SQL SELECT COUNT(*) 
+         INTO :cnt FROM STAFF;
+}

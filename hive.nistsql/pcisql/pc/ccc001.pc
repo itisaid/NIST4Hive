@@ -1,0 +1,210 @@
+/*  EMBEDDED C (file "CCC001.PC)  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/06/24 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC001.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS ROUTINE TESTS THE DEFINITION OF THE C HOST IDENTIFIERS  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+long SQLCODE;
+main()
+{
+/* NOTE!!!  SQLIB-1 Errata #3:
+ " An implementation may reserve a portion of the name space in the
+   <embedded SQL host program>... for program variables..."  
+  If the tester can document that the implementation reserves program
+  variables beginning with underscores, then the tester may use TEd
+  to globally change the two variables below beginning with underscores. */
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char PNUMabcdefghijkABCDEFGHIJK_0001[4];
+     char pnumABCDEFGHIJKabcdefghijk_0001[4];
+     char pnumABCDEFGHIJKabcdefghijk_0002[4];
+     char EMPNAME_123456_123456_abc[20];
+     char _12345_EMPNUM[4];
+     char ______city1[16];
+     char city1_city1[16];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+            char pnum001[4];
+
+
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc001.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0183 ********************/
+
+     printf("\n                     TEST0183             \n");
+     printf("       This tests the C host identifiers.\n");
+     printf(" Reference ANSI X3.159-1989 3.1.2.\n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+
+     errflg = 0;
+     strcpy(pnumABCDEFGHIJKabcdefghijk_0001,"   ");
+
+     EXEC SQL SELECT EMPNUM,EMPNAME
+              INTO  :_12345_EMPNUM,
+                    :EMPNAME_123456_123456_abc
+              FROM  STAFF
+              WHERE CITY='Akron';
+     printf(" _12345_EMPNUM=%s\n",_12345_EMPNUM);
+     printf(" EMPNAME_123456_123456_abc=%s\n",EMPNAME_123456_123456_abc);
+     printf("### The answer should be _12345_EMPNUM=E5 and \n");
+     printf("### EMPNAME_123456_123456_abc=Ed.\n");
+
+     if (strncmp(_12345_EMPNUM,"E5",2) != 0)
+      {
+        printf("*** Problem Found (1) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     if (strncmp(EMPNAME_123456_123456_abc,"Ed",2) != 0)
+      {
+        printf("*** Problem Found (2) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     printf("\n\n=================================================\n");
+
+     EXEC SQL SELECT PNUM,CITY
+              INTO  :PNUMabcdefghijkABCDEFGHIJK_0001,
+                    :______city1
+              FROM  PROJ
+              WHERE PNAME = 'CALM';
+
+     printf(" PNUMabcdefghijkABCDEFGHIJK_0001=%s \n",
+              PNUMabcdefghijkABCDEFGHIJK_0001);
+
+     printf(" ______city1=%s \n",______city1);
+
+     printf("### The answer should be 'P2' and 'Vienna' \n");
+
+     if (strncmp(PNUMabcdefghijkABCDEFGHIJK_0001,"P2",2) != 0)
+      {
+        printf("*** Problem Found (3) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     if (strncmp(______city1,"Vienna",6) != 0)
+      {
+        printf("*** Problem Found (4) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     strcpy(pnum001,PNUMabcdefghijkABCDEFGHIJK_0001);
+
+     printf("\n\n=================================================\n");
+
+     EXEC SQL SELECT PNUM,CITY
+              INTO  :pnumABCDEFGHIJKabcdefghijk_0002,
+                    :city1_city1
+              FROM  PROJ
+              WHERE PNAME='PAYR';
+
+     printf("pnumABCDEFGHIJKabcdefghijk_0002=%s \n",
+             pnumABCDEFGHIJKabcdefghijk_0002);
+
+     printf("city1_city1=%s \n",city1_city1);
+
+     printf("### The answer should be 'P6' and 'Deale'.\n");
+
+     if (strncmp(pnumABCDEFGHIJKabcdefghijk_0002,"P6",2) != 0)
+      {
+        printf("*** Problem Found (5) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     if (strncmp(city1_city1,"Deale",5) != 0)
+      {
+        printf("*** Problem Found (6) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     if (strncmp(pnum001,pnumABCDEFGHIJKabcdefghijk_0002,2)==0)
+      {
+        printf("*** Problem Found (7) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     if (strncmp(pnum001,PNUMabcdefghijkABCDEFGHIJK_0001,2)!=0)
+      {
+        printf("*** Problem Found (8) ! *** \n");
+        errflg = errflg + 1;
+      }
+   
+     if (strncmp(PNUMabcdefghijkABCDEFGHIJK_0001,
+                 pnumABCDEFGHIJKabcdefghijk_0001,2)==0)
+      {
+        printf("*** Problem Found (9) ! *** \n");
+        errflg = errflg + 1;
+      }
+
+     printf("\n\n=================================================\n");
+
+     printf("              errflg = %ld \n",errflg);
+     printf("### maximum number of errors is 9 ###\n");
+
+     if (errflg==0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT VALUES('0183','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT VALUES('0183','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       ccc001.pc  *** fail ***     ");
+       }
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0183 ********************/
+
+     exit(errcnt);
+
+}
+

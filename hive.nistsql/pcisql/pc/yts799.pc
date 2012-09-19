@@ -1,0 +1,383 @@
+/*  EMBEDDED C (file "YTS799.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS799.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  <subquery> as <row value constructor> in <null predicate>    */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    8.6   GR2  <null predicate> IS NULL                        */
+/*    8.6   GR3  <null predicate> IS NOT NULL                    */
+/*    7.11  <scalar subquery>,<row subquery> & <table subquery>  */
+/*    7.1   <row value constructor>                              */
+/*    F#48  Expanded null predicate                              */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-26                                    */
+/*    Added rollback after authid                                */
+/*    Removed EXEC SQL from printf                               */
+/*    Fixed expected result                                      */
+/*    Renamed variables                                          */
+/*    Removed leveling rule violations                           */
+/*    Fixed logic errors                                         */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+short col1;
+short col2;
+short col3;
+short co;
+short indic1;
+short indic2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+short    i;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts799.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7531 ********************/
+flag = 1;
+
+     printf("                  TEST7531 \n");
+     printf("   <subqry> as<row val constructor>in<null predicate>\n");
+     printf("References:\n");
+     printf("    8.6 GR2  <null predicate> IS NULL\n");
+     printf("    8.6 GR3  <null predicate> IS NOT NULL\n");
+     printf("    7.11     <scalar subquery>,<rowsubquery>&<table subquery>\n");
+     printf("    7.1      <row value constructor>\n");
+     printf("    F#48     Expanded null predicate\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+/* declare cursor to test for null vals of <null pred > */
+/* If scalar subquery is empty, result is NULL (6.11 GR.2) */
+
+printf("DECLARE CRA CURSOR FOR\n");
+printf("SELECT TTA, TTB, TTC FROM CTS1.TT\n");
+printf("WHERE (SELECT TUD FROM TU WHERE TU.TUE = TT.TTA)\n");
+printf("IS NULL ORDER BY TTA DESC;\n\n");
+EXEC SQL DECLARE CRA CURSOR FOR
+SELECT TTA, TTB, TTC FROM CTS1.TT
+WHERE (SELECT TUD FROM TU WHERE TU.TUE = TT.TTA)
+IS NULL ORDER BY TTA DESC;
+
+/* Result: */
+/* 5 42 26    (because TUD is NULL) */
+/* 2 98 NULL  (because subquery is empty) */
+/* 1 NULL 99  (because subquery is empty) */
+
+printf("OPEN CRA;\n");
+EXEC SQL OPEN CRA;
+
+CHCKOK ();
+printf("\n");
+
+/* fetch rows of cursor */
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+
+printf("FETCH CRA INTO :col1, :col2, :col3;\n");
+EXEC SQL FETCH CRA INTO :col1, :col2, :col3;
+CHCKOK ();
+printf("5, 42, 26 expected; %d, %d, %d returned.\n\n",col1, col2, col3);
+if (col1 != 5 || col2 != 42 || col3 != 26)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+indic1 = 99;
+indic2 = 99;
+
+printf("FETCH CRA INTO :col1, :col2:indic2, :col3:indic1;\n");
+EXEC SQL FETCH CRA INTO :col1, :col2:indic2, :col3:indic1;
+CHCKOK ();
+printf ("col1 should be 2; its value is %d\n", col1);
+printf ("col2 should be 98; its value is %d\n", col2);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (col1 != 2 || col2 != 98 || indic1 != -1)
+  flag = 0;
+if (indic2 != 0)
+  flag = 0;
+
+col1 = 0;
+col3 = 0;
+indic1 = 99;
+indic2 = 99;
+
+printf("FETCH CRA INTO :col1, :col2:indic2, :col3:indic1;\n");
+EXEC SQL FETCH CRA INTO :col1, :col2:indic2, :col3:indic1;
+CHCKOK ();
+printf ("col1 should be 1; its value is %d\n", col1);
+printf ("col3 should be 99; its value is %d\n", col3);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (col1 != 1 || col3 != 99 || indic1 != 0)
+  flag = 0;
+if (indic2 != -1)
+  flag = 0;
+
+/* declare cursor to test for non-null vals of <null pred> */
+
+printf("DECLARE CRB CURSOR FOR\n");
+printf("SELECT TTA, TTB, TTC FROM CTS1.TT\n");
+printf("WHERE (SELECT TUD FROM TU WHERE TU.TUE = TT.TTA)\n");
+printf("IS NOT NULL ORDER BY TTA;\n");
+EXEC SQL DECLARE CRB CURSOR FOR
+SELECT TTA, TTB, TTC FROM CTS1.TT
+WHERE (SELECT TUD FROM TU WHERE TU.TUE = TT.TTA)
+IS NOT NULL ORDER BY TTA;
+
+/* Result: */
+/* 3 97 96 */
+/* 4 NULL NULL */
+
+/* open cursor */
+
+printf("OPEN CRB;\n");
+EXEC SQL OPEN CRB;
+CHCKOK ();
+printf("\n");
+
+col1 = 99;
+col2 = 99;
+col3 = 99;
+indic1 = 99;
+indic2 = 99;
+
+printf("FETCH CRB INTO :col1, :col2:indic1, :col3:indic2;\n");
+EXEC SQL FETCH CRB INTO :col1, :col2:indic1, :col3:indic2;
+CHCKOK ();
+printf ("col1 should be 3; its value is %d\n", col1);
+printf ("col2 should be 97; its value is %d\n", col2);
+printf ("col3 should be 96; its value is %d\n", col3);
+printf ("indic1, indic2 should be 0, 0; they are %d, %d\n\n", indic1, indic2);
+if (col1 != 3 || col2 != 97 || col3 != 96)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+
+col1 = 99;
+col2 = 99;
+col3 = 99;
+indic1 = 99;
+indic2 = 99;
+
+printf("FETCH CRB INTO :col1, :col2:indic1, :col3:indic2;\n");
+EXEC SQL FETCH CRB INTO :col1, :col2:indic1, :col3:indic2;
+CHCKOK ();
+printf ("col1 should be 4; its value is %d\n", col1);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (col1 != 4)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+/* select rows in TT where either TTB or TTC or both are NULL */
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM CTS1.TT\n");
+printf("WHERE TTB IS NULL OR TTC IS NULL;\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM CTS1.TT
+WHERE TTB IS NULL OR TTC IS NULL;
+CHCKOK ();
+printf("Number of rows expected was 3 number returned %d\n\n", co);
+if (co != 3)
+   flag = 0;
+
+/* select rows in TT where neither TTB nor TTC is NULL */
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM CTS1.TT\n");
+printf("WHERE TTB IS NOT NULL AND TTC IS NOT NULL;\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM CTS1.TT
+WHERE TTB IS NOT NULL AND TTC IS NOT NULL;
+CHCKOK ();
+printf("Number of rows expected was 2 number returned %d\n\n", co);
+if (co != 2)
+      flag = 0;
+
+/* select rows in TT where at least one val in TTB and TTC is non-null */
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM CTS1.TT\n");
+printf("WHERE NOT (TTB IS NULL AND TTC IS NULL);\n");
+
+EXEC SQL SELECT COUNT (*) INTO :co FROM CTS1.TT
+WHERE NOT (TTB IS NULL AND TTC IS NULL);
+printf("Number of rows expected was 4 number returned %d\n\n", co);
+if (co != 4)
+      flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts799.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7531','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts799.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7531','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7531 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

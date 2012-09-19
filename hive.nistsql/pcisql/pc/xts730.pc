@@ -1,0 +1,418 @@
+/*  EMBEDDED C (file " XTS730.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS730.PC                                                   */
+/*  WRITTEN BY: Manolis Megaloikonomou                           */
+/*                                                               */
+/*  Table name with 19 characters - delimited.                   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.3 -- <table definition>                                 */
+/*     5.4 -- <Names and identifiers>                            */
+/*     5.4 GR.1                                                  */
+/*     5.2 -- <token> and <separator>                            */
+/*     5.2 SR.9                                                  */
+/*     5.2 SR.13                                                 */
+/*     5.2 SR.14                                                 */
+/*     5.2 LR.2a -- Raised. Entry SQL restriction which          */
+/*               restricted the length of a <regular identifier> */
+/*               up to 18 <character representation>s.           */
+/*     F#2 -- Basic information schema.                          */
+/*     F#3 -- Basic schema manipulation.                         */
+/*    F#39 -- Long identifiers.                                  */
+/*                                                               */
+/*  DATE LAST ALTERED  12/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 05/12/95:                   */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*         Define cal variable                                   */
+/*         Add ROLLBACK after AUTHID                             */
+/*         print timestamp                                       */
+/*         delete multiple SQLCODE and SQLSTATE initialisation   */
+/*         change string initialisation                          */
+/*         Clean-up database at the end of the test              */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/* Revised by DWF 1996-02-05                                     */
+/*    Fixed SDL transactions                                     */
+/*    Fixed printouts                                            */
+/*    Removed CHCKOK after cursor definition                     */
+/*    Removed field widths from printfs                          */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ long aa;
+ char bb[50];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long  flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts730.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf( "\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7030 ********************/
+flag = 1;
+printf("                  TEST7030 \n");
+printf("    Table name with 19 characters - delimited.\n");
+printf("References:\n");
+printf("    11.3 -- <table definition>\n");
+printf("     5.4 -- <Names and identifiers >\n");
+printf("     5.4 GR.1\n");
+printf("     5.2 -- <token> and <separator>\n");
+printf("     5.2 SR.9\n");
+printf("     5.2 SR.13\n");
+printf("     5.2 SR.14\n");
+printf("     5.2 LR.2a -- Raised. Entry SQL restriction which\n");
+printf("         restricted the length of a <regular identifier>\n");
+printf("         up to 18 <character representation>s.\n");
+printf("     F#2 -- Basic information schema.\n");
+printf("     F#3 -- Basic schema manipulation.\n");
+printf("    F#39 -- Long identifiers.\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("Note:  This test will need some changes if your collating\n");
+printf("sequence is not ASCII.\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* Create tables */
+/* Ensure all have names which are 19 characters long */
+/* Ensure names include upper & lower cases, digits and punctuation */
+printf("CREATE TABLE \"LONGIDENTIFIERSAAAA\" (TNUM NUMERIC(5));\n");
+EXEC SQL CREATE TABLE "LONGIDENTIFIERSAAAA" (TNUM NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE \"longidentifiersaaab\" (TNUM NUMERIC(5));\n");
+EXEC SQL CREATE TABLE "longidentifiersaaab" (TNUM NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE \"0\"\"LONGIDENTIFIERS_1\" (TNUM NUMERIC(5));\n");
+EXEC SQL CREATE TABLE "0""LONGIDENTIFIERS_1" (TNUM NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE \"0\"\"LONGIDENTIFIERS_2\" (TNUM NUMERIC(5));\n");
+EXEC SQL CREATE TABLE "0""LONGIDENTIFIERS_2" (TNUM NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE \"lngIDENTIFIER%% .,()\" (TNUM NUMERIC(5));\n");
+EXEC SQL CREATE TABLE "lngIDENTIFIER% .,()" (TNUM NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Initialize host variables */
+aa = 99;
+strcpy(bb,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+/* Ensure all tables are mentioned in the INFORMATION_SCHEMA */
+printf("SELECT COUNT(*) INTO :aa FROM INFORMATION_SCHEMA.TABLES\n");
+printf("WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_TYPE = 'BASE TABLE'\n");
+printf("AND (TABLE_NAME = 'LONGIDENTIFIERSAAAA'\n");
+printf("     OR TABLE_NAME = 'longidentifiersaaab'\n");
+printf("     OR TABLE_NAME = '0\"LONGIDENTIFIERS_1'\n");
+printf("     OR TABLE_NAME = '0\"LONGIDENTIFIERS_2'\n");
+printf("     OR TABLE_NAME = 'lngIDENTIFIER%% .,()' );\n");
+EXEC SQL SELECT  COUNT(*) INTO :aa 
+         FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = 'CTS1' 
+         AND TABLE_TYPE = 'BASE TABLE'
+         AND ( TABLE_NAME = 'LONGIDENTIFIERSAAAA'
+            OR TABLE_NAME = 'longidentifiersaaab'
+            OR TABLE_NAME = '0"LONGIDENTIFIERS_1'
+            OR TABLE_NAME = '0"LONGIDENTIFIERS_2'
+            OR TABLE_NAME = 'lngIDENTIFIER% .,()' );
+CHCKOK();
+printf("aa should be 5; its value is: aa = %ld\n", aa);
+if ( aa != 5 )
+   flag = 0;
+printf("\n");
+
+/* Ensure all INFORMATION_SCHEMA entries are correct */
+printf("DECLARE a CURSOR\n");
+printf("FOR SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES\n");
+printf("WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_TYPE = 'BASE TABLE'\n");
+printf("AND (TABLE_NAME = 'LONGIDENTIFIERSAAAA'\n");
+printf("     OR TABLE_NAME = 'longidentifiersaaab'\n");
+printf("     OR TABLE_NAME = '0\"LONGIDENTIFIERS_1'\n");
+printf("     OR TABLE_NAME = '0\"LONGIDENTIFIERS_2'\n");
+printf("     OR TABLE_NAME = 'lngIDENTIFIER%% .,()' );\n");
+printf("ORDER BY TABLE_NAME;\n\n");
+EXEC SQL DECLARE a CURSOR
+         FOR SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES
+         WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_TYPE = 'BASE TABLE'
+         AND ( TABLE_NAME = 'LONGIDENTIFIERSAAAA'
+            OR TABLE_NAME = 'longidentifiersaaab'
+            OR TABLE_NAME = '0"LONGIDENTIFIERS_1'
+            OR TABLE_NAME = '0"LONGIDENTIFIERS_2'
+            OR TABLE_NAME = 'lngIDENTIFIER% .,()' )
+         ORDER BY TABLE_NAME;
+
+printf("OPEN a;\n");
+EXEC SQL OPEN a;
+CHCKOK();
+printf("\n");
+
+printf("FETCH a INTO :bb;\n");
+EXEC SQL FETCH a INTO :bb;
+CHCKOK();
+printf("bb should be 0\"LONGIDENTIFIERS_1; its value is %s\n", bb);
+if (strncmp(bb,"0\"LONGIDENTIFIERS_1",19) != 0)
+   flag = 0;
+printf("\n");
+
+strcpy(bb,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH a INTO :bb;\n");
+EXEC SQL FETCH a INTO :bb;
+CHCKOK();
+printf("bb should be 0\"LONGIDENTIFIERS_2; its value is %s\n", bb);
+if (strncmp(bb,"0\"LONGIDENTIFIERS_2",19) != 0)
+   flag = 0;
+printf("\n");
+
+strcpy(bb,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH a INTO :bb;\n");
+EXEC SQL FETCH a INTO :bb;
+CHCKOK();
+printf("bb should be LONGIDENTIFIERSAAAA; its value is %s\n", bb);
+if (strncmp(bb,"LONGIDENTIFIERSAAAA",19) != 0)
+   flag = 0;
+printf("\n");
+
+strcpy(bb,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH a INTO :bb;\n");
+EXEC SQL FETCH a INTO :bb;
+CHCKOK();
+printf("bb should be lngIDENTIFIER%% .,(); its value is %s\n", bb);
+if (strncmp(bb,"lngIDENTIFIER% .,()",19) != 0)
+   flag = 0;
+printf("\n");
+
+strcpy(bb,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH a INTO :bb;\n");
+EXEC SQL FETCH a INTO :bb;
+CHCKOK();
+printf("bb should be longidentifiersaaab; its value is %s\n", bb);
+if (strncmp(bb,"longidentifiersaaab",19) != 0)
+   flag = 0;
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* Now clean-up database */
+printf("DROP TABLE \"LONGIDENTIFIERSAAAA\" CASCADE;\n");
+EXEC SQL DROP TABLE "LONGIDENTIFIERSAAAA" CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE \"longidentifiersaaab\" CASCADE;\n");
+EXEC SQL DROP TABLE "longidentifiersaaab" CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE \"0\"\"LONGIDENTIFIERS_1\" CASCADE;\n");
+EXEC SQL DROP TABLE "0""LONGIDENTIFIERS_1" CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE \"0\"\"LONGIDENTIFIERS_2\" CASCADE;\n");
+EXEC SQL DROP TABLE "0""LONGIDENTIFIERS_2" CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE \"lngIDENTIFIER%% .,()\" CASCADE;\n");
+EXEC SQL DROP TABLE "lngIDENTIFIER% .,()" CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts730.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7030','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts730.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7030','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7030 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

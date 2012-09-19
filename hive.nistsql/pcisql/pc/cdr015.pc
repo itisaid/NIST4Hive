@@ -1,0 +1,245 @@
+/*  EMBEDDED C (file "CDR015.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR015.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENCE INTEGRITY CONSTRAINT FOR  */
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.6 <unique constraint definition>        */
+/*                <unique constraint definition>::=              */
+/*                        <unique specifition>(<unique column    */
+/*                        list>)                                 */
+/*                 <unique specifition>::= UNIQUE|PRIMARY KEY    */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+char EMPNO1[4];
+long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+
+long code1;
+main()
+
+{
+        strcpy(uid,"SUN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr015.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0349 **********************/
+/* This test deletes a row  from PRIMARY KEY    */
+/* TABLE -- SIZ1_P, but there are coresponding rows  in   */
+/* FOREIGN KEY TABLE -- SIZ1_F, this should be an ERROR.   */
+
+printf("\n         FIPS sizing TEST0349             \n");
+printf("              REFERENTIAL INTEGRITY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE FROM SIZ1_P\n");
+printf("        WHERE S1 = 'E1' OR S6 = 'RRR';\n");
+EXEC SQL DELETE FROM SIZ1_P
+        WHERE S1 = 'E1' OR S6 = 'RRR';
+code1=SQLCODE;
+strcpy(EMPNO1,"NV");
+EXEC SQL SELECT S1 INTO :EMPNO1
+        FROM SIZ1_P
+        WHERE S1 = 'E1' AND S2 = 'TTT';
+EXEC SQL ROLLBACK WORK;
+printf("        The correct result is code1 not equal to 0\n");
+printf("                              EMPNO1=E1\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              EMPNO1=%s\n",EMPNO1);
+        if (code1 != 0 && strncmp(EMPNO1,"E1",2) == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0349','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0349','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr015.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+EXEC SQL COMMIT WORK;
+/****************** END TEST0349 *********************/
+
+
+
+/******************** BEGIN TEST0350 **********************/
+/* This test updates a row  from PRIMARY KEY    */
+/* TABLE -- SIZ1_P, there is no such a row  in  */
+/* FOREIGN KEY TABLE -- SIZ1_F.                 */
+
+printf("\n         FIPS sizing TEST0350             \n");
+printf("              REFERENTIAL INTEGRITY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE FROM SIZ1_F\n");
+printf("        WHERE F1 = 'E1';\n");
+printf("\n");
+printf("        UPDATE SIZ1_P\n");
+printf("        SET S1 = 'E9'\n");
+printf("        WHERE S1 = 'E1' AND S2 = 'TTT';\n");
+printf("\n");
+printf("code1 = SQLCODE\n");
+printf("\n");
+printf("        SELECT S1 INTO :EMPNO1\n");
+printf("        FROM SIZ1_P\n");
+printf("        WHERE S1 = 'E9';\n");
+EXEC SQL DELETE FROM SIZ1_F
+        WHERE F1 = 'E1';
+EXEC SQL UPDATE SIZ1_P
+        SET S1 = 'E9'
+        WHERE S1 = 'E1' AND S2 = 'TTT';
+code1=SQLCODE;
+strcpy(EMPNO1,"NV");
+EXEC SQL SELECT S1 INTO :EMPNO1
+        FROM SIZ1_P
+        WHERE S1 = 'E9';
+EXEC SQL ROLLBACK WORK;
+printf("        The correct result is code1 equal to 0\n");
+printf("                              EMPNO1 = E9 \n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              EMPNO1 = %s \n",EMPNO1);
+        if (code1 == 0 && (strncmp(EMPNO1,"E9",2) == 0))
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0350','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0350','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr015.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0350 *********************/
+
+
+
+
+
+/******************** BEGIN TEST0351 ********************/
+/* This program updates a row in PRIMARY KEY TABLE      */
+/* -- SIZ1_P, set (E1,TTS,1,-,-,-,-,-,-) to (E9,TTS,1,- */
+/* -,-,-,-,-), there are (E1,TTS,1,-,-,-,-,-,-)         */
+/* in SIZ1_F.                                           */ 
+
+printf("\n         FIPS sizing TEST0351             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("        UPDATE SIZ1_P\n");
+printf("        SET S1='E9'\n");
+printf("        WHERE S1='E1' AND S2 = 'TTS' AND S3 = 1;\n");
+printf("code1 = SQLCODE;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM SIZ1_P\n");
+printf("        WHERE S1 = 'E1' AND S2 = 'TTS' AND S3 = 1;\n");
+EXEC SQL UPDATE SIZ1_P
+        SET S1 = 'E9'
+        WHERE S1 = 'E1' AND S2 = 'TTS' AND S3 =1;
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM SIZ1_P
+        WHERE S1 = 'E1' AND S2 = 'TTS' AND S3 =1;
+
+EXEC SQL ROLLBACK WORK;
+
+printf("        The correct result is code1 not equal 0\n");
+printf("                              count1 = 1\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              count1 = %ld\n",count1);
+        if (code1 < 0 && count1 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0351','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0351','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr015.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+EXEC SQL COMMIT WORK;
+/******************** END TEST0351 **************************/
+     exit(errcnt);
+
+}
+

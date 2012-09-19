@@ -1,0 +1,954 @@
+/*  EMBEDDED C (file "MPB010.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/2/16 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPB010.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This program tests <grant statement> and <revoke statement>  */
+/*  in non-dynamic SQL.  This is part B of a two-part            */
+/*  concurrency test.  It must be run as HU after MPA010 is      */
+/*  run as FLATER.                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+void
+SLEEEP();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long progno;
+EXEC SQL END DECLARE SECTION;
+long pauze;
+long pauze2;
+long repcnt;
+long iii;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+long fails;
+long maxfls;
+long oldtok;
+long waitin;
+/*  Debugging is turned on by setting debug1 = 1                 */
+long  debug1;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, mpb010.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+printf ("This is part B of a two-part test.  It should be started\n");
+printf ("AFTER mpa010.  Table TOKENS must exist in schema HU.\n\n");
+
+/* to debug program, set debug1 = 1 */
+debug1 = 0;
+maxfls = 1000;
+pauze = 1;
+pauze2 = 2;
+/* This is not a concurrency test. */
+/* Using TEd, increase variable pauze if there is MAYDAY message. */
+progno = 10;
+
+/******************** BEGIN TEST0627 ********************/
+flag = 1;
+
+     printf("                  TEST0627 \n");
+     printf("         <grant statement> (static)\n");
+     printf("             This is program 'B'\n");
+     printf("References:\n");
+     printf("    11.36 <grant statement>\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 3\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf ("You should have already started Program A.\n");
+waitin = 1;
+
+P194:
+if (debug1 != 0)
+  printf("Debug trace: P194\n");
+if (waitin == -1)
+  goto P197;
+fails = 0;
+oldtok = -1;
+printf ("Waiting for the token to reach %ld.\n", waitin);
+P104:
+if (debug1 != 0)
+  printf("Debug trace: P104\n");
+int1 = -1;
+EXEC SQL SELECT TOKEN_NO INTO :int1 FROM HU.TOKENS
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+}
+if (SQLCODE >= 0 && SQLCODE != 100 && int1 != oldtok )
+{
+  printf ("Token = %ld\n", int1);
+  oldtok = int1;
+  fails = 0;
+}
+if (SQLCODE < 0 || SQLCODE == 100 || int1 != waitin)
+{
+  /* Waste time and try again */
+  NOSUBCLASS ();
+  if (strcmp (NORMSQ, "21000") == 0)
+    goto P198;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  024 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P104;
+}
+
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+if (int1 == 1)
+  goto P196;
+if (int1 == 3)
+  goto P190;
+if (int1 == 5)
+  goto P189;
+goto P197;
+
+/* token == 1 */
+P196:
+if (debug1 != 0)
+  printf("Debug trace: P196\n");
+printf ("Program 'B' trying to access inaccessible table.\n\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+printf ("int1 should not be 1; its value is %ld\n\n", int1);
+if (int1 == 1)
+  flag = 0;
+
+printf("INSERT INTO FLATER.GRANT010 VALUES (0);\n");
+EXEC SQL INSERT INTO FLATER.GRANT010 VALUES (0);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("UPDATE FLATER.GRANT010 SET C1 = 0;\n");
+EXEC SQL UPDATE FLATER.GRANT010 SET C1 = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("DELETE FROM FLATER.GRANT010;\n");
+EXEC SQL DELETE FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+waitin = 3;
+goto P195;
+
+/* token == 3 */
+P190:
+if (debug1 != 0)
+  printf("Debug trace: P190\n");
+printf ("Program 'B' trying to access select-only table.\n\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("INSERT INTO FLATER.GRANT010 VALUES (0);\n");
+EXEC SQL INSERT INTO FLATER.GRANT010 VALUES (0);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("UPDATE FLATER.GRANT010 SET C1 = 0;\n");
+EXEC SQL UPDATE FLATER.GRANT010 SET C1 = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("DELETE FROM FLATER.GRANT010;\n");
+EXEC SQL DELETE FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+waitin = 5;
+goto P195;
+
+/* token == 5 */
+P189:
+if (debug1 != 0)
+  printf("Debug trace: P189\n");
+printf ("Program 'B' trying to use all privileges.\n\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("INSERT INTO FLATER.GRANT010 VALUES (0);\n");
+EXEC SQL INSERT INTO FLATER.GRANT010 VALUES (0);
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("UPDATE FLATER.GRANT010 SET C1 = 0;\n");
+EXEC SQL UPDATE FLATER.GRANT010 SET C1 = 0;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010\n");
+printf("  WHERE C1 = 0;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010
+  WHERE C1 = 0;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("DELETE FROM FLATER.GRANT010;\n");
+EXEC SQL DELETE FROM FLATER.GRANT010;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n\n");
+EXEC SQL COMMIT WORK;
+
+printf ("Program 'B' trying to use grant option (should fail).\n\n");
+
+printf("GRANT SELECT ON FLATER.GRANT010 TO SCHANZLE;\n");
+EXEC SQL GRANT SELECT ON FLATER.GRANT010 TO SCHANZLE;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 01007; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE < 0 || strncmp (NORMSQ, "01007", 5) != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+waitin = -1;
+
+P195:
+if (debug1 != 0)
+  printf("Debug trace: P195\n");
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("Incrementing token\n");
+P193:
+if (debug1 != 0)
+  printf("Debug trace: P193\n");
+EXEC SQL UPDATE TOKENS SET TOKEN_NO = TOKEN_NO + 1
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  025 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P193;
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  026 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P193;
+}
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+goto P194;
+
+/* after token == 5 */
+P197:
+if (debug1 != 0)
+  printf("Debug trace: P197\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0627','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       mpb010.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0627','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0627 *********************/
+/******************** BEGIN TEST0628 ********************/
+flag = 1;
+
+     printf("                  TEST0628 \n");
+     printf("         <revoke statement> (static)\n");
+     printf("             This is program 'B'\n");
+     printf("References:\n");
+     printf("    11.37 <revoke statement>\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 3\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("You should have already started Program A.\n");
+waitin = 1;
+
+P160:
+if (debug1 != 0)
+  printf("Debug trace: P160\n");
+if (waitin == -1)
+  goto P163;
+fails = 0;
+oldtok = -1;
+printf ("Waiting for the token to reach %ld.\n", waitin);
+P161:
+if (debug1 != 0)
+  printf("Debug trace: P161\n");
+int1 = -1;
+EXEC SQL SELECT TOKEN_NO INTO :int1 FROM HU.TOKENS
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+}
+if (SQLCODE >= 0 && SQLCODE != 100 && int1 != oldtok )
+{
+  printf ("Token = %ld\n", int1);
+  oldtok = int1;
+  fails = 0;
+}
+if (SQLCODE < 0 || SQLCODE == 100 || int1 != waitin)
+{
+  /* Waste time and try again */
+  NOSUBCLASS ();
+  if (strcmp (NORMSQ, "21000") == 0)
+    goto P198;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  027 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P161;
+}
+
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+if (int1 == 1)
+  goto P162;
+if (int1 == 3)
+  goto P170;
+goto P163;
+
+/* token == 1 */
+P162:
+if (debug1 != 0)
+  printf("Debug trace: P162\n");
+printf ("Program 'B' trying to access insert-only table.\n\n");
+
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO FLATER.GRANT010 VALUES (0);\n");
+EXEC SQL INSERT INTO FLATER.GRANT010 VALUES (0);
+CHCKOK ();
+printf ("\n");
+
+printf("UPDATE FLATER.GRANT010 SET C1 = 0;\n");
+EXEC SQL UPDATE FLATER.GRANT010 SET C1 = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("DELETE FROM FLATER.GRANT010;\n");
+EXEC SQL DELETE FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+waitin = 3;
+goto P164;
+
+/* token == 3 */
+P170:
+if (debug1 != 0)
+  printf("Debug trace: P170\n");
+printf ("Program 'B' trying to access inaccessible table.\n\n");
+
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO FLATER.GRANT010 VALUES (0);\n");
+EXEC SQL INSERT INTO FLATER.GRANT010 VALUES (0);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("UPDATE FLATER.GRANT010 SET C1 = 0;\n");
+EXEC SQL UPDATE FLATER.GRANT010 SET C1 = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("DELETE FROM FLATER.GRANT010;\n");
+EXEC SQL DELETE FROM FLATER.GRANT010;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+waitin = -1;
+
+P164:
+if (debug1 != 0)
+  printf("Debug trace: P164\n");
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("Incrementing token\n");
+P165:
+if (debug1 != 0)
+  printf("Debug trace: P165\n");
+EXEC SQL UPDATE TOKENS SET TOKEN_NO = TOKEN_NO + 1
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  028 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P165;
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  029 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P165;
+}
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+goto P160;
+
+/* after token == 3 */
+P163:
+if (debug1 != 0)
+  printf("Debug trace: P163\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0628','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       mpb010.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0628','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0628 *********************/
+/******************** BEGIN TEST0560 ********************/
+flag = 1;
+
+     printf("                  TEST0560 \n");
+     printf("     Table privileges vs. column privileges\n");
+     printf("             This is program 'B'\n");
+     printf("References:\n");
+     printf("    11.37 <revoke statement>\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("You should have already started Program A.\n");
+waitin = 1;
+
+fails = 0;
+oldtok = -1;
+printf ("Waiting for the token to reach %ld.\n", waitin);
+P151:
+if (debug1 != 0)
+  printf("Debug trace: P151\n");
+int1 = -1;
+EXEC SQL SELECT TOKEN_NO INTO :int1 FROM HU.TOKENS
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+}
+if (SQLCODE >= 0 && SQLCODE != 100 && int1 != oldtok )
+{
+  printf ("Token = %ld\n", int1);
+  oldtok = int1;
+  fails = 0;
+}
+if (SQLCODE < 0 || SQLCODE == 100 || int1 != waitin)
+{
+  /* Waste time and try again */
+  NOSUBCLASS ();
+  if (strcmp (NORMSQ, "21000") == 0)
+    goto P198;
+  fails = fails + 1;
+  if (fails > maxfls*maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  030 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P151;
+}
+
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* token == 1 */
+printf ("Program 'B' testing access to FLATER.X\n\n");
+
+printf("UPDATE FLATER.X SET A = 0;\n");
+EXEC SQL UPDATE FLATER.X SET A = 0;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE FLATER.X SET B = 0;\n");
+EXEC SQL UPDATE FLATER.X SET B = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS ();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("UPDATE FLATER.X SET C = 0;\n");
+EXEC SQL UPDATE FLATER.X SET C = 0;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE FLATER.X SET D = 0;\n");
+EXEC SQL UPDATE FLATER.X SET D = 0;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.X\n");
+printf("  WHERE A = 0 AND B = 2 AND C = 0 AND D = 0;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.X
+  WHERE A = 0 AND B = 2 AND C = 0 AND D = 0;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("Incrementing token\n");
+P155:
+if (debug1 != 0)
+  printf("Debug trace: P155\n");
+EXEC SQL UPDATE TOKENS SET TOKEN_NO = TOKEN_NO + 1
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  031 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P155;
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  SQLSTATE[5] = '\0';
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  032 */
+  SLEEEP ();
+  EXEC SQL ROLLBACK WORK;
+  goto P155;
+}
+/* after token == 1 */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0560','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       mpb010.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0560','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0560 *********************/
+     exit(errcnt);
+
+P198:
+if (debug1 != 0)
+  printf("Debug trace: P198\n");
+printf ("CARDINALITY VIOLATION\n");
+P199:
+if (debug1 != 0)
+  printf("Debug trace: P199\n");
+if (fails > maxfls) {
+  printf("The number of attempts (fails) exceeds variable maxfls.\n");
+  printf("Increase the value of variable maxfls, if needed.\n");
+  printf("Or, increase the value of variable pauze.\n");
+  }
+printf ("MAYDAY    MAYDAY    PROGRAM ABORTING\n");
+printf ("You will have to start this test over.\n");
+exit (-1);
+}
+
+void
+SLEEEP()
+{
+  repcnt = fails * pauze;
+  if (repcnt > 17)
+    repcnt = repcnt * repcnt + pauze2;
+  iii = 1;
+P133: 
+  EXEC SQL COMMIT WORK;
+  int1 = -1;
+  EXEC SQL UPDATE HU.WORKS
+           SET HOURS = -1 WHERE HOURS = :int1;
+  iii = iii + 1;
+  if (iii < repcnt)
+    goto P133;
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

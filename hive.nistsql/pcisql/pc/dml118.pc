@@ -1,0 +1,907 @@
+/*  EMBEDDED C (file "DML118.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/6/2 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML118.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS feature 19.                          */
+/*  This is the dynamic version of DML117.PC.                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml118.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0646 ********************/
+flag = 1;
+
+     printf("                  TEST0646 \n");
+     printf("  Feature 19, Referential delete actions (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 16, 19\n");
+     printf("    11.8  LR.2.a\n");
+     printf("    11.4  LR.2.b\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Simulate a tiny OS with hard quotas (ick!) */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE LUSERS ('        ||
+       '  PRIMARY KEY (LUSER_ID),'    ||
+       '  NAAM         CHAR (10),'    ||
+       '  LUSER_ID     INT,'          ||
+       '  FILE_QUOTA   INT,'          ||
+       '  FILE_USAGE   INT NOT NULL,' ||
+       '  CHECK (FILE_USAGE >= 0 AND' ||
+       '    (FILE_QUOTA IS NULL OR FILE_QUOTA >= FILE_USAGE)))'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* When you delete a user, all his/her files are also deleted */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE LUSER_DATA ('                                     ||
+       '  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE CASCADE,' ||
+       '  PRIMARY KEY (FILE_NAME, LUSER_ID),'                          ||
+       '  FILE_NAME     CHAR (8) NOT NULL,'                            ||
+       '  LUSER_ID     INT NOT NULL,'                                  ||
+       '  LUSER_DATA   CHAR (30))'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE AUDIT_CODES ('                                      ||
+       '  ACTION_KEY       INT PRIMARY KEY,'                             ||
+       '  LUSER_ACTION     CHAR (6) NOT NULL,'                           ||
+       '  CHECK (LUSER_ACTION = ''INSERT'' OR LUSER_ACTION = ''ACCVIO''' ||
+       '    OR LUSER_ACTION = ''DELETE''))'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* This table ostensibly separates UID's that have been valid at some */
+/* time in history from those that have always been invalid.          */
+
+printf("dstmt=\"CREATE TABLE ALL_USER_IDS (LUSER_ID INT UNIQUE)\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE ALL_USER_IDS (LUSER_ID INT UNIQUE)   ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* The persistent audit records need to be consistent in the    */
+/* event that a LUSER_ID is recycled after someone is deleted.  */
+/* The original LUSER_ID is preserved in SAVED_LUSER_ID in case */
+/* it is needed.                                                */
+
+printf("CREATE TABLE AUDIT_RECORDS (\n");
+printf("  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE SET NULL,\n");
+printf("  LUSER_ID         INT,\n");
+printf("  SAVED_LUSER_ID   INT NOT NULL\n");
+printf("    REFERENCES ALL_USER_IDS (LUSER_ID) ON DELETE NO ACTION,\n");
+printf("  ACTION_KEY       INT DEFAULT 0 NOT NULL\n");
+printf("    REFERENCES AUDIT_CODES ON DELETE SET DEFAULT);\n");
+EXEC SQL CREATE TABLE AUDIT_RECORDS (
+  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE SET NULL,
+  LUSER_ID         INT,
+  SAVED_LUSER_ID   INT NOT NULL
+    REFERENCES ALL_USER_IDS (LUSER_ID) ON DELETE NO ACTION,
+  ACTION_KEY       INT DEFAULT 0 NOT NULL
+    REFERENCES AUDIT_CODES ON DELETE SET DEFAULT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Initialize audit codes */
+
+printf("dstmt=\"INSERT INTO AUDIT_CODES VALUES (0, 'ACCVIO')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_CODES VALUES (0, 'ACCVIO')      ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO AUDIT_CODES VALUES (1, 'INSERT')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_CODES VALUES (1, 'INSERT')      ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO AUDIT_CODES VALUES (2, 'DELETE')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_CODES VALUES (2, 'DELETE')      ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+/* Once upon a time, there were three little users. */
+
+printf("dstmt=\"INSERT INTO LUSERS VALUES ('root', 0, NULL, 2)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO LUSERS VALUES ('root', 0, NULL, 2)    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO LUSERS VALUES ('BIFF', 1, 0, 0)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO LUSERS VALUES ('BIFF', 1, 0, 0)       ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO LUSERS VALUES ('Kibo', 2, 1, 1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO LUSERS VALUES ('Kibo', 2, 1, 1)       ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO ALL_USER_IDS VALUES (0)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO ALL_USER_IDS VALUES (0)               ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO ALL_USER_IDS VALUES (1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO ALL_USER_IDS VALUES (1)               ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO ALL_USER_IDS VALUES (2)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO ALL_USER_IDS VALUES (2)               ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+/* Root hated Kibo only slightly less than BIFF */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO LUSER_DATA VALUES (''ROOT1'',' ||
+       '  0, ''BIFF is a total loser'')'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO LUSER_DATA VALUES (''ROOT2'',' ||
+       '  0, ''Kibo wastes disk space'')'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+/* One day, Kibo created a file. */
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+/* Jealous BIFF (no quota) decided to hack Kibo's account */
+
+int1 = 0;
+P199:
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (1, 1, 0)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (1, 1, 0)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+int1 = int1 + 1;
+if (int1 <= 5)
+  goto P199;
+
+/* Finally he succeeded and overwrote Kibo's file with garbage */
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (2, 2, 0)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (2, 2, 0)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (2, 2, 2)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (2, 2, 2)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO LUSER_DATA VALUES (''HAHA'',' ||
+       '  2, ''I G0T KIB0Z PASSW0RD!!!'')'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+/* This angered root, who instantly disbursed group punishment... */
+
+printf("dstmt=\"DELETE FROM LUSERS WHERE NAAM <> 'root'\"\n");
+     strcpy (dstmt,
+     "DELETE FROM LUSERS WHERE NAAM <> 'root'           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM LUSER_DATA\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM LUSER_DATA                   ");
+
+printf("PREPARE S11811 FROM :dstmt;\n");
+EXEC SQL PREPARE S11811 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11811 CURSOR FOR S11811;\n");
+EXEC SQL DECLARE C11811 CURSOR FOR S11811;
+printf("\n");
+
+printf("OPEN C11811;\n");
+EXEC SQL OPEN C11811;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11811 INTO :int1;\n");
+EXEC SQL FETCH C11811 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("CLOSE C11811;\n");
+EXEC SQL CLOSE C11811;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM LUSERS\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM LUSERS                       ");
+
+printf("PREPARE S11812 FROM :dstmt;\n");
+EXEC SQL PREPARE S11812 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11812 CURSOR FOR S11812;\n");
+EXEC SQL DECLARE C11812 CURSOR FOR S11812;
+printf("\n");
+
+printf("OPEN C11812;\n");
+EXEC SQL OPEN C11812;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11812 INTO :int1;\n");
+EXEC SQL FETCH C11812 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C11812;\n");
+EXEC SQL CLOSE C11812;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM AUDIT_RECORDS\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM AUDIT_RECORDS                ");
+
+printf("PREPARE S11813 FROM :dstmt;\n");
+EXEC SQL PREPARE S11813 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11813 CURSOR FOR S11813;\n");
+EXEC SQL DECLARE C11813 CURSOR FOR S11813;
+printf("\n");
+
+printf("OPEN C11813;\n");
+EXEC SQL OPEN C11813;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11813 INTO :int1;\n");
+EXEC SQL FETCH C11813 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+printf("CLOSE C11813;\n");
+EXEC SQL CLOSE C11813;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM AUDIT_RECORDS' ||
+       '  WHERE LUSER_ID IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11814 FROM :longst;\n");
+EXEC SQL PREPARE S11814 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11814 CURSOR FOR S11814;\n");
+EXEC SQL DECLARE C11814 CURSOR FOR S11814;
+printf("\n");
+
+printf("OPEN C11814;\n");
+EXEC SQL OPEN C11814;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11814 INTO :int1;\n");
+EXEC SQL FETCH C11814 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+printf("CLOSE C11814;\n");
+EXEC SQL CLOSE C11814;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM AUDIT_RECORDS' ||
+       '  WHERE SAVED_LUSER_ID IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11815 FROM :longst;\n");
+EXEC SQL PREPARE S11815 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11815 CURSOR FOR S11815;\n");
+EXEC SQL DECLARE C11815 CURSOR FOR S11815;
+printf("\n");
+
+printf("OPEN C11815;\n");
+EXEC SQL OPEN C11815;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11815 INTO :int1;\n");
+EXEC SQL FETCH C11815 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C11815;\n");
+EXEC SQL CLOSE C11815;
+CHCKOK ();
+printf("\n");
+
+/* ...and disabled deletes just for good measure. */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'DELETE FROM AUDIT_CODES' ||
+       ' WHERE LUSER_ACTION = ''DELETE'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM AUDIT_RECORDS' ||
+       '  WHERE ACTION_KEY = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11816 FROM :longst;\n");
+EXEC SQL PREPARE S11816 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11816 CURSOR FOR S11816;\n");
+EXEC SQL DECLARE C11816 CURSOR FOR S11816;
+printf("\n");
+
+int2 = 2;
+printf("int2 = 2;\n");
+printf("OPEN C11816 USING :int2;\n");
+EXEC SQL OPEN C11816 USING :int2;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11816 INTO :int1;\n");
+EXEC SQL FETCH C11816 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C11816;\n");
+EXEC SQL CLOSE C11816;
+CHCKOK ();
+printf("\n");
+
+int2 = 0;
+printf("int2 = 0;\n");
+printf("OPEN C11816 USING :int2;\n");
+EXEC SQL OPEN C11816 USING :int2;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11816 INTO :int1;\n");
+EXEC SQL FETCH C11816 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 8; its value is %ld\n\n", int1);
+if (int1 != 8)
+  flag = 0;
+
+printf("CLOSE C11816;\n");
+EXEC SQL CLOSE C11816;
+CHCKOK ();
+printf("\n");
+
+/* See if that "ON DELETE NO ACTION" did what it was supposed to do. */
+/* It should _not_ allow us to create dangling references.           */
+
+printf("dstmt=\"DELETE FROM ALL_USER_IDS\"\n");
+     strcpy (dstmt,
+     "DELETE FROM ALL_USER_IDS                          ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE AUDIT_RECORDS CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE AUDIT_RECORDS CASCADE                  ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE ALL_USER_IDS CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE ALL_USER_IDS CASCADE                   ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE AUDIT_CODES CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE AUDIT_CODES CASCADE                    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE LUSER_DATA CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE LUSER_DATA CASCADE                     ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE LUSERS CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE LUSERS CASCADE                         ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0646','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml118.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0646','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0646 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

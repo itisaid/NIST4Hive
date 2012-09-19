@@ -1,0 +1,405 @@
+/*  EMBEDDED C (file "XOP720.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/05/05 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP720.PC                                                    */
+/*  WRITTEN BY: E. Pratt                                         */
+/*                                                               */
+/*  GRANT ALL with optional PRIVILEGES omitted                   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open CAE SQL                                         */
+/*        SECTION 5.3.9                                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   02/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+/* This program must be run under authorization id XOPEN3 */
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+long countr;
+char ch1[3];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+
+/* nosubclass variables */
+char NORMSQ[6];
+char ALPNUM[37];
+long norm1;
+long norm2;
+
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation defined    */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+
+norm1 = 2;
+/* subclass begins in position 3 of char array NORMSQ    */
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+        NORMSQ[norm1] = '0';
+    }
+
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+         goto P213;
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+      NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+   for (norm2 = 0; norm2 < 37; norm2++)
+      /* valid characters are 0-9 A-z */
+   {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01). These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+    if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+       NORMSQ[1] = '0';
+P213:
+    return;
+}
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) == 0 &&
+strncmp (NORMSQ, SQLSTATE, 5) != 0)
+printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+
+
+main()
+{
+
+printf("\nThis Test Program must be run after xop719.pc but\n");
+printf("before xop721.pc, xop722.pc and xop723.pc\n");
+printf("\n");
+
+/* Log in as user XOPEN3 */
+     strcpy(uid,"XOPEN3");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+errflg = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop720.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* initialise NOSUBCLASS comparison variable */
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0720 ********************/
+
+     printf("\n                     TEST0720             \n");
+     printf("X/O,GRANT ALL with optional PRIVILEGES omitted \n");
+     printf(" X/Open CAE SQL SEC. 5.3.9\n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf ("### SELECT COUNT(*) INTO :countr FROM XOPEN1.AAA;\n");
+     printf ("### SELECT A1 INTO :ch1 FROM XOPEN1.AAA \n");
+     printf ("###        WHERE A2 = 'AB';\n");
+     printf ("### UPDATE XOPEN1.AAA SET A1 = 'EP' WHERE A2 = 'AB'; \n");
+     printf ("### SELECT A1 INTO :ch1 FROM XOPEN1.AAA \n");
+     printf ("###        WHERE A2 = 'AB';\n");
+     printf ("### INSERT INTO XOPEN1.AAA VALUES('XX','YY','ZZ');\n");
+     printf ("### SELECT COUNT(*) INTO :countr FROM XOPEN1.AAA;\n");
+     printf ("### DELETE FROM XOPEN1.BBB WHERE B1 = 'BA'\n");
+     printf ("### UPDATE XOPEN1.BBB SET B1 = 'SP' WHERE B2 = 'BE'; \n");
+     printf ("### INSERT INTO XOPEN1.BBB VALUES('XX','YY','ZZ');\n");
+     printf ("### INSERT INTO XOPEN1.BBB VALUES('XB','YB','BF');\n");
+     printf ("### SELECT COUNT(*) INTO :countr FROM XOPEN1.CCC;\n");
+     printf ("### INSERT INTO XOPEN1.CCC VALUES('XC','YC','BC');\n");
+     printf("\n\n=================================================\n");
+
+/* Check the number of rows in table AAA is correct */
+     countr = 0;
+     EXEC SQL SELECT COUNT(*) INTO :countr FROM XOPEN1.AAA;
+     printf("Number of rows should be 4, it is %ld\n",countr);
+
+     if (countr != 4)
+     {
+          printf ("*** Problem found (TEST STEP NUMBER 1) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that a row can be selected from table AAA */
+     strcpy(SQLSTATE,"x");
+     strcpy(ch1,"  ");
+     EXEC SQL SELECT A1 INTO :ch1 FROM XOPEN1.AAA 
+       WHERE A2 = 'AB';
+     ch1[2] = '\0';
+     printf("ch1 should be AA , it is %s\n",ch1);
+
+     CHCKOK();
+     if (strncmp(NORMSQ ,"00000",5) != 0 && strncmp(ch1,"AA",2) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 2) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that a value in a row can be updated */
+     strcpy(SQLSTATE,"x");
+     strcpy(ch1,"  ");
+     EXEC SQL UPDATE XOPEN1.AAA SET A1 = 'EP' 
+       WHERE A2 = 'AB';
+     printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 3) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that the updated row has the expected value */
+     strcpy(SQLSTATE,"x");
+     strcpy(ch1,"  ");
+     EXEC SQL SELECT A1 INTO :ch1 FROM XOPEN1.AAA 
+       WHERE A2 = 'AB';
+     ch1[2] = '\0';
+     printf("ch1 should be EP , it is %s\n",ch1);
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0 && strncmp(ch1,"EP",2) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 4) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* user id XOPEN3 does not have INSERT privileges on XOPEN1.AAA */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL INSERT INTO XOPEN1.AAA 
+       VALUES('XX','YY','ZZ');
+     SQLSTATE[5] = '\0';
+     printf("SQLSTATE should be 42000 , it is %s\n",SQLSTATE);
+
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"42000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 5) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that the number of rows in AAA remained the same */
+     countr = 0;
+     EXEC SQL SELECT COUNT(*) INTO :countr FROM XOPEN1.AAA;
+     printf("Number of rows should be 4, it is %ld\n",countr);
+
+     if (countr != 4)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 6) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that a row can be deleted, XOPEN2 is able to */
+/* grant INSERT & DELETE to XOPEN3 (see xop719.pc) */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL DELETE FROM XOPEN1.BBB WHERE B1 = 'BA';
+
+     printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 7) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL ROLLBACK WORK;
+     printf("\n\n=================================================\n");
+
+/* Check that a row in table BBB cannot be updated */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL UPDATE XOPEN1.BBB SET B1 = 'SP' WHERE B2 = 'BE';
+     SQLSTATE[5] = '\0';
+     printf("SQLSTATE should be 42000 , it is %s\n",SQLSTATE);
+
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"42000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 8) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that a row, that does not duplicate any values */
+/* already in table BBB, can be inserted */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL INSERT INTO XOPEN1.BBB 
+       VALUES('XX','YY','ZZ');
+     
+     printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0 && SQLCODE != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 9) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+printf("\n\n=================================================\n");
+
+/* Check that a row, that duplicates a value in the */
+/* UNIQUE constrained field, cannot be inserted */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL INSERT INTO XOPEN1.BBB 
+       VALUES('XB','YB','BF');
+     SQLSTATE[5] = '\0';
+     printf("SQLSTATE should be 23000  , it is %s\n",SQLSTATE);
+
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"23000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 10) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+printf("\n\n=================================================\n");
+
+/* Check that SELECT on table CCC does not work, XOPEN3 was not */
+/* granted this privilege */
+strcpy(SQLSTATE,"x");
+     countr = 0;
+     EXEC SQL SELECT COUNT(*) INTO :countr FROM XOPEN1.CCC;
+     SQLSTATE[5] = '\0';
+     printf("SQLSTATE should be 42000  , it is %s\n",SQLSTATE);
+
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"42000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 11) ! *** \n");
+      errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* Check that INSERT on table CCC does not work, XOPEN3 was not */
+/* granted this privilege */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL INSERT INTO XOPEN1.CCC 
+       VALUES('XC','YC','BC');
+     SQLSTATE[5] = '\0';
+     printf("SQLSTATE should be 42000  , it is %s\n",SQLSTATE);
+
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"42000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 12) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+/* No ROLLBACK - This program is part of a set, run */
+/* together, xop719.pc and xop720.pc to xop723.pc */
+
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 12 ###\n");
+     printf("\n\n");
+     printf("### Program xop719 MUST be run before ###\n");
+     printf("### this program can be re-run        ###\n");
+
+     if (errflg==0)
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0720','pass','PC');
+ printf("\n\n      xop720.pc      *** pass ***     ");
+ }
+ else
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0720','fail','PC');
+ errcnt = errcnt + 1;
+ printf("\n\n      xop720.pc      *** fail ***     ");
+ }
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0720 ********************/
+
+     exit(errcnt);
+
+}
+

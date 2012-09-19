@@ -1,0 +1,649 @@
+/*  EMBEDDED C (file "DML021.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/02/10 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML021.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*     THIS ROUTINE TESTS THE DATA TYPES IN SQL LANGUAGE.        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*              SECTION 5.5 <data type>                          */
+/*                                                               */
+/*              Database Language Embedded SQL                   */
+/*                          X3.168-1989                          */
+/*              SECTION 9. <embedded SQL Host Program>           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     char1[21];
+     long     long1;
+     short     short1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long   i;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml021.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0084 ********************/
+
+printf("                  TEST0084\n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE  AA (chartest  CHAR(20)) \n");
+printf ("  *** INSERT INTO   AA \n");
+printf ("  ***      VALUES('abcdefghijklmnopqrst') \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO AA 
+          VALUES('abcdefghijklmnopqrst');
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+EXEC SQL DECLARE DATA1 CURSOR
+      FOR SELECT CHARTEST
+          FROM   AA;
+EXEC SQL OPEN DATA1;
+
+strcpy(char1,"                    ");
+
+EXEC SQL FETCH DATA1 INTO :char1;
+
+printf("     char1 = %s\n",char1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (strncmp(char1,"abcdefghijklmnopqrst",20)==0)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0084','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0084','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0084 ********************/
+/******************** BEGIN TEST0173 ********************/
+ 
+printf("                  TEST0173   \n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE  BB (chartest  CHAR) \n");
+printf ("  *** INSERT INTO   BB \n");
+printf ("  ***      VALUES('a') \n");
+printf("\n\n");
+i = -1;
+
+EXEC SQL INSERT INTO BB 
+          VALUES('a');
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+EXEC SQL DECLARE DATA01 CURSOR
+      FOR SELECT CHARTEST
+          FROM   BB;
+EXEC SQL OPEN DATA01;
+
+strcpy(char1,"                    ");
+
+EXEC SQL FETCH DATA01 INTO :char1;
+i = SQLCODE;
+
+printf("     char1 = %s\n",char1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (strncmp(char1,"a",1)==0 && i == 0)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0173','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0173','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0173 ********************/
+/******************** BEGIN TEST0085 ********************/
+ 
+printf("                  TEST0085\n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** CREATE TABLE CC (chartest  CHARACTER(20)) \n");
+printf ("*** INSERT INTO CC  \n");
+printf ("***      VALUES('abcdefghijklmnopqrst') \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO CC 
+          VALUES('abcdefghijklmnopqrst');
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+EXEC SQL DECLARE DATA2 CURSOR
+      FOR SELECT CHARTEST
+          FROM   CC;
+EXEC SQL OPEN DATA2;
+
+strcpy(char1,"                   ");
+
+EXEC SQL FETCH DATA2 INTO :char1;
+
+printf("     char1 = %s\n",char1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (strncmp(char1,"abcdefghijklmnopqrst",20)==0)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0085','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0085','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0085 ********************/
+/******************** BEGIN TEST0174 ********************/
+ 
+printf("                   TEST0174   \n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE  DD (chartest  CHARACTER) \n");
+printf ("  *** INSERT INTO   DD \n");
+printf ("  ***      VALUES('a') \n");
+printf("\n\n");
+i = -1;
+
+EXEC SQL INSERT INTO DD 
+          VALUES('a');
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+EXEC SQL DECLARE DATA02 CURSOR
+      FOR SELECT CHARTEST
+          FROM   DD;
+EXEC SQL OPEN DATA02;
+
+strcpy(char1,"                    ");
+
+EXEC SQL FETCH DATA02 INTO :char1;
+i = SQLCODE;
+
+printf("     char1 = %s\n",char1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (strncmp(char1,"a",1)==0 && i == 0)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0174','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0174','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0174 ********************/
+/******************** BEGIN TEST0086 ********************/
+ 
+printf("                   TEST0086\n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE EE (inttest  INTEGER) \n");
+printf ("  *** INSERT INTO  EE  \n");
+printf ("  ***      VALUES(123456) \n");
+printf("\n\n");
+i = -1;
+
+EXEC SQL INSERT INTO EE 
+          VALUES(123456);
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+EXEC SQL DECLARE DATA3 CURSOR
+      FOR SELECT INTTEST
+          FROM   EE;
+EXEC SQL OPEN DATA3;
+
+long1 = 0;
+
+EXEC SQL FETCH DATA3 INTO :long1;
+i = SQLCODE;
+
+printf("     long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 123456 && i == 0)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0086','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0086','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0086 ********************/
+/******************** BEGIN TEST0087 ********************/
+ 
+
+printf("                   TEST0087\n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE FF (inttest  INT) \n");
+printf ("  *** INSERT INTO  FF \n");
+printf ("  ***     VALUES(123456) \n");
+printf("\n\n");
+i = -1;
+
+EXEC SQL INSERT INTO FF 
+          VALUES(123456);
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+EXEC SQL DECLARE DATA4 CURSOR
+      FOR SELECT INTTEST
+          FROM   FF;
+EXEC SQL OPEN DATA4;
+
+long1=0;
+
+EXEC SQL FETCH DATA4 INTO :long1;
+i = SQLCODE;
+
+printf("     long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 123456 && i == 0)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0087','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0087','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0087 ********************/
+/******************** BEGIN TEST0089 ********************/
+ 
+printf("                   TEST0089\n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n"); 
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE HH (smalltest  SMALLINT) \n");
+printf ("  *** INSERT INTO  HH \n");
+printf ("  ***     VALUES(123) \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO HH 
+          VALUES(123);
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+short1=0;
+
+EXEC SQL SELECT * 
+         INTO   :short1
+         FROM   HH;
+
+printf("     short1 = %d\n",short1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (short1 == 123 )
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0089','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0089','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0089 ********************/
+/******************** BEGIN TEST0175 ********************/
+ 
+printf("                   TEST0175   \n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE MM (numtest  NUMERIC) \n");
+printf ("  *** INSERT INTO  MM \n");
+printf ("  ***      VALUES(7) \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO MM 
+          VALUES(7);
+
+printf("  After INSERT sqlcode = %ld \n",SQLCODE);
+long1 = 0;
+
+EXEC SQL SELECT *
+         INTO   :long1
+         FROM   MM;
+
+printf("  select from MM long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 7) 
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0175','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0175','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0175 ********************/
+/******************** BEGIN TEST0176 ********************/
+ 
+printf("                  TEST0176   \n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE NN (numtest  NUMERIC(9)) \n");
+printf ("  *** INSERT INTO  NN \n");
+printf ("  ***      VALUES(123456789) \n");
+printf("\n\n");
+
+EXEC SQL DELETE FROM NN;
+
+EXEC SQL INSERT INTO NN 
+          VALUES(123456789);
+
+printf("  After INSERT sqlcode = %ld \n",SQLCODE);
+
+long1 = 0;
+
+EXEC SQL SELECT * 
+         INTO   :long1
+         FROM   NN;
+
+printf("     long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 123456789)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0176','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0176','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0176 ********************/
+/******************** BEGIN TEST0177 ********************/
+ 
+printf("                  TEST0177   \n");
+printf("reference: X3.135-1989 5.5  & Cross ref. 8.6   \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE OO (numtest  NUMERIC(9)) \n");
+printf ("  *** INSERT INTO  OO \n");
+printf ("  ***      VALUES(123456789) \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO OO 
+          VALUES(123456789);
+
+printf("  After INSERT sqlcode = %ld \n",SQLCODE);
+
+EXEC SQL DECLARE DATA011 CURSOR
+      FOR SELECT NUMTEST
+          FROM   OO;
+EXEC SQL OPEN DATA011;
+
+long1 = 0;
+
+EXEC SQL FETCH DATA011 INTO :long1;
+
+printf("     long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 123456789)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0177','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0177','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0177 ********************/
+/******************** BEGIN TEST0178 ********************/
+ 
+printf("                  TEST0178   \n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE QQ (numtest  DECIMAL) \n");
+printf ("  *** INSERT INTO  QQ \n");
+printf ("  ***      VALUES(56) \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO QQ 
+          VALUES(56);
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+long1 = 0;
+
+EXEC SQL SELECT *
+         INTO   :long1
+         FROM   QQ;
+
+printf("     long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 56)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0178','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0178','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0178 ********************/
+/******************** BEGIN TEST0179 ********************/
+ 
+printf("                  TEST0179   \n");
+printf("reference: X3.135-1989 5.5  & X3.168-1989 9.  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE RR (numtest  DECIMAL(8)) \n");
+printf ("  *** INSERT INTO  RR \n");
+printf ("  ***      VALUES(12345678) \n");
+printf("\n\n");
+
+EXEC SQL INSERT INTO RR 
+          VALUES(12345678);
+
+printf("  After INSERT sqlcode = %ld\n",SQLCODE);
+
+long1 = 0;
+
+EXEC SQL SELECT *
+         INTO   :long1
+         FROM   RR;
+
+printf("     long1 = %ld\n",long1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (long1 == 12345678)
+     {
+     printf("\n\n            *** pass ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0179','pass','PC');
+     }
+else
+     {
+     printf("\n\n  dml021.pc  *** fail ***\n");
+     EXEC SQL INSERT INTO TESTREPORT
+           VALUES('0179','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("=====================================================\n");
+printf("\n\n\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0179 ********************/
+
+exit(errcnt);
+}

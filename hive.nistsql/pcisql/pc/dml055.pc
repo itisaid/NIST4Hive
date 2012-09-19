@@ -1,0 +1,326 @@
+/*  EMBEDDED C (file "DML055.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/02/10 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML055.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*     THIS ROUTINE TESTS THE LIMIT ON THE PRECISION OF VARIOUS  */
+/*     DATA TYPES.                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     long    count1;
+     long    count2;
+     double   float1;
+     double   float2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long   code1;
+    long   code2;
+    long    t1;
+    long    t2;
+    double  f1;
+    double  f2;
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml055.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0243 ********************/
+ 
+printf("       FIPS sizing TEST0243\n");
+printf("reference: X3.135-1989 5.5  FIPS PUB 127-1 Section 13.5\n"); 
+printf("   The precision of SMALLINT is at least 4 digits\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE HH (SMALLTEST  SMALLINT) \n");
+printf("         INSERT INTO HH \n");
+printf("          VALUES(9999);\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count1 FROM HH\n");
+printf("         WHERE SMALLTEST = 9999; \n");
+printf("\n");
+printf("         INSERT INTO HH \n");
+printf("          VALUES(-9999);\n");
+printf("\n");
+printf("         SELECT SMALLTEST INTO :count2 FROM HH\n");
+printf("         WHERE SMALLTEST = -9999; \n");
+printf("\n\n");
+
+EXEC SQL DELETE FROM HH;
+EXEC SQL INSERT INTO HH 
+          VALUES(9999);
+code1 = SQLCODE;
+count1 = 0;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM HH
+         WHERE SMALLTEST = 9999; 
+
+EXEC SQL INSERT INTO HH 
+          VALUES(-9999);
+code2 = SQLCODE;
+count2 = 0;
+EXEC SQL SELECT SMALLTEST INTO :count2 FROM HH
+         WHERE SMALLTEST = -9999; 
+
+
+printf("The correct answer should be:\n");
+printf("                code1 = 0, code2 = 0 \n");
+printf("                count1 = 1,count2 = -9999\n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld,code2 = %ld\n",code1,code2);
+printf("                count1 = %ld,count2 = %ld\n",count1,count2);
+
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && code2 == 0 && count1 == 1 && count2 == -9999)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0243','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0243','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml055.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0243 ********************/
+
+
+
+/******************** BEGIN TEST0244 ********************/
+ 
+printf("       FIPS sizing TEST0244\n");
+printf("reference: X3.135-1989 5.5  FIPS PUB 127-1 Section 13.5\n"); 
+printf("   The precision of INTEGER is at least 9 digits\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("  *** CREATE TABLE EE (INTTEST  INTEGER) \n");
+printf("         INSERT INTO EE \n");
+printf("          VALUES(999999999);\n");
+printf("\n");
+printf("         SELECT INTTEST INTO :count1\n");
+printf("         FROM EE\n");
+printf("         WHERE INTTEST = 999999999;\n");
+printf("\n");
+printf("         INSERT INTO EE \n");
+printf("          VALUES(-999999999);\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count2\n");
+printf("         FROM EE\n");
+printf("         WHERE INTTEST = -999999999;\n");
+printf("\n\n");
+count1 = 0;
+count2 = 0;
+
+EXEC SQL DELETE FROM EE;
+EXEC SQL INSERT INTO EE 
+          VALUES(999999999);
+code1 = SQLCODE;
+
+EXEC SQL SELECT INTTEST INTO :count1
+         FROM EE
+         WHERE INTTEST = 999999999;
+
+EXEC SQL INSERT INTO EE 
+          VALUES(-999999999);
+code2 = SQLCODE;
+
+EXEC SQL SELECT COUNT(*) INTO :count2
+         FROM EE
+         WHERE INTTEST = -999999999;
+
+printf("The correct answer should be:\n");
+printf("                code1 = 0, code2 = 0 \n");
+printf("                count1 = 999999999,count2 = 1\n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld,code2 = %ld\n",code1,code2);
+printf("                count1 = %ld,count2 = %ld\n",count1,count2);
+
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && code2 == 0 && count1 == 999999999 && count2 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0244','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0244','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml055.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0244 ********************/
+
+
+
+/******************** BEGIN TEST0245 ********************/
+ 
+printf("      FIPS sizing TEST0245\n");
+printf("reference: X3.135-1989 5.5  FIPS PUB 127-1 Section 13.5\n"); 
+printf("   The precision of DECIMAL is at least 15 digits\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("     *** CREATE TABLE PP_15 (NUMTEST  DECIMAL(15,15)) \n");
+printf("         INSERT INTO PP_15 \n");
+printf("          VALUES(.123456789012345);\n");
+printf("\n");
+printf("         DECLARE DATA9 CURSOR\n");
+printf("         FOR SELECT NUMTEST\n");
+printf("          FROM   PP_15;\n");
+printf("         FETCH DATA9 INTO :float1;\n");
+printf("         INSERT INTO PP_15 \n");
+printf("          VALUES(-.912345678901234);\n");
+printf("         FETCH DATA9 INTO :float2;\n");
+printf("\n");
+printf("EXEC SQL SELECT COUNT(*) INTO :count1 FROM PP_15\n");
+printf("         WHERE NUMTEST = -0.912345678901234;\n");
+printf("\n\n");
+EXEC SQL DELETE FROM PP_15;
+
+EXEC SQL INSERT INTO PP_15 
+          VALUES(.123456789012345);
+
+code1 = SQLCODE;
+
+
+EXEC SQL DECLARE DATA9 CURSOR
+      FOR SELECT NUMTEST
+          FROM   PP_15;
+EXEC SQL OPEN DATA9;
+
+EXEC SQL FETCH DATA9 INTO :float1;
+EXEC SQL CLOSE DATA9;
+
+EXEC SQL DELETE FROM PP_15;
+EXEC SQL INSERT INTO PP_15 
+          VALUES(-.912345678901234);
+
+code2 = SQLCODE;
+
+EXEC SQL OPEN DATA9;
+EXEC SQL FETCH DATA9 INTO :float2;
+EXEC SQL CLOSE DATA9;
+
+count1 = 0;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM PP_15
+         WHERE NUMTEST = -0.912345678901234;
+
+printf("The correct answer should be:\n");
+printf("                code1 = 0, code2 = 0 \n");
+printf("                float1 = 0.123456789012345\n");
+printf("                float2 = -0.912345678901234\n");
+printf("                count1 = 1 \n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld,code2 = %ld\n",code1,code2);
+printf("                float1 = %15.15f\n",float1);
+printf("                float2 = %15.15f\n",float2);
+printf("                count1 = %ld\n",count1);
+
+if (float1 > 0.123456789012345)
+    {
+     f1 = float1 - 0.123456789012345;
+    }
+else 
+     f1 = 0.123456789012345 - float1;
+if (float2 > -0.912345678901234)
+    {
+     f2 = float2 + 0.912345678901234;
+    }
+else 
+     f2 = -0.912345678901234 - float2;
+if (f1 < 0.000000000000005)
+     {
+     t1 = 0;
+     }
+else 
+     t1 =1;
+if (f2 < 0.000000000000005)
+     {
+     t2 = 0;
+     }
+else 
+    t2 =1;
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && code2 == 0 && t1 == 0 && t2 == 0 && count1 ==1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0245','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0245','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml055.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0245 ********************/
+
+exit(errcnt);
+}

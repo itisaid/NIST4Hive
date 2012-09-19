@@ -1,0 +1,17 @@
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/cts5sch1.sql
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/cts5sch2.sql
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/cts5sch3.sql
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/cts5sch4.sql
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/cts5sch5.sql
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schem10.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schem11.std
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schem12.std
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema1.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema2.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema3.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema4.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema5.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema6.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema7.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema8.smi
+source /home/frank/work/hive-0.9.0-plsql-support/src/hive.nistsql/nist/schema/schema9.smi

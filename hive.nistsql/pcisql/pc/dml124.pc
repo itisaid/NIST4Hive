@@ -1,0 +1,2266 @@
+/*  EMBEDDED C (file "DML124.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/6/20 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML124.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*  Bug fixes & stronger pass criteria by Joan Sullivan 2/27/95  */
+/*  Corrected in accordance with X3H2-95-105 5/9/95              */
+/*                                                               */
+/*  This routine tests SQL descriptors, which is a feature of    */
+/*  Dynamic SQL.                                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+long int3;
+long int4;
+long int5;
+long int6;
+long int7;
+float flt1;
+     char dstmt[51];
+     char longst[241];
+char cname[21];
+short indic1;
+char c2[3];
+char c4[5];
+char c6[7];
+char c7[8];
+short smint1;
+EXEC SQL END DECLARE SECTION;
+long intprc;
+long relprc;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml124.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* This test was converted from a FLATER test to a HU test.  We */
+/* need CONCATBUF. */
+printf("CREATE TABLE CONCATBUF (ZZ CHAR(240));\n");
+EXEC SQL CREATE TABLE CONCATBUF (ZZ CHAR(240));
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0653 ********************/
+flag = 1;
+
+     printf("                  TEST0653 \n");
+     printf("       Descriptors:  DESCRIBE OUTPUT\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    17.8 -- <describe statement>\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.2 GR.3 -- limit on descriptor areas is\n");
+     printf("                 implementation-defined\n");
+     printf("     7.9 SR.10 -- nullability\n");
+     printf("     6.1 -- <data type>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE CACHESTAT (\n");
+printf("  HIT_RATIO FLOAT (17) NOT NULL,\n");
+printf("  FRAGMENTATION_PCT FLOAT);\n");
+EXEC SQL CREATE TABLE CACHESTAT (
+  HIT_RATIO FLOAT (17) NOT NULL,
+  FRAGMENTATION_PCT FLOAT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW COMBINATIONS (INTTEST,\n");
+printf("  REALTEST, SMALLTEST, DOUBLETEST, NUMTEST,\n");
+printf("  DECTEST) AS SELECT * FROM HU.EE, HU.GG, HU.HH,\n");
+printf("  HU.II, HU.LL, HU.PP;\n");
+EXEC SQL CREATE VIEW COMBINATIONS (INTTEST,
+  REALTEST, SMALLTEST, DOUBLETEST, NUMTEST,
+  DECTEST) AS SELECT * FROM HU.EE, HU.GG, HU.HH,
+  HU.II, HU.LL, HU.PP;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("ALLOCATE DESCRIPTOR 'D12411' WITH MAX 8;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12411' WITH MAX 8;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009!\n");
+  printf ("This test must be rewritten by NIST (in the event of\n");
+  printf ("a validation) to accomodate implementation-defined\n");
+  printf ("limit on <occurrences>.\n");
+}
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM HU.STAFF\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM HU.STAFF                            ");
+
+printf("PREPARE S12411 FROM :dstmt;\n");
+EXEC SQL PREPARE S12411 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE OUTPUT S12411 USING SQL DESCRIPTOR 'D12411';\n");
+EXEC SQL DESCRIBE OUTPUT S12411 USING SQL DESCRIPTOR 'D12411';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12411' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' :int1 = COUNT;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+/* CHARACTER_SET_* and COLLATION_* are orphaned features */
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 1\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 1
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 1 (CHARACTER); its value is %ld\n", int1);
+printf ("int2 should be 0 (NOT NULL); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'EMPNUM              '; its value is '%s'\n", cname);
+printf ("int4 should be 3; its value is %ld\n", int4);
+printf ("int5 should be > 2; its value is %ld\n\n", int5);
+if (int1 != 1 || int2 != 0 || int3 != 0)
+  flag = 0;
+if (int4 != 3 || int5 <= 2)
+  flag = 0;
+if (strcmp (cname, "EMPNUM              ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 2\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 2
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 1 (CHARACTER); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'EMPNAME             '; its value is '%s'\n", cname);
+printf ("int4 should be 20; its value is %ld\n", int4);
+printf ("int5 should be > 14; its value is %ld\n\n", int5);
+if (int1 != 1 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 != 20 || int5 <= 14)
+  flag = 0;
+if (strcmp (cname, "EMPNAME             ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 3\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 3
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 3 (DECIMAL); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'GRADE               '; its value is '%s'\n", cname);
+printf ("int4 should be >= 4; its value is %ld\n", int4);
+printf ("int5 should be 0; its value is %ld\n\n", int5);
+if (int1 != 3 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 4 || int5 != 0)
+  flag = 0;
+if (strcmp (cname, "GRADE               ") != 0)
+  flag = 0;
+
+printf("GET DESCRIPTOR 'D12411' VALUE 4\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 4
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 1 (CHARACTER); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'CITY                '; its value is '%s'\n", cname);
+printf ("int4 should be 15; its value is %ld\n", int4);
+printf ("int5 should be > 11; its value is %ld\n\n", int5);
+if (int1 != 1 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 != 15 || int5 <= 11)
+  flag = 0;
+if (strcmp (cname, "CITY                ") != 0)
+  flag = 0;
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT * FROM CACHESTAT, COMBINATIONS' ||
+       '  WHERE HIT_RATIO < .97'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S12412 FROM :longst;\n");
+EXEC SQL PREPARE S12412 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12412 USING SQL DESCRIPTOR 'D12411';\n");
+EXEC SQL DESCRIBE S12412 USING SQL DESCRIPTOR 'D12411';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12411' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' :int1 = COUNT;
+CHCKOK ();
+printf ("int1 should be 8; its value is %ld\n\n", int1);
+if (int1 != 8)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 1\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 1
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 6 (FLOAT); its value is %ld\n", int1);
+printf ("int2 should be 0 (NOT NULL); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'HIT_RATIO           '; its value is '%s'\n", cname);
+printf ("int4 should be > 0; its value is %ld\n\n", int4);
+if (int1 != 6 || int2 != 0 || int3 != 0)
+  flag = 0;
+if (int4 <= 0)
+  flag = 0;
+if (strcmp (cname, "HIT_RATIO           ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 2\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 2
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 6 (FLOAT); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'FRAGMENTATION_PCT   '; its value is '%s'\n", cname);
+printf ("int4 should be > 0; its value is %ld\n\n", int4);
+if (int1 != 6 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 1)
+  flag = 0;
+if (strcmp (cname, "FRAGMENTATION_PCT   ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 3\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 3
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 4 (INTEGER); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'INTTEST             '; its value is '%s'\n", cname);
+printf ("int4 should be > 0; its value is %ld\n", int4);
+printf ("int5 should be 0; its value is %ld\n\n", int5);
+if (int1 != 4 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 1 || int5 != 0)
+  flag = 0;
+if (strcmp (cname, "INTTEST             ") != 0)
+  flag = 0;
+intprc = int4;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 4\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 4
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 7 (REAL); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'REALTEST            '; its value is '%s'\n", cname);
+printf ("int4 should be > 0; its value is %ld\n\n", int4);
+if (int1 != 7 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 1)
+  flag = 0;
+if (strcmp (cname, "REALTEST            ") != 0)
+  flag = 0;
+relprc = int4;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+int6 = 5;
+printf ("int6 = 5\n");
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE :int6\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE :int6
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 5 (SMALLINT); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'SMALLTEST           '; its value is '%s'\n", cname);
+printf ("int4 should be 0 < int4 <= %ld; its value is %ld\n", intprc, int4);
+printf ("int5 should be 0; its value is %ld\n\n", int5);
+if (int1 != 4 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 1 || int4 > intprc || int5 != 0)
+  flag = 0;
+if (strcmp (cname, "SMALLTEST           ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 6\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 6
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 8 (DOUBLE); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'DOUBLETEST          '; its value is '%s'\n", cname);
+printf ("int4 should be > %ld; its value is %ld\n\n", relprc, int4);
+if (int1 != 8 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 1 || int4 <= relprc)
+  flag = 0;
+if (strcmp (cname, "DOUBLETEST          ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 7\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 7
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 2 (NUMERIC); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'NUMTEST             '; its value is '%s'\n", cname);
+printf ("int4 should be 13; its value is %ld\n", int4);
+printf ("int5 should be 6; its value is %ld\n\n", int5);
+if (int1 != 2 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 != 13 || int5 != 6)
+  flag = 0;
+if (strcmp (cname, "NUMTEST             ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 8\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 8
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 3 (DECIMAL); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'DECTEST             '; its value is '%s'\n", cname);
+printf ("int4 should be >= 13; its value is %ld\n", int4);
+printf ("int5 should be 6; its value is %ld\n\n", int5);
+if (int1 != 3 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 < 13 || int5 != 6)
+  flag = 0;
+if (strcmp (cname, "DECTEST             ") != 0)
+  flag = 0;
+
+/* Unnamed columns */
+
+printf("dstmt=\"SELECT USER, COUNT(*) FROM HU.ECCO\"\n");
+     strcpy (dstmt,
+     "SELECT USER, COUNT(*) FROM HU.ECCO                ");
+
+printf("PREPARE S12413 FROM :dstmt;\n");
+EXEC SQL PREPARE S12413 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12413 USING SQL DESCRIPTOR 'D12411';\n");
+EXEC SQL DESCRIBE S12413 USING SQL DESCRIPTOR 'D12411';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12411' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' :int1 = COUNT;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* Nullability of columns:  7.9 GR.10 */
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 1\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 1
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = LENGTH, :int5 = OCTET_LENGTH;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 1 (CHARACTER); its value is %ld\n", int1);
+printf ("int2 should be 0 (NOT NULL); its value is %ld\n", int2);
+printf ("int3 should be 1 (unnamed); its value is %ld\n", int3);
+printf ("cname is '%s'\n", cname);
+printf ("int4 should be > 7; its value is %ld\n", int4);
+printf ("int5 should be > 4; its value is %ld\n", int5);
+if (int1 != 1 || int2 != 0 || int3 != 1)
+  flag = 0;
+if (int4 <= 7 || int5 <= 4) {
+  printf ("The correct values for int4 and int5 are implementation-\n");
+  printf ("defined, but must be justified since they are unexpectedly low.\n");
+  flag = 0;
+}
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int5 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12411' VALUE 2\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 2
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int4 = PRECISION, :int5 = SCALE;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 2 <= int1 <= 5; its value is %ld\n", int1);
+printf ("int2 should be 0 (NOT NULL); its value is %ld\n", int2);
+printf ("int3 should be 1 (unnamed); its value is %ld\n", int3);
+printf ("cname is '%s'\n", cname);
+printf ("int4 should be > 0; its value is %ld\n", int4);
+printf ("int5 should be 0; its value is %ld\n\n", int5);
+if (int1 < 2 || int1 > 5 || int2 != 0)
+  flag = 0;
+if (int3 != 1 || int4 < 1 || int5 != 0)
+  flag = 0;
+
+/* X3H2-95-103:  Question marks are possibly nullable */
+/* 17.9 GR.3.e.iii  Unnamed columns */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT HIT_RATIO AS HR, FRAGMENTATION_PCT * ?' ||
+       '  FROM CACHESTAT'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S12414 FROM :longst;\n");
+EXEC SQL PREPARE S12414 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12414 USING SQL DESCRIPTOR 'D12411';\n");
+EXEC SQL DESCRIBE S12414 USING SQL DESCRIPTOR 'D12411';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12411' VALUE 1\n");
+printf("  :int1 = NULLABLE, :int2 = UNNAMED, :cname = NAME;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 1
+  :int1 = NULLABLE, :int2 = UNNAMED, :cname = NAME;
+printf ("int1 should be 0 (NOT NULL); its value is %ld\n", int1);
+printf ("int2 should be 0 (named); its value is %ld\n", int2);
+printf("cname should be 'HR                  '; its value is '%s'\n\n", cname);
+if (int1 != 0 || int2 != 0)
+  flag = 0;
+if (strcmp (cname, "HR                  ") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("GET DESCRIPTOR 'D12411' VALUE 2\n");
+printf("  :int1 = NULLABLE, :int2 = UNNAMED;\n");
+EXEC SQL GET DESCRIPTOR 'D12411' VALUE 2
+  :int1 = NULLABLE, :int2 = UNNAMED;
+printf ("int1 should be 1 (NULLABLE); its value is %ld\n", int1);
+printf ("int2 should be 1 (unnamed); its value is %ld\n\n", int2);
+if (int1 != 1 || int2 != 1)
+  flag = 0;
+
+printf("DEALLOCATE DESCRIPTOR 'D12411';\n");
+EXEC SQL DEALLOCATE DESCRIPTOR 'D12411';
+CHCKOK ();
+printf("\n");
+
+P199:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE CACHESTAT CASCADE;\n");
+EXEC SQL DROP TABLE CACHESTAT CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW COMBINATIONS CASCADE;\n");
+EXEC SQL DROP VIEW COMBINATIONS CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0653','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml124.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0653','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0653 *********************/
+/******************** BEGIN TEST0654 ********************/
+flag = 1;
+
+     printf("                  TEST0654 \n");
+     printf("    Descriptors:  INTO SQL DESCRIPTOR\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    17.9 -- <using clause>\n");
+     printf("    17.8 -- <describe statement>\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.2 GR.3 -- limit on descriptor areas is\n");
+     printf("                 implementation-defined\n");
+     printf("     6.1 -- <data type>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE BANKTAB (\n");
+printf("  NAAM CHAR (10), BALANCE NUMERIC (7, 2),\n");
+printf("  INTEREST DECIMAL (3, 2), TRANSACTIONS INT,\n");
+printf("  PAYMENTS SMALLINT, INTEREST_RATE FLOAT,\n");
+printf("  ANNUAL_YIELD REAL, FRACTIONAL_CENTS DOUBLE PRECISION);\n");
+EXEC SQL CREATE TABLE BANKTAB (
+  NAAM CHAR (10), BALANCE NUMERIC (7, 2),
+  INTEREST DECIMAL (3, 2), TRANSACTIONS INT,
+  PAYMENTS SMALLINT, INTEREST_RATE FLOAT,
+  ANNUAL_YIELD REAL, FRACTIONAL_CENTS DOUBLE PRECISION);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO BANKTAB VALUES (\n");
+printf("  'Bubba', 524.07, 2.42, 13, 1, 3.0, 3.1, -.256);\n");
+EXEC SQL INSERT INTO BANKTAB VALUES (
+  'Bubba', 524.07, 2.42, 13, 1, 3.0, 3.1, -.256);
+CHCKOK ();
+printf("\n");
+
+/* Allocate one extra occurrence */
+
+printf("ALLOCATE DESCRIPTOR 'D12421' WITH MAX 9;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12421' WITH MAX 9;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009!\n");
+  printf ("This test must be rewritten by NIST (in the event of\n");
+  printf ("a validation) to accomodate implementation-defined\n");
+  printf ("limit on <occurrences>.\n");
+}
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM BANKTAB\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM BANKTAB                             ");
+
+printf("PREPARE S12421 FROM :dstmt;\n");
+EXEC SQL PREPARE S12421 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE OUTPUT S12421 USING SQL DESCRIPTOR 'D12421';\n");
+EXEC SQL DESCRIBE OUTPUT S12421 USING SQL DESCRIPTOR 'D12421';
+CHCKOK ();
+printf("\n");
+
+/* Doctor results of describe to "match" host language variables */
+/* Implementation-dependent precisions, etc. */
+
+printf("SET DESCRIPTOR 'D12421' VALUE 1\n");
+printf("  LENGTH = 20;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 1
+  LENGTH = 20;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12421' VALUE 2\n");
+printf("  TYPE = 7;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 2
+  TYPE = 7;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12421' VALUE 3\n");
+printf("  TYPE = 7;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 3
+  TYPE = 7;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12421' VALUE 5\n");
+printf("  TYPE = 4;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 5
+  TYPE = 4;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12421' VALUE 6\n");
+printf("  TYPE = 7;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 6
+  TYPE = 7;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12421' VALUE 8\n");
+printf("  TYPE = 7;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 8
+  TYPE = 7;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12421 CURSOR FOR S12421;\n");
+EXEC SQL DECLARE C12421 CURSOR FOR S12421;
+printf("\n");
+
+printf("OPEN C12421;\n");
+EXEC SQL OPEN C12421;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12421 INTO SQL DESCRIPTOR 'D12421';\n");
+EXEC SQL FETCH C12421 INTO SQL DESCRIPTOR 'D12421';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12421' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' :int1 = COUNT;
+CHCKOK ();
+printf ("int1 should be 8; its value is %ld\n\n", int1);
+if (int1 != 8)
+  flag = 0;
+
+int1 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12421' VALUE 1\n");
+printf("  :int1 = INDICATOR, :cname = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 1
+  :int1 = INDICATOR, :cname = DATA;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf("cname should be 'Bubba               '; its value is '%s'\n\n", cname);
+if (int1 != 0 || strcmp (cname, "Bubba               ") != 0)
+  flag = 0;
+
+int1 = -1;
+flt1 = -1.0;
+printf("GET DESCRIPTOR 'D12421' VALUE 2\n");
+printf("  :int1 = INDICATOR, :flt1 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 2
+  :int1 = INDICATOR, :flt1 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("flt1 should be 524.07 +-.005; its value is %f\n\n", flt1);
+if (int1 != 0 || flt1 < 524.065 || flt1 > 524.075)
+  flag = 0;
+
+int1 = -1;
+flt1 = -1.0;
+printf("GET DESCRIPTOR 'D12421' VALUE 3\n");
+printf("  :int1 = INDICATOR, :flt1 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 3
+  :int1 = INDICATOR, :flt1 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("flt1 should be 2.42 +-.005; its value is %f\n\n", flt1);
+if (int1 != 0 || flt1 < 2.415 || flt1 > 2.425)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12421' VALUE 4\n");
+printf("  :int1 = INDICATOR, :int2 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 4
+  :int1 = INDICATOR, :int2 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("int2 should be 13; its value is %ld\n\n", int2);
+if (int1 != 0 || int2 != 13)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12421' VALUE 5\n");
+printf("  :int1 = INDICATOR, :int2 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 5
+  :int1 = INDICATOR, :int2 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("int2 should be 1; its value is %ld\n\n", int2);
+if (int1 != 0 || int2 != 1)
+  flag = 0;
+
+int1 = -1;
+flt1 = -1.0;
+printf("GET DESCRIPTOR 'D12421' VALUE 6\n");
+printf("  :int1 = INDICATOR, :flt1 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 6
+  :int1 = INDICATOR, :flt1 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("flt1 should be 3.0 +-.05; its value is %f\n\n", flt1);
+if (int1 != 0 || flt1 < 2.95 || flt1 > 3.05)
+  flag = 0;
+
+int1 = -1;
+flt1 = -1.0;
+printf("GET DESCRIPTOR 'D12421' VALUE 7\n");
+printf("  :int1 = INDICATOR, :flt1 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 7
+  :int1 = INDICATOR, :flt1 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("flt1 should be 3.1 +-.05; its value is %f\n\n", flt1);
+if (int1 != 0 || flt1 < 3.05 || flt1 > 3.15)
+  flag = 0;
+
+int1 = -1;
+flt1 = -1.0;
+printf("GET DESCRIPTOR 'D12421' VALUE 8\n");
+printf("  :int1 = INDICATOR, :flt1 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 8
+  :int1 = INDICATOR, :flt1 = DATA;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("flt1 should be -.256 +-.0005; its value is %f\n\n", flt1);
+if (int1 != 0 || flt1 < -.2565 || flt1 > -.2555)
+  flag = 0;
+
+/* 17.4 GR 4, no data (SQLSTATE 02000) if <item number> > COUNT */
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12421' VALUE 9\n");
+printf("  :int1 = INDICATOR;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 9
+  :int1 = INDICATOR;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Implicit casting:  17.9 GR.7 */
+/* Substitute integer for real */
+
+printf("SET DESCRIPTOR 'D12421' VALUE 2\n");
+printf("  TYPE = 4;\n");
+EXEC SQL SET DESCRIPTOR 'D12421' VALUE 2
+  TYPE = 4;
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE C12421;\n");
+EXEC SQL CLOSE C12421;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C12421;\n");
+EXEC SQL OPEN C12421;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12421 INTO SQL DESCRIPTOR 'D12421';\n");
+EXEC SQL FETCH C12421 INTO SQL DESCRIPTOR 'D12421';
+CHCKOK ();
+printf("\n");
+
+/* Make sure it didn't munge the settings */
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+int6 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12421' VALUE 2\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int6 = INDICATOR, :int4 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 2
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int6 = INDICATOR, :int4 = DATA;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 4 (INTEGER); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'BALANCE             '; its value is '%s'\n", cname);
+printf ("int4 should be 524; its value is %ld\n", int4);
+printf ("int6 should be 0; its value is %ld\n\n", int6);
+if (int1 != 4 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int4 != 524 || int6 != 0)
+  flag = 0;
+if (strcmp (cname, "BALANCE             ") != 0)
+  flag = 0;
+
+/* Test null */
+
+printf("CLOSE C12421;\n");
+EXEC SQL CLOSE C12421;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE BANKTAB SET BALANCE = NULL;\n");
+EXEC SQL UPDATE BANKTAB SET BALANCE = NULL;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C12421;\n");
+EXEC SQL OPEN C12421;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12421 INTO SQL DESCRIPTOR 'D12421';\n");
+EXEC SQL FETCH C12421 INTO SQL DESCRIPTOR 'D12421';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int6 = -1;
+int7 = -1;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxx");
+
+printf("GET DESCRIPTOR 'D12421' VALUE 2\n");
+printf("  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,\n");
+printf("  :cname = NAME, :int6 = INDICATOR, :int7 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12421' VALUE 2
+  :int1 = TYPE, :int2 = NULLABLE, :int3 = UNNAMED,
+  :cname = NAME, :int6 = INDICATOR, :int7 = DATA;
+cname[20] = '\0';
+CHCKOK ();
+printf ("int1 should be 4 (INTEGER); its value is %ld\n", int1);
+printf ("int2 should be 1 (NULLABLE); its value is %ld\n", int2);
+printf ("int3 should be 0 (named); its value is %ld\n", int3);
+printf ("cname should be 'BALANCE             '; its value is '%s'\n", cname);
+printf ("int6 should be -1; its value is %ld\n\n", int6);
+if (int1 != 4 || int2 != 1 || int3 != 0)
+  flag = 0;
+if (int6 != -1)
+  flag = 0;
+if (strcmp (cname, "BALANCE             ") != 0)
+  flag = 0;
+
+P198:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* TEd Hook #1 */
+printf("DROP TABLE BANKTAB CASCADE;\n");
+EXEC SQL DROP TABLE BANKTAB CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+/* TEd Hook #2 */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0654','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml124.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0654','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0654 *********************/
+/******************** BEGIN TEST0655 ********************/
+flag = 1;
+
+     printf("                  TEST0655 \n");
+     printf("    Descriptors:  USING SQL DESCRIPTOR\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    17.9 -- <using clause>\n");
+     printf("    17.10 -- <execute statement>\n");
+     printf("    17.14 -- <dynamic open statement>\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.2 GR.3 -- limit on descriptor areas is\n");
+     printf("                 implementation-defined\n");
+     printf("     6.1 -- <data type>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* TEd Hook #1 */
+printf("CREATE TABLE BANKTAB (\n");
+printf("  NAAM CHAR (10), BALANCE NUMERIC (7, 2),\n");
+printf("  INTEREST DECIMAL (3, 2), TRANSACTIONS INT,\n");
+printf("  PAYMENTS SMALLINT, INTEREST_RATE FLOAT,\n");
+printf("  ANNUAL_YIELD REAL, FRACTIONAL_CENTS DOUBLE PRECISION);\n");
+EXEC SQL CREATE TABLE BANKTAB (
+  NAAM CHAR (10), BALANCE NUMERIC (7, 2),
+  INTEREST DECIMAL (3, 2), TRANSACTIONS INT,
+  PAYMENTS SMALLINT, INTEREST_RATE FLOAT,
+  ANNUAL_YIELD REAL, FRACTIONAL_CENTS DOUBLE PRECISION);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+/* TEd Hook #2 */
+
+printf("ALLOCATE DESCRIPTOR 'D12431' WITH MAX 8;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12431' WITH MAX 8;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009!\n");
+  printf ("This test must be rewritten by NIST (in the event of\n");
+  printf ("a validation) to accomodate implementation-defined\n");
+  printf ("limit on <occurrences>.\n");
+}
+printf("\n");
+
+/* Now we're going to do implicit casting in the other direction */
+
+printf("SET DESCRIPTOR 'D12431' COUNT = 8;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' COUNT = 8;
+CHCKOK ();
+printf("\n");
+
+/* Name is NULL */
+
+printf("SET DESCRIPTOR 'D12431' VALUE 1\n");
+printf("  TYPE = 2, PRECISION = 3, SCALE = 0, INDICATOR = -1;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 1
+  TYPE = 2, PRECISION = 3, SCALE = 0, INDICATOR = -1;
+CHCKOK ();
+printf("\n");
+
+flt1 = 3785.2;
+printf("SET DESCRIPTOR 'D12431' VALUE 2\n");
+printf("  DATA = :flt1, TYPE = 7, INDICATOR = 0;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 2
+  DATA = :flt1, TYPE = 7, INDICATOR = 0;
+CHCKOK ();
+printf("\n");
+
+int1 = 1;
+int2 = 4;
+int3 = 0;
+printf("int1 = 1\n");
+printf("int2 = 4\n");
+printf("int3 = 0\n");
+strcpy (c4, "7.67");
+printf("SET DESCRIPTOR 'D12431' VALUE 3\n");
+printf("  TYPE = :int1, LENGTH = :int2,\n");
+printf("  INDICATOR = :int3, DATA = :c4;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 3
+  TYPE = :int1, LENGTH = :int2,
+  INDICATOR = :int3, DATA = :c4;
+CHCKOK ();
+printf("\n");
+
+int1 = 4;
+printf ("int1 = 4\n");
+int2 = 5;
+printf("SET DESCRIPTOR 'D12431' VALUE :int1\n");
+printf("  TYPE = 4, INDICATOR = 0, DATA = :int2;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE :int1
+  TYPE = 4, INDICATOR = 0, DATA = :int2;
+CHCKOK ();
+printf("\n");
+
+int2 = 0;
+printf("SET DESCRIPTOR 'D12431' VALUE 5\n");
+printf("  TYPE = 4, INDICATOR = 0, DATA = :int2;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 5
+  TYPE = 4, INDICATOR = 0, DATA = :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (c6, "010.95");
+printf("SET DESCRIPTOR 'D12431' VALUE 6\n");
+printf("  TYPE = 1, LENGTH = 6,\n");
+printf("  INDICATOR = 0, DATA = :c6");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 6
+  TYPE = 1, LENGTH = 6,
+  INDICATOR = 0, DATA = :c6;
+CHCKOK ();
+printf("\n");
+
+/* 17.5 GR.5.a:  character set fields are automatically set */
+
+int1 = 2;
+printf ("int1 = 2\n");
+strcpy (c2, "11");
+printf ("c2 = '%s'\n", c2);
+printf("SET DESCRIPTOR 'D12431' VALUE 7\n");
+printf("  TYPE = 1, INDICATOR = 0, LENGTH = :int1, DATA = :c2;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 7
+  TYPE = 1, INDICATOR = 0, LENGTH = :int1, DATA = :c2;
+CHCKOK ();
+printf("\n");
+
+flt1 = .3;
+printf("SET DESCRIPTOR 'D12431' VALUE 8\n");
+printf("  TYPE = 7, INDICATOR = 0, DATA = :flt1;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 8
+  TYPE = 7, INDICATOR = 0, DATA = :flt1;
+CHCKOK ();
+printf("\n");
+
+/* Here goes nothing */
+
+printf("dstmt=\"INSERT INTO BANKTAB VALUES (?,?,?,?,?,?,?,?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO BANKTAB VALUES (?,?,?,?,?,?,?,?)      ");
+
+printf("PREPARE S12431 FROM :dstmt;\n");
+EXEC SQL PREPARE S12431 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12431 USING SQL DESCRIPTOR 'D12431';\n");
+EXEC SQL EXECUTE S12431 USING SQL DESCRIPTOR 'D12431';
+CHCKOK ();
+printf("\n");
+
+/* Verify results without using descriptors */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM BANKTAB\n");
+printf("  WHERE NAAM IS NULL\n");
+printf("  AND BALANCE >= 3785.19 AND BALANCE <= 3785.21\n");
+printf("  AND INTEREST = 7.67\n");
+printf("  AND TRANSACTIONS = 5\n");
+printf("  AND PAYMENTS = 0\n");
+printf("  AND INTEREST_RATE >= 10.94 AND INTEREST_RATE <= 10.96\n");
+printf("  AND ANNUAL_YIELD >= 10.99 AND ANNUAL_YIELD <= 11.01\n");
+printf("  AND FRACTIONAL_CENTS >= 0.29 AND FRACTIONAL_CENTS <= 0.31;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM BANKTAB
+  WHERE NAAM IS NULL
+  AND BALANCE >= 3785.19 AND BALANCE <= 3785.21
+  AND INTEREST = 7.67
+  AND TRANSACTIONS = 5
+  AND PAYMENTS = 0
+  AND INTEREST_RATE >= 10.94 AND INTEREST_RATE <= 10.96
+  AND ANNUAL_YIELD >= 10.99 AND ANNUAL_YIELD <= 11.01
+  AND FRACTIONAL_CENTS >= 0.29 AND FRACTIONAL_CENTS <= 0.31;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/* Now substitute some equal values in various fields in the */
+/* descriptor and test for equality.                         */
+
+printf("SET DESCRIPTOR 'D12431' VALUE 1\n");
+printf("  TYPE = 6, PRECISION = 1, INDICATOR = -1;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 1
+  TYPE = 6, PRECISION = 1, INDICATOR = -1;
+CHCKOK ();
+printf("\n");
+
+smint1 = 5;
+printf("SET DESCRIPTOR 'D12431' VALUE 4\n");
+printf("  TYPE = 5, INDICATOR = 0, DATA = :smint1;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 4
+  TYPE = 5, INDICATOR = 0, DATA = :smint1;
+CHCKOK ();
+printf("\n");
+
+smint1 = 0;
+printf("SET DESCRIPTOR 'D12431' VALUE 5\n");
+printf("  TYPE = 5, INDICATOR = 0, DATA = :smint1;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 5
+  TYPE = 5, INDICATOR = 0, DATA = :smint1;
+CHCKOK ();
+printf("\n");
+
+strcpy (c7, "010.950");
+printf("SET DESCRIPTOR 'D12431' VALUE 6\n");
+printf("  TYPE = 1, LENGTH = 7,\n");
+printf("  INDICATOR = 0, DATA = :c7;\n");
+EXEC SQL SET DESCRIPTOR 'D12431' VALUE 6
+  TYPE = 1, LENGTH = 7,
+  INDICATOR = 0, DATA = :c7;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM BANKTAB'            ||
+       ' WHERE (NAAM = ? OR NAAM IS NULL) AND BALANCE = ?' ||
+       ' AND INTEREST = ? AND TRANSACTIONS = ?'  ||
+       ' AND PAYMENTS = ? AND INTEREST_RATE = ?' ||
+       ' AND ANNUAL_YIELD = ? AND FRACTIONAL_CENTS = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S12432 FROM :longst;\n");
+EXEC SQL PREPARE S12432 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12432 CURSOR FOR S12432;\n");
+EXEC SQL DECLARE C12432 CURSOR FOR S12432;
+printf("\n");
+
+printf("OPEN C12432 USING SQL DESCRIPTOR 'D12431';\n");
+EXEC SQL OPEN C12432 USING SQL DESCRIPTOR 'D12431';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C12432 INTO :int1;\n");
+EXEC SQL FETCH C12432 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C12432;\n");
+EXEC SQL CLOSE C12432;
+CHCKOK ();
+printf("\n");
+
+printf("DEALLOCATE DESCRIPTOR 'D12431';\n");
+EXEC SQL DEALLOCATE DESCRIPTOR 'D12431';
+CHCKOK ();
+printf("\n");
+
+P197:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE BANKTAB CASCADE;\n");
+EXEC SQL DROP TABLE BANKTAB CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0655','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml124.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0655','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0655 *********************/
+/******************** BEGIN TEST0656 ********************/
+flag = 1;
+
+     printf("                  TEST0656 \n");
+     printf("         Descriptors:  datetimes\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("     6.1 -- <data type> esp. temporal types\n");
+     printf("    10.1 -- <interval qualifier>\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.9 -- <using clause>\n");
+     printf("    17.10 -- <execute statement>\n");
+     printf("    17.14 -- <dynamic open statement>\n");
+     printf("    17.2 GR.3 -- limit on descriptor areas is\n");
+     printf("                 implementation-defined\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE LOTSA_DATETIMES (\n");
+printf("  C1 DATE, C2 TIME, C3 TIMESTAMP,\n");
+printf("  C4 INTERVAL YEAR, C5 INTERVAL MONTH, C6 INTERVAL DAY,\n");
+printf("  C7 INTERVAL HOUR, C8 INTERVAL MINUTE, C9 INTERVAL SECOND,\n");
+printf("  C10 INTERVAL YEAR TO MONTH,\n");
+printf("  C11 INTERVAL DAY TO HOUR,\n");
+printf("  C12 INTERVAL DAY TO MINUTE,\n");
+printf("  C13 INTERVAL DAY TO SECOND,\n");
+printf("  C14 INTERVAL HOUR TO MINUTE,\n");
+printf("  C15 INTERVAL HOUR TO SECOND,\n");
+printf("  C16 INTERVAL MINUTE TO SECOND);\n");
+EXEC SQL CREATE TABLE LOTSA_DATETIMES (
+  C1 DATE, C2 TIME, C3 TIMESTAMP,
+  C4 INTERVAL YEAR, C5 INTERVAL MONTH, C6 INTERVAL DAY,
+  C7 INTERVAL HOUR, C8 INTERVAL MINUTE, C9 INTERVAL SECOND,
+  C10 INTERVAL YEAR TO MONTH,
+  C11 INTERVAL DAY TO HOUR,
+  C12 INTERVAL DAY TO MINUTE,
+  C13 INTERVAL DAY TO SECOND,
+  C14 INTERVAL HOUR TO MINUTE,
+  C15 INTERVAL HOUR TO SECOND,
+  C16 INTERVAL MINUTE TO SECOND);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("ALLOCATE DESCRIPTOR 'D12441' WITH MAX 16;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12441' WITH MAX 16;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009!\n");
+  printf ("This test must be rewritten by NIST (in the event of\n");
+  printf ("a validation) to accomodate implementation-defined\n");
+  printf ("limit on <occurrences>.\n");
+}
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM LOTSA_DATETIMES\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM LOTSA_DATETIMES                     ");
+
+printf("PREPARE S12441 FROM :dstmt;\n");
+EXEC SQL PREPARE S12441 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE OUTPUT S12441 USING SQL DESCRIPTOR 'D12441';\n");
+EXEC SQL DESCRIBE OUTPUT S12441 USING SQL DESCRIPTOR 'D12441';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12441' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' :int1 = COUNT;
+CHCKOK ();
+printf ("int1 should be 16; its value is %ld\n\n", int1);
+if (int1 != 16)
+  flag = 0;
+
+/* The LENGTH field of the descriptor is tested in DML154, test 0849.   */
+
+int1 = -1;
+int2 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 1\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 1
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE;
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n", int1);
+printf("int2 should be 1; its value is %ld\n\n", int2);
+if (int1 != 9 || int2 != 1)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 2\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 2
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = PRECISION;
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n", int1);
+printf("int2 should be 2; its value is %ld\n", int2);
+printf("int3 should be 0; its value is %ld\n\n", int3);
+if (int1 != 9 || int2 != 2 || int3 != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 3\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 3
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = PRECISION;
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n", int1);
+printf("int2 should be 3; its value is %ld\n", int2);
+printf("int3 should be 6; its value is %ld\n\n", int3);
+if (int1 != 9 || int2 != 3 || int3 != 6)
+  flag = 0;
+
+/* Interval leading field precision = 2:  10.1 SR.5 */
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 4\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 4
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 1; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 1 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 5\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 5
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 2; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 2 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 6\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 6
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 3; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 3 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 7\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 7
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 4; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 4 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 8\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 8
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 5; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 5 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 9\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION,\n");
+printf("  :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 9
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION,
+  :int4 = PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 6; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n", int3);
+printf("int4 should be 6; its value is %ld\n\n", int4);
+if (int1 != 10 || int2 != 6 || int3 != 2)
+  flag = 0;
+if (int4 != 6)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 10\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 10
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 7; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 7 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 11\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 11
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 8; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 8 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 12\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 12
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 9; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 9 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 13\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION,\n");
+printf("  :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 13
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION,
+  :int4 = PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 10; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n", int3);
+printf("int4 should be 6; its value is %ld\n\n", int4);
+if (int1 != 10 || int2 != 10 || int3 != 2)
+  flag = 0;
+if (int4 != 6)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 14\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 14
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 11; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n\n", int3);
+if (int1 != 10 || int2 != 11 || int3 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 15\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION,\n");
+printf("  :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 15
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION,
+  :int4 = PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 12; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n", int3);
+printf("int4 should be 6; its value is %ld\n\n", int4);
+if (int1 != 10 || int2 != 12 || int3 != 2)
+  flag = 0;
+if (int4 != 6)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 16\n");
+printf("  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,\n");
+printf("  :int3 = DATETIME_INTERVAL_PRECISION,\n");
+printf("  :int4 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 16
+  :int1 = TYPE, :int2 = DATETIME_INTERVAL_CODE,
+  :int3 = DATETIME_INTERVAL_PRECISION,
+  :int4 = PRECISION;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n", int1);
+printf("int2 should be 13; its value is %ld\n", int2);
+printf("int3 should be 2; its value is %ld\n", int3);
+printf("int4 should be 6; its value is %ld\n\n", int4);
+if (int1 != 10 || int2 != 13 || int3 != 2)
+  flag = 0;
+if (int4 != 6)
+  flag = 0;
+
+/* Set the data values in the descriptor and insert */
+
+strcpy (dstmt, "DATE '1994-06-24'                                 ");
+printf("SET DESCRIPTOR 'D12441' VALUE 1\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 1
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "TIME '14:41:10'                                   ");
+printf("SET DESCRIPTOR 'D12441' VALUE 2\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 2
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "TIMESTAMP '1994-12-25 00:00:00.000000'            ");
+printf("SET DESCRIPTOR 'D12441' VALUE 3\n");
+printf("  INDICATOR = 0,\n");
+printf("  TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 3
+  INDICATOR = 0,
+  TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '01' YEAR                                ");
+printf("SET DESCRIPTOR 'D12441' VALUE 4\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 4
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '05' MONTH                               ");
+printf("SET DESCRIPTOR 'D12441' VALUE 5\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 5
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '20' DAY                                 ");
+printf("SET DESCRIPTOR 'D12441' VALUE 6\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 6
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '30' HOUR                                ");
+printf("SET DESCRIPTOR 'D12441' VALUE 7\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 7
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '15' MINUTE                              ");
+printf("SET DESCRIPTOR 'D12441' VALUE 8\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 8
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12441' VALUE 9\n");
+printf("  INDICATOR = -1;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 9
+  INDICATOR = -1;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '03-11' YEAR TO MONTH                    ");
+printf("SET DESCRIPTOR 'D12441' VALUE 10\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 10
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '01 16' DAY TO HOUR                      ");
+printf("SET DESCRIPTOR 'D12441' VALUE 11\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 11
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '01 16:10' DAY TO MINUTE                 ");
+printf("SET DESCRIPTOR 'D12441' VALUE 12\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 12
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '01 16:10:07.000000' DAY TO SECOND       ");
+printf("SET DESCRIPTOR 'D12441' VALUE 13\n");
+printf("  INDICATOR = 0, DATA =\n");
+printf("  :dstmt, TYPE = 1, LENGTH = 50;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 13
+  INDICATOR = 0, DATA =
+  :dstmt, TYPE = 1, LENGTH = 50;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '02:17' HOUR TO MINUTE                   ");
+printf("SET DESCRIPTOR 'D12441' VALUE 14\n");
+printf("  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 14
+  INDICATOR = 0, TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '02:17:56.000000' HOUR TO SECOND         ");
+printf("SET DESCRIPTOR 'D12441' VALUE 15\n");
+printf("  INDICATOR = 0, DATA =\n");
+printf("  :dstmt, TYPE = 1, LENGTH = 50;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 15
+  INDICATOR = 0, DATA =
+  :dstmt, TYPE = 1, LENGTH = 50;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '00:56.000000' MINUTE TO SECOND          ");
+printf("SET DESCRIPTOR 'D12441' VALUE 16\n");
+printf("  INDICATOR = 0, DATA =\n");
+printf("  :dstmt, TYPE = 1, LENGTH = 50;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 16
+  INDICATOR = 0, DATA =
+  :dstmt, TYPE = 1, LENGTH = 50;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO LOTSA_DATETIMES VALUES (' ||
+       '  ?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S12442 FROM :longst;\n");
+EXEC SQL PREPARE S12442 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12442 USING SQL DESCRIPTOR 'D12441';\n");
+EXEC SQL EXECUTE S12442 USING SQL DESCRIPTOR 'D12441';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM LOTSA_DATETIMES WHERE\n");
+printf("  C1 = DATE '1994-06-24' AND C2 = TIME '14:41:10'\n");
+printf("  AND C3 = TIMESTAMP '1994-12-25 00:00:00'\n");
+printf("  AND C4 = INTERVAL '1' YEAR\n");
+printf("  AND C5 = INTERVAL '5' MONTH AND C6 = INTERVAL '20' DAY\n");
+printf("  AND C7 = INTERVAL '30' HOUR AND C8 = INTERVAL '15' MINUTE\n");
+printf("  AND C9 IS NULL AND\n");
+printf("  C10 = INTERVAL '3-11' YEAR TO MONTH AND\n");
+printf("  C11 = INTERVAL '1 16' DAY TO HOUR AND\n");
+printf("  C12 = INTERVAL '1 16:10' DAY TO MINUTE AND\n");
+printf("  C13 = INTERVAL '1 16:10:07' DAY TO SECOND AND\n");
+printf("  C14 = INTERVAL '2:17' HOUR TO MINUTE AND\n");
+printf("  C15 = INTERVAL '2:17:56' HOUR TO SECOND AND\n");
+printf("  C16 = INTERVAL '0:56' MINUTE TO SECOND;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM LOTSA_DATETIMES WHERE
+  C1 = DATE '1994-06-24' AND C2 = TIME '14:41:10'
+  AND C3 = TIMESTAMP '1994-12-25 00:00:00'
+  AND C4 = INTERVAL '1' YEAR
+  AND C5 = INTERVAL '5' MONTH AND C6 = INTERVAL '20' DAY
+  AND C7 = INTERVAL '30' HOUR AND C8 = INTERVAL '15' MINUTE
+  AND C9 IS NULL AND
+  C10 = INTERVAL '3-11' YEAR TO MONTH AND
+  C11 = INTERVAL '1 16' DAY TO HOUR AND
+  C12 = INTERVAL '1 16:10' DAY TO MINUTE AND
+  C13 = INTERVAL '1 16:10:07' DAY TO SECOND AND
+  C14 = INTERVAL '2:17' HOUR TO MINUTE AND
+  C15 = INTERVAL '2:17:56' HOUR TO SECOND AND
+  C16 = INTERVAL '0:56' MINUTE TO SECOND;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/* Yet more implicit casting */
+
+strcpy (dstmt, "DATE '1994-12-25'                                 ");
+printf("SET DESCRIPTOR 'D12441' VALUE 3\n");
+printf("  TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 3
+  TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+smint1 = 1;
+printf("SET DESCRIPTOR 'D12441' VALUE 4\n");
+printf("  TYPE = 5, DATA = :smint1;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 4
+  TYPE = 5, DATA = :smint1;
+CHCKOK ();
+printf("\n");
+
+/* 17.9 GR.5.b.iv  NULLs do not generate exception for invalid cast */
+
+printf("SET DESCRIPTOR 'D12441' VALUE 9\n");
+printf("  TYPE = 8;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 9
+  TYPE = 8;
+CHCKOK ();
+printf("\n");
+
+/* Syntax required by SQL-92 */
+
+strcpy (dstmt, "INTERVAL '1 16:10' DAY TO MINUTE                  ");
+printf("SET DESCRIPTOR 'D12441' VALUE 12\n");
+printf("  TYPE = 1, LENGTH = 50,\n");
+printf("  DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 12
+  TYPE = 1, LENGTH = 50,
+  DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+/* Nice, normal syntax legalized by X3H2-94-15 */
+
+strcpy (dstmt, "1 16:10:07                                        ");
+printf("SET DESCRIPTOR 'D12441' VALUE 13\n");
+printf("  TYPE = 1, LENGTH = 50, DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 13
+  TYPE = 1, LENGTH = 50, DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy (dstmt, "INTERVAL '56' SECOND                              ");
+printf("SET DESCRIPTOR 'D12441' VALUE 16\n");
+printf("  TYPE = 1, LENGTH = 50,\n");
+printf("  DATA = :dstmt;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 16
+  TYPE = 1, LENGTH = 50,
+  DATA = :dstmt;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM LOTSA_DATETIMES' ||
+       ' WHERE C1 = ? AND C2 = ? AND C3 = ?'  ||
+       ' AND C4 = ? AND C5 = ? AND C6 = ?'    ||
+       ' AND C7 = ? AND C8 = ? AND (C9 = ? OR C9 IS NULL)'    ||
+       ' AND C10 = ? AND C11 = ? AND C12 = ?' ||
+       ' AND C13 = ? AND C14 = ? AND C15 = ?' ||
+       ' AND C16 = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S12443 FROM :longst;\n");
+EXEC SQL PREPARE S12443 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12443 CURSOR FOR S12443;\n");
+EXEC SQL DECLARE C12443 CURSOR FOR S12443;
+printf("\n");
+
+printf("OPEN C12443 USING SQL DESCRIPTOR 'D12441';\n");
+EXEC SQL OPEN C12443 USING SQL DESCRIPTOR 'D12441';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C12443 INTO :int1;\n");
+EXEC SQL FETCH C12443 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C12443;\n");
+EXEC SQL CLOSE C12443;
+CHCKOK ();
+printf("\n");
+
+/* Still have to test INTO */
+
+printf("DESCRIBE OUTPUT S12441 USING SQL DESCRIPTOR 'D12441';\n");
+EXEC SQL DESCRIBE OUTPUT S12441 USING SQL DESCRIPTOR 'D12441';
+CHCKOK ();
+printf("\n");
+
+/* Set up cast to integer */
+
+printf("SET DESCRIPTOR 'D12441' VALUE 4\n");
+printf("  TYPE = 4;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 4
+  TYPE = 4;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12441' VALUE 9\n");
+printf("  PRECISION = 0, TYPE = 9, DATETIME_INTERVAL_CODE = 1;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 9
+  PRECISION = 0, TYPE = 9, DATETIME_INTERVAL_CODE = 1;
+CHCKOK ();
+printf("\n");
+
+/* set up cast to char */
+
+printf("SET DESCRIPTOR 'D12441' VALUE 15\n");
+printf("  TYPE = 1, LENGTH = 50;\n");
+EXEC SQL SET DESCRIPTOR 'D12441' VALUE 15
+  TYPE = 1, LENGTH = 50;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12441 CURSOR FOR S12441;\n");
+EXEC SQL DECLARE C12441 CURSOR FOR S12441;
+printf("\n");
+
+printf("OPEN C12441;\n");
+EXEC SQL OPEN C12441;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12441 INTO SQL DESCRIPTOR 'D12441';\n");
+EXEC SQL FETCH C12441 INTO SQL DESCRIPTOR 'D12441';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+printf("GET DESCRIPTOR 'D12441' VALUE 4\n");
+printf("  :int1 = DATA, :int2 = INDICATOR;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 4
+  :int1 = DATA, :int2 = INDICATOR;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n\n", int2);
+if (int1 != 1 || int2 != 0)
+  flag = 0;
+
+/* 6.10 GR.2.a:  NULLs can be cast from anything to anything. */
+
+int1 = 42;
+printf("GET DESCRIPTOR 'D12441' VALUE 9\n");
+printf("  :int1 = INDICATOR;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 9
+  :int1 = INDICATOR;
+CHCKOK ();
+printf ("int1 should be -1; its value is %ld\n\n", int1);
+if (int1 != -1)
+  flag = 0;
+
+/* Syntax required by SQL-92 */
+
+strcpy (dstmt, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12441' VALUE 15\n");
+printf("  :dstmt = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12441' VALUE 15
+  :dstmt = DATA;
+dstmt[50] = '\0';
+CHCKOK ();
+printf ("dstmt should be very similar to\n");
+printf ("     INTERVAL '2:17:56.000000' HOUR TO SECOND\n");
+printf ("Its value is %s\n\n", dstmt);
+if (strcmp (dstmt, "INTERVAL                                          ") <= 0)
+  flag = 0;
+if (strcmp (dstmt, "INTERVAM                                          ") >= 0)
+  flag = 0;
+
+printf("DEALLOCATE DESCRIPTOR 'D12441';\n");
+EXEC SQL DEALLOCATE DESCRIPTOR 'D12441';
+CHCKOK ();
+printf("\n");
+
+P196:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE LOTSA_DATETIMES CASCADE;\n");
+EXEC SQL DROP TABLE LOTSA_DATETIMES CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0656','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml124.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0656','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0656 *********************/
+printf("DROP TABLE CONCATBUF CASCADE;\n");
+EXEC SQL DROP TABLE CONCATBUF CASCADE;
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

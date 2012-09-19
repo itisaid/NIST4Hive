@@ -1,0 +1,324 @@
+/*  EMBEDDED C (file "MPA008.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/31 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPA008.PC                                                    */
+/*  WRITTEN BY: David W. Flater                                  */
+/*                                                               */
+/*  THIS PROGRAM IS PART A OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      4.28  SQL-transactions                                   */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long knum;
+   long tmpint;
+   char uid[19];
+   char uidx[19];
+EXEC SQL END DECLARE SECTION;
+   long i;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+   long code1;
+   long pauze;
+   long cnt;
+   long flcnt;
+   long mxfail;
+   long pauze2;
+   long pauze3;
+   long pauze4;
+   long flag;
+   long j;
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpa008.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+  pauze = 1;
+  flag = 1;
+  pauze3 = 300;
+  flcnt = 0;
+  mxfail = 10;
+  pauze2 = 300;
+  pauze4 = 75;
+
+/******************** BEGIN TEST0517 ********************/
+flag = 1;
+
+     printf("\n                TEST0517 \n");
+     printf("  Transactions serializable:  Twins Problem\n");
+printf("Reference ANSI SQL-1992 section 4.28  SQL-transactions\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** This program is part A of a two-part\n");
+printf ("*** program (A & B).\n");
+
+printf ("\n\n This is Program A which starts first and waits.... \n\n");
+
+P100:
+/*                       -----Initialization----- */
+    code1 = 0;
+    EXEC SQL DELETE FROM MP8_AA;
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL INSERT INTO MP8_AA VALUES (1,'A');
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL INSERT INTO MP8_AA VALUES (2,'A');
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL INSERT INTO MP8_AA VALUES (3,'A');
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL INSERT INTO MP8_AA VALUES (4,'A');
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL INSERT INTO MP8_AA VALUES (5,'A');
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL DELETE FROM MP8_NEXTKEY;
+    if (SQLCODE < 0)
+          code1 =  1;
+    EXEC SQL INSERT
+       INTO MP8_NEXTKEY (KEYNUM,AUTHOR)
+       VALUES (1,'A');
+    if (SQLCODE != 0)
+          code1 =  1;
+
+    if (code1 == 1)
+        {
+              printf("*****Error initializing tables ****\n");
+              EXEC SQL ROLLBACK WORK;
+              goto P100;
+        }
+    
+       
+    EXEC SQL COMMIT WORK;
+    if (SQLCODE != 0)
+        {
+           printf("*********Setup will not commit ********\n");
+           EXEC SQL ROLLBACK WORK;
+           goto P100;
+        } 
+    
+/*                       -----Synchronization----- */
+    
+P105:
+         printf("   PLEASE start program MPB008!!!   \n\n");
+   /* pause a little */
+   /* increase value of variable pauze if MPB008 has trouble */
+   /*   getting table MP8_NEXTKEY. */
+    i = 0;
+P106:
+    EXEC SQL UPDATE MP8_NN
+         SET NUMTEST = 1;
+    i = i + 1;
+    if (i < pauze)
+      goto P106;
+    /* end of pause */
+
+    knum = 0;
+    EXEC SQL SELECT COUNT(*)
+         INTO :knum
+         FROM MP8_NEXTKEY WHERE AUTHOR = 'B';
+    
+    EXEC SQL COMMIT WORK;
+    
+    /* are we in sync? */
+    
+    if (knum == 0)
+         goto P105;
+    
+    /* YES, we are in sync! */    
+    
+    printf("Transaction A Starts!!  \n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("\n");
+    printf("IF this test lasts too long, DEADLOCK\n");
+    printf("has taken place, STOP this test!\n");
+    printf("\n");
+
+    printf("Brief pause\n");
+    j = 0;
+P122:
+    EXEC SQL UPDATE MP8_NN
+         SET NUMTEST = 1;
+    j = j + 1;
+    if (j < pauze4)
+      goto P122;
+    /* end of pause */
+
+    printf("SELECT COUNT(*) FROM MP8_AA WHERE ANUM = 3;\n");
+    EXEC SQL SELECT COUNT(*) INTO :tmpint
+      FROM MP8_AA WHERE ANUM = 3;
+
+    printf("COUNT must be 1; its value is %ld\n", tmpint);
+
+    if (tmpint != 1)
+      flag = 0;
+
+P101:
+    printf("DELETE FROM MP8_AA WHERE ANUM = 3;\n");
+    EXEC SQL DELETE FROM MP8_AA
+      WHERE ANUM = 3;
+    if (SQLCODE < 0)
+      goto P120;
+
+    printf("Waste time....\n");
+    j = 0;
+P102:
+    EXEC SQL UPDATE MP8_NN
+         SET NUMTEST = 1;
+    j = j + 1;
+    if (j < pauze2)
+      goto P102;
+    /* end of pause */
+
+    printf("INSERT INTO MP8_AA VALUES (3,'A');\n");
+    EXEC SQL INSERT INTO MP8_AA VALUES (3,'A');
+    if (SQLCODE < 0)
+      goto P120;
+    printf("COMMIT WORK;\n");
+    EXEC SQL COMMIT WORK;
+    if (SQLCODE >= 0)
+      goto P166;
+
+P120:
+    printf("!+!+!+!+!+!+!+!+  DEADLOCK? !+!+!+!+!+!+!+!+!+!+!\n");
+    printf("Negative SQLCODE (Deadlock?) was returned earlier\n");
+    printf("!+!+!+!+!+!+!+!+  DEADLOCK? !+!+!+!+!+!+!+!+!+!+!\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("Restarting transaction\n");
+    EXEC SQL ROLLBACK WORK;
+    flcnt = flcnt + 1;
+    if (flcnt < mxfail)
+      goto P101;
+    flcnt = 0;
+    printf("Wasting some time to try to end repeated restarts...\n");
+    j = 0;
+P136:
+    EXEC SQL UPDATE MP8_NN
+         SET NUMTEST = 1;
+    j = j + 1;
+    if (j < pauze2)
+      goto P136;
+    /* end of pause */
+    goto P101;
+
+P166:
+    /* Waste time */
+    printf("MPA008 transaction completed--wasting time....\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    cnt = 0;
+P115:
+    EXEC SQL UPDATE MP8_NEXTKEY
+            SET KEYNUM = KEYNUM +1;
+    cnt = cnt + 1;
+    if (cnt < pauze3)
+       goto P115;
+    EXEC SQL COMMIT WORK;
+
+P168:
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    /* Finish up */
+    printf("SELECT COUNT(*) FROM MP8_AA WHERE ANUM = 3;\n");
+    EXEC SQL SELECT COUNT(*) INTO :tmpint
+      FROM MP8_AA WHERE ANUM = 3;
+    if (SQLCODE !=0 )
+      {
+         printf("Restarting final evaluation due to negative SQLCODE.\n");
+         EXEC SQL COMMIT WORK;
+         goto P168;
+       }
+
+    printf("COUNT must be 1; its value is %ld\n", tmpint);
+    if (tmpint != 1)
+      flag = 0;
+
+    printf("SELECT COUNT(*) FROM MP8_AA WHERE AUTHOR = 'B';\n");
+    EXEC SQL SELECT COUNT(*) INTO :tmpint
+      FROM MP8_AA WHERE AUTHOR = 'B';
+    if (SQLCODE !=0 )
+      {
+         printf("Restarting final evaluation due to negative SQLCODE.\n");
+         EXEC SQL COMMIT WORK;
+         goto P168;
+       }
+
+    printf("COUNT must be 0; its value is %ld\n", tmpint);
+    if (tmpint != 0)
+      flag = 0;
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0517','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       mpa008.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0517','fail','PC');
+          errcnt = errcnt + 1;
+       }
+    EXEC SQL COMMIT WORK;
+
+P198:
+    printf("\n\n");
+    printf("====================================================\n\n");
+
+/******************** END TEST0517 ********************/
+    
+    /* Empty table to prevent program MPB from jumping gun on rerun.*/
+    EXEC SQL DELETE FROM MP8_NEXTKEY;
+    EXEC SQL COMMIT WORK;
+
+    exit(errcnt);
+}

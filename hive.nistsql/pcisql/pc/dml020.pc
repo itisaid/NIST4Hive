@@ -1,0 +1,295 @@
+/*  EMBEDDED C (file "DML020.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML020.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE JOIN QUERY FUNCTIONS IN SQL.        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*           SECTION 5.20 <from clause>                          */
+/*                                                               */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char     PPNUM[4];
+     char     PNAME1[21];
+     char     PTYPE[16];
+     long     BUGET1;
+     char     PCITY[16];
+     char     EMPNO1[4];
+     char     EMPNA1[21];
+     long     GRADE1;
+     char     SCITY[16];
+     long     i;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     ii;
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml020.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0080 ********************/
+
+printf("\n\n             TEST0080 \n");
+printf(" reference X3.135-1989 section 5.20 <from clause> GR\n");
+printf ("*** Simple equijoin. \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** SELECT EMPNUM,EMPNAME,GRADE,STAFF.CITY,PNAME,PROJ.CITY \n");
+printf ("*** FROM STAFF, PROJ \n");
+printf ("*** WHERE STAFF.CITY = PROJ.CITY \n");
+
+EXEC SQL DECLARE SNP1 CURSOR FOR
+          SELECT EMPNUM,EMPNAME,GRADE,STAFF.CITY, PNAME, PROJ.CITY
+          FROM STAFF, PROJ
+          WHERE STAFF.CITY = PROJ.CITY;
+EXEC SQL OPEN SNP1;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM  GRADE  STAFF.CITY  PROJ.CITY \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH SNP1 INTO
+          :EMPNO1,:EMPNA1,:GRADE1,:SCITY,:PNAME1,:PCITY;
+     if (SQLCODE == 0)
+         {
+          i = i + 1;
+          printf ("%s  %ld  %s  %s\n",EMPNO1,GRADE1,SCITY,PCITY);
+         }
+     }
+EXEC SQL CLOSE SNP1;
+
+printf("\n          i should be 10, i = %ld\n",i);
+
+if (i == 10)
+     {
+     printf("\n\n               *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0080','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml020.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0080','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n");
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0080 ********************/
+/******************** BEGIN TEST0081 ********************/
+ 
+printf("\n\n             TEST0081 \n");
+printf(" reference X3.135-1989 section 5.20 <from clause> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Join query with additional information. \n");
+printf ("*** SELECT EMPNUM,EMPNAME,GRADE,STAFF.CITY,PNUM,PNAME\n");
+printf ("                  PTYPE,BUDGET,PROJ.CITY \n");
+printf ("*** FROM STAFF, PROJ \n");
+printf ("*** WHERE STAFF.CITY = PROJ.CITY \n");
+printf ("*** AND GRADE <> 12 \n");
+
+EXEC SQL DECLARE SNP3 CURSOR FOR
+          SELECT EMPNUM,EMPNAME,GRADE,STAFF.CITY,PNUM,PNAME,
+                                PTYPE,BUDGET,PROJ.CITY
+          FROM STAFF, PROJ
+          WHERE STAFF.CITY = PROJ.CITY
+          AND GRADE <> 12;
+EXEC SQL OPEN SNP3;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH SNP3 INTO
+     :EMPNO1,:EMPNA1,:GRADE1,:SCITY,:PPNUM,
+             :PNAME1,:PTYPE,:BUGET1,:PCITY;
+     if (SQLCODE == 0)
+      {
+       i = i + 1;
+       printf("STAFF.CITY=%s  PROJ.CITY=%s  GRADE1=%ld\n",SCITY,PCITY,GRADE1);
+      }
+     }
+EXEC SQL CLOSE SNP3;
+
+printf("\n          i should be 4, i = %ld\n",i);
+
+if (i == 4)
+     {
+     printf("\n\n               *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0081','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml020.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0081','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n");
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0081 ********************/
+/******************** BEGIN TEST0082 ********************/
+ 
+printf("\n\n              TEST0082 \n");
+printf(" reference X3.135-1989 section 5.20 <from clause> GR\n"); 
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Join of three tables. \n");
+printf ("*** SELECT DISTINCT STAFF.CITY, PROJ.CITY \n");
+printf ("*** FROM STAFF, WORKS, PROJ \n");
+printf ("*** WHERE STAFF.EMPNUM = WORKS.EMPNUM \n");
+printf ("*** AND WORKS.PNUM = PROJ.PNUM \n");
+
+EXEC SQL DECLARE SNP5 CURSOR FOR
+          SELECT DISTINCT STAFF.CITY, PROJ.CITY
+          FROM STAFF, WORKS, PROJ
+          WHERE STAFF.EMPNUM = WORKS.EMPNUM
+          AND WORKS.PNUM = PROJ.PNUM;
+EXEC SQL OPEN SNP5;
+i=0;
+if (SQLCODE == 0)
+     printf ("STAFF.CITY          PROJ.CITY \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH SNP5 INTO
+               :SCITY,:PCITY;
+     if (SQLCODE == 0)
+        {
+          i = i + 1;
+          printf ("%s     %s\n",SCITY,PCITY);
+        }
+     }
+EXEC SQL CLOSE SNP5;
+
+printf("\n          i should be 5, i = %ld\n",i);
+
+if (i == 5)
+     {
+     printf("\n\n               *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0082','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml020.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0082','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n");
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0082 ********************/
+/******************** BEGIN TEST0083 ********************/
+ 
+printf("\n\n              TEST0083 \n");
+printf(" reference X3.135-1989 section 5.20 <from clause> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Joining a table with itself. \n");
+printf ("*** SELECT FIRST1.EMPNUM, SECOND2.EMPNUM \n");
+printf ("*** FROM STAFF FIRST1, STAFF SECOND2 \n");
+printf ("*** WHERE FIRST1.CITY = SECOND2.CITY \n");
+printf ("*** AND FIRST1.EMPNUM < SECOND2.EMPNUM \n");
+
+EXEC SQL DECLARE SNP6 CURSOR FOR
+          SELECT FIRST1.EMPNUM, SECOND2.EMPNUM
+          FROM STAFF FIRST1, STAFF SECOND2
+          WHERE FIRST1.CITY = SECOND2.CITY
+          AND FIRST1.EMPNUM < SECOND2.EMPNUM;
+EXEC SQL OPEN SNP6;
+i=0;
+if (SQLCODE == 0)
+     printf ("FIRST1.EMPNUM     SECOND2.EMPNUM \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH SNP6 INTO
+               :EMPNO1,:PPNUM;
+     if (SQLCODE == 0)
+         {
+          i = i + 1;
+          printf ("%s     %s\n",EMPNO1,PPNUM);
+         }
+     }
+EXEC SQL CLOSE SNP6;
+
+printf("\n          i should be 2, i = %ld\n",i);
+
+if (i == 2)
+     {
+     printf("\n\n               *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0083','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml020.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0083','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n");
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0083 ********************/
+
+exit(errcnt);
+
+}

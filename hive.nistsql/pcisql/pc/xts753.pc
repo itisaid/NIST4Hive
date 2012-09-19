@@ -1,0 +1,391 @@
+/*  EMBEDDED C (file " XTS753.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS753.PC                                                   */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  ALTER TABLE ADD COLUMN WITH data type                        */ 
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.10   -- <Alter table statement>                         */
+/*    11.10 AR.1                                                 */
+/*    11.11   -- <Add column definition>                         */
+/*    11.1 GR.1                                                  */
+/*    F#1     -- Dynamic SQL                                     */
+/*    F#2     -- Basic Information Schema                        */
+/*    F#38    -- Schema manipulation                             */
+/*                                                               */ 
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 15/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA STATUS : QA CHECK                                         */
+/*                                                               */
+/*  Revised by DWF 1996-02-16                                    */
+/*    Removed status checks after cursor declaration             */
+/*    Removed field widths in printfs                            */
+/*    Matched printout with statements                           */
+/*    Fixed SDL transactions                                     */
+/*    Fixed char string lengths                                  */
+/*    Removed coding rules violations                            */
+/*    Fixed C coding errors                                      */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long c1;
+char c2[11];
+char c3[11];
+long c4;
+char c5[8];
+long coun;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts753.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf(" \n Time Run :  %s \n ", ctime(&cal));
+
+/******************** BEGIN TEST7053 ********************/
+flag = 1;
+printf("                   TEST7053\n");
+printf("    ALTER TABLE ADD COLUMN WITH <data type> \n"); 
+printf(" References:\n");
+printf("    11.10   -- <Alter table statement>\n");
+printf("    11.10 AR.1 \n");
+printf("    11.11   -- <Add column definition> \n");
+printf("    11.11 GR.1                         \n");
+printf("    F#2     -- Basic Information Schema \n");
+printf("    F#38    -- Schema manipulation \n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+/* create a table under the current schema */
+printf("CREATE TABLE TAB753\n");
+printf("(COL1 DECIMAL(4),\n");
+printf(" COL2 CHAR(10),\n");
+printf(" COL3 CHAR(10));\n");
+EXEC SQL CREATE TABLE TAB753
+         (COL1 DECIMAL(4),
+          COL2 CHAR(10),
+          COL3 CHAR(10));
+CHCKOK();   
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();   
+printf("\n");
+ 
+/* now alter the table definition */  
+printf("ALTER TABLE TAB753 ADD COLUMN COL4 NUMERIC(7);\n");
+EXEC SQL ALTER TABLE TAB753 ADD COLUMN COL4 NUMERIC(7);
+CHCKOK(); 
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK(); 
+printf("\n");
+ 
+/* initialise host variable */
+coun = 0;
+
+/* Access the COLUMNS view from the INFORMATION SCHEMA */
+/* and check that column COL4 is present */
+printf("SELECT COUNT(*) INTO :coun\n"); 
+printf("FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf("WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TAB753'\n");   
+printf("AND COLUMN_NAME = 'COL4';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TAB753'
+         AND COLUMN_NAME = 'COL4';
+CHCKOK();
+printf("coun should be 1; its value is %ld\n",coun);
+if (coun != 1)
+  flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK(); 
+printf("\n");
+ 
+/* Alter again the table definition  */
+printf("ALTER TABLE TAB753 ADD COLUMN COL5 CHAR(7);\n");
+EXEC SQL ALTER TABLE TAB753 ADD COLUMN COL5 CHAR(7);
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+ /* Access the COLUMNS view from the INFORMATION SCHEMA */
+ /* and check that column COL5 is present */
+coun = 0;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf("WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TAB753'\n");
+printf("AND COLUMN_NAME = 'COL5';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TAB753'
+         AND COLUMN_NAME = 'COL5';
+CHCKOK();
+printf("coun should be 1; its value is %ld\n",coun);
+if (coun != 1)
+  flag = 0;
+printf("\n");
+
+/* add two rows in the table and observe behaviour */
+printf("INSERT INTO TAB753 VALUES(1000,'PHONE','NICKOS',12000,'blue');\n");
+EXEC SQL INSERT INTO TAB753 VALUES(1000,'PHONE','NICKOS',12000,'blue');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO TAB753 VALUES(1001,'HULME','CHEADLE',12001,'velvet');\n");
+EXEC SQL INSERT INTO TAB753 VALUES(1001,'HULME','CHEADLE',12001,'velvet');    
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK(); 
+printf("\n");
+
+printf("DECLARE A CURSOR FOR SELECT COL1,COL2,COL3,COL4,COL5\n");
+printf("FROM TAB753\n");
+printf("ORDER BY COL1;\n\n");
+EXEC SQL DECLARE A CURSOR FOR SELECT COL1,COL2,COL3,COL4,COL5
+         FROM TAB753
+         ORDER BY COL1;
+
+printf("OPEN A;\n");
+EXEC SQL OPEN A;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */ 
+c1 = 0;
+c4 = 0;
+strcpy(c2,"xxxxxxxxxx");
+strcpy(c3,"xxxxxxxxxx");
+strcpy(c5,"xxxxxxx");
+ 
+printf("FETCH A INTO :c1,:c2,:c3,:c4,:c5;\n");
+EXEC SQL FETCH A INTO :c1,:c2,:c3,:c4,:c5;
+CHCKOK();
+printf("c1 should be   1000; its value is %ld\n",c1);
+printf("c2 should be  PHONE; its value is %s\n",c2);
+printf("c3 should be NICKOS; its value is %s\n",c3);
+printf("c4 should be  12000; its value is %ld\n",c4);
+printf("c5 should be   blue; its value is %s\n",c5);
+if (c1!=1000 || strncmp(c2,"PHONE",5)!=0 || strncmp(c3,"NICKOS",6)!=0)
+   flag = 0;
+if (c4 !=12000 || strncmp(c5,"blue",4)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+c1 = 0;
+c4 = 0;
+strcpy(c2,"xxxxxxxxxx");
+strcpy(c3,"xxxxxxxxxx");
+strcpy(c5,"xxxxxxx");
+
+printf("FETCH A INTO :c1,:c2,:c3,:c4,:c5;\n");
+EXEC SQL FETCH A INTO :c1,:c2,:c3,:c4,:c5;
+CHCKOK();
+printf("c1 should be    1001; its value is %ld\n",c1);
+printf("c2 should be   HULME; its value is %s\n",c2);
+printf("c3 should be CHEADLE; its value is %s\n",c3);
+printf("c4 should be   12001; its value is %ld\n", c4);
+printf("c5 should be  velvet; its value is %s\n",c5);
+if (c1!=1001 || strncmp(c2,"HULME",5)!=0 || strncmp(c3,"CHEADLE",7)!=0)
+   flag = 0;
+if (c4 !=12001 || strncmp(c5,"velvet",6)!=0)
+   flag = 0;
+printf("\n");
+
+printf("CLOSE A;\n");
+EXEC SQL CLOSE A;
+CHCKOK();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+ /* Drop the table */
+
+printf("DROP TABLE TAB753 CASCADE;\n");
+EXEC SQL DROP TABLE TAB753 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+ /* record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts753.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7053','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts753.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7053','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7053 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

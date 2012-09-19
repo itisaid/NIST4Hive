@@ -1,0 +1,425 @@
+/*  EMBEDDED C (file "REPORTB.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                 COMMENT SECTION                               */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*                                                               */
+/*  WRITTEN BY:  J. Sullivan                                     */
+/*                                                               */
+/*  This routine inserts the result value from TESTREPORT into   */
+/*  the T_REQ row and then maps these test/binding/status/result */
+/*  rows into the report structure R_STRUCTURE.                  */
+/*                                                               */
+/*  A test is run only once, but it is reported in each profile  */
+/*  which requires it.                                           */
+/*                                                               */
+/*  This join of T_REQ and R_STRUCTURE is written as an ASCII    */
+/*  file, passfail.dat, for use by the following report program. */
+/*  A restriction of REPORTFEATURE (only rows needed for the     */
+/*  report) is written as ASCII file heading.dat.                */
+/*  A restriction of TESTCASE (only rows needed for problem      */
+/*  tests) is written as ASCII file testcase.dat.                */
+/*  Interactive SQL reporting is ignored by this program.        */
+/*                                                               */
+/*  Debugging is turned on by setting debug1 = 1                 */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char  prog[7];
+  char  tpnote[11];
+  char  testno[5];
+  char  descr[51];
+  char  feat1[5];
+  char  feat2[5];
+  char  result[5];
+  char  resul7[8];
+  char  bind1[4];
+  char  reqopt[4];
+  char  featur[33];
+  char  bindmx[4];
+  long  bindct;
+  short indic1;
+  char  uid[19];
+  char  uidx[19];
+  char  SQLSTATE[6];
+  long  SQLCODE;
+EXEC SQL END DECLARE SECTION;
+
+  long  indivt;
+  int  errcnt;
+  long  iii;
+  long  debug1;
+  long  bindii;
+  FILE  *fp;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+   strcpy (uid,"HU                ");
+   AUTHID(uid);
+   strcpy (uidx,"not logged in, not");
+   EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+   if (strncmp(uid,uidx,2) != 0)
+      {
+       printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+       exit(99);
+      }
+printf("SQL Test Suite, V6.0, Embedded C, reportb.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+   errcnt = 0;
+
+/* to debug program, set debug1 = 1 */
+   debug1 = 0;
+/* to suppress print of Profile P998, set indivt = 0 */
+   indivt = 1;
+
+/* set up */
+
+   EXEC SQL COMMIT WORK;
+
+/* We want to verify later, as we write passfail.dat records, */
+/*   that the binding pattern is cyclic -                     */
+/*   as expected by the report program.                       */
+/* For example, every 3rd row is 'PC'.                        */
+printf("REPORTB step 1:  Check BINDING_CLAIMED table.\n");
+
+   EXEC SQL SELECT COUNT(*) INTO :bindct
+              FROM BINDING_CLAIMED
+              WHERE BINDING1 <> 'SQL';
+   if (SQLCODE < 0 || SQLCODE == 100)
+      {
+       errcnt = errcnt + 1;
+       printf("#ERR1 Error counting BINDING_CLAIMED rows,\n");
+       printf("   or BINDING_CLAIMED is empty\n");
+       printf("   or has only one row with value SQL.\n");
+       printf("This program does not report on Interactive SQL.\n");
+       printf("SQLCODE = %ld \n", SQLCODE);
+       /* Suicide note #1 */
+      }
+   EXEC SQL SELECT MAX(BINDING1) INTO :bindmx
+               FROM BINDING_CLAIMED
+               WHERE BINDING1 <> 'SQL';
+   if (SQLCODE < 0 || SQLCODE == 100)
+      {
+       errcnt = errcnt + 1;
+       printf("#ERR2 Error selecting MAX(BINDING1) from BINDING_CLAIMED.\n");
+       printf("SQLCODE = %ld\n", SQLCODE);
+       /* Suicide note #2 */
+      }
+   EXEC SQL COMMIT WORK;
+
+/* Insert TESTREPORT pass/fail/nogo result into T_REQ */
+/* Assign "miss" value for missing results */
+/* Assign "    " value for NA tests as well as DL and WD tests*/
+
+printf("\n");
+printf("REPORTB step 2:  Merge pass/fail/nogo values from TESTREPORT\n");
+printf("                 into table T_REQ (list of tests required).\n");
+printf("This could take a while....\n");
+
+   EXEC SQL UPDATE T_REQ SET RESULT = '    ';
+   EXEC SQL COMMIT WORK;
+
+   EXEC SQL DECLARE T_REQ_CURSOR CURSOR FOR
+              SELECT TESTNO, BINDING1, REQOPTNA
+                FROM T_REQ
+               WHERE BINDING1 <> 'SQL';
+   EXEC SQL OPEN T_REQ_CURSOR;
+
+P100:
+   EXEC SQL FETCH T_REQ_CURSOR INTO :testno, :bind1, :reqopt;
+   if (SQLCODE < 0 || SQLCODE == 100)
+      goto P199;
+
+   if (strncmp(reqopt,"NA ",3) == 0 )
+     {
+      strcpy (result,"    ");
+      goto P150;
+     }
+   if (strncmp(reqopt,"DL ",3) == 0 || strncmp(reqopt,"WD ",3) == 0)
+     {
+      strcpy (result,"    ");
+      goto P150;
+     }
+   EXEC SQL SELECT DISTINCT RESULT INTO :result
+           FROM  TESTREPORT
+           WHERE TESTNO   = :testno
+             AND TESTTYPE = :bind1;
+   if (SQLCODE == 100)
+     {
+      strcpy (result,"miss");
+      goto P150;
+     }
+   if (SQLCODE < 0)
+     goto P110;
+   if (strncmp(result,"pass",4) == 0)
+     goto P150;
+   if (strncmp(result,"fail",4) == 0)
+     goto P150;
+   if (strncmp(result,"nogo",4) == 0)
+     goto P150;
+   strcpy (result,"fail");
+  /* Suicide note #3a */
+   errcnt = errcnt + 1;
+   printf("\n");
+   printf("#ERR3a Illegal value in TESTREPORT (RESULT) = %s\n",result);
+   goto P150;
+P110:
+  /* No suicide note, just get attention with a FAIL */
+   printf("\n");
+   printf("#ERR3b Conflicting results for TESTREPORT rows.\n");
+   printf("The final result is FAIL:\n");
+   printf("SQLCODE = %ld \n", SQLCODE);
+   EXEC SQL DECLARE ERROR1 CURSOR FOR
+             SELECT DISTINCT RESULT
+                FROM TESTREPORT
+                WHERE TESTNO   = :testno
+                  AND TESTTYPE = :bind1
+             ORDER BY RESULT;
+   EXEC SQL OPEN ERROR1;
+P120:
+   EXEC SQL FETCH ERROR1 INTO :result;
+   if (SQLCODE < 0)
+     printf("FETCH ERROR1 SQLCODE = %ld \n", SQLCODE);
+   if (SQLCODE < 0 || SQLCODE == 100)
+     goto P121;
+   printf("TESTNO = %s, RESULT = %s, TESTTYPE = %s\n",testno,result,bind1);
+   goto P120;
+P121:
+   EXEC SQL CLOSE ERROR1;
+   strcpy (result,"fail");
+
+P150:
+/* result value has been obtained for this row */
+   if (debug1 == 1)
+      printf("Updated T_REQ = %s, %s, %s, %s\n",testno,bind1,reqopt,result);
+   EXEC SQL UPDATE T_REQ SET RESULT = :result
+            WHERE CURRENT OF T_REQ_CURSOR;
+   /*  same as WHERE TESTNO = :testno AND BINDING1 = :bind1; */
+   if (SQLCODE < 0 || SQLCODE == 100)
+      {
+        errcnt = errcnt + 1;
+printf("#ERR4 Failed to UPDATE row %s %s with result %s\n",testno,bind1,result);
+       /* Suicide note #4 */
+      }
+   goto P100;
+P199:
+   if (SQLCODE < 0)
+      {
+       errcnt = errcnt + 1;
+       printf("#ERR5 Error reading T_REQ_CURSOR.\n");
+       printf("SQLCODE = %ld \n", SQLCODE);
+       /* Suicide note #5 */
+      }
+   EXEC SQL CLOSE T_REQ_CURSOR;
+   EXEC SQL COMMIT WORK;
+
+/* Join R_STRUCTURE to T_REQ */
+/* and write as ASCII file passfail.dat */
+printf("\n");
+printf("REPORTB step 3:  Write ASCII file passfail.dat.\n");
+
+   bindii = 0;
+
+   EXEC SQL DECLARE TESTLIST CURSOR FOR
+     SELECT DISTINCT C1, P1, R_STRUCTURE.TESTNO,
+                     BINDING1, REQOPTNA, RESULT
+       FROM R_STRUCTURE, T_REQ
+       WHERE R_STRUCTURE.TESTNO = T_REQ.TESTNO
+         AND BINDING1 <> 'SQL'
+       ORDER BY 1, 2, 3, 4;
+   EXEC SQL OPEN TESTLIST;
+
+  /* open ASCII file passfail.dat */
+  /* please modify fopen command to suit your C compiler. */
+   if (!(fp = fopen ("passfail.dat", "w")))
+   {
+     perror ("fopen");
+     fprintf (stderr, "Could not open passfail.dat\n");
+     exit (-1);
+   }
+
+   if (debug1 == 1)
+      printf("Derived list of test cases:\n");
+
+P200:
+   EXEC SQL FETCH TESTLIST INTO :feat1, :feat2,
+             :testno, :bind1, :reqopt, :resul7;
+   if (SQLCODE < 0)
+      {
+       errcnt = errcnt + 1;
+       printf("#ERR6 Error reading TESTLIST cursor.\n");
+       printf("SQLCODE = %ld \n", SQLCODE);
+       /* Suicide note #6 */
+      }
+   if (SQLCODE < 0 || SQLCODE == 100)
+      goto P202;
+
+   /* X/Open profiles do not exist for bindings other than PC and PCO */
+   if (strcmp(feat2,"P210") != 0 && strcmp(feat2,"P230") != 0)
+      goto P201;
+   if (strncmp(bind1,"PC ",2) == 0 || strcmp(bind1,"PCO") == 0)
+      goto P201;
+   strcpy (reqopt,"NA ");
+   strcpy (resul7,"       ");
+
+P201:
+   /* Profile P998, by default prints, but can be suppressed. */
+   if (strcmp(feat1,"P998") == 0 && indivt == 0)
+      goto P200;
+
+   if (strncmp(resul7,"miss   ",7) == 0)
+      strcpy (resul7,"missing");
+
+  /* Result value has been obtained from TESTREPORT. */
+  /* Write passfail.dat record. */
+   fprintf(fp,"%s %s %s %s %s %s\n",feat1,feat2,testno,bind1,reqopt,resul7);
+   if (debug1 == 1)
+      printf("%s %s %s %s %s %s\n",feat1,feat2,testno,bind1,reqopt,resul7);
+
+  /* Verify every nth bind1 value is the max value */
+   bindii = bindii + 1;
+   if (bindii >= bindct)
+      {
+       bindii = 0;
+       if (strncmp(bind1,bindmx,3) != 0)
+         {
+          errcnt = errcnt + 1;
+          printf("#ERR7 Binding values are not cyclic at PASSFAIL row:\n");
+          printf("SQLCODE = %ld \n", SQLCODE);
+          printf("%s %s %s %s\n",feat1,feat2,testno,bind1);
+          /* Suicide note #7 */
+         }
+      }
+   goto P200;
+
+P202:
+   EXEC SQL CLOSE TESTLIST;
+   EXEC SQL COMMIT WORK;
+   /* close ASCII file passfail.dat */
+   fclose(fp);
+
+  /* create file heading.dat */
+  /* pick up names for profile C1 and subprofile P1 */
+
+printf("\n");
+printf("REPORTB step 4:  Write ASCII file heading.dat.\n");
+
+   EXEC SQL DECLARE HEADING_DAT CURSOR FOR
+              SELECT DISTINCT FEATURE1, FEATURENAME
+                FROM REPORTFEATURE, R_STRUCTURE
+               WHERE FEATURE1 = C1 OR FEATURE1 = P1
+               ORDER BY FEATURE1;
+   EXEC SQL OPEN HEADING_DAT;
+
+  /* open ASCII file heading.dat */
+  /* please modify fopen command to suit your C compiler. */
+   if (!(fp = fopen ("heading.dat", "w")))
+   {
+     perror ("fopen");
+     fprintf (stderr, "Could not open heading.dat\n");
+     exit (-1);
+   }
+
+P601:
+   EXEC SQL FETCH HEADING_DAT INTO :feat1, :featur;
+   if (SQLCODE < 0)
+      {
+       errcnt = errcnt + 1;
+       printf("#ERR8 Error reading HEADING_DAT cursor.\n");
+       printf("SQLCODE = %ld \n", SQLCODE);
+       /* Suicide note #8 */
+      }
+   if (SQLCODE < 0 || SQLCODE == 100)
+      goto P602;
+   fprintf(fp,"%s=%s\n",feat1,featur);
+   goto P601;
+P602:
+  EXEC SQL CLOSE HEADING_DAT;
+  EXEC SQL COMMIT WORK;
+  /* close ASCII file heading.dat */
+   fclose(fp);
+
+  /* create file testcase.dat */
+  /* for problem test numbers */
+
+printf("\n");
+printf("REPORTB step 5:  Write ASCII file testcase.dat.\n");
+
+   EXEC SQL DECLARE TESTCASE_DAT CURSOR FOR
+              SELECT TESTNO, DESCR, PROG, T_NOTE
+                FROM TESTCASE
+               WHERE TESTNO IN
+                (SELECT TESTNO FROM T_REQ
+                   WHERE RESULT = 'fail' OR RESULT = 'miss')
+               ORDER BY TESTNO;
+   EXEC SQL OPEN TESTCASE_DAT;
+
+  /* open ASCII file testcase.dat */
+  /* please modify fopen command to suit your C compiler. */
+   if (!(fp = fopen ("testcase.dat", "w")))
+   {
+     perror ("fopen");
+     fprintf (stderr, "Could not open testcase.dat\n");
+     exit (-1);
+   }
+
+P701:
+   EXEC SQL FETCH TESTCASE_DAT INTO :testno, :descr, :prog, :tpnote :indic1;
+   if (SQLCODE < 0)
+      {
+       errcnt = errcnt + 1;
+       printf("#ERR9 Error reading TESTCASE_DAT cursor.\n");
+       printf("SQLCODE = %ld \n", SQLCODE);
+       /* Suicide note #9 */
+      }
+   if (SQLCODE < 0 || SQLCODE == 100)
+      goto P702;
+   if (indic1 < 0)
+      strcpy (tpnote,"          ");
+   fprintf(fp,"%s %s %s %s\n",testno,descr,prog,tpnote);
+   goto P701;
+P702:
+   EXEC SQL CLOSE TESTCASE_DAT;
+   EXEC SQL COMMIT WORK;
+  /* close ASCII file testcase.dat */
+   fclose(fp);
+
+   /* Did we get any suicide notes? */
+   if (errcnt > 0)
+      {
+       for (iii = 0; iii < 10; iii++)
+          {
+           printf(" ***************************************\n");
+           printf(" **** Do not run the REPORT program. ***\n");
+           printf(" **** Correct %ld errors and rerun! ****\n",errcnt);
+           printf(" ***************************************\n");
+          }
+      }
+
+/*========================================================= */
+
+   printf("\n\n");
+exit(errcnt);
+}

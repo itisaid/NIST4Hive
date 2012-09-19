@@ -1,0 +1,355 @@
+/*  EMBEDDED C (file "XOP703.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/05/04 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP703.PC                                                    */
+/*  WRITTEN BY: Colin O'Driscoll                                 */
+/*                                                               */
+/*  CREATE INDEX, check for success when creating an index on    */
+/*  existing table                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open CAE SQL Specification                           */
+/*        Section 5.3.3 CREATE INDEX                             */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   01/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+int i;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+
+extern int AUTHID();
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+/* variables for nosubclass routine */
+
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+
+main()
+{
+
+strcpy(uid,"XOPEN1");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+
+     EXEC SQL COMMIT WORK;
+errcnt = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop703.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0703 ********************/
+
+     printf("\n                     TEST0703                  \n");
+     printf("X/O,CREATE INDEX on existent/non-existent tables\n");
+     printf(" X/OPEN CAE SQL SECTION 5.3.3  \n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("### CREATE INDEX EMPIND ON STAFF(EMPNAME ASC) ;\n");
+     printf("### CREATE INDEX EMPIND ON STAFF(EMPNAME);\n");
+     printf("###     DROP INDEX EMPIND;\n");
+     printf("### CREATE INDEX EMPIND ON STAFF(EMPNUM,EMPNAME DESC);\n");
+     printf("### CREATE INDEX EMPIND ON STAFF(EMPNUM,EMPNAME);\n");
+     printf("### CREATE INDEX EMPIND ON NOT_A_TABLE(NOT_A_COLUMN);\n");
+     printf("### CREATE INDEX XXX ON STAFF(NOT_A_COLUMN);\n");
+     printf("### INSERT INTO INDEXTEST VALUES ('A', :i);\n");
+     printf("###     CREATE UNIQUE INDEX COLIND ON INDEXTEST(COL1);\n");
+     printf("### CREATE UNIQUE INDEX COLIND ON INDEXTEST(COL2);\n");
+     printf("###     INSERT INTO INDEXTEST VALUES ('B', 0);\n");
+     printf("### INSERT INTO INDEXTEST VALUES ('B', NULL);\n");
+     printf("### INSERT INTO INDEXTEST VALUES ('B', NULL);\n");
+     printf("\n\n=================================================\n");
+
+/* Prepare the database for the test */ 
+EXEC SQL DROP TABLE INDEXTEST;
+
+     EXEC SQL COMMIT WORK;
+EXEC SQL CREATE TABLE INDEXTEST(COL1 CHAR(1), COL2 DECIMAL);
+     EXEC SQL COMMIT WORK;
+EXEC SQL DROP INDEX EMPIND;
+EXEC SQL COMMIT WORK;
+
+     errflg = 0;
+
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE INDEX EMPIND ON STAFF(EMPNAME ASC);
+     CHCKOK();
+     if(strncmp(NORMSQ,"00000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 1) ! *** \n");
+        errflg = errflg + 1;
+        }
+     EXEC SQL COMMIT WORK;
+
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE INDEX EMPIND ON STAFF(EMPNAME);
+
+     printf("SQLSTATE should be 'S0011', it is %s\n",SQLSTATE);
+
+     if(strncmp(SQLSTATE,"S0011",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 2) ! *** \n");
+        errflg = errflg + 1;
+        }
+
+     EXEC SQL COMMIT WORK;
+     EXEC SQL DROP INDEX EMPIND;
+
+     EXEC SQL COMMIT WORK;
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE INDEX EMPIND ON STAFF(EMPNUM,EMPNAME DESC);
+
+     CHCKOK();
+     if(strncmp(NORMSQ,"00000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 3) ! *** \n");
+     errflg = errflg + 1;
+     }
+     EXEC SQL COMMIT WORK;
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE INDEX EMPIND ON STAFF(EMPNUM,EMPNAME);
+     printf("SQLSTATE should be 'S0011', it is %s\n",SQLSTATE);
+
+        if(strncmp(SQLSTATE,"S0011",5) != 0)
+        {
+        printf ("*** Problem found (TEST STEP NUMBER 4) ! *** \n");
+        errflg = errflg + 1;
+        }
+
+     EXEC SQL COMMIT WORK;
+     EXEC SQL DROP INDEX EMPIND;
+     EXEC SQL COMMIT WORK;
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE INDEX EMPIND ON NOT_A_TABLE(NOT_A_COLUMN);
+     printf("SQLSTATE should be 'S0002, it is %s\n",SQLSTATE);
+
+     if(strncmp(SQLSTATE,"S0002",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 5) ! *** \n");
+        errflg = errflg + 1;
+        }
+     EXEC SQL COMMIT WORK;
+
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+    EXEC SQL CREATE INDEX XXX ON STAFF(NOT_A_COLUMN);
+    printf("SQLSTATE should be 'S0002, it is %s\n",SQLSTATE);
+
+    if (strncmp(SQLSTATE,"S0002",5) != 0)
+    {
+    printf("*** Problem found (TEST STEP NUMBER 6) ! ***\n");
+    errflg = errflg + 1;
+    }
+     EXEC SQL COMMIT WORK;
+
+    printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+/*     CREATE TABLE INDEXTEST(COL1 CHAR(1), COL2 DECIMAL); */
+     for (i = 0; i < 10; i++)
+     {
+     EXEC SQL INSERT INTO INDEXTEST VALUES ('A', :i);
+     }
+     EXEC SQL COMMIT WORK;
+     EXEC SQL CREATE UNIQUE INDEX COLIND ON INDEXTEST(COL1);
+     printf ("SQLSTATE should be '23000',it is %s \n", SQLSTATE);
+     NOSUBCLASS();
+     if(strncmp(NORMSQ,"23000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 7) ! *** \n");
+        errflg = errflg + 1;
+     }
+     else
+     {
+     printf ("Valid implementation defined SQLSTATE accepted.\n");
+     }
+     EXEC SQL COMMIT WORK;
+
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE UNIQUE INDEX COLIND ON INDEXTEST(COL2);
+     EXEC SQL COMMIT WORK;
+     EXEC SQL INSERT INTO INDEXTEST VALUES ('B', 0);
+     printf ("SQLSTATE should be '23000',it is %s \n", SQLSTATE);
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"23000",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 8) ! *** \n");
+        errflg = errflg + 1;
+     }
+     else
+     {
+     printf ("Valid implementation defined SQLSTATE accepted.\n");
+     }
+
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL INSERT INTO INDEXTEST VALUES ('B', NULL);
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0)
+     {
+     printf("*** Problem found (TEST STEP NUMBER 9) ! ***\n");
+     errflg = errflg + 1;
+     }
+     printf("\n\n=================================================\n");
+     strcpy(SQLSTATE,"x");
+     EXEC SQL INSERT INTO INDEXTEST VALUES ('B', NULL);
+     printf ("SQLSTATE should be '23000',it is %s \n", SQLSTATE);
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"23000",5) != 0)
+     {
+     printf("*** Problem found (TEST STEP NUMBER 10) ! ***\n");
+     errflg = errflg + 1;
+     }
+     else
+     {
+     printf ("Valid implementation defined SQLSTATE accepted.\n");
+     }
+
+     EXEC SQL COMMIT WORK;
+     printf("\n\n=================================================\n");
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 10 ###\n");
+
+if (errflg == 0)
+                 {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0703','pass','PC');
+ printf("\n\n       xop703.pc   *** pass ***     ");
+ }
+  else
+       {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0703','fail','PC');
+ errcnt = errcnt + 1;
+ printf("\n\n       xop703.pc  *** fail ***     ");
+ }
+
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0703 ********************/
+
+     exit(errcnt);
+
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation defined   */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+/* subclass begins in position 3 of char array NORMSQ    */
+norm1 = 2;
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+NORMSQ[norm1] = '0';
+    }
+
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+   goto P213;
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-z */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01). These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+    NORMSQ[1] = '0';
+
+P213:
+    return;
+
+}
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+   SQLSTATE[5] = '\0';
+   printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+   NOSUBCLASS();
+   if (strncmp (NORMSQ, "00000", 5) == 0 &&
+       strncmp (NORMSQ, SQLSTATE, 5) != 0)
+      printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+

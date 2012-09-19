@@ -1,0 +1,349 @@
+/*  EMBEDDED C (file "DML070.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1990/11/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML070.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS SET OPERATIONS.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long  HOURS1;
+char  PNUM1[10];
+char  EMPNO1[4];
+char EMPNA1[21];
+long GRADE1;
+char PNA1[21];
+char PTY1[7];
+long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+long cnt;
+long cnt2;
+long code1;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml070.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+
+
+
+/******************** BEGIN TEST0409 ********************/
+
+  printf("\n                      TEST0409      \n");
+  printf("   Effective outer join -- join with two cursors\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("\n");
+printf("\n");
+  HOURS1 = 0;
+  strcpy(EMPNO1, "NV");
+
+  EXEC SQL INSERT INTO STAFF
+           VALUES ('E6', 'Lendle', 17, 'Potomac');
+ 
+  EXEC SQL DECLARE SCALLOP CURSOR FOR
+           SELECT  PNUM, WORKS.EMPNUM, EMPNAME, HOURS 
+           FROM WORKS,STAFF
+           WHERE STAFF.EMPNUM = WORKS.EMPNUM
+           ORDER BY 2;
+
+
+printf("The correct result is :\n");
+printf("            P2,   E3,  Carmen,  20\n");
+printf("            ZZ,   E5,  Ed,      -99\n");
+printf("            ZZ,   E6,  Lendle,  -99\n");
+printf("Your answer is :\n");
+  EXEC SQL OPEN SCALLOP;
+
+  cnt2 = 0;
+  flag = 1;
+  count1 = 0;
+  for (cnt = 1; cnt < 15; cnt++)
+     {
+        EXEC SQL FETCH SCALLOP INTO :PNUM1,
+                   :EMPNO1, :EMPNA1, :HOURS1;
+        if (SQLCODE == 0)
+           count1 = count1 + 1;
+        if (strncmp(EMPNO1, "E3", 2) == 0 && strncmp(PNUM1, "P2", 2) == 0)
+            {
+               cnt2 = cnt2 + 1;
+      printf("     %s,    %s,   %s,  %ld\n", PNUM1, EMPNO1, EMPNA1, HOURS1);
+               if (strncmp(EMPNA1, "Carmen", 5) != 0 || HOURS1 != 20)
+                   flag = 0;
+            }
+      }
+
+  if (cnt2 != 1)
+     flag = 0;
+
+  EXEC SQL CLOSE SCALLOP;
+
+  EXEC SQL DECLARE FISH CURSOR FOR 
+           SELECT  'ZZ', EMPNUM, EMPNAME, -99
+           FROM STAFF
+           WHERE NOT EXISTS (SELECT * FROM WORKS
+                             WHERE WORKS.EMPNUM = STAFF.EMPNUM)
+           ORDER BY EMPNUM;
+
+  EXEC SQL OPEN FISH;
+  EXEC SQL FETCH FISH INTO :PNUM1,
+                :EMPNO1, :EMPNA1, :HOURS1;
+  if (SQLCODE != 0)
+     flag = 0;
+  printf("     %s,    %s,   %s,  %ld\n", PNUM1, EMPNO1, EMPNA1, HOURS1);
+  if (strncmp(EMPNO1, "E5", 2) != 0 || strncmp(EMPNA1, "Ed", 2) != 0)
+     flag = 0;
+  if (strncmp(PNUM1, "ZZ", 2) != 0 || HOURS1 != -99)
+     flag = 0;
+
+  EXEC SQL FETCH FISH INTO :PNUM1,
+               :EMPNO1, :EMPNA1, :HOURS1;
+  if (SQLCODE != 0)
+     flag = 0;
+  printf("     %s,    %s,   %s,  %ld\n", PNUM1, EMPNO1, EMPNA1, HOURS1);
+  if (strncmp(EMPNO1, "E6", 2) != 0 || strncmp(EMPNA1, "Lendle", 6) != 0)
+     flag = 0;
+  if (strncmp(PNUM1, "ZZ", 2) != 0 || HOURS1 != -99)
+     flag = 0;
+
+  EXEC SQL FETCH FISH INTO :PNUM1,
+                :EMPNO1, :EMPNA1, :HOURS1;
+  if (SQLCODE == 0)
+     flag = 0;
+
+  EXEC SQL CLOSE FISH;
+
+  EXEC SQL ROLLBACK WORK;
+
+  
+if (flag == 1 && count1 == 12)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0409','pass','PC');
+    }
+  else
+    {
+      printf("      dml070.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0409','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0409 ********************/
+
+
+
+
+
+
+
+
+
+
+/******************** BEGIN TEST0411 ********************/
+
+  printf("\n                      TEST0411      \n");
+  printf("          Effective set difference\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("select all staff who joined project P2 and did not join P1.\n");
+printf("           SELECT EMPNUM FROM WORKS\n");
+printf("           WHERE  PNUM = 'P2';\n");
+printf("           **** DIFFER ****\n");
+printf("           SELECT EMPNUM FROM WORKS\n");
+printf("           WHERE  PNUM = 'P1';\n");
+printf("\n");
+printf("\n");
+  HOURS1 = 0;
+  strcpy(EMPNO1, "NV");
+
+  EXEC SQL DECLARE SMURF CURSOR FOR
+           SELECT W1.EMPNUM FROM WORKS W1
+           WHERE  W1.PNUM = 'P2'
+                  AND NOT EXISTS (SELECT * FROM WORKS W2
+                                 WHERE W2.EMPNUM = W1.EMPNUM
+                                       AND W2.PNUM = 'P1')
+           ORDER BY 1 ASC;
+
+flag = 0;
+printf("The correct result is :\n");
+printf("            E3\n");
+printf("            E4\n");
+printf("            code1 <> 0\n");
+printf("Your answer is :\n");
+  EXEC SQL OPEN SMURF;
+
+        EXEC SQL FETCH SMURF INTO :EMPNO1;
+printf("            %s \n", EMPNO1);
+   if (strncmp(EMPNO1, "E3", 2) != 0)
+                   flag = 1;
+        EXEC SQL FETCH SMURF INTO :EMPNO1;
+printf("            %s\n", EMPNO1);
+   if (strncmp(EMPNO1, "E4", 2) != 0)
+                   flag = 1;
+        EXEC SQL FETCH SMURF INTO :EMPNO1;
+        code1 = SQLCODE;
+printf("          %ld\n", code1);
+  EXEC SQL CLOSE SMURF;
+
+
+  
+if (flag == 0 && code1 != 0)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0411','pass','PC');
+    }
+  else
+    {
+      printf("      dml070.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0411','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0411 ********************/
+
+
+
+
+/******************** BEGIN TEST0412 ********************/
+
+  printf("\n                      TEST0412      \n");
+  printf("          Effective set intersection\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("select all staff who joined both project P2 and P1.\n");
+printf("           SELECT EMPNUM FROM WORKS\n");
+printf("           WHERE  PNUM = 'P2';\n");
+printf("           **** INTERSECT *****\n");
+printf("           SELECT EMPNUM FROM WORKS\n");
+printf("           WHERE  PNUM = 'P1';\n");
+printf("\n");
+printf("\n");
+  HOURS1 = 0;
+  strcpy(EMPNO1, "NV");
+
+  EXEC SQL DECLARE BULL CURSOR FOR
+           SELECT W1.EMPNUM FROM WORKS W1
+           WHERE  W1.PNUM = 'P2'
+                  AND EXISTS (SELECT * FROM WORKS W2
+                             WHERE W1.EMPNUM = W2.EMPNUM
+                                AND W2.PNUM = 'P1')
+           ORDER BY EMPNUM ASC;
+
+printf("The correct result is :\n");
+printf("            E1\n");
+printf("            E2\n");
+printf("            code1 <> 0 \n");
+printf("Your answer is :\n");
+  EXEC SQL OPEN BULL;
+
+        EXEC SQL FETCH BULL INTO :EMPNO1;
+   printf("            %s\n",EMPNO1);
+   if (strncmp(EMPNO1, "E1", 2) != 0)
+                   flag = 1;
+        EXEC SQL FETCH BULL INTO :EMPNO1;
+   printf("            %s\n",EMPNO1);
+   if (strncmp(EMPNO1, "E2", 2) != 0)
+                   flag = 1;
+        EXEC SQL FETCH BULL INTO :EMPNO1;
+        code1 = SQLCODE;
+   printf("            %ld\n", code1);
+
+
+  EXEC SQL CLOSE BULL;
+
+
+  
+if (flag == 0 && code1 != 0)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0412','pass','PC');
+    }
+  else
+    {
+      printf("      dml070.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0412','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0412 ********************/
+
+
+
+
+
+  exit(errcnt);
+
+}
+

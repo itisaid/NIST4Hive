@@ -1,0 +1,376 @@
+/*  EMBEDDED C (file " XTS727.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS727.PC                                                   */
+/*  WRITTEN BY: Vassilis Kogakis                                 */
+/*                                                               */
+/*  Flagging - FULL SQL - <explicit table> in <query expression> */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    7.10 -- <query expression>                                 */
+/*    7.10 SR.2                                                  */
+/*    7.10 SR.5b                                                 */
+/*    7.10 LR.1b -- Intermediate SQL restriction which prohibits */
+/*                  the use of <explicit table> in a <simple     */
+/*                  table> in a <query expression>               */
+/*    F#37 -- Intermediate SQL Flagging.                         */
+/*                                                               */
+/*  DATE LAST ALTERED  09/02/96 Alpha Release V1.0               */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 09/02/96                    */
+/*                                                               */
+/*  Rewritten by V. Kogakis on 09/02/96                          */
+/*                                                               */
+/*  Revised by DWF 1996-02-14                                    */
+/*     Fixed char string lengths                                 */
+/*     Fixed refs to non-existent columns                        */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ long  coun;
+ long c_num1;
+ long c_num2;
+ char c_ch1[11];
+ char c_ch2[11];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts727.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7027 ********************/
+ flag = 1;
+ printf("               TEST7027\n"); 
+ printf("    Flagging - Full SQL - <explicit table> in <qry exprssn>\n");
+ printf(" References \n");
+ printf("    7.10 -- <query expression>\n");
+ printf("    7.10 SR.2\n");
+ printf("    7.10 SR.5b\n");
+ printf("    7.10 LR.1b Intermediate SQL restriction which prohibits the\n");
+ printf("               use of <explicit table> on a <query expression> \n");
+ printf("    F#37 -- Intermediate SQL Flagging.\n");
+ printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* initialise host variables */
+strcpy(c_ch1,"xxxxxxxxxx");
+strcpy(c_ch2,"xxxxxxxxxx");
+c_num1=0;
+c_num2=0;
+coun=0;
+
+/* Insert into TEST6840C all rows from table CL_STANDARD */
+printf("INSERT INTO TEST6840C\n");
+printf("TABLE CL_STANDARD;\n"); 
+EXEC SQL INSERT INTO TEST6840C
+         TABLE CL_STANDARD;
+CHCKOK();
+printf("\n");
+
+printf("SELECT COUNT(*) INTO :coun FROM TEST6840C;\n");
+EXEC SQL SELECT COUNT(*) INTO :coun FROM TEST6840C;
+CHCKOK();
+printf("Coun should be 5; its value is:  %ld\n",coun);
+if (coun != 5)
+     flag = 0;
+printf("\n");
+
+/* now check if all rows were inserted  correctly */
+/* First row */
+printf("SELECT NUM_C1,CH_C1,NUM_C2,CH_C2\n");
+printf("INTO :c_num1,:c_ch1,:c_num2,:c_ch2\n");
+printf("FROM TEST6840C\n"); 
+printf("WHERE NUM_C1 = 1000;\n");
+EXEC SQL SELECT NUM_C1,CH_C1,NUM_C2,CH_C2
+         INTO :c_num1,:c_ch1,:c_num2,:c_ch2
+         FROM TEST6840C
+         WHERE NUM_C1 = 1000;
+CHCKOK();
+/* check results returned by the <query specification>**/
+printf("NUM_C1 should be 1000;   it is : %ld\n",c_num1);
+printf("CH_C1  should be NICKOS; it is : %s\n",c_ch1);
+printf("NUM_C2 should be 4000;   it is : %ld\n",c_num2);
+printf("CH_C2  should be ATHENS; it is : %s\n",c_ch2);
+if (strncmp(c_ch1,"NICKOS",6)!=0 || strncmp(c_ch2,"ATHENS",6)!=0)
+  flag = 0;
+if (c_num2 != 4000 || c_num1 != 1000)   
+  flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(c_ch1,"xxxxxxxxxx");
+strcpy(c_ch2,"xxxxxxxxxx");
+c_num1=0;
+c_num2=0;
+
+/* Second row */
+printf("SELECT NUM_C1,CH_C1,NUM_C2,CH_C2\n");
+printf("INTO :c_num1,:c_ch1,:c_num2,:c_ch2\n");
+printf("FROM TEST6840C\n"); 
+printf("WHERE NUM_C1 = 1001;\n");
+EXEC SQL SELECT NUM_C1,CH_C1,NUM_C2,CH_C2
+         INTO :c_num1,:c_ch1,:c_num2,:c_ch2
+         FROM TEST6840C
+         WHERE NUM_C1 = 1001;
+CHCKOK();
+/* check results returned by the <query specification>**/
+printf("NUM_C1 should be 1001;   it is : %ld\n",c_num1);
+printf("CH_C1  should be MARIA;  it is : %s\n",c_ch1);
+printf("NUM_C2 should be 4001;   it is : %ld\n",c_num2);
+printf("CH_C2  should be RHODES; it is : %s\n",c_ch2);
+if (strncmp(c_ch1,"MARIA",5)!=0 || strncmp(c_ch2,"RHODES",6)!=0)
+  flag = 0;
+if (c_num2 != 4001 || c_num1 != 1001)
+  flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(c_ch1,"xxxxxxxxxx");
+strcpy(c_ch2,"xxxxxxxxxx");
+c_num1=0;
+c_num2=0;
+
+/* Third row */
+printf("SELECT NUM_C1,CH_C1,NUM_C2,CH_C2\n");
+printf("INTO :c_num1,:c_ch1,:c_num2,:c_ch2\n");
+printf("FROM TEST6840C\n"); 
+printf("WHERE NUM_C1 = 1002;\n");
+EXEC SQL SELECT NUM_C1,CH_C1,NUM_C2,CH_C2
+         INTO :c_num1,:c_ch1,:c_num2,:c_ch2
+         FROM TEST6840C
+         WHERE NUM_C1 = 1002;
+CHCKOK();
+/* check results returned by the <query specification>**/
+printf("NUM_C1 should be 1002;   it is : %ld\n",c_num1);
+printf("CH_C1  should be MAKIS;  it is : %s\n",c_ch1);
+printf("NUM_C2 should be 4002;   it is : %ld\n",c_num2);
+printf("CH_C2  should be HANIA;  it is : %s\n",c_ch2);
+if (strncmp(c_ch1,"MAKIS",5)!=0 || strncmp(c_ch2,"HANIA",5)!=0)
+  flag = 0;
+if (c_num2 != 4002 || c_num1 != 1002)
+  flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(c_ch1,"xxxxxxxxxx");
+strcpy(c_ch2,"xxxxxxxxxx");
+c_num1=0;
+c_num2=0;
+
+/* Forth row */
+printf("SELECT NUM_C1,CH_C1,NUM_C2,CH_C2\n");
+printf("INTO :c_num1,:c_ch1,:c_num2,:c_ch2\n");
+printf("FROM TEST6840C\n"); 
+printf("WHERE NUM_C1 = 1003;\n");
+EXEC SQL SELECT NUM_C1,CH_C1,NUM_C2,CH_C2
+         INTO :c_num1,:c_ch1,:c_num2,:c_ch2
+         FROM TEST6840C
+         WHERE NUM_C1 = 1003;
+CHCKOK();
+/* check results returned by the <query specification>**/
+printf("NUM_C1 should be 1003;   it is : %ld\n",c_num1);
+printf("CH_C1  should be GEORGE; it is : %s\n",c_ch1);
+printf("NUM_C2 should be 4003;   it is : %ld\n",c_num2);
+printf("CH_C2  should be ARTA;   it is : %s\n",c_ch2);
+if (strncmp(c_ch1,"GEORGE",6)!=0 || strncmp(c_ch2,"ARTA",4)!=0)
+  flag = 0;
+if (c_num2 != 4003 || c_num1 != 1003)
+  flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(c_ch1,"xxxxxxxxxx");
+strcpy(c_ch2,"xxxxxxxxxx");
+c_num1=0;
+c_num2=0;
+
+/* Fifth row */
+printf("SELECT NUM_C1,CH_C1,NUM_C2,CH_C2\n");
+printf("INTO :c_num1,:c_ch1,:c_num2,:c_ch2\n");
+printf("FROM TEST6840C\n");
+printf("WHERE NUM_C1 = 1004;\n");
+EXEC SQL SELECT NUM_C1,CH_C1,NUM_C2,CH_C2
+         INTO :c_num1,:c_ch1,:c_num2,:c_ch2
+         FROM TEST6840C
+         WHERE NUM_C1 = 1004;
+CHCKOK();
+/* check results returned by the <query specification>**/
+printf("NUM_C1 should be 1004;   it is : %ld\n",c_num1);
+printf("CH_C1  should be MORRIS; it is : %s\n",c_ch1);
+printf("NUM_C2 should be 4004;   it is : %ld\n",c_num2);
+printf("CH_C2  should be PARGA; it is : %s\n",c_ch2);
+if (strncmp(c_ch1,"MORRIS",6)!=0 || strncmp(c_ch2,"PARGA",5)!=0)
+  flag = 0;
+if (c_num2 != 4004 || c_num1 != 1004)
+  flag = 0;
+printf("\n");
+
+/* restore table CL_STANDARD in its original state */
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+ /* record results */
+
+     if ( flag == 1 )
+       {
+        printf("\n\n       xts727.pc  *** pass *** \n");
+        EXEC SQL INSERT INTO CTS1.TESTREPORT
+        VALUES('7027','pass','PC');
+        printf("Intermediate SQL extension\n");
+        printf("Explicit table in <query expression>\n");
+        printf("executed successfully.\n");
+        printf("Vendor must demonstrate Intermediate Flagger WARNING\n");
+       }
+     else
+       {
+        printf("\n\n       xts727.pc  *** NOGO *** \n");
+        EXEC SQL INSERT INTO CTS1.TESTREPORT
+        VALUES('7027','NOGO','PC');
+        printf("Vendor does not support fully \n");
+        printf("Intermediate SQL extension \n");
+        printf("Support explicit table in query expression is not required\n");
+       }
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7027 *********************/
+
+    exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

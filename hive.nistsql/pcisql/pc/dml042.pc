@@ -1,0 +1,120 @@
+/*  EMBEDDED C (file "DML042.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/11/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML042.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT ON THE NUMBER OF COLUMNS IN A */
+/*  TABLE. THIS LIMIT IS NOT LESS THAN ONE HUNDRED (100).        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char vc1[3];
+  char vc21[3];
+  char vc41[3];
+  char vc61[3];
+  char vc81[3];
+  char vc100[3];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  long  i;
+  long  ii;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml042.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0213 ********************/
+
+  printf("\n          FIPS sizing TEST0213      \n");
+  printf("  This routine tests the number of columns (100) in a row\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO T100(C1,C21,C41,C61,C81,C100)
+    VALUES(' 1','21','41','61','81','00');
+
+  i = SQLCODE;
+
+  EXEC SQL SELECT C1,C21,C41,C61,C81,C100
+           INTO :vc1,:vc21,:vc41,:vc61,:vc81,:vc100
+           FROM T100;
+  ii = SQLCODE;
+
+  printf("i = %ld, ii = %ld \n", i, ii);
+  printf("vc1 = %s,vc21 = %s,vc41 = %s\n",vc1,vc21,vc41);
+  printf("vc61 = %s,vc81 = %s,vc100 = %s \n",vc61,vc81,vc100);
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (i==0 && ii==0 && strncmp(vc1," 1",2)==0 && strncmp(vc100,"00",2)==0)
+    {
+      printf("        *** pass *** \n\n");      
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0213','pass','PC');
+    }
+  else
+    {
+      printf("dml042.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0213','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0213 ********************/
+
+  exit(errcnt);
+}
+

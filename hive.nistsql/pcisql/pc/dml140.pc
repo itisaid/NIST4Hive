@@ -1,0 +1,303 @@
+/*  EMBEDDED C (file "DML140.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/9/30 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML140.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests <drop behavior> in dynamic SQL.  It is    */
+/*  the dynamic version of DML139.                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml140.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0829 ********************/
+flag = 1;
+
+     printf("                  TEST0829 \n");
+     printf("     <drop behavior> on a REVOKE (dynamic)\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("    11.2 FT.2 -- <drop behavior>\n");
+     printf("    11.37 -- <revoke statement>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* The following violates 11.37 SR.18. */
+/* If it is rejected at compile time, save the error and TEd it out. */
+/* schema2 - AUTHORIZATION CUGINI - */
+/*           grants SELECT ON HU.WORKS TO SULLIVAN */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'REVOKE GRANT OPTION FOR SELECT' ||
+       '  ON HU.WORKS FROM CUGINI RESTRICT'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'REVOKE GRANT OPTION FOR SELECT' ||
+       '  ON HU.WORKS FROM CUGINI CASCADE'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* schema1  GRANT SELECT ON HU.WORKS TO CUGINI is not affected by */
+/*         REVOKE SELECT ON HU.WORKS FROM PUBLIC*/ 
+
+printf("dstmt=\"REVOKE SELECT ON HU.WORKS FROM PUBLIC RESTRICT\"\n");
+     strcpy (dstmt,
+     "REVOKE SELECT ON HU.WORKS FROM PUBLIC RESTRICT    ");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* The following violates 11.37 SR.18. */
+/* If it is rejected at compile time, save the error and TEd it out. */
+/* schema4 - AUTHORIZATION SULLIVAN1 */
+/*         - creates view MUL_SCH with SELECT from HU.STAFF */
+
+printf("dstmt=\"REVOKE SELECT ON HU.STAFF FROM PUBLIC RESTRICT\"\n");
+     strcpy (dstmt,
+     "REVOKE SELECT ON HU.STAFF FROM PUBLIC RESTRICT    ");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"REVOKE SELECT ON HU.PROJ FROM PUBLIC RESTRICT\"\n");
+     strcpy (dstmt,
+     "REVOKE SELECT ON HU.PROJ FROM PUBLIC RESTRICT    ");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0829','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml140.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0829','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0829 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

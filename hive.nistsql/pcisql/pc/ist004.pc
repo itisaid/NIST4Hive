@@ -1,0 +1,278 @@
+/*  EMBEDDED C (file "IST004.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/06/18 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  IST004.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE INFORMATION SCHEMA FOR              */
+/*    TRANSITIONAL SQL.                                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      21 Information Schema and Definition Schema              */
+/*    X3H2-93-389  Corrections to FIPS Transitional SQL          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long ctr1;
+long ctr2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, ist004.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0606 ********************/
+flag = 1;
+
+/* Transitional SQL.  Examine the contents of the SCHEMATA     */
+/* view in INFO_SCHEM with regards to pre-existing             */
+/* objects in our own schema (FLATER).  This test is primarily */
+/* concerned with making sure that all the columns are there   */
+/* and have something resembling the correct data types.       */
+/* It also checks the functionality of the SCHEMATA view w.r.t.*/
+/* pre-existing objects in our own schema.  Objects in other   */
+/* schemas, privileges, and dynamically created objects are    */
+/* tested later.                                               */
+
+     printf("                  TEST0606 \n");
+     printf("        INFO_SCHEM.SCHEMATA definition\n");
+     printf(" References\n");
+     printf("     ANSI SQL-1992  21.2.4  SCHEMATA view,\n");
+     printf("     X3H2-93-389  Corrections to FIPS Transitional SQL\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Verify that only the schemata we own are listed. */
+/* Multiple owners should generate a cardinality error. */
+/* NULLs will also blow up. */
+
+strcpy (uidx, "xxxxxxxxxxxxxxxxxx");
+printf ("SELECT DISTINCT SCHEM_OWNER\n");
+printf ("INTO :uidx\n");
+printf ("FROM INFO_SCHEM.SCHEMATA;\n");
+
+EXEC SQL SELECT DISTINCT SCHEM_OWNER
+INTO :uidx
+FROM INFO_SCHEM.SCHEMATA;
+
+CHCKOK ();
+uidx[18] = '\0';
+printf ("uidx should be 'FLATER'; its value is '%s'\n\n", uidx);
+if (strcmp (uidx, "FLATER            ") != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT SCHEMATA_PRIMARY_KEY */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.SCHEMATA\n");
+printf("WHERE SCHEM_NAME IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.SCHEMATA
+WHERE SCHEM_NAME IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+printf ("The following result includes schema FLATER and the two\n");
+printf ("schemas in SCHEMA6.\n\n");
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.SCHEMATA;\n");
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.SCHEMATA;
+CHCKOK ();
+printf ("ctr1 should be 3; its value is %ld\n\n", ctr1);
+if (ctr1 != 3)
+  flag = 0;
+
+ctr2 = -1;
+printf("SELECT COUNT(*) INTO :ctr2\n");
+printf("FROM INFO_SCHEM.SCHEMATA A,\n");
+printf(" INFO_SCHEM.SCHEMATA B\n");
+printf("WHERE A.SCHEM_NAME = B.SCHEM_NAME;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr2
+FROM INFO_SCHEM.SCHEMATA A,
+ INFO_SCHEM.SCHEMATA B
+WHERE A.SCHEM_NAME = B.SCHEM_NAME;
+
+CHCKOK ();
+printf ("ctr1 should be equal to ctr2.\n");
+printf ("ctr1 is %ld; ctr2 is %ld.\n\n", ctr1, ctr2);
+if (ctr1 != ctr2)
+  flag = 0;
+
+/* Check the only tuple we can, other than INTSQL. */
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.SCHEMATA\n");
+printf("WHERE SCHEM_NAME = 'FLATER'\n");
+printf("AND SCHEM_OWNER = 'FLATER';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.SCHEMATA
+WHERE SCHEM_NAME = 'FLATER'
+AND SCHEM_OWNER = 'FLATER';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0606','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       ist004.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0606','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0606 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

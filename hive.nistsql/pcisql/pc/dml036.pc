@@ -1,0 +1,127 @@
+/*  EMBEDDED C (file "DML036.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML036.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS PROGRAM TESTS THE HANDLING OF CHARACTER STRING (SPACE   */
+/*  FILLING, TRUNCATING ETC.) INTO TEST COLUMNS. IT ALSO TESTS   */
+/*  THE USE OF NUMERIC DATATYPES IN INSERT STATEMENTS.           */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     short indic1;
+     short indic2;
+     char   t13[5];
+     long t23; 
+     char   t33[5];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long ii;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml036.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0166 ********************/
+
+
+printf("\n                      TEST0166     \n");
+printf("       Insert with indicators (-1) (5.6 GR1) \n");
+printf("       - - - - - - - - - - - - - - - - - -\n\n");
+
+strcpy(t13, "zzzz"); 
+strcpy(t33, "zzzz"); 
+t23 = 23;
+
+indic2 = -1;
+indic1 = -1;
+
+EXEC SQL INSERT INTO TMP
+     VALUES(:t13,:t23:indic1,:t33:indic2);
+
+indic2 = 0;
+indic1 = 0;
+
+EXEC SQL SELECT *
+         INTO   :t13,:t23:indic1,:t33:indic2
+         FROM   TMP
+         WHERE  T1='zzzz';
+
+printf("    indic1 = %d,  indic2 = %d \n",indic1,indic2);
+
+EXEC SQL ROLLBACK WORK;
+
+if (indic1 == -1 && indic2 == -1)
+     {
+     printf("\n\n                     *** pass ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0166','pass','PC');
+     }
+else
+     {
+     printf("\n\n           dml036.pc  *** fail ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0166','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0166 ********************/
+
+exit(errcnt);
+}

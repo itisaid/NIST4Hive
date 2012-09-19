@@ -1,0 +1,1896 @@
+/*  EMBEDDED C (file "DML105.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/08/16 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML105.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests Fips Feature #4 for dynamic TSQL.  Fips   */
+/*  Feature #4 is "joined table."                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992 7.5 <joined table>                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long ivar1;
+long ivar2;
+char cvar1[6];
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml105.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0595 ********************/
+flag = 1;
+
+     printf("                  TEST0595 \n");
+     printf("     NATURAL JOIN (feature 4) (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE GROUPS1 (EMPNUM INT, GRP INT)\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE GROUPS1 (EMPNUM INT, GRP INT)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"CREATE TABLE NAMES1 (EMPNUM INT, NAAM CHAR(5))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE NAMES1 (EMPNUM INT, NAAM CHAR(5))    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW NAMGRP1 AS SELECT * ' ||
+       '  FROM NAMES1 NATURAL JOIN GROUPS1'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS1 VALUES (0, 10)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS1 VALUES (0, 10)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS1 VALUES (1, 20)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS1 VALUES (1, 20)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS1 VALUES (2, 30)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS1 VALUES (2, 30)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS1 VALUES (3, 40)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS1 VALUES (3, 40)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES1 VALUES (5, 'HARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES1 VALUES (5, 'HARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES1 VALUES (1, 'MARY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES1 VALUES (1, 'MARY')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES1 VALUES (7, 'LARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES1 VALUES (7, 'LARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES1 VALUES (0, 'KERI')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES1 VALUES (0, 'KERI')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES1 VALUES (9, 'BARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES1 VALUES (9, 'BARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM FROM NAMGRP1 WHERE NAAM = ? AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10511 FROM :longst;\n");
+EXEC SQL PREPARE S10511 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10511 CURSOR FOR S10511;\n");
+EXEC SQL DECLARE C10511 CURSOR FOR S10511;
+printf("\n");
+
+printf("ivar1 = 10;\n");
+printf("strcpy (cvar1, \"KERI \");\n");
+ivar1 = 10;
+strcpy (cvar1, "KERI ");
+
+printf("OPEN C10511 USING :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10511 USING :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10511 INTO :int1;\n");
+EXEC SQL FETCH C10511 INTO :int1;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C10511;\n");
+EXEC SQL CLOSE C10511;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 20;\n");
+printf("strcpy (cvar1, \"MARY \");\n");
+ivar1 = 20;
+strcpy (cvar1, "MARY ");
+
+printf("OPEN C10511 USING :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10511 USING :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10511 INTO :int1;\n");
+EXEC SQL FETCH C10511 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10511;\n");
+EXEC SQL CLOSE C10511;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NAMGRP1 '   ||
+       '  WHERE (NAAM <> ''MARY'''        ||
+       '  AND NAAM <> ''KERI'')'          ||
+       '  OR (GRP <> 20 '                 ||
+       '  AND GRP <> 10) '                ||
+       '  OR (EMPNUM <> 0 '                 ||
+       '  AND EMPNUM <> 1) '                ||
+       '  OR NAAM IS NULL '              ||
+       '  OR GRP IS NULL '               ||
+       '  OR EMPNUM IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10512 FROM :longst;\n");
+EXEC SQL PREPARE S10512 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10512 CURSOR FOR S10512;\n");
+EXEC SQL DECLARE C10512 CURSOR FOR S10512;
+printf("\n");
+
+printf("OPEN C10512;\n");
+EXEC SQL OPEN C10512;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10512 INTO :int1;\n");
+EXEC SQL FETCH C10512 INTO :int1;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C10512;\n");
+EXEC SQL CLOSE C10512;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE NAMES1 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE NAMES1 CASCADE                         ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE GROUPS1 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE GROUPS1 CASCADE                        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP should go away on its own due to CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0595','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml105.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0595','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0595 *********************/
+/******************** BEGIN TEST0596 ********************/
+flag = 1;
+
+     printf("                  TEST0596 \n");
+     printf("     INNER JOIN (feature 4) (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE GROUPS2 (EMPNUM INT, GRP INT)\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE GROUPS2 (EMPNUM INT, GRP INT)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"CREATE TABLE NAMES2 (EMPNUM INT, NAAM CHAR(5))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE NAMES2 (EMPNUM INT, NAAM CHAR(5))    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW NAMGRP2 AS SELECT * ' ||
+       '  FROM NAMES2 INNER JOIN GROUPS2 USING (EMPNUM)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Inner is implicit -- 7.5 SR.3 */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW NMGRP2 AS SELECT * ' ||
+       '  FROM NAMES2 JOIN GROUPS2 USING (EMPNUM) WHERE EMPNUM > 0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS2 VALUES (0, 10)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS2 VALUES (0, 10)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS2 VALUES (1, 20)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS2 VALUES (1, 20)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS2 VALUES (2, 30)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS2 VALUES (2, 30)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS2 VALUES (3, 40)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS2 VALUES (3, 40)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES2 VALUES (5, 'HARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES2 VALUES (5, 'HARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES2 VALUES (1, 'MARY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES2 VALUES (1, 'MARY')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES2 VALUES (7, 'LARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES2 VALUES (7, 'LARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES2 VALUES (0, 'KERI')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES2 VALUES (0, 'KERI')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES2 VALUES (9, 'BARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES2 VALUES (9, 'BARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM FROM NAMGRP2 WHERE NAAM = ? AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10521 FROM :longst;\n");
+EXEC SQL PREPARE S10521 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10521 CURSOR FOR S10521;\n");
+EXEC SQL DECLARE C10521 CURSOR FOR S10521;
+printf("\n");
+
+printf("ivar1 = 10;\n");
+printf("strcpy (cvar1, \"KERI \");\n");
+ivar1 = 10;
+strcpy (cvar1, "KERI ");
+
+printf("OPEN C10521 USING :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10521 USING :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10521 INTO :int1;\n");
+EXEC SQL FETCH C10521 INTO :int1;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C10521;\n");
+EXEC SQL CLOSE C10521;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 20;\n");
+printf("strcpy (cvar1, \"MARY \");\n");
+ivar1 = 20;
+strcpy (cvar1, "MARY ");
+
+printf("OPEN C10521 USING :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10521 USING :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10521 INTO :int1;\n");
+EXEC SQL FETCH C10521 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10521;\n");
+EXEC SQL CLOSE C10521;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NAMGRP2 '   ||
+       '  WHERE NAAM <> ''MARY'''        ||
+       '  AND NAAM <> ''KERI'''          ||
+       '  OR GRP <> 20 '                 ||
+       '  AND GRP <> 10 '                ||
+       '  OR EMPNUM <> 0 '                 ||
+       '  AND EMPNUM <> 1 '                ||
+       '  OR NAAM IS NULL '              ||
+       '  OR GRP IS NULL '               ||
+       '  OR EMPNUM IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10522 FROM :longst;\n");
+EXEC SQL PREPARE S10522 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10522 CURSOR FOR S10522;\n");
+EXEC SQL DECLARE C10522 CURSOR FOR S10522;
+printf("\n");
+
+printf("OPEN C10522;\n");
+EXEC SQL OPEN C10522;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10522 INTO :int1;\n");
+EXEC SQL FETCH C10522 INTO :int1;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C10522;\n");
+EXEC SQL CLOSE C10522;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM FROM NMGRP2 WHERE NAAM = ? AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10524 FROM :longst;\n");
+EXEC SQL PREPARE S10524 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10524 CURSOR FOR S10524;\n");
+EXEC SQL DECLARE C10524 CURSOR FOR S10524;
+printf("\n");
+
+printf("ivar1 = 20;\n");
+printf("strcpy (cvar1, \"MARY \");\n");
+ivar1 = 20;
+strcpy (cvar1, "MARY ");
+
+printf("OPEN C10524 USING :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10524 USING :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10524 INTO :int1;\n");
+EXEC SQL FETCH C10524 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10524;\n");
+EXEC SQL CLOSE C10524;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NMGRP2 '    ||
+       '  WHERE NAAM <> ''MARY'''        ||
+       '  OR GRP <> 20 '                 ||
+       '  OR EMPNUM <> 1 '                 ||
+       '  OR NAAM IS NULL '              ||
+       '  OR GRP IS NULL '               ||
+       '  OR EMPNUM IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10523 FROM :longst;\n");
+EXEC SQL PREPARE S10523 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10523 CURSOR FOR S10523;\n");
+EXEC SQL DECLARE C10523 CURSOR FOR S10523;
+printf("\n");
+
+printf("OPEN C10523;\n");
+EXEC SQL OPEN C10523;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10523 INTO :int1;\n");
+EXEC SQL FETCH C10523 INTO :int1;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C10523;\n");
+EXEC SQL CLOSE C10523;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE NAMES2 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE NAMES2 CASCADE                         ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE GROUPS2 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE GROUPS2 CASCADE                        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP and NMGRP2 should go away on their own due to CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0596','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml105.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0596','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0596 *********************/
+/******************** BEGIN TEST0597 ********************/
+flag = 1;
+
+     printf("                  TEST0597 \n");
+     printf("     LEFT OUTER JOIN (feature 4) (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE GROUPS3 (EMPNUM INT, GRP INT)\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE GROUPS3 (EMPNUM INT, GRP INT)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"CREATE TABLE NAMES3 (EMPNUM INT, NAAM CHAR(5))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE NAMES3 (EMPNUM INT, NAAM CHAR(5))    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW NAMGRP3 AS '  ||
+       '  SELECT * FROM NAMES3 LEFT OUTER JOIN GROUPS3 USING (EMPNUM)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* This is just to see if ON is also supported */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW NMGRP3 AS'                                  ||
+       '  SELECT NAAM, GRP FROM NAMES3 LEFT OUTER JOIN GROUPS3' ||
+       '  ON NAMES3.EMPNUM < GROUPS3.EMPNUM'                        ||
+       '  WHERE NAAM <> ''KERI'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS3 VALUES (0, 10)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS3 VALUES (0, 10)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS3 VALUES (1, 20)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS3 VALUES (1, 20)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS3 VALUES (2, 30)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS3 VALUES (2, 30)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS3 VALUES (3, 40)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS3 VALUES (3, 40)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES3 VALUES (5, 'HARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES3 VALUES (5, 'HARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES3 VALUES (1, 'MARY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES3 VALUES (1, 'MARY')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES3 VALUES (7, 'LARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES3 VALUES (7, 'LARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES3 VALUES (0, 'KERI')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES3 VALUES (0, 'KERI')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES3 VALUES (9, 'BARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES3 VALUES (9, 'BARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NAMGRP3 WHERE EMPNUM = ? AND ' ||
+       '  NAAM = ? AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10531 FROM :longst;\n");
+EXEC SQL PREPARE S10531 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10531 CURSOR FOR S10531;\n");
+EXEC SQL DECLARE C10531 CURSOR FOR S10531;
+printf("\n");
+
+printf("ivar1 = 10;\n");
+printf("ivar2 = 0;\n");
+printf("strcpy (cvar1, \"KERI \");\n");
+ivar1 = 10;
+ivar2 = 0;
+strcpy (cvar1, "KERI ");
+
+printf("OPEN C10531 USING :ivar2, :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10531 USING :ivar2, :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10531 INTO :int1;\n");
+EXEC SQL FETCH C10531 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10531;\n");
+EXEC SQL CLOSE C10531;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 20;\n");
+printf("ivar2 = 1;\n");
+printf("strcpy (cvar1, \"MARY \");\n");
+ivar1 = 20;
+ivar2 = 1;
+strcpy (cvar1, "MARY ");
+
+printf("OPEN C10531 USING :ivar2, :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10531 USING :ivar2, :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10531 INTO :int1;\n");
+EXEC SQL FETCH C10531 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10531;\n");
+EXEC SQL CLOSE C10531;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NAMGRP3 WHERE EMPNUM = ? AND ' ||
+       '  NAAM = ? AND GRP IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10533 FROM :longst;\n");
+EXEC SQL PREPARE S10533 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10533 CURSOR FOR S10533;\n");
+EXEC SQL DECLARE C10533 CURSOR FOR S10533;
+printf("\n");
+
+printf("ivar1 = 5;\n");
+printf("strcpy (cvar1, \"HARRY\");\n");
+ivar1 = 5;
+strcpy (cvar1, "HARRY");
+
+printf("OPEN C10533 USING :ivar1, :cvar1;\n");
+EXEC SQL OPEN C10533 USING :ivar1, :cvar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10533 INTO :int1;\n");
+EXEC SQL FETCH C10533 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10533;\n");
+EXEC SQL CLOSE C10533;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 7;\n");
+printf("strcpy (cvar1, \"LARRY\");\n");
+ivar1 = 7;
+strcpy (cvar1, "LARRY");
+
+printf("OPEN C10533 USING :ivar1, :cvar1;\n");
+EXEC SQL OPEN C10533 USING :ivar1, :cvar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10533 INTO :int1;\n");
+EXEC SQL FETCH C10533 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10533;\n");
+EXEC SQL CLOSE C10533;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 9;\n");
+printf("strcpy (cvar1, \"BARRY\");\n");
+ivar1 = 9;
+strcpy (cvar1, "BARRY");
+
+printf("OPEN C10533 USING :ivar1, :cvar1;\n");
+EXEC SQL OPEN C10533 USING :ivar1, :cvar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10533 INTO :int1;\n");
+EXEC SQL FETCH C10533 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10533;\n");
+EXEC SQL CLOSE C10533;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM NAMGRP3\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM NAMGRP3                      ");
+
+printf("PREPARE S10532 FROM :dstmt;\n");
+EXEC SQL PREPARE S10532 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10532 CURSOR FOR S10532;\n");
+EXEC SQL DECLARE C10532 CURSOR FOR S10532;
+printf("\n");
+
+printf("OPEN C10532;\n");
+EXEC SQL OPEN C10532;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10532 INTO :int1;\n");
+EXEC SQL FETCH C10532 INTO :int1;
+CHCKOK ();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+printf("CLOSE C10532;\n");
+EXEC SQL CLOSE C10532;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NMGRP3 WHERE' ||
+       '  NAAM = ''MARY'' AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10534 FROM :longst;\n");
+EXEC SQL PREPARE S10534 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10534 CURSOR FOR S10534;\n");
+EXEC SQL DECLARE C10534 CURSOR FOR S10534;
+printf("\n");
+
+printf("ivar1 = 30;\n");
+ivar1 = 30;
+
+printf("OPEN C10534 USING :ivar1;\n");
+EXEC SQL OPEN C10534 USING :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10534 INTO :int1;\n");
+EXEC SQL FETCH C10534 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10534;\n");
+EXEC SQL CLOSE C10534;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 40;\n");
+ivar1 = 40;
+
+printf("OPEN C10534 USING :ivar1;\n");
+EXEC SQL OPEN C10534 USING :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10534 INTO :int1;\n");
+EXEC SQL FETCH C10534 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10534;\n");
+EXEC SQL CLOSE C10534;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NMGRP3 WHERE' ||
+       '  NAAM = ? AND GRP IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10535 FROM :longst;\n");
+EXEC SQL PREPARE S10535 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10535 CURSOR FOR S10535;\n");
+EXEC SQL DECLARE C10535 CURSOR FOR S10535;
+printf("\n");
+
+printf("strcpy (cvar1, \"BARRY\");\n");
+strcpy (cvar1, "BARRY");
+
+printf("OPEN C10535 USING :cvar1;\n");
+EXEC SQL OPEN C10535 USING :cvar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10535 INTO :int1;\n");
+EXEC SQL FETCH C10535 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10535;\n");
+EXEC SQL CLOSE C10535;
+CHCKOK ();
+printf("\n");
+
+printf("strcpy (cvar1, \"HARRY\");\n");
+strcpy (cvar1, "HARRY");
+
+printf("OPEN C10535 USING :cvar1;\n");
+EXEC SQL OPEN C10535 USING :cvar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10535 INTO :int1;\n");
+EXEC SQL FETCH C10535 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10535;\n");
+EXEC SQL CLOSE C10535;
+CHCKOK ();
+printf("\n");
+
+printf("strcpy (cvar1, \"LARRY\");\n");
+strcpy (cvar1, "LARRY");
+
+printf("OPEN C10535 USING :cvar1;\n");
+EXEC SQL OPEN C10535 USING :cvar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10535 INTO :int1;\n");
+EXEC SQL FETCH C10535 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10535;\n");
+EXEC SQL CLOSE C10535;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM NMGRP3\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM NMGRP3                       ");
+
+printf("PREPARE S10536 FROM :dstmt;\n");
+EXEC SQL PREPARE S10536 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10536 CURSOR FOR S10536;\n");
+EXEC SQL DECLARE C10536 CURSOR FOR S10536;
+printf("\n");
+
+printf("OPEN C10536;\n");
+EXEC SQL OPEN C10536;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10536 INTO :int1;\n");
+EXEC SQL FETCH C10536 INTO :int1;
+CHCKOK ();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+printf("CLOSE C10536;\n");
+EXEC SQL CLOSE C10536;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE NAMES3 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE NAMES3 CASCADE                         ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE GROUPS3 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE GROUPS3 CASCADE                        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP should go away on its own due to CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0597','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml105.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0597','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0597 *********************/
+/******************** BEGIN TEST0598 ********************/
+flag = 1;
+
+     printf("                  TEST0598 \n");
+     printf("     RIGHT OUTER JOIN (feature 4) (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE GROUPS4 (EMPNUM INT, GRP INT)\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE GROUPS4 (EMPNUM INT, GRP INT)        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"CREATE TABLE NAMES4 (EMPNUM INT, NAAM CHAR(5))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE NAMES4 (EMPNUM INT, NAAM CHAR(5))    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW NAMGRP4 AS ' ||
+       '  SELECT * FROM NAMES4 RIGHT OUTER JOIN GROUPS4 USING (EMPNUM)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS4 VALUES (0, 10)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS4 VALUES (0, 10)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS4 VALUES (1, 20)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS4 VALUES (1, 20)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS4 VALUES (2, 30)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS4 VALUES (2, 30)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO GROUPS4 VALUES (3, 40)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO GROUPS4 VALUES (3, 40)                ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES4 VALUES (5, 'HARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES4 VALUES (5, 'HARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES4 VALUES (1, 'MARY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES4 VALUES (1, 'MARY')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES4 VALUES (7, 'LARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES4 VALUES (7, 'LARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES4 VALUES (0, 'KERI')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES4 VALUES (0, 'KERI')             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO NAMES4 VALUES (9, 'BARRY')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO NAMES4 VALUES (9, 'BARRY')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NAMGRP4 WHERE EMPNUM = ? AND ' ||
+       '  NAAM = ? AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10541 FROM :longst;\n");
+EXEC SQL PREPARE S10541 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10541 CURSOR FOR S10541;\n");
+EXEC SQL DECLARE C10541 CURSOR FOR S10541;
+printf("\n");
+
+printf("ivar1 = 10;\n");
+printf("ivar2 = 0;\n");
+printf("strcpy (cvar1, \"KERI\");\n");
+ivar1 = 10;
+ivar2 = 0;
+strcpy (cvar1, "KERI");
+
+printf("OPEN C10541 USING :ivar2, :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10541 USING :ivar2, :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10541 INTO :int1;\n");
+EXEC SQL FETCH C10541 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10541;\n");
+EXEC SQL CLOSE C10541;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 20;\n");
+printf("ivar2 = 1;\n");
+printf("strcpy (cvar1, \"MARY\");\n");
+ivar1 = 20;
+ivar2 = 1;
+strcpy (cvar1, "MARY");
+
+printf("OPEN C10541 USING :ivar2, :cvar1, :ivar1;\n");
+EXEC SQL OPEN C10541 USING :ivar2, :cvar1, :ivar1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10541 INTO :int1;\n");
+EXEC SQL FETCH C10541 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10541;\n");
+EXEC SQL CLOSE C10541;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NAMGRP4 WHERE EMPNUM = ? AND ' ||
+       '  NAAM IS NULL AND GRP = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S10542 FROM :longst;\n");
+EXEC SQL PREPARE S10542 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10542 CURSOR FOR S10542;\n");
+EXEC SQL DECLARE C10542 CURSOR FOR S10542;
+printf("\n");
+
+printf("ivar1 = 2;\n");
+printf("ivar2 = 30;\n");
+ivar1 = 2;
+ivar2 = 30;
+
+printf("OPEN C10542 USING :ivar1, :ivar2;\n");
+EXEC SQL OPEN C10542 USING :ivar1, :ivar2;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10542 INTO :int1;\n");
+EXEC SQL FETCH C10542 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10542;\n");
+EXEC SQL CLOSE C10542;
+CHCKOK ();
+printf("\n");
+
+printf("ivar1 = 3;\n");
+printf("ivar2 = 40;\n");
+ivar1 = 3;
+ivar2 = 40;
+
+printf("OPEN C10542 USING :ivar1, :ivar2;\n");
+EXEC SQL OPEN C10542 USING :ivar1, :ivar2;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10542 INTO :int1;\n");
+EXEC SQL FETCH C10542 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C10542;\n");
+EXEC SQL CLOSE C10542;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM NAMGRP4\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM NAMGRP4                      ");
+
+printf("PREPARE S10543 FROM :dstmt;\n");
+EXEC SQL PREPARE S10543 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C10543 CURSOR FOR S10543;\n");
+EXEC SQL DECLARE C10543 CURSOR FOR S10543;
+printf("\n");
+
+printf("OPEN C10543;\n");
+EXEC SQL OPEN C10543;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C10543 INTO :int1;\n");
+EXEC SQL FETCH C10543 INTO :int1;
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("CLOSE C10543;\n");
+EXEC SQL CLOSE C10543;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE NAMES4 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE NAMES4 CASCADE                         ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE GROUPS4 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE GROUPS4 CASCADE                        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP should go away on its own due to CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0598','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml105.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0598','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0598 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

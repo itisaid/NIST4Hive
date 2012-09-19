@@ -1,0 +1,561 @@
+/*  EMBEDDED C (file "DML117.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/5/17 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML117.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS feature 19.                          */
+/*  This is the non-dynamic version of DML118.PC.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml117.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0645 ********************/
+flag = 1;
+
+     printf("                  TEST0645 \n");
+     printf("  Feature 19, Referential delete actions (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 16, 19\n");
+     printf("    11.8  LR.2.a\n");
+     printf("    11.4  LR.2.b\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Simulate a tiny OS with hard quotas (ick!) */
+
+printf("CREATE TABLE LUSERS (\n");
+printf("  PRIMARY KEY (LUSER_ID),\n");
+printf("  NAAM         CHAR (10),\n");
+printf("  LUSER_ID     INT,\n");
+printf("  FILE_QUOTA   INT,\n");
+printf("  FILE_USAGE   INT NOT NULL,\n");
+printf("  CHECK (FILE_USAGE >= 0 AND\n");
+printf("    (FILE_QUOTA IS NULL OR FILE_QUOTA >= FILE_USAGE)));\n");
+EXEC SQL CREATE TABLE LUSERS (
+  PRIMARY KEY (LUSER_ID),
+  NAAM         CHAR (10),
+  LUSER_ID     INT,
+  FILE_QUOTA   INT,
+  FILE_USAGE   INT NOT NULL,
+  CHECK (FILE_USAGE >= 0 AND
+    (FILE_QUOTA IS NULL OR FILE_QUOTA >= FILE_USAGE)));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* When you delete a user, all his/her files are also deleted */
+
+printf("CREATE TABLE LUSER_DATA (\n");
+printf("  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE CASCADE,\n");
+printf("  PRIMARY KEY (FILE_NAME, LUSER_ID),\n");
+printf("  FILE_NAME     CHAR (8) NOT NULL,\n");
+printf("  LUSER_ID     INT NOT NULL,\n");
+printf("  LUSER_DATA   CHAR (30));\n");
+EXEC SQL CREATE TABLE LUSER_DATA (
+  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE CASCADE,
+  PRIMARY KEY (FILE_NAME, LUSER_ID),
+  FILE_NAME     CHAR (8) NOT NULL,
+  LUSER_ID     INT NOT NULL,
+  LUSER_DATA   CHAR (30));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE AUDIT_CODES (\n");
+printf("  ACTION_KEY       INT PRIMARY KEY,\n");
+printf("  LUSER_ACTION     CHAR (6) NOT NULL,\n");
+printf("  CHECK (LUSER_ACTION = 'INSERT' OR LUSER_ACTION = 'ACCVIO'\n");
+printf("         OR LUSER_ACTION = 'DELETE'));\n");
+EXEC SQL CREATE TABLE AUDIT_CODES (
+  ACTION_KEY       INT PRIMARY KEY,
+  LUSER_ACTION     CHAR (6) NOT NULL,
+  CHECK (LUSER_ACTION = 'INSERT' OR LUSER_ACTION = 'ACCVIO'
+         OR LUSER_ACTION = 'DELETE'));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* This table ostensibly separates UID's that have been valid at some */
+/* time in history from those that have always been invalid.          */
+
+printf("CREATE TABLE ALL_USER_IDS (LUSER_ID INT UNIQUE);\n");
+EXEC SQL CREATE TABLE ALL_USER_IDS (LUSER_ID INT UNIQUE);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* The persistent audit records need to be consistent in the    */
+/* event that a LUSER_ID is recycled after someone is deleted.  */
+/* The original LUSER_ID is preserved in SAVED_LUSER_ID in case */
+/* it is needed.                                                */
+
+printf("CREATE TABLE AUDIT_RECORDS (\n");
+printf("  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE SET NULL,\n");
+printf("  LUSER_ID         INT,\n");
+printf("  SAVED_LUSER_ID   INT NOT NULL\n");
+printf("    REFERENCES ALL_USER_IDS (LUSER_ID) ON DELETE NO ACTION,\n");
+printf("  ACTION_KEY       INT DEFAULT 0 NOT NULL\n");
+printf("    REFERENCES AUDIT_CODES ON DELETE SET DEFAULT);\n");
+EXEC SQL CREATE TABLE AUDIT_RECORDS (
+  FOREIGN KEY (LUSER_ID) REFERENCES LUSERS ON DELETE SET NULL,
+  LUSER_ID         INT,
+  SAVED_LUSER_ID   INT NOT NULL
+    REFERENCES ALL_USER_IDS (LUSER_ID) ON DELETE NO ACTION,
+  ACTION_KEY       INT DEFAULT 0 NOT NULL
+    REFERENCES AUDIT_CODES ON DELETE SET DEFAULT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Initialize audit codes */
+
+printf("INSERT INTO AUDIT_CODES VALUES (0, 'ACCVIO');\n");
+EXEC SQL INSERT INTO AUDIT_CODES VALUES (0, 'ACCVIO');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO AUDIT_CODES VALUES (1, 'INSERT'); \n");
+EXEC SQL INSERT INTO AUDIT_CODES VALUES (1, 'INSERT');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO AUDIT_CODES VALUES (2, 'DELETE');\n");
+EXEC SQL INSERT INTO AUDIT_CODES VALUES (2, 'DELETE');
+CHCKOK ();
+printf("\n");
+
+/* Once upon a time, there were three little users. */
+
+printf("INSERT INTO LUSERS VALUES ('root', 0, NULL, 2);\n");
+EXEC SQL INSERT INTO LUSERS VALUES ('root', 0, NULL, 2);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO LUSERS VALUES ('BIFF', 1, 0, 0);\n");
+EXEC SQL INSERT INTO LUSERS VALUES ('BIFF', 1, 0, 0);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO LUSERS VALUES ('Kibo', 2, 1, 1);\n");
+EXEC SQL INSERT INTO LUSERS VALUES ('Kibo', 2, 1, 1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO ALL_USER_IDS VALUES (0);\n");
+EXEC SQL INSERT INTO ALL_USER_IDS VALUES (0);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO ALL_USER_IDS VALUES (1);\n");
+EXEC SQL INSERT INTO ALL_USER_IDS VALUES (1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO ALL_USER_IDS VALUES (2);\n");
+EXEC SQL INSERT INTO ALL_USER_IDS VALUES (2);
+CHCKOK ();
+printf("\n");
+
+/* Root hated Kibo only slightly less than BIFF */
+
+printf("INSERT INTO LUSER_DATA VALUES ('ROOT1',\n");
+printf("  0, 'BIFF is a total loser');\n");
+EXEC SQL INSERT INTO LUSER_DATA VALUES ('ROOT1',
+  0, 'BIFF is a total loser');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO LUSER_DATA VALUES ('ROOT2',\n");
+printf("  0, 'Kibo wastes disk space');\n");
+EXEC SQL INSERT INTO LUSER_DATA VALUES ('ROOT2',
+  0, 'Kibo wastes disk space');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (0, 0, 1);
+CHCKOK ();
+printf("\n");
+
+/* One day, Kibo created a file. */
+
+printf("INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1);
+CHCKOK ();
+printf("\n");
+
+/* Jealous BIFF (no quota) decided to hack Kibo's account */
+
+int1 = 0;
+P199:
+printf("INSERT INTO AUDIT_RECORDS VALUES (1, 1, 0);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (1, 1, 0);
+CHCKOK ();
+printf("\n");
+int1 = int1 + 1;
+if (int1 <= 5)
+  goto P199;
+
+/* Finally he succeeded and overwrote Kibo's file with garbage */
+
+printf("INSERT INTO AUDIT_RECORDS VALUES (2, 2, 0);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (2, 2, 0);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO AUDIT_RECORDS VALUES (2, 2, 2);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (2, 2, 2);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1);\n");
+EXEC SQL INSERT INTO AUDIT_RECORDS VALUES (2, 2, 1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO LUSER_DATA VALUES ('HAHA',\n");
+printf("  2, 'I G0T KIB0Z PASSW0RD!!!');\n");
+EXEC SQL INSERT INTO LUSER_DATA VALUES ('HAHA',
+  2, 'I G0T KIB0Z PASSW0RD!!!');
+CHCKOK ();
+printf("\n");
+
+/* This angered root, who instantly disbursed group punishment... */
+
+printf("DELETE FROM LUSERS\n");
+printf("  WHERE NAAM <> 'root';\n");
+EXEC SQL DELETE FROM LUSERS WHERE NAAM <> 'root';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM LUSER_DATA;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM LUSER_DATA;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM LUSERS;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM LUSERS;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM AUDIT_RECORDS;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS;
+CHCKOK ();
+printf("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM AUDIT_RECORDS WHERE LUSER_ID IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS
+  WHERE LUSER_ID IS NULL;
+CHCKOK ();
+printf("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM AUDIT_RECORDS WHERE SAVED_LUSER_ID IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS
+  WHERE SAVED_LUSER_ID IS NULL;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+/* ...and disabled deletes just for good measure. */
+
+printf("DELETE FROM AUDIT_CODES\n");
+printf("  WHERE LUSER_ACTION = 'DELETE';\n");
+EXEC SQL DELETE FROM AUDIT_CODES
+  WHERE LUSER_ACTION = 'DELETE';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS\n");
+printf("  WHERE ACTION_KEY = 2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS
+  WHERE ACTION_KEY = 2;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS\n");
+printf("  WHERE ACTION_KEY = 0;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM AUDIT_RECORDS
+  WHERE ACTION_KEY = 0;
+CHCKOK ();
+printf("int1 should be 8; its value is %ld\n\n", int1);
+if (int1 != 8)
+  flag = 0;
+
+/* See if that "ON DELETE NO ACTION" did what it was supposed to do. */
+/* It should _not_ allow us to create dangling references.           */
+
+printf("DELETE FROM ALL_USER_IDS;\n");
+EXEC SQL DELETE FROM ALL_USER_IDS;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE AUDIT_RECORDS CASCADE;\n");
+EXEC SQL DROP TABLE AUDIT_RECORDS CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE ALL_USER_IDS CASCADE;\n");
+EXEC SQL DROP TABLE ALL_USER_IDS CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE AUDIT_CODES CASCADE;\n");
+EXEC SQL DROP TABLE AUDIT_CODES CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE LUSER_DATA CASCADE;\n");
+EXEC SQL DROP TABLE LUSER_DATA CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE LUSERS CASCADE;\n");
+EXEC SQL DROP TABLE LUSERS CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0645','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml117.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0645','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0645 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,3704 @@
+%!PS-Adobe-3.0
+%%Title: (TEd manual 5.1)
+%%Creator: (Microsoft Word 5.1: PSPrinter 8.0)
+%%CreationDate: (2:38 PM Tuesday, May 30, 1995)
+%%For: (chris)
+%%Pages: 21
+%%DocumentFonts: Times-Italic NewCenturySchlbk-Roman NewCenturySchlbk-Bold NewCenturySchlbk-Italic NewCenturySchlbk-BoldItalic Courier Courier-Oblique Courier-Bold
+%%DocumentNeededFonts: Times-Italic NewCenturySchlbk-Roman NewCenturySchlbk-Bold NewCenturySchlbk-Italic NewCenturySchlbk-BoldItalic Courier Courier-Oblique Courier-Bold
+%%DocumentSuppliedFonts:
+%%DocumentData: Clean7Bit
+%%PageOrder: Ascend
+%%Orientation: Portrait
+%ADO_PaperArea: -12 -12 780 600
+%ADO_ImageableArea: 0 0 768 588
+%%EndComments
+/md 190 dict def md begin
+/currentpacking where {pop /sc_oldpacking currentpacking def true setpacking}if
+%%BeginFile: adobe_psp_errorhandler
+%%Copyright: Copyright 1985-1993 Adobe Systems Incorporated. All Rights Reserved.
+/currentpacking where
+{pop/oldpack currentpacking def/setpacking where
+{
+pop false setpacking
+}if
+}if
+/$brkpage 64 dict def $brkpage begin
+/prnt
+{dup type/stringtype ne{=string cvs}if dup length 6 mul/tx exch def/ty 10 def
+currentpoint/toy exch def/tox exch def 1 setgray newpath
+tox toy 2 sub moveto 0 ty rlineto tx 0 rlineto 0 ty neg rlineto
+closepath fill tox toy moveto 0 setgray show}bind def
+/nl{currentpoint exch pop lmargin exch moveto 0 -10 rmoveto}def
+/=={/cp 0 def typeprint nl}def
+/typeprint{dup type exec}readonly def
+/lmargin 72 def
+/rmargin 72 def
+/tprint
+{dup length cp add rmargin gt{nl/cp 0 def}if
+dup length cp add/cp exch def prnt}readonly def
+/cvsprint{=string cvs tprint( )tprint}readonly def
+/integertype{cvsprint}readonly def
+/realtype{cvsprint}readonly def
+/booleantype{cvsprint}readonly def
+/operatortype{(--)tprint =string cvs tprint(-- )tprint}readonly def
+/marktype{pop(-mark- )tprint}readonly def
+/dicttype{pop(-dictionary- )tprint}readonly def
+/nulltype{pop(-null- )tprint}readonly def
+/filetype{pop(-filestream- )tprint}readonly def
+/savetype{pop(-savelevel- )tprint}readonly def
+/fonttype{pop(-fontid- )tprint}readonly def
+/nametype{dup xcheck not{(/)tprint}if cvsprint}readonly def
+/stringtype
+{dup rcheck{(\()tprint tprint(\))tprint}{pop(-string- )tprint}ifelse
+}readonly def
+/arraytype
+{dup rcheck{dup xcheck
+{({)tprint{typeprint}forall(})tprint}
+{([)tprint{typeprint}forall(])tprint}ifelse}{pop(-array- )tprint}ifelse
+}readonly def
+/packedarraytype
+{dup rcheck{dup xcheck
+{({)tprint{typeprint}forall(})tprint}
+{([)tprint{typeprint}forall(])tprint}ifelse}{pop(-packedarray- )tprint}ifelse
+}readonly def
+/courier/Courier findfont 10 scalefont def
+end
+errordict/handleerror
+{systemdict begin $error begin $brkpage begin newerror
+{/newerror false store
+vmstatus pop pop 0 ne{grestoreall}if initgraphics courier setfont
+lmargin 720 moveto(ERROR: )prnt errorname prnt
+nl(OFFENDING COMMAND: )prnt/command load prnt
+$error/ostack
+known{nl nl(STACK:)prnt nl nl $error/ostack get aload length{==}repeat}if
+systemdict/showpage get exec(%%[ Error: )print
+errorname =print(; OffendingCommand: )print/command
+load =print( ]%%)= flush}if end end end}
+dup 0 systemdict put dup 4 $brkpage put bind readonly put
+/currentpacking where
+{pop/setpacking where
+{
+pop oldpack setpacking
+}if
+}if
+%%EndFile
+%%BeginFile: adobe_psp_basic
+%%Copyright: Copyright 1990-1993 Adobe Systems Incorporated. All Rights Reserved.
+/bd{bind def}bind def
+/xdf{exch def}bd
+/xs{exch store}bd
+/ld{load def}bd
+/Z{0 def}bd
+/T/true
+/F/false
+/:L/lineto
+/lw/setlinewidth
+/:M/moveto
+/rl/rlineto
+/rm/rmoveto
+/:C/curveto
+/:T/translate
+/:K/closepath
+/:mf/makefont
+/gS/gsave
+/gR/grestore
+/np/newpath
+14{ld}repeat
+/$m matrix def
+/av 80 def
+/por true def
+/normland false def
+/psb-nosave{}bd
+/pse-nosave{}bd
+/us Z
+/psb{/us save store}bd
+/pse{us restore}bd
+/level2
+/languagelevel where
+{
+pop languagelevel 2 ge
+}{
+false
+}ifelse
+def
+/featurecleanup
+{
+stopped
+cleartomark
+countdictstack exch sub dup 0 gt
+{
+{end}repeat
+}{
+pop
+}ifelse
+}bd
+/noload Z
+/startnoload
+{
+{/noload save store}if
+}bd
+/endnoload
+{
+{noload restore}if
+}bd
+level2 startnoload
+/setjob
+{
+statusdict/jobname 3 -1 roll put
+}bd
+/setcopies
+{
+userdict/#copies 3 -1 roll put
+}bd
+level2 endnoload level2 not startnoload
+/setjob
+{
+1 dict begin/JobName xdf currentdict end setuserparams
+}bd
+/setcopies
+{
+1 dict begin/NumCopies xdf currentdict end setpagedevice
+}bd
+level2 not endnoload
+/pm Z
+/mT Z
+/sD Z
+/realshowpage Z
+/initializepage
+{
+/pm save store mT concat
+}bd
+/endp
+{
+pm restore showpage
+}def
+/$c/DeviceRGB def
+/rectclip where
+{
+pop/rC/rectclip ld
+}{
+/rC
+{
+np 4 2 roll
+:M
+1 index 0 rl
+0 exch rl
+neg 0 rl
+:K
+clip np
+}bd
+}ifelse
+/rectfill where
+{
+pop/rF/rectfill ld
+}{
+/rF
+{
+gS
+np
+4 2 roll
+:M
+1 index 0 rl
+0 exch rl
+neg 0 rl
+fill
+gR
+}bd
+}ifelse
+/rectstroke where
+{
+pop/rS/rectstroke ld
+}{
+/rS
+{
+gS
+np
+4 2 roll
+:M
+1 index 0 rl
+0 exch rl
+neg 0 rl
+:K
+stroke
+gR
+}bd
+}ifelse
+%%EndFile
+%%BeginFile: adobe_psp_colorspace_level1
+%%Copyright: Copyright 1991-1993 Adobe Systems Incorporated. All Rights Reserved.
+/G/setgray ld
+/:F/setrgbcolor ld
+%%EndFile
+%%BeginFile: adobe_psp_uniform_graphics
+%%Copyright: Copyright 1990-1993 Adobe Systems Incorporated. All Rights Reserved.
+/@a
+{
+np :M 0 rl :L 0 exch rl 0 rl :L fill
+}bd
+/@b
+{
+np :M 0 rl 0 exch rl :L 0 rl 0 exch rl fill
+}bd
+/arct where
+{
+pop
+}{
+/arct
+{
+arcto pop pop pop pop
+}bd
+}ifelse
+/x1 Z
+/x2 Z
+/y1 Z
+/y2 Z
+/rad Z
+/@q
+{
+/rad xs
+/y2 xs
+/x2 xs
+/y1 xs
+/x1 xs
+np
+x2 x1 add 2 div y1 :M
+x2 y1 x2 y2 rad arct
+x2 y2 x1 y2 rad arct
+x1 y2 x1 y1 rad arct
+x1 y1 x2 y1 rad arct
+fill
+}bd
+/@s
+{
+/rad xs
+/y2 xs
+/x2 xs
+/y1 xs
+/x1 xs
+np
+x2 x1 add 2 div y1 :M
+x2 y1 x2 y2 rad arct
+x2 y2 x1 y2 rad arct
+x1 y2 x1 y1 rad arct
+x1 y1 x2 y1 rad arct
+:K
+stroke
+}bd
+/@i
+{
+np 0 360 arc fill
+}bd
+/@j
+{
+gS
+np
+:T
+scale
+0 0 .5 0 360 arc
+fill
+gR
+}bd
+/@e
+{
+np
+0 360 arc
+:K
+stroke
+}bd
+/@f
+{
+np
+$m currentmatrix
+pop
+:T
+scale
+0 0 .5 0 360 arc
+:K
+$m setmatrix
+stroke
+}bd
+/@k
+{
+gS
+np
+:T
+0 0 :M
+0 0 5 2 roll
+arc fill
+gR
+}bd
+/@l
+{
+gS
+np
+:T
+0 0 :M
+scale
+0 0 .5 5 -2 roll arc
+fill
+gR
+}bd
+/@m
+{
+np
+arc
+stroke
+}bd
+/@n
+{
+np
+$m currentmatrix
+pop
+:T
+scale
+0 0 .5 5 -2 roll arc
+$m setmatrix
+stroke
+}bd
+%%EndFile
+%%BeginFile: adobe_psp_basic_text
+%%Copyright: Copyright 1990-1993 Adobe Systems Incorporated. All Rights Reserved.
+/S/show ld
+/A{
+0.0 exch ashow
+}bd
+/R{
+0.0 exch 32 exch widthshow
+}bd
+/W{
+0.0 3 1 roll widthshow
+}bd
+/J{
+0.0 32 4 2 roll 0.0 exch awidthshow
+}bd
+/V{
+0.0 4 1 roll 0.0 exch awidthshow
+}bd
+/fcflg true def
+/fc{
+fcflg{
+vmstatus exch sub 50000 lt{
+(%%[ Warning: Running out of memory ]%%\r)print flush/fcflg false store
+}if pop
+}if
+}bd
+/$f[1 0 0 -1 0 0]def
+/:ff{$f :mf}bd
+/MacEncoding StandardEncoding 256 array copy def
+MacEncoding 39/quotesingle put
+MacEncoding 96/grave put
+/Adieresis/Aring/Ccedilla/Eacute/Ntilde/Odieresis/Udieresis/aacute
+/agrave/acircumflex/adieresis/atilde/aring/ccedilla/eacute/egrave
+/ecircumflex/edieresis/iacute/igrave/icircumflex/idieresis/ntilde/oacute
+/ograve/ocircumflex/odieresis/otilde/uacute/ugrave/ucircumflex/udieresis
+/dagger/degree/cent/sterling/section/bullet/paragraph/germandbls
+/registered/copyright/trademark/acute/dieresis/notequal/AE/Oslash
+/infinity/plusminus/lessequal/greaterequal/yen/mu/partialdiff/summation
+/product/pi/integral/ordfeminine/ordmasculine/Omega/ae/oslash
+/questiondown/exclamdown/logicalnot/radical/florin/approxequal/Delta/guillemotleft
+/guillemotright/ellipsis/space/Agrave/Atilde/Otilde/OE/oe
+/endash/emdash/quotedblleft/quotedblright/quoteleft/quoteright/divide/lozenge
+/ydieresis/Ydieresis/fraction/currency/guilsinglleft/guilsinglright/fi/fl
+/daggerdbl/periodcentered/quotesinglbase/quotedblbase/perthousand
+/Acircumflex/Ecircumflex/Aacute/Edieresis/Egrave/Iacute/Icircumflex/Idieresis/Igrave
+/Oacute/Ocircumflex/apple/Ograve/Uacute/Ucircumflex/Ugrave/dotlessi/circumflex/tilde
+/macron/breve/dotaccent/ring/cedilla/hungarumlaut/ogonek/caron
+MacEncoding 128 128 getinterval astore pop
+level2 startnoload
+/copyfontdict
+{
+findfont dup length dict
+begin
+{
+1 index/FID ne{def}{pop pop}ifelse
+}forall
+}bd
+level2 endnoload level2 not startnoload
+/copyfontdict
+{
+findfont dup length dict
+copy
+begin
+}bd
+level2 not endnoload
+md/fontname known not{
+/fontname/customfont def
+}if
+/Encoding Z
+/:mre
+{
+copyfontdict
+/Encoding MacEncoding def
+fontname currentdict
+end
+definefont :ff def
+}bd
+/:bsr
+{
+copyfontdict
+/Encoding Encoding 256 array copy def
+Encoding dup
+}bd
+/pd{put dup}bd
+/:esr
+{
+pop pop
+fontname currentdict
+end
+definefont :ff def
+}bd
+/scf
+{
+scalefont def
+}bd
+/scf-non
+{
+$m scale :mf setfont
+}bd
+/ps Z
+/fz{/ps xs}bd
+/sf/setfont ld
+/cF/currentfont ld
+/mbf
+{
+/makeblendedfont where
+{
+pop
+makeblendedfont
+/ABlend exch definefont
+}{
+pop
+}ifelse
+def
+}def
+%%EndFile
+%%BeginFile: adobe_psp_derived_styles
+%%Copyright: Copyright 1990-1993 Adobe Systems Incorporated. All Rights Reserved.
+/wi
+version(23.0)eq
+{
+{
+gS 0 0 0 0 rC stringwidth gR
+}bind
+}{
+/stringwidth load
+}ifelse
+def
+/$o 1. def
+/gl{$o G}bd
+/ms{:M S}bd
+/condensedmtx[.82 0 0 1 0 0]def
+/:mc
+{
+condensedmtx :mf def
+}bd
+/extendedmtx[1.18 0 0 1 0 0]def
+/:me
+{
+extendedmtx :mf def
+}bd
+/basefont Z
+/basefonto Z
+/dxa Z
+/dxb Z
+/dxc Z
+/dxd Z
+/dsdx2 Z
+/bfproc Z
+/:fbase
+{
+dup/FontType get 0 eq{
+dup length dict begin
+dup{1 index/FID ne 2 index/UniqueID ne and{def}{pop pop}ifelse}forall
+/FDepVector exch/FDepVector get[exch/:fbase load forall]def
+}/bfproc load ifelse
+/customfont currentdict end definefont
+}bd
+/:mo
+{
+/bfproc{
+dup dup length 2 add dict
+begin
+{
+1 index/FID ne 2 index/UniqueID ne and{def}{pop pop}ifelse
+}forall
+/PaintType 2 def
+/StrokeWidth .012 0 FontMatrix idtransform pop def
+/customfont currentdict
+end
+definefont
+8 dict begin
+/basefonto xdf
+/basefont xdf
+/FontType 3 def
+/FontMatrix[1 0 0 1 0 0]def
+/FontBBox[0 0 1 1]def
+/Encoding StandardEncoding def
+/BuildChar
+{
+exch begin
+basefont setfont
+( )dup 0 4 -1 roll put
+dup wi
+setcharwidth
+0 0 :M
+gS
+gl
+dup show
+gR
+basefonto setfont
+show
+end
+}def
+}store :fbase
+}bd
+/:mso
+{
+/bfproc{
+7 dict begin
+/basefont xdf
+/FontType 3 def
+/FontMatrix[1 0 0 1 0 0]def
+/FontBBox[0 0 1 1]def
+/Encoding StandardEncoding def
+/BuildChar
+{
+exch begin
+sD begin
+/dxa 1 ps div def
+basefont setfont
+( )dup 0 4 -1 roll put
+dup wi
+1 index 0 ne
+{
+exch dxa add exch
+}if
+setcharwidth
+dup 0 0 ms
+dup dxa 0 ms
+dup dxa dxa ms
+dup 0 dxa ms
+gl
+dxa 2. div dup ms
+end
+end
+}def
+}store :fbase
+}bd
+/:ms
+{
+/bfproc{
+dup dup length 2 add dict
+begin
+{
+1 index/FID ne 2 index/UniqueID ne and{def}{pop pop}ifelse
+}forall
+/PaintType 2 def
+/StrokeWidth .012 0 FontMatrix idtransform pop def
+/customfont currentdict
+end
+definefont
+8 dict begin
+/basefonto xdf
+/basefont xdf
+/FontType 3 def
+/FontMatrix[1 0 0 1 0 0]def
+/FontBBox[0 0 1 1]def
+/Encoding StandardEncoding def
+/BuildChar
+{
+exch begin
+sD begin
+/dxb .05 def
+basefont setfont
+( )dup 0 4 -1 roll put
+dup wi
+exch dup 0 ne
+{
+dxb add
+}if
+exch setcharwidth
+dup dxb .01 add 0 ms
+0 dxb :T
+gS
+gl
+dup 0 0 ms
+gR
+basefonto setfont
+0 0 ms
+end
+end
+}def
+}store :fbase
+}bd
+/:mss
+{
+/bfproc{
+7 dict begin
+/basefont xdf
+/FontType 3 def
+/FontMatrix[1 0 0 1 0 0]def
+/FontBBox[0 0 1 1]def
+/Encoding StandardEncoding def
+/BuildChar
+{
+exch begin
+sD begin
+/dxc 1 ps div def
+/dsdx2 .05 dxc 2 div add def
+basefont setfont
+( )dup 0 4 -1 roll put
+dup wi
+exch dup 0 ne
+{
+dsdx2 add
+}if
+exch setcharwidth
+dup dsdx2 .01 add 0 ms
+0 .05 dxc 2 div sub :T
+dup 0 0 ms
+dup dxc 0 ms
+dup dxc dxc ms
+dup 0 dxc ms
+gl
+dxc 2 div dup ms
+end
+end
+}def
+}store :fbase
+}bd
+/:msb
+{
+/bfproc{
+7 dict begin
+/basefont xdf
+/FontType 3 def
+/FontMatrix[1 0 0 1 0 0]def
+/FontBBox[0 0 1 1]def
+/Encoding StandardEncoding def
+/BuildChar
+{
+exch begin
+sD begin
+/dxd .03 def
+basefont setfont
+( )dup 0 4 -1 roll put
+dup wi
+1 index 0 ne
+{
+exch dxd add exch
+}if
+setcharwidth
+dup 0 0 ms
+dup dxd 0 ms
+dup dxd dxd ms
+0 dxd ms
+end
+end
+}def
+}store :fbase
+}bd
+/italicmtx[1 0 -.212557 1 0 0]def
+/:mi
+{
+italicmtx :mf def
+}bd
+/:v
+{
+[exch dup/FontMatrix get exch
+dup/FontInfo known
+{
+/FontInfo get
+dup/UnderlinePosition known
+{
+dup/UnderlinePosition get
+2 index 0
+3 1 roll
+transform
+exch pop
+}{
+.1
+}ifelse
+3 1 roll
+dup/UnderlineThickness known
+{
+/UnderlineThickness get
+exch 0 3 1 roll
+transform
+exch pop
+abs
+}{
+pop pop .067
+}ifelse
+}{
+pop pop .1 .067
+}ifelse
+]
+}bd
+/$t Z
+/$p Z
+/$s Z
+/:p
+{
+aload pop
+2 index mul/$t xs
+1 index mul/$p xs
+.012 mul/$s xs
+}bd
+/:m
+{gS
+0 $p rm
+$t lw
+0 rl stroke
+gR
+}bd
+/:n
+{
+gS
+0 $p rm
+$t lw
+0 rl
+gS
+gl
+stroke
+gR
+strokepath
+$s lw
+/setstrokeadjust where{pop
+currentstrokeadjust true setstrokeadjust stroke setstrokeadjust
+}{
+stroke
+}ifelse
+gR
+}bd
+/:o
+{gS
+0 $p rm
+$t 2 div dup rm
+$t lw
+dup 0 rl
+stroke
+gR
+:n
+}bd
+%%EndFile
+/currentpacking where {pop sc_oldpacking setpacking}if
+end		% md
+%%EndProlog
+%%BeginSetup
+md begin
+countdictstack
+[
+{%stopped
+%%BeginFeature: *ManualFeed False
+1 dict dup /ManualFeed false put setpagedevice
+%%EndFeature
+}featurecleanup
+countdictstack
+[
+{%stopped
+%%BeginFeature: *PageSize Letter
+
+    1 dict
+    dup /Policies 2 dict dup /PageSize 2 put dup /MediaType 0 put put
+	setpagedevice
+	2 dict
+    dup /PageSize [612 792] put
+    dup /ImagingBBox null put
+    setpagedevice
+%%EndFeature
+}featurecleanup
+(chris)setjob
+/pT[1 0 0 -1 12 780]def/mT[1 0 0 -1 12 780]def
+/sD 16 dict def
+300 level2{1 dict dup/WaitTimeout 4 -1 roll put setuserparams}{statusdict/waittimeout 3 -1 roll put}ifelse
+%%IncludeFont: Times-Italic
+%%IncludeFont: NewCenturySchlbk-Roman
+%%IncludeFont: NewCenturySchlbk-Bold
+%%IncludeFont: NewCenturySchlbk-Italic
+%%IncludeFont: NewCenturySchlbk-BoldItalic
+%%IncludeFont: Courier
+%%IncludeFont: Courier-Oblique
+%%IncludeFont: Courier-Bold
+/f0_1/Times-Italic :mre
+/f0_11 f0_1 11 scf
+/f1_1/NewCenturySchlbk-Roman :mre
+/f1_16 f1_1 16 scf
+/f1_11 f1_1 11 scf
+/f1_10 f1_1 10 scf
+/f1_9 f1_1 9 scf
+/f1_8 f1_1 8 scf
+/f2_1/NewCenturySchlbk-Bold :mre
+/f2_12 f2_1 12 scf
+/f2_10 f2_1 10 scf
+/f3_1/NewCenturySchlbk-Italic :mre
+/f3_10 f3_1 10 scf
+/f4_1 f1_1 :v def
+/f5_1/NewCenturySchlbk-BoldItalic :mre
+/f5_10 f5_1 10 scf
+/f6_1/Courier :mre
+/f6_10 f6_1 10 scf
+/f6_9 f6_1 9 scf
+/f7_1/Courier-Oblique :mre
+/f7_10 f7_1 10 scf
+/f8_1/Courier-Bold :mre
+/f8_10 f8_1 10 scf
+/Courier findfont[10 0 0 -10 0 0]:mf setfont
+%%EndSetup
+%%Page: 1 1
+%%BeginPageSetup
+initializepage
+(chris; page: 1 of 21)setjob
+%%EndPageSetup
+gS 0 0 588 768 rC
+332 28 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+291 729 :M
+f1_11 sf
+(1)S
+60 67 :M
+f2_12 sf
+.437(Introduction)A
+60 91 :M
+f1_10 sf
+1.138 .114(For the purpose of conducting an SQL validation at a vendor site, NIST staff will need to use a)J
+60 104 :M
+1.258 .126(familiar editor to change the official test files.  These changes may be global changes to all the)J
+60 117 :M
+2.218 .222(programs in a given test suite type or modifications to an individual program.  In general,)J
+60 130 :M
+1.275 .128(these changes will be proposed in advance by the vendor.  Each vendor will be provided a copy)J
+60 143 :M
+1.338 .134(of the NIST editor software so that they can install and locally test the change file which they)J
+60 156 :M
+2.047 .205(propose.  The change file will be reviewed and accepted or negotiated by NIST.  The file of)J
+60 169 :M
+1.434 .143(proposed inputs to the editor also serves as documentation of vendor modifications and will be)J
+60 182 :M
+2.134 .213(incorporated into the final validation report.  TEd is distributed with the suite for vendor\325s)J
+60 195 :M
+.835 .083(private use to meet the following goals:)J
+97 218 :M
+(\245)S
+114 218 :M
+.978 .098(install NIST maintenance changes to the test suite)J
+97 231 :M
+(\245)S
+114 231 :M
+1.67 .167(install \322implementation defined\323 specifications allowed by the standard)J
+97 244 :M
+(\245)S
+114 244 :M
+2.346 .235(patch vendor nonconformities to the SQL standards for more comprehensive test)J
+114 257 :M
+.193(results)A
+97 270 :M
+(\245)S
+114 270 :M
+3.378 .338(document changes to the test suite in a consistent format for inclusion in a)J
+114 283 :M
+1.905 .191(validation summary report)J
+60 306 :M
+2.506 .251(TEd \(pseudo-acronym of Test EDitor\) is written in C for maximum portability to different)J
+60 319 :M
+1.426 .143(hardware and software platforms.  During development, system-dependent functions were kept)J
+60 332 :M
+1.331 .133(to a minimum, allowing easy porting to most MS-DOS, Unix, and VMS environments.)J
+60 364 :M
+f2_12 sf
+1.187 .119(The Change File)J
+60 388 :M
+f1_10 sf
+1.237 .124(TEd reads an ASCII file of editing commands, called )J
+f6_10 sf
+.43(tedchg)A
+f1_10 sf
+1.105 .111( by default.  Each command has a)J
+60 401 :M
+1.485 .149(file specification, which may include wildcard characters, to restrict the command to operating)J
+60 414 :M
+1.373 .137(only on certain file names and/or types.  After the input file is read, execution of commands is)J
+60 427 :M
+2.173 .217(only attempted if the input file specifications match.  This allows a single, human-readable)J
+60 440 :M
+.685 .069(reference to a wide range of changes to )J
+f3_10 sf
+.49 .049(all )J
+f1_10 sf
+.838 .084(programs in the test suite.)J
+60 463 :M
+.899 .09(The special change file  is a sequence of commands that TEd executes.  It is a simple ASCII text)J
+60 476 :M
+1.809 .181(file containing commands \(and user comments\) that TEd understands.  The )J
+f6_10 sf
+.561(tedchg)A
+f1_10 sf
+1.336 .134( file may)J
+60 489 :M
+1.479 .148(contain )J
+f3_10 sf
+.297(all)A
+f1_10 sf
+1.054 .105( the changes to be applied to any of the programs to be tested.  TEd edits one source)J
+60 502 :M
+.893 .089(file at a time and will only apply changes appropriate to the source file.)J
+60 525 :M
+1.281 .128(TEd has the ability to read commands interactively from the user.  This allows simple changes)J
+60 538 :M
+1.159 .116(to be made without creating a change file.  The interactive mode is especially helpful if you are)J
+60 551 :M
+1.434 .143(testing a command to see if it works as you expected.  See the section \322Using TEd\323 for details)J
+60 564 :M
+.886 .089(about the interactive command input mode.)J
+60 587 :M
+.873 .087(A sample )J
+f6_10 sf
+.332(tedchg)A
+f1_10 sf
+.954 .095( file might be coded to accomplish the following:)J
+78 610 :M
+(\245)S
+97 610 :M
+1.591 .159(Globally change the precision of the Embedded COBOL SQLCODE \(*.pco\) from 9 to 4.)J
+97 623 :M
+1.353 .135(This is an implementation-defined option in the standard.)J
+78 646 :M
+(\245)S
+97 646 :M
+1.548 .155(Globally replace the Embedded C subroutine call to AUTHID with the vendor-required)J
+97 659 :M
+.621 .062(CONNECT statement, as allowed by the instructions for the test suite.)J
+78 682 :M
+(\245)S
+97 682 :M
+1.874 .187(Delete test number 793 from program dml079 \(for all test suite languages\), since the)J
+97 695 :M
+1.56 .156(feature being tested is not supported by the SQL implementation being tested and the)J
+endp
+%%Page: 2 2
+%%BeginPageSetup
+initializepage
+(chris; page: 2 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(2)S
+109 68 :M
+f1_10 sf
+.708 .071(program will not pre-compile as is.  It is necessary to remove the test to execute the other)J
+109 81 :M
+1.373 .137(tests remaining in the program.)J
+90 104 :M
+(\245)S
+109 104 :M
+2.282 .228(Globally customize the screen display for each module language COBOL program to)J
+109 117 :M
+2.21 .221(identify the vendor and time of day.  A DISPLAY statement will be inserted at the)J
+109 130 :M
+1.427 .143(beginning of each PROCEDURE DIVISION.)J
+72 153 :M
+1.021 .102(The change file to perform these changes would be as follows:)J
+72 176 :M
+f6_10 sf
+(sub *.pco /SQLCODE/)S
+72 189 :M
+(/S9\(9\)/S9\(4\)/)S
+72 202 :M
+(rep *.pc /AUTHID\(uid\)/)S
+72 215 :M
+.004 0(    EXEC SQL CONNECT :uid IDENTIFIED BY :uid;)J
+72 228 :M
+.007 .001(del dml079.* /BEGIN TEST0793/END TEST0793/)J
+72 241 :M
+(ins> *.sco /PROCEDURE DIVISION/)S
+72 254 :M
+(       PRINT-TIME.)S
+144 267 :M
+.006 .001(DISPLAY "Vendor XYZ, Op.Sys ABC, Module COBOL Tests")J
+144 280 :M
+.005 0(DISPLAY "Executed on " DATE " at " TIME.)J
+72 313 :M
+f2_10 sf
+1.692 .169(Command File Structure)J
+72 336 :M
+f1_10 sf
+1.631 .163(For each source file read, the file specification of each command in the change file is checked)J
+72 349 :M
+1.733 .173(to see if the command should be applied.  Commands are tested for possible execution )J
+f3_10 sf
+1.792 .179(in the)J
+72 362 :M
+.715 .071(same order as they appear in the change file.)J
+72 385 :M
+f1_10 sf
+1.863 .186(Comments begin with an exclamation point \322!\323 in column one \(i.e., the first character on the)J
+72 398 :M
+1.324 .132(line\).  The rest of a comment line is ignored.)J
+72 421 :M
+1.937 .194(Commands must start at the beginning of a line to be recognized and must appear in lower)J
+72 434 :M
+.399(case.)A
+72 467 :M
+f2_10 sf
+1.891 .189(Command Syntax)J
+72 490 :M
+f1_10 sf
+1.375 .137(Most commands are of the following format:)J
+109 513 :M
+f6_10 sf
+.004 0(<command>  <filespec>  <search_spec>  [ -c ]  [-i]  [-e]  [-p]  [-m])J
+109 526 :M
+(<text>)S
+72 549 :M
+f1_10 sf
+1.177 .118(\(arguments enclosed in brackets [ ] are optional\))J
+72 572 :M
+3.629 .363(The <command> argument determines what action will be performed.  There are four)J
+72 585 :M
+2.08 .208(commands that allow line insertions \()J
+f2_10 sf
+.562(ins>)A
+f1_10 sf
+.955 .095( and )J
+f2_10 sf
+.562(ins<)A
+f1_10 sf
+1.631 .163(\), line deletions \()J
+f2_10 sf
+.552(del)A
+f1_10 sf
+2.424 .242(\), line replacements)J
+72 598 :M
+.461(\()A
+f2_10 sf
+.813(rep)A
+f1_10 sf
+2.535 .254(\), and string substitutions \()J
+f2_10 sf
+.846(sub)A
+f1_10 sf
+2.223 .222(\).  Each command is described in detail in the section)J
+72 611 :M
+2.093 .209(\322Command Descriptions\323 below.)J
+endp
+%%Page: 3 3
+%%BeginPageSetup
+initializepage
+(chris; page: 3 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(3)S
+72 68 :M
+f2_10 sf
+3.533 .353(File Specification)J
+72 91 :M
+f1_10 sf
+2.265 .226(The <filespec> argument is used to specify a file, or a group of files, the command will be)J
+72 104 :M
+.928 .093(applied to.  In our test suite, we have adopted the following file extension naming conventions:)J
+72 126 :M
+10 f4_1 :p
+72 :m
+2.079 .208(File Extension)J
+180 126 :M
+56 :m
+.268(Description)A
+72 140 :M
+f6_10 sf
+(.pad)S
+180 140 :M
+f1_10 sf
+1.341 .134(Embedded Ada)J
+72 153 :M
+f6_10 sf
+(.pc)S
+180 153 :M
+f1_10 sf
+.587 .059(Embedded C)J
+72 166 :M
+f6_10 sf
+(.pfo)S
+180 166 :M
+f1_10 sf
+2.564 .256(Embedded FORTRAN)J
+72 179 :M
+f6_10 sf
+(.pco)S
+180 179 :M
+f1_10 sf
+.726 .073(Embedded COBOL)J
+72 192 :M
+f6_10 sf
+(.ppa)S
+180 192 :M
+f1_10 sf
+1.804 .18(Embedded Pascal)J
+72 205 :M
+f6_10 sf
+(.sad   .mad)S
+180 205 :M
+f1_10 sf
+1.314 .131(Standard Ada and Module Ada)J
+72 218 :M
+f6_10 sf
+(.sc    .mc)S
+180 218 :M
+f1_10 sf
+.85 .085(Standard C and Module C)J
+72 231 :M
+f6_10 sf
+(.sfo   .mfo)S
+180 231 :M
+f1_10 sf
+2.143 .214(Standard FORTRAN and Module FORTRAN)J
+72 244 :M
+f6_10 sf
+(.sco   .mco)S
+180 244 :M
+f1_10 sf
+.911 .091(Standard COBOL and Module COBOL)J
+72 257 :M
+f6_10 sf
+(.spa   .mpa)S
+180 257 :M
+f1_10 sf
+1.625 .162(Standard Pascal and Module Pascal)J
+72 270 :M
+f6_10 sf
+(.sql)S
+180 270 :M
+f1_10 sf
+.734 .073(Interactive SQL statements)J
+72 293 :M
+1.925 .192(The standard program files are derived from the embedded SQL program files by converting)J
+72 306 :M
+.976 .098(the EXEC SQL commands to subroutine calls.  The module files are the SQL procedures derived)J
+72 319 :M
+1.255 .126(from the embedded SQL commands.)J
+72 342 :M
+1.898 .19(The <filespec> argument is how TEd decides if the command is applicable to the input file\325s)J
+72 355 :M
+1.515 .151(filename.  The file specification in the change file is the only place where wildcards \()J
+f3_10 sf
+.525(globbing)A
+72 368 :M
+f1_10 sf
+.629 .063(or )J
+f3_10 sf
+2.053 .205(pattern matching)J
+f1_10 sf
+1.007 .101(\) is available for files)J
+f1_8 sf
+0 -3 rm
+.298(1)A
+0 3 rm
+f1_10 sf
+1.143 .114(.  The following table describes the types of wildcards)J
+72 381 :M
+1.097 .11(that are available:)J
+72 403 :M
+48 :m
+.854(Wildcard)A
+144 403 :M
+56 :m
+.268(Description)A
+72 417 :M
+(*)S
+144 417 :M
+1.271 .127(matches zero or more occurrences of any characters)J
+72 430 :M
+(?)S
+144 430 :M
+1.727 .173(matches any single character)J
+72 443 :M
+-.217([ ])A
+144 443 :M
+2.612 .261(matches single characters specified inside the brackets \(ranges permitted by)J
+144 456 :M
+1.4 .14(using a hyphen\))J
+72 469 :M
+1.305 .131({ })J
+144 469 :M
+.97 .097(matches comma-separated character )J
+f3_10 sf
+.163(strings)A
+f1_10 sf
+.618 .062( inside the braces)J
+72 492 :M
+1.111 .111(Note that we will typcally prepend file specifications with an asterisk to ensure correct matches)J
+72 505 :M
+1.075 .108(even if the current file has a directory prefix.)J
+72 528 :M
+2.381 .238(Although filename pattern matching is )J
+f2_10 sf
+.657(not)A
+f1_10 sf
+1.796 .18( case sensitive, in general, )J
+f3_10 sf
+2.204 .22(use lower case.)J
+f1_10 sf
+1.306 .131(  Most)J
+72 541 :M
+1.33 .133(operating systems will convert filenames to upper-case when files are opened if necessary \(e.g.,)J
+72 554 :M
+1.168 .117(MS-DOS, VAX VMS\).)J
+-4096 -4095 -1 1 -4094 -4095 1 -4096 -4096 @a
+0 665.24 -.24 .24 143.24 665 .24 0 665 @a
+71 676 :M
+f1_9 sf
+(1)S
+85 679 :M
+.338 .034(While some command interpreters will evaluate and expand wildcards to all matching filenames before)J
+85 689 :M
+.331 .033(passing the arguments to the application program \(e.g., the Unix shells \322sh\323 and \322csh\323\), while others do)J
+85 699 :M
+1.195 .119(not \(MS-DOS \322command.com\323, VMS \322dcl\323\) and leave searching for matching files )J
+446 699 :M
+.856 .086(to the application)J
+85 709 :M
+1.126 .113(program.  TEd )J
+154 709 :M
+1.572 .157(will not expand wildcards on the non-expanding type of command interpreters for)J
+85 719 :M
+-.044(portability reasons.)A
+endp
+%%Page: 4 4
+%%BeginPageSetup
+initializepage
+(chris; page: 4 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(4)S
+72 68 :M
+f2_10 sf
+2.677 .268(File Specification Wildcard Examples)J
+72 90 :M
+f1_10 sf
+10 f4_1 :p
+113 :m
+.254 .025(File Spec                       )J
+116 90 :M
+3 :m
+.222 .022( )J
+180 90 :M
+56 :m
+.268(Description)A
+72 104 :M
+f6_10 sf
+(*)S
+180 104 :M
+f1_10 sf
+2.315 .231(matches all filenames)J
+72 117 :M
+f6_10 sf
+(*.*)S
+180 117 :M
+f1_10 sf
+1.197 .12(matches all files with a period somewhere in the name \(all our files\))J
+72 130 :M
+f6_10 sf
+(*.pco)S
+180 130 :M
+f1_10 sf
+1.22 .122(matches all embedded Cobol files)J
+72 143 :M
+f6_10 sf
+(*.?c)S
+180 143 :M
+f1_10 sf
+1.485 .148(matches all C files \(matches *.pc, *.mc, *.sc\))J
+72 156 :M
+f6_10 sf
+(*.m*)S
+180 156 :M
+f1_10 sf
+1.92 .192(matches all module language files \(*.mc, *.mco, *.mfo, *.mpa\))J
+72 169 :M
+f6_10 sf
+(*.sc?)S
+180 169 :M
+f1_10 sf
+1.11 .111(matches all standard Cobol files \(*.sco\) but not *.sc)J
+72 182 :M
+f6_10 sf
+(dml*.*)S
+180 182 :M
+f1_10 sf
+1.07 .107(matches all files that start with \322dml\323.)J
+72 195 :M
+f6_10 sf
+(*dml029.pc)S
+180 195 :M
+f1_10 sf
+.92 .092(matches file dml029.pc, even if prefixed by a directory path)J
+72 208 :M
+f6_10 sf
+(dlm00[789].pc)S
+180 208 :M
+f1_10 sf
+.933 .093(matches files dml007.pc, dml008.pc, and dml009.pc)J
+72 221 :M
+f6_10 sf
+(dml02[0-9].pc)S
+180 221 :M
+f1_10 sf
+4.348 .435(matches all dml02x.pc files \(dml020.pc, dml021.pc, dml022.pc, ...,)J
+180 234 :M
+.148(dml029.pc\).)A
+72 247 :M
+f6_10 sf
+({sd,dm}*.pc)S
+180 247 :M
+f1_10 sf
+.973 .097(matches all *.pc files that start with either \322sd\323 or \322dm\323)J
+72 280 :M
+f2_10 sf
+2.277 .228(Search Specification)J
+72 303 :M
+f1_10 sf
+1.265 .126(The <search_spec> has two forms:)J
+109 326 :M
+.567(<delim><match_string><delim>)A
+72 339 :M
+.562(or)A
+109 352 :M
+.526(<delim><start_string><delim><end_string><delim>)A
+72 375 :M
+2.963 .296(TEd will search for lines that contain either <match_string> or a group \(range\) of lines)J
+72 388 :M
+3.453 .345(surrounded by lines that contain <start_string> and a line that contains <end_string>.)J
+72 401 :M
+1.255 .125(Usually, strings are searched for their occurrence in the source text lines.  See \322Options\323 below)J
+72 414 :M
+1.614 .161(for different methods of specifying string searches.  The <start_string> and <end_string> may)J
+72 427 :M
+1.108 .111(\(or, of course, may not\) appear on the same line to denote a range.  The <end_string> is always)J
+72 440 :M
+1.415 .142(on a line equal to or further down from the <start_string> in the input file.  After finding one)J
+72 453 :M
+3.205 .321(range, the command \(insert, replace, string substitute\) is performed on that range, and)J
+72 466 :M
+1.434 .143(searching continues for another range after the line containing the <end_string>.)J
+72 489 :M
+f2_10 sf
+.401(Note)A
+f1_10 sf
+(:)S
+108 489 :M
+1.608 .161(When searching for a range, if the <start_string> is found but the <end_string> is not)J
+108 502 :M
+.961 .096(found, the range is considered to be undefined and the command will not be executed.  If)J
+108 515 :M
+2.112 .211(this occurs after one or more defined ranges, the command will be executed only for)J
+108 528 :M
+1.114 .111(those ranges where the <end_string> was found.)J
+72 551 :M
+3.184 .318(Delimiters \(<delim>\) may be any )J
+f3_10 sf
+.758(single)A
+f1_10 sf
+3.171 .317( character.  We generally use the forward-slash)J
+72 564 :M
+1.849 .185(character \322/\323 but it may be any character that is unique to the rest of the string\(s\) with the)J
+72 577 :M
+.683 .068(exception of the hyphen \(its use is reserved for command options\).  Ether the apostrophe \(\324\) or the)J
+72 590 :M
+1.276 .128(double quotes \(\322\) is an aesthetically pleasing alternative.)J
+72 613 :M
+1.63 .163(To match all lines, use an empty <match_string>.  That is, two adjoining delimeters.  This is)J
+72 626 :M
+1.04 .104(useful for the string substitution command, described below.)J
+72 659 :M
+f2_10 sf
+.348(Options)A
+72 682 :M
+f1_10 sf
+1.543 .154(There are several optional flags that may be applied to a command to modify its behavior.  If)J
+72 695 :M
+1.403 .14(more than one option is desired, they may be specified without additional hyphens.  The order)J
+72 708 :M
+2.756 .276(in which options appear is not significant.  The following three examples are interpreted)J
+72 721 :M
+.385 .038(exactly the same way:  )J
+f6_10 sf
+.524 .052(-m -i -p; -mip; -pim)J
+f1_10 sf
+(.)S
+endp
+%%Page: 5 5
+%%BeginPageSetup
+initializepage
+(chris; page: 5 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(5)S
+72 68 :M
+f1_10 sf
+1.104 .11(The )J
+f6_10 sf
+.451(-i)A
+f1_10 sf
+1.323 .132( option specifies the \322ignore case\323 option on search strings.  By default, string matching)J
+72 81 :M
+1.975 .197(is case sensitive, so the strings \322NIST\323 and \322nist\323 are different.  The )J
+f6_10 sf
+.758(-i)A
+f1_10 sf
+2.269 .227( option converts all)J
+72 94 :M
+1.122 .112(strings to lower case before comparing them.)J
+72 117 :M
+.781 .078(The )J
+f6_10 sf
+.319(-e)A
+f1_10 sf
+.877 .088( option specifies that changes are to be \322echoed\323 as they are being performed.  By default,)J
+72 130 :M
+1.475 .147(changes are not echoed to the terminal as they are performed.  In all cases, however, a single)J
+72 143 :M
+1.95 .195(line summary of the actions the command performed is always displayed for each command.)J
+72 156 :M
+2.42 .242(If TEd is invoked with the verbose option \(see \322Using TEd\323\) then all commands and their)J
+72 169 :M
+.638 .064(changes are echoed to the screen as they are executed.)J
+72 192 :M
+1.197 .12(The )J
+f6_10 sf
+.489(-p)A
+f1_10 sf
+1.591 .159( option changes the concept of the <search_spec> slightly such that string comparisons)J
+72 205 :M
+2.033 .203(are performed using pattern matching techniques.  The wildcards available are the same as)J
+72 218 :M
+1.788 .179(those used for matching filenames with the <file_spec>.)J
+f1_8 sf
+0 -3 rm
+.387(1)A
+0 3 rm
+f1_10 sf
+0 -3 rm
+.22 .022(  )J
+0 3 rm
+1.591 .159(Without the )J
+f6_10 sf
+.522(-p)A
+f1_10 sf
+1.328 .133( option, the string is)J
+72 231 :M
+1.255 .126(searched for occurrence in any part of a line.)J
+72 254 :M
+.636 .064(If the )J
+f6_10 sf
+.369(-p)A
+f1_10 sf
+1.04 .104( option is used, the context of the <search_spec> must be fully described.  For example,)J
+72 267 :M
+1.004 .1(the following two commands are both valid and operate in exactly the same way:)J
+109 290 :M
+f6_10 sf
+(sub * /SQLCODE/)S
+324 290 :M
+(sub * /*SQLCODE*/ -p)S
+109 303 :M
+(/SQLCODE/SQLCOD/)S
+324 303 :M
+(/SQLCODE/SQLCOD/)S
+72 326 :M
+f1_10 sf
+1.232 .123(Note that the command with the )J
+f6_10 sf
+.438(-p)A
+f1_10 sf
+1.43 .143( option requires the \324*\325 character surrounding the searched)J
+72 339 :M
+1.325 .133(text.  If the asterisks were omitted, then the command would match a line that contained only)J
+72 352 :M
+4.117 .412(\322SQLCODE\323 \(e.g., \322SQLCODE\323 at the beginning of a line immediately followed by a)J
+72 365 :M
+1.509 .151(<newline>\).  If )J
+f6_10 sf
+.593(-p)A
+f1_10 sf
+1.787 .179( was not used, TEd would search for the text \322*SQLCODE*\323, including the)J
+72 378 :M
+1.18 .118(asterisks, on any part of a line.)J
+72 401 :M
+2.814 .281(To retain backward compatibility with previous search specifications, TEd will match the)J
+72 414 :M
+1.165 .117(following search specification:  )J
+f6_10 sf
+1.223 .122(sub * /*END EXEC/ -p.)J
+f1_10 sf
+.733 .073(  That is, if a string is known to occur)J
+72 427 :M
+.647 .065(at the end of a line, the trailing \\n and the associated )J
+f6_10 sf
+.274(-c)A
+f1_10 sf
+.8 .08( option are not required.)J
+72 450 :M
+.565 .056(If the )J
+f6_10 sf
+.327(-p)A
+f1_10 sf
+.914 .091( option is used, some characters have special meaning and must be )J
+f3_10 sf
+1.075 .108(quoted )J
+f1_10 sf
+1.524 .152(by preceding)J
+72 463 :M
+1.165 .117(them with a backslash \322\\\323 if they are to be interpreted as actual text to be searched for, rather)J
+72 476 :M
+.779 .078(than a pattern.  The special characters are the open bracket [, open brace {, backslash \\, asterisk)J
+72 489 :M
+2.041 .204(*, and the question mark ?  These special characters cannot be used as delimiters with the)J
+72 502 :M
+.918 .092(pattern matching option \(it would get much too confusing\).)J
+72 525 :M
+.507 .051(For example, to search for the text)J
+180 548 :M
+f6_10 sf
+(X = 5 * Y[2] \\ X)S
+72 571 :M
+f1_10 sf
+.225 .022(a pattern to match it would be)J
+180 594 :M
+f6_10 sf
+(*X = 5 \\* Y\\[2] \\\\ X*)S
+72 617 :M
+.25(.)A
+f1_10 sf
+.643 .064(  Notice how the backslash is quoted by itself.)J
+72 640 :M
+.959 .096(Multiple options can be specified with the use of only one hyphen, then the option characters \(in)J
+72 653 :M
+1.334 .133(any order\).  For example,)J
+72 676 :M
+f6_10 sf
+.007 .001(ins<  *.pc /*EXEC*SQL*SELECT*/*;*/ -pie)J
+-4096 -4095 -1 1 -4094 -4095 1 -4096 -4096 @a
+0 692.24 -.24 .24 143.24 692 .24 0 692 @a
+71 703 :M
+f1_9 sf
+(1)S
+85 709 :M
+.106 .011(The )J
+f6_9 sf
+.043(-p)A
+f1_9 sf
+.121 .012( option exists to allow more flexible and exact <search_string> searches, but it is an option due to)J
+85 719 :M
+-.002(the decreased legibility of the change file if all <search_spec>\325s required surrounding with asterisks.)A
+endp
+%%Page: 6 6
+%%BeginPageSetup
+initializepage
+(chris; page: 6 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(6)S
+72 68 :M
+f6_10 sf
+.005 .001(    printf\("SQLCODE BEFORE SELECT = %ld\\n", SQLCODE\);)J
+72 91 :M
+f1_10 sf
+2.624 .262(selects pattern matching <search_spec> mode, ignore case on the <search_spec>, and echo)J
+72 104 :M
+2.416 .242(command and changes.)J
+72 127 :M
+1.999 .2(The )J
+f6_10 sf
+.817(-m)A
+f1_10 sf
+2.424 .242( option is to permit access to runtime-specific variables through the use of macros.)J
+72 140 :M
+3.285 .329(Macros are preceded by a dollar sign \($\) and may occur in any portion of a command)J
+72 153 :M
+3.463 .346(\(excluding the command name, of course\).  Thus, macros can occur in the <file_spec>,)J
+72 166 :M
+2.989 .299(<match_string>, <start_string>, <end_string>, and/or <text> specifications.  The following)J
+72 179 :M
+2.165 .216(macros are available:)J
+109 201 :M
+10 f4_1 :p
+76 :m
+.322 .032(Macro               )J
+140 201 :M
+3 :m
+.222 .022( )J
+180 201 :M
+56 :m
+.268(Description)A
+109 215 :M
+f6_10 sf
+($if)S
+180 215 :M
+f1_10 sf
+1.705 .171(input filename \(complete\))J
+109 228 :M
+f6_10 sf
+($ifh)S
+180 228 :M
+f1_10 sf
+1.545 .155(input filename head \(e.g., \322dml001\323 from \322dml001.pc\323\))J
+109 241 :M
+f6_10 sf
+($ife)S
+180 241 :M
+f1_10 sf
+1.658 .166(input filename extension \(e.g., \322pc\323 from \322dml001.pc\323\))J
+109 254 :M
+f6_10 sf
+($of)S
+180 254 :M
+f1_10 sf
+1.058 .106(output filename \(complete\))J
+109 267 :M
+f6_10 sf
+($ofh)S
+180 267 :M
+f1_10 sf
+.8 .08(output filename head)J
+109 280 :M
+f6_10 sf
+($ofe)S
+180 280 :M
+f1_10 sf
+1.198 .12(output filename extension)J
+109 293 :M
+f6_10 sf
+($ted)S
+180 293 :M
+f1_10 sf
+2.605 .261(commands filename \(complete\))J
+109 306 :M
+f6_10 sf
+($ver)S
+180 306 :M
+f1_10 sf
+1.237 .124(version ID string for TEd executable)J
+72 329 :M
+1.293 .129(Additionally, each macro may be capitalized, resulting in the expansion text of the macro to be)J
+72 342 :M
+.588 .059(capitalized also.  E.g., if )J
+f6_10 sf
+.244($if)A
+f1_10 sf
+.636 .064( \(the input filename\) was )J
+f6_10 sf
+.244(dml001.pc)A
+f1_10 sf
+.507 .051(, $IF would be )J
+f6_10 sf
+.244(DML001.PC)A
+f1_10 sf
+(.)S
+72 365 :M
+1.728 .173(For example,)J
+72 388 :M
+f6_9 sf
+-.413(ins> *.pc /*begin*test*/ -mip)A
+72 401 :M
+-.405(  printf\("NIST SQL Test Suite version 2.0.  Testing file $of\\n"\);)A
+72 414 :M
+-.405(  printf\("Edited from $ifh.$ife from the TEd change file $ted\\n"\);)A
+72 437 :M
+f1_10 sf
+1.266 .127(If TEd were given an input filename of )J
+f6_10 sf
+.498(dml001.pc)A
+f1_10 sf
+1.206 .121(, an output filename of )J
+f6_10 sf
+.498(dml001a.ccc)A
+f1_10 sf
+1.36 .136(, and)J
+72 450 :M
+1.344 .134(the commands filename of )J
+f6_10 sf
+.423(dmlchg.ted)A
+f1_10 sf
+1.232 .123(, TEd would insert the following two lines after finding)J
+72 463 :M
+.852 .085(the word \322begin\323 followed by the word \322test\323 on any line without regard to case:)J
+72 486 :M
+f6_9 sf
+-.404(  printf\("NIST SQL Test Suite version 2.0.  Testing file dml001a.ccc\\n"\);)A
+72 499 :M
+-.404(  printf\("Edited from dml001.pc from the TEd change file dmlchg.ted\\n"\);)A
+72 522 :M
+f1_10 sf
+1.525 .152(In this example, $ifh and $ife are used separately to demonstrate how the original file can be)J
+72 535 :M
+1.087 .109(put together again by using the head and extension macros.  Normally $if would suffice.)J
+72 558 :M
+1.082 .108(Macros are updated for each source file to ensure expected results when using the )J
+f6_10 sf
+.378(-f)A
+f1_10 sf
+1.758 .176( command)J
+72 571 :M
+1.056 .106(line option.  Refer to \322Using TEd\323 for more information about the )J
+f6_10 sf
+.389(-f)A
+f1_10 sf
+1.324 .132( command line option.)J
+72 594 :M
+1.687 .169(Attention must be given when specifying the order in which macros across several commands)J
+72 607 :M
+.916 .092(are to be executed in a change file.  If the following sub command were used,)J
+72 630 :M
+f6_9 sf
+-.439(sub * // -m)A
+72 643 :M
+-.435(/INFILE/$if/)A
+72 656 :M
+-.424(/INFILE_EXT/$ife/)A
+72 679 :M
+f1_10 sf
+.888 .089(and if the input file \(named )J
+f6_10 sf
+.365(dml001.pc)A
+f1_10 sf
+1.089 .109(\) had included the following two lines,)J
+endp
+%%Page: 7 7
+%%BeginPageSetup
+initializepage
+(chris; page: 7 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(7)S
+72 67 :M
+f6_9 sf
+-.598(...)A
+72 80 :M
+-.412(/* the input file is INFILE */)A
+72 93 :M
+-.408(/* the input file\325s extension is INFILE_EXT */)A
+72 106 :M
+-.598(...)A
+72 129 :M
+f1_10 sf
+3.481 .348(then both instances of the string INFILE would be expanded with the first substitute)J
+72 142 :M
+1.673 .167(replacement, since both lines include the string \322INFILE\323 which is replaced by the macro $if.)J
+72 155 :M
+.888 .089(The generated output would look like,)J
+72 178 :M
+f6_9 sf
+-.598(...)A
+72 191 :M
+-.411(/* the input file is dml001.pc */)A
+72 204 :M
+-.407(/* the input file\325s extension is dml001.pc_EXT */)A
+72 217 :M
+-.598(...)A
+72 240 :M
+f1_10 sf
+1.612 .161(obviously not what was intended.  To work around this difficulty, either \(1\) specify macros so)J
+72 253 :M
+2.795 .279(their strings don\325t overlap or \(2\) list longer macro search strings in the change file first)J
+72 266 :M
+1.591 .159(\(specify INFILE_EXT )J
+f3_10 sf
+.942 .094(then )J
+f1_10 sf
+1.288 .129(INFILE in the commands file\).)J
+72 289 :M
+.82 .082(The )J
+f6_10 sf
+.335(-c)A
+f1_10 sf
+1.015 .101( option allows control characters to be embedded in strings throughout a command.  This)J
+72 302 :M
+2.33 .233(option is often used to either join \(concatenate\) two lines by deleting a trailing newline or)J
+72 315 :M
+1.476 .148(splitting a line into multiple lines by adding newline characters into the middle of an existing)J
+72 328 :M
+2.189 .219(line.  In each case, after the command is finished, all the lines in memory are reorganized)J
+72 341 :M
+1.402 .14(such that each line contains one, and only one, newline at the end of the line.  If a newline is)J
+72 354 :M
+1.328 .133(deleted, the line will be concatenated with the contents of the next line.  Similarly, if newlines)J
+72 367 :M
+1.192 .119(are added to a text line, the lines will be split into separate lines.  This functionality results in)J
+72 380 :M
+1.128 .113(expected behavior for subsequent commands.)J
+72 403 :M
+2.61 .261(Control characters are escaped with the ANSI C programming conventions.  For example,)J
+72 416 :M
+.716 .072(newlines are \\n, tabs are \\t.  The supported escape sequences are as follows:)J
+109 439 :M
+f6_9 sf
+-.415(\\a = audible alert \(bell\))A
+288 439 :M
+-.42(\\r = carriage return)A
+109 452 :M
+-.429(\\b = backspace)A
+288 452 :M
+-.421(\\t = horizontal tab)A
+109 465 :M
+-.432(\\f = formfeed)A
+288 465 :M
+-.424(\\v = vertical tab)A
+109 478 :M
+-.435(\\n = newline)A
+288 478 :M
+-.429(\\\\ = backslash)A
+72 501 :M
+f1_10 sf
+.638 .064(Note how the backslash is quoted by itself.)J
+72 524 :M
+2.122 .212(In addition to the above escapes, any value can be embedded by entering its octal or hexa-)J
+72 537 :M
+1.575 .157(decimal value.  To insert a literal octal value, use the backslash followed by octal digits.  For)J
+72 550 :M
+.328 .033(example, \\7, \\07, and \\007 are the same values.)J
+72 573 :M
+3.369 .337(Hexadecimal values are inserted by using the backslash followed by the letter \322x\323 and)J
+72 586 :M
+.942 .094(hexadecimal digits.  For example, \\x8 and \\x08 are the same values.)J
+72 609 :M
+f2_10 sf
+.284(Note:)A
+f1_10 sf
+.842 .084(  Care must be taken not to have any other surrounding digits that could be interpreted as)J
+108 622 :M
+1.952 .195(part of a value.  For example, \322\\x7feet\323 is interpreted as the hex value 7fee, not the)J
+108 635 :M
+.989 .099(intended \\x7 value.)J
+72 658 :M
+1.726 .173(Note that all values are placed into character strings where each character can hold an 8-bit)J
+72 671 :M
+1.568 .157(value.  Thus, the largest values are \\xff or \\177.  Trying to exceed these limits will result in)J
+72 684 :M
+1.285 .129(unpredictable behaviour, depending on how your compiler handles signed vs unsigned )J
+f6_10 sf
+.371(char)A
+f1_10 sf
+.292(\325s.)A
+72 707 :M
+1.366 .137(Here is a simple example:)J
+endp
+%%Page: 8 8
+%%BeginPageSetup
+initializepage
+(chris; page: 8 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(8)S
+72 67 :M
+f6_9 sf
+-.439(sub * // -c)A
+72 80 :M
+-.406(/this is a very long string/this is not a\\nlong string/)A
+72 103 :M
+f1_10 sf
+1.235 .123(This command substitutes all occurrences of the string:)J
+72 126 :M
+f6_9 sf
+-.415(this is a very long string)A
+72 149 :M
+f1_10 sf
+.025(with)A
+72 172 :M
+f6_9 sf
+-.432(this is not a)A
+72 185 :M
+-.439(long string)A
+72 208 :M
+f1_10 sf
+2.24 .224(Be careful when making changes to a file containing C source code, as the )J
+f6_10 sf
+.838(-c)A
+f1_10 sf
+2.495 .249( option with)J
+72 221 :M
+1.015 .101(embedded control characters can get confusing and you must \322escape the escape character.\323  For)J
+72 234 :M
+.907 .091(example, let\325s say you needed to split a long printf statement from:)J
+109 257 :M
+f6_9 sf
+-.405(printf\(\322Alpha = %d, Beta = %d, Gamma = %f\\n\323,alpha, beta, gamma\);)A
+72 280 :M
+f1_10 sf
+-.889(to)A
+109 303 :M
+f6_9 sf
+-.406(printf\(\322Alpha = %d, Beta = %d, Gamma = %f\\n\323, alpha,)A
+144 316 :M
+-.432(beta, gamma\);)A
+72 339 :M
+f1_10 sf
+.825 .083(The substitute command could be:)J
+72 362 :M
+f6_9 sf
+-.416(sub * /printf\(\322Alpha/ -c)A
+72 375 :M
+-.406(/Gamma = %f\\\\n\323,alpha, /Gamma = %f\\\\n\323, alpha,\\n\\t\\t/)A
+72 398 :M
+f1_10 sf
+.87 .087(Again, note how the backslash is quoted by itself.)J
+72 421 :M
+1.741 .174(The )J
+f6_10 sf
+.711(-p)A
+f1_10 sf
+1.709 .171( option joined with the )J
+f6_10 sf
+.711(-c)A
+f1_10 sf
+1.993 .199( option is useful for performing searches that relate to the)J
+72 434 :M
+1.624 .162(newline character, \\n, which is the last character in each text line after TEd reads the input)J
+72 447 :M
+1.045 .104(file.  If you substitute the newline character with some other character, TEd \322fixes\323 all the lines)J
+72 460 :M
+1.262 .126(in the file.  That is, if a line doesn\325t have a newline at the end after a command executes, it is)J
+72 473 :M
+1.462 .146(concatenated \(joined\) with the next line.  This ensures that all lines will have newlines at the)J
+72 486 :M
+1.072 .107(end for the next command.  For example,)J
+72 509 :M
+f6_9 sf
+-.416(sub * /*end-exec\\n/ -ipc)A
+72 522 :M
+-.417(/end-exec\\n/end-exec  /)A
+72 545 :M
+f1_10 sf
+1.781 .178(probably isn\325t useful \(like many of our examples\), but illustrative nonetheless.  TEd searches)J
+72 558 :M
+3.004 .3(for a line that ends with the characters \322end-exec\323 immediately followed by the newline)J
+72 571 :M
+2.047 .205(character.  When it finds such a line, it replaces \322end-exec\323 with \322end-exec  \323 \(note the two)J
+72 584 :M
+1.789 .179(trailing spaces and lack of newline\).  When all lines have been searched, TEd fixes the lines)J
+72 597 :M
+1.614 .161(such that whatever was on the line following \322end-exec\323 is now on the same line as the \322end-)J
+72 610 :M
+1.377 .138(exec  \323 line.)J
+72 643 :M
+f2_10 sf
+.225(Text)A
+72 666 :M
+f1_10 sf
+1.431 .143(<text> refers to the text to be inserted or the replacement text.  It may span several lines.  If)J
+72 679 :M
+.556 .056(indentation is desired in the output file, it must be done here since the text is copied to the output)J
+72 692 :M
+1.113 .111(file verbatim \(except when modified by the )J
+f6_10 sf
+.378(-m)A
+f1_10 sf
+.954 .095( macro option\).  The only restriction on the text is)J
+72 705 :M
+1.42 .142(that it must not look like a command \(i.e., commands start at the beginning of a line in lower)J
+72 718 :M
+1.096 .11(case, comments begin with the \322!\323 character at the beginning of a line\).)J
+endp
+%%Page: 9 9
+%%BeginPageSetup
+initializepage
+(chris; page: 9 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+303 741 :M
+f1_11 sf
+(9)S
+72 68 :M
+f1_10 sf
+1.458 .146(The substitute command does not use <text> like other commands, but rather the string to be)J
+72 81 :M
+1.146 .115(substituted and a replacement string, all surrounded by delimiters:)J
+109 104 :M
+.526(<delim><start_string><delim><end_string><delim>)A
+72 127 :M
+1.207 .121(See the substitute command description for additional information.)J
+72 159 :M
+f2_12 sf
+2.767 .277(Command Descriptions)J
+72 183 :M
+f1_10 sf
+1.476 .148(The following commands are permitted by TEd:)J
+72 205 :M
+10 f4_1 :p
+51 :m
+.599(Command)A
+144 205 :M
+56 :m
+.268(Description)A
+72 219 :M
+f6_10 sf
+(ins>)S
+144 219 :M
+f1_10 sf
+1.348 .135(Insert lines after a <search_spec>)J
+72 232 :M
+f6_10 sf
+(ins<)S
+144 232 :M
+f1_10 sf
+1.315 .131(Insert lines before a <search_spec>)J
+72 245 :M
+f6_10 sf
+(del)S
+144 245 :M
+f1_10 sf
+1.624 .162(Delete lines contained in the <search_spec> inclusively)J
+72 258 :M
+f6_10 sf
+(rep)S
+144 258 :M
+f1_10 sf
+1.758 .176(Replace lines contained in the <search_spec> inclusively)J
+72 271 :M
+f6_10 sf
+(sub)S
+144 271 :M
+f1_10 sf
+.921 .092(Substitute strings contained in the <search_spec>)J
+72 294 :M
+1.306 .131(As mentioned previously, the general syntax of the commands is:)J
+109 317 :M
+f6_10 sf
+.004 0(<command>  <filespec>  <search_spec>  [ -c]  [-i]  [-e]  [-p]  [-m])J
+109 330 :M
+(<text>)S
+72 353 :M
+f1_10 sf
+.909 .091(where the items enclosed in brackets \([ ]\) are optional.  <search_spec> is either)J
+109 376 :M
+f6_10 sf
+(<delim><match_string><delim>)S
+72 389 :M
+f1_10 sf
+.562(or)A
+109 402 :M
+f6_10 sf
+.001(<delim><start_string><delim><end_string><delim>)A
+72 425 :M
+f1_10 sf
+2.252 .225(The <match_string> simply looks for a particular string on a line.  The <start_string> and)J
+72 438 :M
+2.1 .21(<end_string> pair delimit)J
+f3_10 sf
+1.556 .156( ranges)J
+f1_10 sf
+1.164 .116( of text lines.  A command will be applied several times if the)J
+72 451 :M
+1.379 .138(<match_string> or the <start_string> + <end_string> pair are found several times.)J
+72 474 :M
+f2_10 sf
+.401(Note)A
+f1_10 sf
+(:)S
+108 474 :M
+1.608 .161(When searching for a range, if the <start_string> is found but the <end_string> is not)J
+108 487 :M
+1.754 .175(found, the range is not defined and the command will not be executed.  If this occurs)J
+108 500 :M
+1.704 .17(after one or more defined ranges, the command will be executed only for those ranges)J
+108 513 :M
+1.248 .125(where the <end_string> was found.)J
+72 536 :M
+2.646 .265(Differences and limitations of these two formats of the <search_spec> will be noted when)J
+72 549 :M
+1.64 .164(applicable for each command.)J
+72 581 :M
+f2_12 sf
+.806 .081(Insert Lines)J
+72 605 :M
+f1_10 sf
+2.583 .258(There are two variations on the insert command to perform insertions before or after the)J
+72 618 :M
+1.195 .119(<search_spec> string:  )J
+f6_10 sf
+1.197 .12(ins< )J
+f1_10 sf
+.347(and)A
+f6_10 sf
+1.197 .12( ins>)J
+f1_10 sf
+1.257 .126(, respectively.  Both commands allow the <search_spec>)J
+72 631 :M
+1.132 .113(to be either <match_string> or <start_string> + <end_string> pair.  For example,)J
+72 654 :M
+f6_10 sf
+(ins>  *.pc /*AUTHID*\(*\)*/ -p)S
+72 667 :M
+.005 0(    printf\("Embedded C test of RDBMS13 on April 1, 1990\\n"\);)J
+72 690 :M
+f1_10 sf
+1.289 .129(would be executed if the input filename matched \322*.pc\323 \(all embedded C programs\).  The editor)J
+72 703 :M
+1.549 .155(would then insert the line \322   printf\("Embedded C ...\323 )J
+f3_10 sf
+.447(after)A
+f1_10 sf
+1.561 .156( it finds any line that contains the)J
+72 716 :M
+1.73 .173(subroutine call to AUTHID with any arguments \(notice the liberal use of wildcard characters)J
+72 729 :M
+-.017(with the -p option\).)A
+endp
+%%Page: 10 10
+%%BeginPageSetup
+initializepage
+(chris; page: 10 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(10)A
+72 68 :M
+f6_10 sf
+(ins>  *.pc /EXEC SQL SELECT/;/)S
+72 81 :M
+.005 .001(    printf\("SQLCODE = %ld\\n", SQLCODE\);)J
+72 104 :M
+f1_10 sf
+2.318 .232(This command would be executed on all embedded C files for lines containing \322EXEC SQL)J
+72 117 :M
+1.84 .184(SELECT\323.  The editor continues searching for a line \(starting at the same line\) containing a)J
+72 130 :M
+1.951 .195(semicolon.  If one is found, it inserts the printf text after the line containing the semicolon.)J
+72 143 :M
+1.096 .11(Note that the <start_string> \(\322EXEC SQL SELECT\323\) and the <end_string> \(\322;\323\) may or may not)J
+72 156 :M
+1.48 .148(appear on the same line.  The text to be inserted will always appear on the line following the)J
+72 169 :M
+.473(<end_string>.)A
+72 192 :M
+f6_10 sf
+(ins< *.pfo  /  STOP/)S
+72 205 :M
+(      EXEC SQL END TRANSACTION;)S
+72 228 :M
+f1_10 sf
+2.122 .212(This command inserts the line \322    EXEC SQL END TRANSACTION;\323 )J
+f3_10 sf
+.568(before)A
+f1_10 sf
+1.526 .153( any \322  STOP\323)J
+72 241 :M
+2.255 .225(statements in all embedded FORTRAN files.  Note in this example the replacement text is)J
+72 254 :M
+1.413 .141(indented to column seven as required by most FORTRAN compilers.)J
+72 286 :M
+f2_12 sf
+1.177 .118(Delete Lines)J
+72 310 :M
+f1_10 sf
+1.544 .154(The delete \()J
+f6_10 sf
+.544(del)A
+f1_10 sf
+1.485 .148(\) command allows removal of text lines from the source files.  Like the insert-)J
+72 323 :M
+1.771 .177(after command, it allows the deletion of lines that match every line that contains a specified)J
+72 336 :M
+1.319 .132(string or fall within a range of lines.  For example,)J
+72 359 :M
+f6_10 sf
+(del  cob002.*co  /01  XYZ5/)S
+72 382 :M
+f1_10 sf
+2.531 .253(deletes all lines that contain \32201  XYZ5\323 from any cob002 COBOL input files \(cob002.pco,)J
+72 395 :M
+.314 .031(cob002.sco, cob002.mco\).)J
+72 418 :M
+1.414 .141(A range of lines can be deleted by giving a <start_string> and <end_string>:)J
+72 441 :M
+f6_10 sf
+.005 .001(del  cob002.*co  /01  XYZ5/design,/)J
+72 464 :M
+f1_10 sf
+1.298 .13(This will delete lines between \32201  XYZ5\323 and \322design,\323 )J
+f5_10 sf
+.398(inclusively)A
+f1_10 sf
+.974 .097(.  That is, it will delete the)J
+72 477 :M
+1.827 .183(lines containing <start_string> and <end_string> parameters.   As usual, if the <end_string>)J
+72 490 :M
+.9 .09(is not found, the command is not executed.)J
+72 513 :M
+.538 .054(An entire test can be deleted by)J
+72 536 :M
+f6_10 sf
+.007 .001(del dml022.p*  /BEGIN TEST0100/END TEST0100/)J
+72 559 :M
+f1_10 sf
+1.047 .105(since \(in theory\) all test suite programs have comments surrounding the begin and end of a test)J
+72 572 :M
+1.265 .127(in the format \322BEGIN TESTxxxx\323 and \322END TESTxxxx\323 where xxxx is the test number.)J
+72 595 :M
+1.124 .112(Note that in our COBOL programs, performed paragraphs belonging to TEST0100 are placed at)J
+72 608 :M
+1.948 .195(the end of the program, outside the range of the comments.  Therefore, an additional delete)J
+72 621 :M
+1.208 .121(command may be required for COBOL, shown below:)J
+72 644 :M
+f6_10 sf
+(del dml022.pco /P46./   ./)S
+72 676 :M
+f2_12 sf
+1.671 .167(Replace Lines)J
+72 700 :M
+f1_10 sf
+3.992 .399(The replace command \()J
+f6_10 sf
+1.137(rep)A
+f1_10 sf
+3.007 .301(\) allows a range of existing text to be replaced with <text>)J
+72 713 :M
+2.884 .288(inclusively.  Both <match_string> and <start_string><end_string> forms are valid for the)J
+72 726 :M
+1.437 .144(<search_spec>.  For example,)J
+endp
+%%Page: 11 11
+%%BeginPageSetup
+initializepage
+(chris; page: 11 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(11)A
+72 68 :M
+f6_10 sf
+(rep dml082.{pc,pfo,ppa} /AUTHID/)S
+72 81 :M
+.004 0(       EXEC SQL DECLARE HU1 SCHEMA FOR FILENAME [HU1]HU1;)J
+72 94 :M
+.004 0(       EXEC SQL DECLARE HU2 SCHEMA FOR FILENAME [HU2]HU2;)J
+72 117 :M
+f1_10 sf
+.848 .085(will replace the line which contain the text \322AUTHID\323 with the two DECLARE statements.  This)J
+72 130 :M
+2.45 .245(replace command will execute on an embedded C, FORTRAN, or Pascal version of the file)J
+72 143 :M
+.508 .051(dml082.  It is up to the user, however, to ensure proper indentation of the replacement text for the)J
+72 156 :M
+1.323 .132(appropriate language.)J
+72 179 :M
+1.438 .144(Here is an example of a replacement with a <start_string><end_string> search specification:)J
+72 202 :M
+f6_10 sf
+(rep cob003.*co /01  XYZ5/design,/)S
+72 215 :M
+(         01  XYZ5.)S
+72 228 :M
+.003 0(             02  FILLER  pic x\(80\) value...)J
+72 241 :M
+.003 0(             02  FILLER  pic x\(80\) value "design,")J
+72 264 :M
+f1_10 sf
+1.169 .117(replaces the lines between \32201  XYZ5\323 and \322design,\323 with the three lines of text underneath the)J
+72 277 :M
+f2_10 sf
+.381(rep)A
+f1_10 sf
+1.25 .125( command.  Since text is replaced inclusively with the replace command, the <start_string>)J
+72 290 :M
+3.577 .358(\32201  XYZ5\323 and the line that contains the <end_string> \322design,\323 must appear in the)J
+72 303 :M
+.975 .098(replacement text if needed.)J
+72 335 :M
+f2_12 sf
+.916 .092(Substitute Strings)J
+72 359 :M
+f1_10 sf
+1.504 .15(The substitute command searches for every occurrence of <search_string> and replaces it with)J
+72 372 :M
+1.232 .123(<replacement_string>.  It has one basic format:)J
+109 395 :M
+1.277 .128(sub  <file_spec>  <search_spec>)J
+144 408 :M
+.51(<delim><search_string><delim><replacement_string><delim>)A
+144 421 :M
+.481([<delim><search_string><delim><replacement_string><delim>])A
+72 444 :M
+1.329 .133(<search_spec> may be one of the following forms:)J
+72 467 :M
+f2_10 sf
+.616(<delim><match_string><delim>)A
+144 490 :M
+f1_10 sf
+1.551 .155(the substitute command is only applied if <match_string> is found on the same)J
+144 503 :M
+.704(line.)A
+72 526 :M
+f2_10 sf
+.53(<delim><start_string><delim><end_string><delim>)A
+144 549 :M
+f1_10 sf
+4.719 .472(only lines that fall inside the <start_string> and <end_string> of the)J
+144 562 :M
+.722 .072(<search_spec> are checked to see if the substitute command can be applied.  If the)J
+144 575 :M
+2.18 .218(<replacement_string> is empty, the <search_string> will effectively be deleted)J
+144 588 :M
+1.462 .146(\(replaced with nothing\).)J
+72 611 :M
+f2_10 sf
+1.019(<delim><delim>)A
+144 634 :M
+f1_10 sf
+1.255 .125(all lines in the file are scanned to see if the substitute command can be applied.)J
+144 647 :M
+.778 .078(Note that there are no characters between the two delimiters \(unless the -p option)J
+144 660 :M
+2.19 .219(is used, in which case an asterisk \322*\323 must appear between the delimiters to)J
+144 673 :M
+1.235 .124(provide the same function\).)J
+72 696 :M
+1.945 .195(Multiple string substitutions can be specified for the same <file_spec> and <search_spec> by)J
+72 709 :M
+2.514 .251(simply adding additional)J
+endp
+%%Page: 12 12
+%%BeginPageSetup
+initializepage
+(chris; page: 12 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(12)A
+109 68 :M
+f1_10 sf
+.51(<delim><search_string><delim><replacement_string><delim>)A
+72 91 :M
+1.4 .14(lines after one another.  Each search/replace line is interpreted as another command, executed)J
+72 104 :M
+2.035 .203(in the same order specified in the change file.  Comments, however, cannot appear between)J
+72 117 :M
+1.491 .149(multiple search/replace lines.  TEd will skip over blanks when searching for the delimiters, so)J
+72 130 :M
+1.608 .161(search/replace lines may be indented for clarity.)J
+72 153 :M
+1.728 .173(For example,)J
+72 176 :M
+f6_10 sf
+(sub  dml035.* //)S
+72 189 :M
+(  'zzzzz'zzzz')S
+72 202 :M
+(  'Chris Schanzle'')S
+72 225 :M
+f1_10 sf
+1.586 .159(will execute on all dml035 input test files and replaces each string of five z\325s with a string of)J
+72 238 :M
+4.395 .439(four z\325s.  The next command to be executed would have the same <file_spec> and)J
+72 251 :M
+1.393 .139(<search_spec>, but the command will now effectively delete all occurrences of \322Chris Schanzle\323)J
+72 264 :M
+5.689 .569(from the contents of any line by replacing the <search_string> with an empty)J
+72 277 :M
+2.104 .21(<replacement_string>.  Note the <search_spec> for both commands is empty, meaning every)J
+72 290 :M
+.825 .083(line in the input file is searched from top to bottom for the <search_string>.)J
+72 313 :M
+f6_10 sf
+(sub  *.*pc  /printf/)S
+72 326 :M
+(     "\\n\\n"\\n")S
+72 349 :M
+f1_10 sf
+1.847 .185(This substitute command will be executed with an embedded C input file.  It will search for)J
+72 362 :M
+1.176 .118(lines that contain \322printf\323, then check if the line contains the four characters that make up two)J
+72 375 :M
+2.301 .23(linefeed characters \(\322\\n\\n\323\) and replaces it with two characters that make up one linefeed)J
+72 388 :M
+1.544 .154(character \(\322\\n\323\).  This can be used to change double spaced lines to single spaced lines \(other)J
+72 401 :M
+2.744 .274(languages are similar\).)J
+72 424 :M
+f6_10 sf
+.006 .001(sub  dml013.*  /BEGIN TEST0171/END TEST0171/)J
+72 437 :M
+(  /DISTINCT//)S
+72 460 :M
+f1_10 sf
+2.924 .292(This substitute command would execute on all DML013 input files.  It will delete every)J
+72 473 :M
+1.492 .149(occurrence of the string \322DISTINCT\323 occurring between lines that contain \322BEGIN TEST0171\323)J
+72 486 :M
+1.378 .138(and \322END TEST0171\323.)J
+endp
+%%Page: 13 13
+%%BeginPageSetup
+initializepage
+(chris; page: 13 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(13)A
+72 89 :M
+f2_12 sf
+1.063 .106(Using TEd)J
+72 113 :M
+f1_10 sf
+1.449 .145(TEd is invoked at the command line with following syntax:)J
+109 136 :M
+f6_10 sf
+.005 0(ted [ -options ]  [ input_file1 ]  [ input_file2 ... input_filen])J
+72 159 :M
+f1_10 sf
+.836 .084(where [ -options ] is one or more of the following letters and arguments:)J
+72 182 :M
+f6_10 sf
+(-f filename)S
+108 205 :M
+f1_10 sf
+1.954 .195(Use the file )J
+f6_10 sf
+.904(filename)A
+f1_10 sf
+2.251 .225( to get a list of input, output, and to load additional editing)J
+108 218 :M
+2.801 .28(commands.  If any )J
+f6_10 sf
+1.113(input_file)A
+f1_10 sf
+2.98 .298( is given on the command line, the argument is)J
+108 231 :M
+1.335 .134(ignored.  The \322list of files\323 file has one or more lines of the following format:)J
+144 254 :M
+f6_10 sf
+.009 .001(input_file [output_file] [change_file] [flush])J
+108 277 :M
+f1_10 sf
+3.253 .325(\(Optional arguments are shown, but not typed, in brackets.\)  Each parameter is)J
+108 290 :M
+1.419 .142(separated by one or more spaces or tabs.  The )J
+f6_10 sf
+.584(input_file)A
+f1_10 sf
+1.338 .134( specifies what file is to be)J
+108 303 :M
+1.381 .138(edited.  The )J
+f6_10 sf
+.62(output_file)A
+f1_10 sf
+1.744 .174( specifies the filename to write the file after all commands)J
+108 316 :M
+1.107 .111(have been processed \(rather than the default action to overwrite the )J
+f6_10 sf
+.375(input_file)A
+f1_10 sf
+.707 .071(\).  The)J
+108 329 :M
+f6_10 sf
+1.218(change_file)A
+f1_10 sf
+2.452 .245( parameter is a file of )J
+f3_10 sf
+.981(additional)A
+f1_10 sf
+3.269 .327( commands to be applied to the)J
+108 342 :M
+f6_10 sf
+.332(input_file)A
+f1_10 sf
+.14 .014( )J
+f3_10 sf
+.998 .1(and for all subsequent input files)J
+f1_10 sf
+.865 .086(.  If the final parameter exists, all existing)J
+108 355 :M
+2.391 .239(change commands are flushed \(deleted\) from memory before reading new commands)J
+108 368 :M
+2.663 .266(from the )J
+f6_10 sf
+1.097(change_file)A
+f1_10 sf
+2.995 .299( parameter.  Actually, any word will suffice for the final)J
+108 381 :M
+1.438 .144(argument, but \322flush\323 provides \(slightly more\) meaning in the list of files file.)J
+108 404 :M
+1.606 .161(Note that when specifying a )J
+f6_10 sf
+.568(change_file,)A
+f1_10 sf
+.779 .078( the )J
+f6_10 sf
+.568(output_file)A
+f1_10 sf
+1.367 .137( must be specified as a)J
+108 417 :M
+.725 .072(place holder, even if it is the same as the first argument \()J
+f6_10 sf
+.296(input_file)A
+f1_10 sf
+.301(\).)A
+72 440 :M
+f6_10 sf
+(-i)S
+108 463 :M
+f1_10 sf
+1.348 .135(The -i option sets interactive command input mode.  Rather than read a file of changes)J
+108 476 :M
+1.311 .131(\(by reading )J
+f6_10 sf
+.456(tedchg)A
+f1_10 sf
+.847 .085( or by using the )J
+f6_10 sf
+.456(-t)A
+f1_10 sf
+1.329 .133( option described below\), the user is prompted to)J
+108 489 :M
+2.802 .28(enter TEd change commands directly at the keyboard.  The commands are parsed)J
+108 502 :M
+1.288 .129(\(interpreted\) the same way as when commands are read from a change file on disk, but)J
+108 515 :M
+.988 .099(with a little more output when a command is \322discovered\323 by TEd.)J
+108 538 :M
+1.788 .179(There are two additional commands that are helpful when using the interactive input)J
+108 551 :M
+1.89 .189(mode:  )J
+f6_10 sf
+.929(help)A
+f1_10 sf
+1.422 .142( and )J
+f6_10 sf
+.929(list)A
+f1_10 sf
+2.35 .235(.   Help gives assistance on the syntax and/or meaning of a)J
+108 564 :M
+2.38 .238(command or its arguments.  A help command may be entered where TEd would be)J
+108 577 :M
+2.566 .257(looking for a line beginning with a command keyword \(e.g., sub, ins>, etc\).  These)J
+108 590 :M
+1.452 .145(commands won\325t be recognized inside a block of replacement <text> or in the middle of)J
+108 603 :M
+2.284 .228(multiple )J
+f2_10 sf
+.633(sub)A
+f1_10 sf
+2.094 .209( commands with a common <filespec> and <search_spec>.  Remember a)J
+108 616 :M
+1.217 .122(comment line always ends a command, so you could enter a line with just a ! character,)J
+108 629 :M
+.248 .025(then use )J
+f6_10 sf
+.102(help)A
+f1_10 sf
+.106 .011( or )J
+f6_10 sf
+.102(list)A
+f1_10 sf
+(.)S
+108 652 :M
+1.15 .115(The )J
+f6_10 sf
+.47(list)A
+f1_10 sf
+1.239 .124( command will display a list of commands entered thus far in a form that can)J
+108 665 :M
+.765 .076(be saved and used as input into TEd later.)J
+108 688 :M
+1.167 .117(Appendix A contains a sample script of an interactive session with TEd.)J
+endp
+%%Page: 14 14
+%%BeginPageSetup
+initializepage
+(chris; page: 14 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(14)A
+72 68 :M
+f6_10 sf
+(-o output_file)S
+108 91 :M
+f1_10 sf
+.659 .066(Use the filename )J
+f6_10 sf
+.228(output_file)A
+f1_10 sf
+.606 .061( as the output filename.  The default action is to overwrite)J
+108 104 :M
+.931 .093(the )J
+f6_10 sf
+2.4 .24(input_file a)J
+f1_10 sf
+1.382 .138(fter all commands have been successfully processed and if the input)J
+108 117 :M
+1.38 .138(file has been changed.  This option is ignored \(with a warning message\) if the -f option)J
+108 130 :M
+.96 .096(is used.  If more than one )J
+f6_10 sf
+.466(input_file)A
+f1_10 sf
+1.159 .116( is given on the command line, this option is not)J
+108 143 :M
+1.619 .162(allowed \(an error message will occur and TEd will terminate\).)J
+72 166 :M
+f6_10 sf
+(-t change_file)S
+108 189 :M
+f1_10 sf
+.691 .069(Use )J
+f6_10 sf
+.282(change_file)A
+f1_10 sf
+.669 .067( to load the editing commands TEd will apply to input file\(s\).  If the )J
+f6_10 sf
+.565(-t)A
+108 202 :M
+f1_10 sf
+1.189 .119(option is not specified, the file to be read will be )J
+f6_10 sf
+.522(tedchg)A
+f1_10 sf
+.631 .063(.  If the )J
+f6_10 sf
+.522(-f)A
+f1_10 sf
+1.311 .131( option is also used,)J
+108 215 :M
+.932 .093(commands in the file specified with the )J
+f6_10 sf
+.335(-t)A
+f1_10 sf
+.937 .094( option are loaded first.)J
+72 238 :M
+f6_10 sf
+(-v)S
+108 261 :M
+f1_10 sf
+1.368 .137(Turn verbose mode ON \(default is OFF\).  Each command, its parameters, and the lines)J
+108 274 :M
+.546 .055(it affects, are echoed to the screen as they are executed.)J
+72 297 :M
+1.061 .106(TEd uses the pseudo Unix standard )J
+f6_10 sf
+.355(getopt\(\))A
+f1_10 sf
+1.152 .115( technique for parsing command line options and)J
+72 310 :M
+.727 .073(their arguments.  All options must precede the first )J
+f6_10 sf
+.259(input_file)A
+f1_10 sf
+.9 .09( argument, options are specified)J
+72 323 :M
+.757 .076(by a hyphen and a single letter \(no space between the hyphen and the option letter\), and then an)J
+72 336 :M
+1.444 .144(argument, possibly preceded by a space.  Options that do not require arguments \(the -v and -i)J
+72 349 :M
+.914 .091(options in TEd\) may be specified before options that do require arguments.  For example,)J
+72 372 :M
+f6_10 sf
+(% ted -vt alt_change -ffiles)S
+109 395 :M
+f1_10 sf
+.796(and)A
+72 418 :M
+f6_10 sf
+(% ted -talt_change -v -f files)S
+72 441 :M
+f1_10 sf
+1.456 .146(are both valid and functionally identical.  However,)J
+72 464 :M
+f6_10 sf
+(% ted -tv alt_change)S
+72 487 :M
+f1_10 sf
+.85 .085(is interpreted as \322v\323 being the argument for the \322t\323 option and alt_change as the first input file.)J
+72 510 :M
+f2_10 sf
+3.382 .338(Note VAX/VMS Users)J
+108 533 :M
+f1_10 sf
+2.263 .226(Because the VMS \322run\323 command will not accept arguments that TEd)J
+108 546 :M
+2.576 .258(often requires, a global symbol that points to the executable \(usually)J
+108 559 :M
+1.143 .114(TED.EXE\) must be defined as follows:)J
+144 582 :M
+f6_10 sf
+($ ted :== $ )S
+f7_10 sf
+(disk)S
+f6_10 sf
+(:[)S
+f7_10 sf
+(directory)S
+f6_10 sf
+(]ted)S
+108 605 :M
+f1_10 sf
+1.808 .181(Where )J
+f7_10 sf
+.524(disk)A
+f1_10 sf
+.802 .08( and )J
+f7_10 sf
+.524(directory)A
+f1_10 sf
+1.522 .152( are easily discovered by applying the \322dir\323)J
+108 618 :M
+3.379 .338(command where the executable for TEd resides.  Now TEd can be)J
+108 631 :M
+1.734 .173(invoked by typing its name \(ted\) and specifying arguments as described)J
+108 644 :M
+.877 .088(below.  You may wish to add this line to your LOGIN.COM file.)J
+endp
+%%Page: 15 15
+%%BeginPageSetup
+initializepage
+(chris; page: 15 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(15)A
+72 68 :M
+f2_10 sf
+1.305 .131(Examples for Using TEd)J
+72 91 :M
+f6_10 sf
+(% ted dml001.pc)S
+72 114 :M
+f1_10 sf
+1.524 .152(This is the simplest way to invoke TEd.  TEd reads the default commands file )J
+f6_10 sf
+.575(tedchg)A
+f1_10 sf
+1.098 .11( in the)J
+72 127 :M
+1.627 .163(current directory, reads the contents of )J
+f6_10 sf
+.538(dml001.pc)A
+f1_10 sf
+1.762 .176( into memory, executes the commands \(as)J
+72 140 :M
+3.042 .304(described in \322Command Descriptions\323\), then rewrites )J
+f6_10 sf
+.823(dml001.pc)A
+f1_10 sf
+2.38 .238( with the edited version)J
+72 153 :M
+1.848 .185(processed in memory.)J
+72 176 :M
+f6_10 sf
+.006 .001(% ted -t mychange -o dml001.pc1 dml001.pc)J
+72 199 :M
+f1_10 sf
+.933 .093(This command tells TEd to read the change file )J
+f6_10 sf
+.346(mychange)A
+f1_10 sf
+.826 .083( instead of the default \()J
+f6_10 sf
+.346(tedchg)A
+f1_10 sf
+1.069 .107(\), read)J
+72 212 :M
+1.242 .124(the contents of )J
+f6_10 sf
+.485(dml001.pc)A
+f1_10 sf
+1.407 .141(, execute the commands, then write the edited version to file called)J
+72 225 :M
+f6_10 sf
+.237(dml001.pc1)A
+f1_10 sf
+.506 .051(.  Note that the original file )J
+f6_10 sf
+.237(dml001.pc)A
+f1_10 sf
+.699 .07( is left unchanged.)J
+72 248 :M
+f6_10 sf
+(% ted -f files)S
+72 271 :M
+f1_10 sf
+1.487 .149(This tells TEd to read lines in the file )J
+f6_10 sf
+.666(files)A
+f1_10 sf
+1.617 .162( for an input file, and output file, and a change)J
+72 284 :M
+1.309 .131(file.  Note that since no change file was specified on the command line, it must be specified on)J
+72 297 :M
+.981 .098(the first line in )J
+f6_10 sf
+.472(files)A
+f1_10 sf
+1.116 .112( \(shown below as )J
+f6_10 sf
+.472(dmlchg.ted)A
+f1_10 sf
+1.148 .115(\).  After TEd has read a commands file, it)J
+72 310 :M
+.857 .086(can operate on input files.  For example, if )J
+f6_10 sf
+.35(files)A
+f1_10 sf
+1.224 .122( contained the following,)J
+109 333 :M
+f6_10 sf
+(dml001.pc dml001.pc dmlchg.ted)S
+109 346 :M
+(dml002.pc)S
+109 359 :M
+.008 .001(sdl003.pc sdl003.pc1 sdlchg.ted flush)J
+109 372 :M
+(sdl004.pc sdl004.pc1)S
+109 385 :M
+(sdl005.pc)S
+72 408 :M
+f1_10 sf
+2.661 .266(then the commands in the change file )J
+f6_10 sf
+.969(dmlchg.ted)A
+f1_10 sf
+2.564 .256( would be loaded, then the text from)J
+72 421 :M
+f6_10 sf
+.419(dml001.pc)A
+f1_10 sf
+.412 .041(.  \(If )J
+f6_10 sf
+.419(dmlchg.ted)A
+f1_10 sf
+1.013 .101( was not specified on the first line, TEd will notify the user that a)J
+72 434 :M
+2.028 .203(commands file could not be loaded and exit.\)  TEd would then perform the commands, then)J
+72 447 :M
+.051 .005(write the output file )J
+f6_10 sf
+.02(dml001.pc)A
+f1_10 sf
+(.)S
+72 470 :M
+2.904 .29(After finding line #2, TEd would \322forget\323 the contents )J
+f6_10 sf
+1.013(dml001.pc)A
+f1_10 sf
+2.685 .268(, read the contents of)J
+72 483 :M
+f6_10 sf
+.358(dml002.pc)A
+f1_10 sf
+1.068 .107(, perform the same commands from )J
+f6_10 sf
+.358(dmlchg.ted)A
+f1_10 sf
+.875 .087(, then rewrite )J
+f6_10 sf
+.358(dml002.pc)A
+f1_10 sf
+.885 .088( with the)J
+72 496 :M
+1.763 .176(edited version.)J
+72 519 :M
+1.913 .191(When line #3 in )J
+f6_10 sf
+.846(files)A
+f1_10 sf
+2.495 .25( is read, all existing commands are flushed from memory and new)J
+72 532 :M
+2.335 .233(commands are loaded from )J
+f6_10 sf
+.716(sdlchg.ted)A
+f1_10 sf
+1.743 .174(.  Note that all old commands are lost when a new)J
+72 545 :M
+1.179 .118(commands file is loaded when the fourth argument exists.  The contents of )J
+f6_10 sf
+.416(sdl003.pc)A
+f1_10 sf
+.913 .091( is read,)J
+72 558 :M
+.855 .085(the commands are performed, and the edited version is written to a file called )J
+f6_10 sf
+.311(sdl003.pc1)A
+f1_10 sf
+(.)S
+72 581 :M
+1.762 .176(Line #4 of )J
+f6_10 sf
+.89(files)A
+f1_10 sf
+2.174 .217( tells TEd to use the same commands file )J
+f6_10 sf
+.89(sdlchg.ted)A
+f1_10 sf
+1.999 .2( on the input file)J
+72 594 :M
+f6_10 sf
+.026(sdl004.pc)A
+f1_10 sf
+.058 .006( and write the output as )J
+f6_10 sf
+.026(sdl004.pc1)A
+f1_10 sf
+(.)S
+72 617 :M
+1.168 .117(Finally, the last line in )J
+f6_10 sf
+.49(files)A
+f1_10 sf
+1.054 .105( is read and the contents of )J
+f6_10 sf
+.49(sdl005.pc)A
+f1_10 sf
+1.273 .127( is read.  The commands)J
+72 630 :M
+.655 .065(from )J
+f6_10 sf
+.241(sdlchg.ted)A
+f1_10 sf
+.629 .063( are performed, and )J
+f6_10 sf
+.241(sdl005.pc)A
+f1_10 sf
+.691 .069( is rewritten with the new edited version.)J
+endp
+%%Page: 16 16
+%%BeginPageSetup
+initializepage
+(chris; page: 16 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(16)A
+72 79 :M
+f2_12 sf
+1.594 .159(Implementation Notes and User Feedback)J
+72 103 :M
+f1_10 sf
+4.078 .408(As mentioned in the introduction, TEd was carefully designed and coded in the \322C\323)J
+72 116 :M
+2.628 .263(programming language to allow execution in almost any environment with no source code)J
+72 129 :M
+1.679 .168(modification.  We use TEd in the following environments:)J
+72 151 :M
+10 f4_1 :p
+129.999 :m
+.188 .019(Computer                            )J
+118 151 :M
+3 :m
+.222 .022( )J
+198 151 :M
+132 :m
+.339 .034(Operating System               )J
+285 151 :M
+3 :m
+.222 .022( )J
+324 151 :M
+78 :m
+.425 .043(Version             )J
+363 151 :M
+3 :m
+.222 .022( )J
+396 151 :M
+58 :m
+.413(Compiler\(s\))A
+72 165 :M
+.451 .045(Sun Sparcstation 2)J
+198 165 :M
+1.502 .15(SunOS Unix)J
+324 165 :M
+-.308(4.1.3)A
+396 165 :M
+.721 .072(cc, gcc 2.4.5)J
+72 178 :M
+.078 .008(PC Clone \(386,486\))J
+198 178 :M
+.016(MS-DOS)A
+324 178 :M
+-.448(5.0)A
+396 178 :M
+.184 .018(Turbo C 2.0)J
+72 191 :M
+.042 .004(VAX 785)J
+198 191 :M
+1.742 .174(VAX VMS)J
+324 191 :M
+-.448(5.5)A
+396 191 :M
+1.089 .109(VAX C)J
+72 214 :M
+3.498 .35(In nearly all instances, TEd allocates memory dynamically as required.  This includes)J
+72 227 :M
+1.897 .19(storage space for reading the input files and for commands and their parameters.  However,)J
+72 240 :M
+1.225 .123(input line and search string buffers are limited to 128 bytes; longer lines will be truncated and)J
+72 253 :M
+1.127 .113(a warning message will be displayed.  You can change this parameter in the source code.)J
+72 276 :M
+2.191 .219(If you have an ancient C compiler that chokes on procedure names and/or identifier names)J
+72 289 :M
+2.029 .203(which are longer than eight characters, we can only recommend you see your vendor for an)J
+72 302 :M
+.612 .061(update to your compiler.)J
+72 325 :M
+2.111 .211(You may wish to browse through the code if you are having compilation difficulties.  While)J
+72 338 :M
+2.504 .25(there are several compilation definitions at the beginning of \322ted.c\323, there are many other)J
+72 351 :M
+1.166 .117(comments in the code which address portability issues.  These portions of TEd may be modified)J
+72 364 :M
+3.484 .348(as stated in the code.  If you have to make any changes to make TEd work in your)J
+72 377 :M
+1.431 .143(environment, let us know!  Otherwise, there might be surprises when we come to validate you)J
+72 390 :M
+2.948 .295(for conformance.)J
+72 413 :M
+.751 .075(If you have questions on how to apply TEd to the test suite, please contact Joan Sullivan at \(301\))J
+72 426 :M
+-.502(975-3258.)A
+72 449 :M
+1.824 .182(If you are having technical difficulties with TEd \320 e.g., compilation errors, stack/core dumps,)J
+72 462 :M
+2.15 .215(crashing, strange error messages, incorrect operation, or \()J
+f3_10 sf
+.511(gasp!)A
+f1_10 sf
+1.387 .139(\) bugs \320 or would like to give)J
+72 475 :M
+1.584 .158(input on potential enhancements to TEd or this documentation, please feel free to contact the)J
+72 488 :M
+1.698 .17(author, Chris Schanzle, at \(301\) 975-3796 or at the address listed below.  You may also send)J
+72 501 :M
+2.1 .21(electronic mail on the Internet to \322chris@speckle.ncsl.nist.gov\323.  We welcome your comments)J
+72 514 :M
+1.99 .199(and suggestions!)J
+72 537 :M
+1.828 .183(Chris Schanzle)J
+72 550 :M
+.841 .084(NIST Bldg 225 \(Tech\) Rm A-266)J
+72 563 :M
+.153 .015(Gaithersburg, MD 20899)J
+endp
+%%Page: 17 17
+%%BeginPageSetup
+initializepage
+(chris; page: 17 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(17)A
+72 79 :M
+f2_12 sf
+1.41 .141(Example Interactive Session)J
+72 103 :M
+f1_10 sf
+2.55 .255(Below is actual captured output of a simple interactive command input session with TEd.)J
+72 116 :M
+1.282 .128(Notice the list of valid commands \(near the end\) displays the commands in a fashion such that)J
+72 129 :M
+1.857 .186(they can be captured from the screen and copied directly into a new commands file for later)J
+72 142 :M
+.843 .084(use.  The user\325s input is shown as )J
+f8_10 sf
+.368(bold)A
+f1_10 sf
+.876 .088( type at the Unix shell prompt \()J
+f6_10 sf
+.368(%)A
+f1_10 sf
+.973 .097(\) and TEd\325s prompt \()J
+f6_10 sf
+.368(>)A
+f1_10 sf
+.375(\).)A
+72 155 :M
+1.025 .102(Following the TEd invocation is a \324diff\325 of the input file \(dml001.pc\) and the output file \(asdf\).)J
+72 176 :M
+f6_10 sf
+2.045 .204(% .)J
+f8_10 sf
+3.919 .392(/ted -io asdf dml001.pc)J
+72 187 :M
+f6_10 sf
+.005 .001(NIST SQL Test EDitor "TEd" vers 5.1 5/17/95)J
+72 198 :M
+.007 .001(Interactive command input mode set.)J
+72 220 :M
+.005 0(Enter commands now.  Type 'help' for help.  Enter ".")J
+72 231 :M
+.005 .001(on its own line to simulate an end-of-file.)J
+72 253 :M
+1.114 .111(> )J
+f8_10 sf
+.891(help)A
+72 275 :M
+f6_10 sf
+.005 .001(Enter commands just as they would have been entered in a file.)J
+72 286 :M
+.006 .001(Type "." \(w/o the quotes\) to simulate an end-of-file.)J
+72 308 :M
+.005 .001(For additional help, type "help <cmd>" where <cmd> is one of the)J
+72 319 :M
+(following:)S
+72 341 :M
+.003 0(    sub        - substitute strings within lines)J
+72 352 :M
+(    rep        - replace lines)S
+72 363 :M
+.003 0(    ins        - insert lines before or after a search string)J
+72 374 :M
+(    del        - delete lines)S
+72 385 :M
+.004 0(    search     - help with <search_spec> \(used in most commands\))J
+72 396 :M
+.004 0(    options    - the options available to all commands)J
+72 407 :M
+.003 0(    list       - list commands entered thus far)J
+72 429 :M
+1.336 .134(> )J
+f8_10 sf
+3.771 .377(help sub)J
+72 451 :M
+f6_10 sf
+.006 .001(The sub command permits string substitutions with the following syntax:)J
+72 473 :M
+.005 .001(    sub <filespec> <search_spec> [-options])J
+72 484 :M
+.007 .001(    <search_string><replacement_string>)J
+72 495 :M
+.006 .001(    [ <search_string><replacement_string> ])J
+72 517 :M
+.005 0(The items enclosed in brackets [ ] are optional.  If you have more than one)J
+72 528 :M
+.006 .001(string to be replaced that meets the same <filespec> and <search_spec>,)J
+72 539 :M
+.008 .001(simply add a new <search_string><replacement_string> pair underneath.)J
+72 550 :M
+(SEE ALSO:  search)S
+72 572 :M
+1.336 .134(> )J
+f8_10 sf
+2.375 .237(sub * //)J
+72 583 :M
+f6_10 sf
+1.494 .149(> )J
+f8_10 sf
+.952(/"HU"/"SCHANZLE"/)A
+72 605 :M
+f6_10 sf
+(This SUB command looks OK...)S
+72 616 :M
+(! From file standard input:4)S
+72 627 :M
+(sub * //)S
+72 638 :M
+(/"HU"/"SCHANZLE"/)S
+72 649 :M
+1.447 .145(> )J
+f8_10 sf
+.94(/BEGIN/begin/)A
+72 671 :M
+f6_10 sf
+(This SUB command looks OK...)S
+72 682 :M
+(! From file standard input:5)S
+72 693 :M
+(sub * //)S
+72 704 :M
+(/BEGIN/begin/)S
+72 715 :M
+1.588 .159(> )J
+f8_10 sf
+4.222 .422(sub * /begin test0003/end test0003/ -ei)J
+72 726 :M
+f6_10 sf
+1.299 .13(> )J
+f8_10 sf
+.909('15'20')A
+endp
+%%Page: 18 18
+%%BeginPageSetup
+initializepage
+(chris; page: 18 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(18)A
+72 79 :M
+f6_10 sf
+(This SUB command looks OK...)S
+72 90 :M
+(! From file standard input:7)S
+72 101 :M
+.006 .001(sub * /begin test0003/end test0003/ -ei)J
+72 112 :M
+(/15/20/)S
+72 123 :M
+1.546 .155(> )J
+f8_10 sf
+4.293 .429(ins> * /*begin*test*/ -ip)J
+72 134 :M
+f6_10 sf
+.964 .096(>     )J
+f8_10 sf
+4.258 .426(printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 145 :M
+f6_10 sf
+.558 .056(> )J
+f8_10 sf
+(.)S
+72 167 :M
+f6_10 sf
+(This command looks OK...)S
+72 178 :M
+(! From file standard input:8)S
+72 189 :M
+(ins> * /*begin*test*/ -ip)S
+72 200 :M
+.005 .001(    printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 222 :M
+.002 0(****   L i s t    o f    V a l i d   C o m m a n d s   ****)J
+72 244 :M
+(! From file standard input:4)S
+72 255 :M
+(sub * //)S
+72 266 :M
+(/"HU"/"SCHANZLE"/)S
+72 277 :M
+(!)S
+72 288 :M
+(! From file standard input:5)S
+72 299 :M
+(sub * //)S
+72 310 :M
+(/BEGIN/begin/)S
+72 321 :M
+(!)S
+72 332 :M
+(! From file standard input:7)S
+72 343 :M
+.006 .001(sub * /begin test0003/end test0003/ -ei)J
+72 354 :M
+(/15/20/)S
+72 365 :M
+(!)S
+72 376 :M
+(! From file standard input:8)S
+72 387 :M
+(ins> * /*begin*test*/ -ip)S
+72 398 :M
+.005 .001(    printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 420 :M
+.002 0(****   E n d   o f   C o m m a n d s   ****)J
+72 453 :M
+.125 .012(Execute these commands?  \(y/n\) )J
+f8_10 sf
+(y)S
+72 486 :M
+f6_10 sf
+(Input: dml001.pc    Output: asdf)S
+72 508 :M
+.005 .001(sub from standard input:4 found 544 lines with the <search_str> and made 1 sub)J
+72 519 :M
+.005 .001(sub from standard input:5 found 544 lines with the <search_str> and made 9)J
+72 530 :M
+(subs)S
+72 541 :M
+(---------)S
+72 552 :M
+(! From file standard input:7)S
+72 563 :M
+.006 .001(sub * /begin test0003/end test0003/ -ei)J
+72 574 :M
+(/15/20/)S
+72 585 :M
+(<      for \(ii=1;ii<15;ii++\))S
+72 596 :M
+(>      for \(ii=1;ii<20;ii++\))S
+72 618 :M
+.005 0(sub from standard input:7 searched 54 lines in 1 range and made 1 sub)J
+72 629 :M
+.005 .001(ins> from standard input:8 inserted blks of 1 line 8 times)J
+72 651 :M
+1.51 .151(% )J
+f8_10 sf
+4.531 .453(diff asdf dml001.pc)J
+72 662 :M
+f6_10 sf
+(31c31)S
+72 673 :M
+(< EXEC SQL begin DECLARE SECTION;)S
+72 684 :M
+(---)S
+72 695 :M
+(> EXEC SQL BEGIN DECLARE SECTION;)S
+72 706 :M
+(51c51)S
+72 717 :M
+(<       strcpy\(uid,"SCHANZLE"\);)S
+72 728 :M
+(---)S
+endp
+%%Page: 19 19
+%%BeginPageSetup
+initializepage
+(chris; page: 19 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+344 40 :M
+f0_11 sf
+.817 .082(NIST SQL Test Editor Documentation v5.1)J
+300 741 :M
+f1_11 sf
+-1.23(19)A
+72 68 :M
+f6_10 sf
+(>       strcpy\(uid,"HU"\);)S
+72 79 :M
+(69,70c69)S
+72 90 :M
+.009 .001(< /******************** begin TEST0001 ********************/)J
+72 101 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 112 :M
+(---)S
+72 123 :M
+.009 .001(> /******************** BEGIN TEST0001 ********************/)J
+72 134 :M
+(123,124c122)S
+72 145 :M
+.009 .001(< /******************** begin TEST0002 ********************/)J
+72 156 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 167 :M
+(---)S
+72 178 :M
+.009 .001(> /******************** BEGIN TEST0002 ********************/)J
+72 189 :M
+(177,178c175)S
+72 200 :M
+.009 .001(< /******************** begin TEST0003 ********************/)J
+72 211 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 222 :M
+(---)S
+72 233 :M
+.009 .001(> /******************** BEGIN TEST0003 ********************/)J
+72 244 :M
+(201c198)S
+72 255 :M
+(<       for \(ii=1;ii<20;ii++\))S
+72 266 :M
+(---)S
+72 277 :M
+(>       for \(ii=1;ii<15;ii++\))S
+72 288 :M
+(232,233c229)S
+72 299 :M
+.009 .001(< /******************** begin TEST0004 ********************/)J
+72 310 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 321 :M
+(---)S
+72 332 :M
+.009 .001(> /******************** BEGIN TEST0004 ********************/)J
+72 343 :M
+(292,293c288)S
+72 354 :M
+.009 .001(< /******************** begin TEST0005 ********************/)J
+72 365 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 376 :M
+(---)S
+72 387 :M
+.009 .001(> /******************** BEGIN TEST0005 ********************/)J
+72 398 :M
+(351,352c346)S
+72 409 :M
+.009 .001(< /******************** begin TEST0158 ********************/)J
+72 420 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 431 :M
+(---)S
+72 442 :M
+.009 .001(> /******************** BEGIN TEST0158 ********************/)J
+72 453 :M
+(415,416c409)S
+72 464 :M
+.009 .001(< /******************** begin TEST0159 ********************/)J
+72 475 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 486 :M
+(---)S
+72 497 :M
+.009 .001(> /******************** BEGIN TEST0159 ********************/)J
+72 508 :M
+(483,484c476)S
+72 519 :M
+.009 .001(< /******************** begin TEST0160 ********************/)J
+72 530 :M
+.005 0(<     printf\("NIST SQLVTS 1/2/95:  beginning new test!\\n"\);)J
+72 541 :M
+(---)S
+72 552 :M
+.009 .001(> /******************** BEGIN TEST0160 ********************/)J
+72 563 :M
+(%)S
+endp
+%%Page: 20 20
+%%BeginPageSetup
+initializepage
+(chris; page: 20 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+endp
+%%Page: 21 21
+%%BeginPageSetup
+initializepage
+(chris; page: 21 of 21)setjob
+%%EndPageSetup
+-12 -12 :T
+gS 12 12 588 768 rC
+273 75 :M
+f1_16 sf
+-.278(Contents)A
+108 113 :M
+f1_10 sf
+.218(Introduction..................................................................................................)A
+168 113 :M
+.222 .022( )J
+463 113 :M
+(1)S
+108 131 :M
+1.568 .157(The Change File)J
+192 131 :M
+.224(..........................................................................................)A
+190 131 :M
+.222 .022( )J
+463 131 :M
+(1)S
+130 149 :M
+1.332 .133(Command File Structure)J
+252 149 :M
+.225(......................................................................)A
+251 149 :M
+.222 .022( )J
+463 149 :M
+(2)S
+130 167 :M
+2.271 .227(Command Syntax)J
+219 167 :M
+.224(.................................................................................)A
+218 167 :M
+.222 .022( )J
+463 167 :M
+(2)S
+130 185 :M
+2.291 .229(File Specification and Wildcards........................................................)J
+294 185 :M
+.222 .022( )J
+463 185 :M
+(3)S
+130 203 :M
+2.16 .216(File Specification and Wildcards Examples.......................................)J
+345 203 :M
+.222 .022( )J
+463 203 :M
+(4)S
+130 221 :M
+1.769 .177(Search Specification)J
+231 221 :M
+.225(.............................................................................)A
+229 221 :M
+.222 .022( )J
+463 221 :M
+(4)S
+130 239 :M
+.118(Options)A
+168 239 :M
+.224(..................................................................................................)A
+167 239 :M
+.222 .022( )J
+463 239 :M
+(4)S
+130 257 :M
+.357(Text)A
+153 257 :M
+.224(.......................................................................................................)A
+152 257 :M
+.222 .022( )J
+463 257 :M
+(8)S
+108 275 :M
+2.368 .237(Command Descriptions)J
+225 275 :M
+.225(...............................................................................)A
+223 275 :M
+.222 .022( )J
+463 275 :M
+(9)S
+130 293 :M
+1.681 .168(Insert Lines)J
+192 293 :M
+.224(..........................................................................................)A
+190 293 :M
+.222 .022( )J
+463 293 :M
+(9)S
+130 311 :M
+1.356 .136(Delete Lines)J
+192 311 :M
+.224(........................................................................................)A
+191 311 :M
+.222 .022( )J
+458 311 :M
+-1.118(10)A
+130 329 :M
+2.072 .207(Replace Lines)J
+201 329 :M
+.224(.....................................................................................)A
+199 329 :M
+.222 .022( )J
+458 329 :M
+-1.118(10)A
+130 347 :M
+-.011(Substitute Strings)A
+216 347 :M
+.224(................................................................................)A
+215 347 :M
+.222 .022( )J
+458 347 :M
+-1.118(11)A
+108 365 :M
+2.234 .223(Using TEd..................................................................................................)J
+162 365 :M
+.222 .022( )J
+458 365 :M
+-1.118(13)A
+130 383 :M
+1.748 .175(Command Line Options)J
+249 383 :M
+.225(.....................................................................)A
+247 383 :M
+.222 .022( )J
+458 383 :M
+-1.118(13)A
+130 401 :M
+.349(Examples)A
+180 401 :M
+.224(............................................................................................)A
+178 401 :M
+.222 .022( )J
+458 401 :M
+-1.118(15)A
+108 419 :M
+1.202 .12(Implementation Notes and User Feedback)J
+315 419 :M
+.226(...............................................)A
+313 419 :M
+.222 .022( )J
+458 419 :M
+-1.118(16)A
+108 437 :M
+.984 .098(Interactive Command Input Script Example)J
+321 437 :M
+.227(.............................................)A
+320 437 :M
+.222 .022( )J
+458 437 :M
+-1.118(17)A
+endp
+%%Trailer
+end		% md
+%%EOF

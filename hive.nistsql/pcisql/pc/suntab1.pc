@@ -1,0 +1,182 @@
+/*  EMBEDDED C (file "SUNTAB1.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SUNTAB1.PC                                                   */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*   This routine initializes the contents of tables:            */
+/*        STAFF_C, PROJ_M, and STAFF_M                           */
+/*   This routine may be run at any time to re-initialize tables.*/
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long cnt1;
+long cnt2;
+long cnt3;
+long cnt4;
+long cnt5;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+strcpy(uid,"SUN");
+AUTHID(uid);
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, suntab1.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* SET NULL  foreign key values for tables which  */
+/* reference each other or are self-referencing:  */
+
+EXEC SQL UPDATE STAFF_M
+         SET PRI_WK = NULL;
+EXEC SQL UPDATE PROJ_M
+         SET MGR = NULL;
+EXEC SQL DELETE FROM PROJ_M;
+EXEC SQL DELETE FROM STAFF_M;
+
+EXEC SQL UPDATE STAFF_C
+         SET MGR = NULL;
+EXEC SQL DELETE FROM STAFF_C;
+
+EXEC SQL INSERT INTO STAFF_M
+         VALUES('E1','Alice',12,'Deale',NULL);
+EXEC SQL INSERT INTO STAFF_M
+         VALUES('E2','Betty',10,'Vienna',NULL);
+EXEC SQL INSERT INTO STAFF_M
+         VALUES('E3','Carmen',13,'Vienna',NULL);
+EXEC SQL INSERT INTO STAFF_M
+         VALUES('E5','Don',12,'Deale',NULL);
+EXEC SQL INSERT INTO STAFF_M
+         VALUES('E4','Don',12,'Deale',NULL);
+
+EXEC SQL INSERT INTO PROJ_M
+         VALUES('P1','MXSS','Design',10000,'Deale',NULL);
+EXEC SQL INSERT INTO PROJ_M
+         VALUES('P2','CALM','Code',30000,'Vienna',NULL);
+EXEC SQL INSERT INTO PROJ_M
+         VALUES('P4','SDP','Design',20000,'Deale',NULL);
+EXEC SQL INSERT INTO PROJ_M
+         VALUES('P3','SDP','Test',30000,'Tample',NULL);
+EXEC SQL INSERT INTO PROJ_M
+         VALUES('P5','IRM','Test',10000,'Vienna',NULL);
+EXEC SQL INSERT INTO PROJ_M
+         VALUES('P6','PAYR','Design',50000,'Deale',NULL);
+
+EXEC SQL UPDATE STAFF_M
+         SET PRI_WK = 'P1'
+         WHERE EMPNUM = 'E1';
+EXEC SQL UPDATE STAFF_M
+         SET PRI_WK = 'P1'
+         WHERE EMPNUM = 'E2';
+EXEC SQL UPDATE STAFF_M
+         SET PRI_WK = 'P1'
+         WHERE EMPNUM = 'E3';
+EXEC SQL UPDATE STAFF_M
+         SET PRI_WK = 'P2'
+         WHERE EMPNUM = 'E4';
+EXEC SQL UPDATE STAFF_M
+         SET PRI_WK = 'P4'
+         WHERE EMPNUM = 'E5';
+
+EXEC SQL UPDATE PROJ_M
+         SET MGR = 'E2'
+         WHERE PNUM = 'P1';
+EXEC SQL UPDATE PROJ_M
+         SET MGR = 'E2'
+         WHERE PNUM = 'P2';
+EXEC SQL UPDATE PROJ_M
+         SET MGR = 'E3'
+         WHERE PNUM = 'P3';
+EXEC SQL UPDATE PROJ_M
+         SET MGR = 'E4'
+         WHERE PNUM = 'P4';
+EXEC SQL UPDATE PROJ_M
+         SET MGR = 'E4'
+         WHERE PNUM = 'P5';
+
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E1','Alice',12,'Deale',NULL);
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E2','Betty',10,'Vienna','E1');
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E3','Carmen',13,'Vienna','E2');
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E4','Don',12,'Deale','E2');
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E5','Don',12,'Deale','E1');
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E6','Tom',14,'Gettysburg','E5');
+EXEC SQL INSERT INTO STAFF_C
+         VALUES('E7','Kingdom',18,'Gettysburg','E7');
+
+
+cnt1 = 0;
+cnt2 = 0;
+cnt3 = 0;
+cnt4 = 0;
+cnt5 = 0;
+
+EXEC SQL SELECT COUNT(*) INTO :cnt1
+         FROM STAFF_M;
+
+EXEC SQL SELECT COUNT(*) INTO :cnt4
+         FROM STAFF_M
+         WHERE PRI_WK IS NOT NULL;
+
+EXEC SQL SELECT COUNT(*) INTO :cnt2
+         FROM PROJ_M;
+
+EXEC SQL SELECT COUNT(*) INTO :cnt5
+         FROM PROJ_M 
+         WHERE MGR IS NULL;
+
+EXEC SQL SELECT COUNT(*) INTO :cnt3
+         FROM STAFF_C;
+
+
+if (cnt1 == 5 && cnt2 == 6 && cnt3 == 7 && cnt4 == 5 && cnt5 == 1)
+  {
+  printf("PROJ_M, STAFF_M, STAFF_C were created successfully!\n");
+  }
+else
+  {
+    printf("*******************************************\n");
+    printf("*  PROJ_M, STAFF_M or STAFF_C ERROR !!!   *\n");
+    printf("*******************************************\n");
+  }
+
+EXEC SQL COMMIT WORK;
+
+exit(errcnt);
+
+}
+

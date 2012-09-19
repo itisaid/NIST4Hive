@@ -1,0 +1,178 @@
+/*  EMBEDDED C (file "DML017.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML017.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE WHENEVER CONDITIONS.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*       SECTION Annexes B. <embedded exception declaration>     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char EMPNO1[4];
+  char SNUM[4];
+  long ind1;
+  long HOURS1;
+  long i;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml017.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+ind1=0;
+
+/******************** BEGIN TEST0067 ********************/
+
+EXEC SQL WHENEVER NOT FOUND GOTO P100;
+
+/* Do legit select that won't find anything */ 
+
+printf("\n                   TEST0067          \n");
+printf("         <embedded exception declaration> \n");
+printf("Reference: ANSI X3.135-1989 Annexes B. General Rules\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+  EXEC SQL DECLARE X CURSOR
+    FOR SELECT EMPNUM,HOURS
+        FROM   WORKS
+        WHERE  PNUM='P2'
+        ORDER  BY EMPNUM DESC;
+  EXEC SQL OPEN X;
+  
+  for (i=0;i<20;i++)
+  {
+  EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+  printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+  }
+
+ind1= -1;
+printf("\n\n***  should never get here: whenever notfound failed" ); 
+printf("\n***  SQLCODE should be 100, it was %ld", SQLCODE);
+
+
+P100:
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+  EXEC SQL CLOSE X;
+  EXEC SQL SELECT EMPNUM INTO :SNUM FROM STAFF WHERE EMPNUM='E8';
+ 
+printf("    SQLCODE should be 100: SQLCODE = %ld\n",SQLCODE);
+if (SQLCODE != 100)
+    printf("       SQLCODE is wrong !!!\n\n");
+if (ind1==0 )
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0067','pass','PC');
+}
+else
+{
+  printf("\n\n   dml017.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0067','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0067 ********************/
+
+
+/******************** BEGIN TEST0068 ********************/
+
+EXEC SQL WHENEVER SQLERROR GO TO P110;
+
+printf("\n\n                  TEST0068          \n");
+printf("         <embedded exception declaration> \n");
+printf("Reference: ANSI X3.135-1989 Annexes B. General Rules\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+ind1=0;
+
+/* select more than one row. that should get an error */
+
+EXEC SQL SELECT EMPNUM
+       INTO   :EMPNO1
+       FROM   WORKS
+       WHERE  PNUM='P2';
+
+ind1= -1;
+printf( "\n\n***  should never get here: whenever SQLERROR failed");
+printf( "\n***  SQLCODE should be <0, it was %ld", SQLCODE);
+
+P110: 
+  /* open a cursor twice.  that should get an error */
+       EXEC SQL WHENEVER SQLERROR CONTINUE;
+       EXEC SQL DECLARE XX CURSOR FOR SELECT * FROM PROJ;
+       EXEC SQL OPEN XX;
+       EXEC SQL OPEN XX;
+     printf("SQLCODE should < 0, SQLCODE = %ld \n",SQLCODE);
+
+if (SQLCODE >= 0)
+    printf("     SQLCODE is wrong  !!!\n\n");
+
+if (ind1==0 )
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0068','pass','PC');
+}
+else
+{
+  printf("\n\n   dml017.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0068','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0068 ********************/
+
+exit(errcnt);
+}

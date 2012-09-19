@@ -1,0 +1,417 @@
+/*  EMBEDDED C (file "YTS809.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS809.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  This routine tests TIME ZONE in <time zone specifier> in     */
+/*                     <datetime value expression>               */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    6.14 GR4b <datetime value expression>                      */
+/*    F#41      Time zone specification                          */
+/*    F#5       DATETIME datatypes                               */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*  24/10/95 References to TIME and TIMESTAMP corrected          */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-04-01                                    */
+/*    Added rollback after authid                                */
+/*    Fixed schema references                                    */
+/*    Fixed syntax errors                                        */
+/*    Replaced broken time zone calculations                     */
+/*    Replaced bogus comparisons                                 */
+/*    Removed EXEC SQL from printfs                              */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+short co;
+short co2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+short total;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts809.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7566 ********************/
+flag = 1;
+
+     printf("                  TEST7566 \n");
+     printf("   TIME ZONE in <datetime value expression>\n");
+     printf("References:\n");
+     printf("    6.14 GR4b <datetime value expression>\n");
+     printf("    F#41      Time zone specification\n");
+     printf("    F#5       DATETIME data types\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* initialise host variables *.
+co = 99;
+co2 = 99;
+
+/* initialise line counting variable */
+total = 0;
+
+/* execute select including time zone specification */
+
+printf("SELECT COUNT (*) INTO :co\n");
+printf("         FROM CTS1.TTIME3\n");
+printf("         WHERE TT2 AT TIME ZONE\n");
+printf("            ((SELECT TT2 FROM TTIME3\n");
+printf("               WHERE PK = 1)\n");
+printf("               -\n");
+printf("               (SELECT TT2 FROM TTIME3\n");
+printf("               WHERE PK = 3))\n");
+printf("            HOUR TO MINUTE\n");
+printf("         < TIME '02:00:00+10:00';\n");
+EXEC SQL SELECT COUNT (*) INTO :co
+         FROM CTS1.TTIME3
+         WHERE TT2 AT TIME ZONE
+            ((SELECT TT2 FROM TTIME3
+               WHERE PK = 1)
+               -
+               (SELECT TT2 FROM TTIME3
+               WHERE PK = 3))
+            HOUR TO MINUTE
+         < TIME '02:00:00+10:00';
+
+/* Time zone is 12:15:00-11:45 - 23:19:00+10:32 */
+/*              00:00:00+00:00 - 12:47:00+00:00 */
+/* = INTERVAL -'12:47' HOUR TO MINUTE */
+
+/* 02:00:00+10:00 = 16:00:00+00:00 */
+
+CHCKOK ();
+printf("\n");
+
+/* execute select with equivalent time zone specification */
+
+printf("SELECT COUNT (*) INTO :co2\n");
+printf("FROM CTS1.TTIME3\n");
+printf("WHERE TIME '16:00:00+00:00'\n");
+printf("<= TT2 AT TIME ZONE (\n");
+printf("            ((SELECT TT2 FROM TTIME3\n");
+printf("               WHERE PK = 2)\n");
+printf("               -\n");
+printf("               (SELECT TT2 FROM TTIME3\n");
+printf("               WHERE PK = 5))\n");
+printf("            HOUR TO MINUTE\n");
+printf("          - INTERVAL '08:02' HOUR TO MINUTE);\n");
+EXEC SQL SELECT COUNT (*) INTO :co2
+FROM CTS1.TTIME3
+WHERE TIME '16:00:00+00:00'
+<= TT2 AT TIME ZONE (
+            ((SELECT TT2 FROM TTIME3
+               WHERE PK = 2)
+               -
+               (SELECT TT2 FROM TTIME3
+               WHERE PK = 5))
+            HOUR TO MINUTE
+          - INTERVAL '08:02' HOUR TO MINUTE);
+CHCKOK ();
+printf("\n");
+
+/* Time zone is 00:07:00+08:39 - 08:28:00-11:45 */
+/*              15:28:00+00:00 - 20:13:00+00:00 */
+/* (928 min. - 1213 min.) */
+/* = INTERVAL -'4:45' HOUR TO MINUTE (-285 min.) */
+
+/* - INTERVAL '08:02' HOUR TO MINUTE (482 min.) */
+/* = INTERVAL -'12:47' HOUR TO MINUTE (-767 min.) */
+
+total = co + co2;
+printf ("co + co2 should be 6; total is %d\n\n", total);
+if (total != 6)
+   flag = 0;
+
+/* select count time stamp at time zone < timestamp literal */
+
+total = 0;
+co = 99;
+co2 = 99;
+
+/* Time zone is 00:00 */
+
+printf("SELECT COUNT (*) INTO :co\n");
+printf("FROM CTS1.TTIME3\n");
+printf("WHERE TS2 AT TIME ZONE\n");
+printf("             ((SELECT TS2 FROM TTIME3\n");
+printf("               WHERE PK = 5)\n");
+printf("               -\n");
+printf("               (SELECT TS2 FROM TTIME3\n");
+printf("               WHERE PK = 6))\n");
+printf("           HOUR TO MINUTE\n");
+printf("     < TIMESTAMP '1995-02-10 23:48:00+10:06';\n");
+EXEC SQL SELECT COUNT (*) INTO :co
+FROM CTS1.TTIME3
+WHERE TS2 AT TIME ZONE
+             ((SELECT TS2 FROM TTIME3
+               WHERE PK = 5)
+               -
+               (SELECT TS2 FROM TTIME3
+               WHERE PK = 6))
+           HOUR TO MINUTE
+     < TIMESTAMP '1995-02-10 23:48:00+10:06';
+
+CHCKOK ();
+printf("\n");
+
+/* 1995-02-10 23:48:00+10:06 = 1995-02-10 13:42:00 */
+/* = 1995-02-10 03:12:00-10:30 */
+
+printf("SELECT COUNT (*) INTO :co2\n");
+printf("FROM CTS1.TTIME3\n");
+printf("WHERE TS2 AT TIME ZONE (\n");
+printf("             ((SELECT TS2 FROM TTIME3\n");
+printf("               WHERE PK = 1)\n");
+printf("               -\n");
+printf("               (SELECT TS2 FROM TTIME3\n");
+printf("               WHERE PK = 6))\n");
+printf("           HOUR TO MINUTE\n");
+printf("           + INTERVAL -'4500:15' HOUR TO MINUTE)\n");
+printf("     >= TIMESTAMP '1995-02-10 03:12:00-10:30';\n");
+EXEC SQL SELECT COUNT (*) INTO :co2
+FROM CTS1.TTIME3
+WHERE TS2 AT TIME ZONE (
+             ((SELECT TS2 FROM TTIME3
+               WHERE PK = 1)
+               -
+               (SELECT TS2 FROM TTIME3
+               WHERE PK = 6))
+           HOUR TO MINUTE
+           + INTERVAL -'4500:15' HOUR TO MINUTE)
+     >= TIMESTAMP '1995-02-10 03:12:00-10:30';
+
+/* TIMESTAMP '1995-07-07 08:15:00+03:05' - */
+/* TIMESTAMP '1994-12-31 20:00:00+04:05' */
+
+/* = TIMESTAMP '1995-07-07 05:10:00+00:00' - */
+/* TIMESTAMP '1994-12-31 15:55:00+00:00' */
+
+/* = 805090200 - 788889300 = 16200900 sec. */
+/* / 60 = 270015 min. */
+/* = INTERVAL '4500:15' HOUR TO MINUTE */
+
+CHCKOK ();
+printf("\n");
+
+total = co + co2;
+printf ("co + co2 should be 6; total is %d\n\n", total);
+if (total != 6)
+   flag = 0;
+
+/* declare cursor including time zone interval value expression */
+
+/*reinitialise error reporting variables */
+
+/* reinitialise host variables */
+
+co = 99;
+
+/* attempt to delcare cursor with time zone out of range */
+printf("DECLARE data809 CURSOR FOR\n");
+printf("SELECT COUNT(*) FROM TTIME3\n");
+printf("WHERE TT2 AT TIME ZONE\n");
+printf("        ((SELECT TS2 FROM TTIME3\n");
+printf("          WHERE PK = 1)\n");
+printf("          -\n");
+printf("         (SELECT TS2 FROM TTIME3\n");
+printf("          WHERE PK = 6))\n");
+printf("          HOUR TO MINUTE\n");
+printf("< TIME '02:00:00+10:00';\n\n");
+EXEC SQL DECLARE data809 CURSOR FOR
+SELECT COUNT(*) FROM TTIME3
+WHERE TT2 AT TIME ZONE
+        ((SELECT TS2 FROM TTIME3
+          WHERE PK = 1)
+          -
+         (SELECT TS2 FROM TTIME3
+          WHERE PK = 6))
+          HOUR TO MINUTE
+< TIME '02:00:00+10:00';
+
+printf("OPEN data809;\n");
+EXEC SQL OPEN data809;
+if (SQLCODE != 0)
+{
+  goto P100;
+}
+CHCKOK ();
+printf ("\n");
+
+printf("FETCH data809 into :co;\n");
+EXEC SQL FETCH data809 into :co;
+
+P100:
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 22009; its value is %s\n\n", SQLSTATE);
+if (strncmp(SQLSTATE,"22009",5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK; 
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts809.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7566','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts809.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7566','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7566 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,125 @@
+/*  EMBEDDED C (file "DML033.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/06/20 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML033.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE DIFFERENCE BETWEEN UPER-CASE       */
+/*  LETTERS AND LOER-CASE LETTERS.                              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                    SECTION 5.1 <character>                    */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char UPER[4];
+     char loer[4];
+     char UPER1[4];
+     char loer1[4];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long i;
+     long ii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml033.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0135 ********************/
+
+     printf("\n                   TEST0135             \n");
+     printf("reference X3.135-1989 section 5.1 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+strcpy(UPER,"0");
+strcpy(loer,"0");
+strcpy(UPER1,"0");
+strcpy(loer1,"0");
+     EXEC SQL INSERT INTO WORKS
+          VALUES('UPP','low',100);
+
+     EXEC SQL SELECT EMPNUM,PNUM
+              INTO :UPER, :loer
+              FROM WORKS
+              WHERE EMPNUM='UPP' AND PNUM='low';
+
+     i = SQLCODE;
+
+     printf(" sqlcode=%ld, UPER=%s, loer=%s \n",SQLCODE,UPER,loer);
+   
+     EXEC SQL SELECT EMPNUM,PNUM
+              INTO :UPER1, :loer1
+              FROM WORKS
+              WHERE EMPNUM='upp' OR PNUM='LOW';
+
+     ii = SQLCODE;
+
+     printf(" sqlcode=%ld, UPER1=%s,loer1=%s\n",SQLCODE,UPER1,loer1);
+   
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (i==0 && ii>0 && strncmp(UPER,"UPP",3)==0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0135','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0135','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml033.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0135 ********************/
+
+     exit(errcnt);
+
+}
+

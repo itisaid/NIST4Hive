@@ -1,0 +1,1328 @@
+/*  EMBEDDED C (file "DML115.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/4/8 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML115.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS features 13, 14, 15, and 16.         */
+/*  This is the dynamic version of DML114.PC.                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+char ch1[4];
+char ch2[21];
+char ch3[16];
+char ch4[4];
+     char dstmt[51];
+     char longst[241];
+short indic1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+long ctr1;
+long ctr2;
+long ctr3;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml115.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0636 ********************/
+flag = 1;
+
+     printf("                  TEST0636 \n");
+     printf("   Feature 13, grouped operations (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 13\n");
+     printf("     7.3  LR.2.a\n");
+     printf("     7.4  LR.2.a\n");
+     printf("     7.9  LR.2.c\n");
+     printf("     7.11 LR.2.a\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW WORKWEEK AS'              ||
+       '  SELECT EMPNUM, HOURS FROM HU.WORKS' ||
+       '  GROUP BY HOURS, EMPNUM'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Removal of leveling rule 2a of Subclause 7.3 */
+/* Removal of leveling rule 2c of Subclause 7.9 */
+/* Removal of leveling rule 2b of Subclause 13.5 */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM, SUM (HOURS) FROM WORKWEEK'        ||
+       '  WHERE HOURS > 20 GROUP BY EMPNUM' ||
+       '  HAVING EMPNUM = ''E1'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11511 FROM :longst;\n");
+EXEC SQL PREPARE S11511 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11511 CURSOR FOR S11511;\n");
+EXEC SQL DECLARE C11511 CURSOR FOR S11511;
+printf("\n");
+
+printf("OPEN C11511;\n");
+EXEC SQL OPEN C11511;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xyz");
+printf("FETCH C11511 INTO :ch1, :int1;\n");
+EXEC SQL FETCH C11511 INTO :ch1, :int1;
+CHCKOK ();
+printf("ch1 should be 'E1 '; its value is '%s'\n", ch1);
+printf("int1 should be 120; its value is %ld\n\n", int1);
+if (strcmp (ch1, "E1 ") != 0 || int1 != 120)
+  flag = 0;
+
+printf("CLOSE C11511;\n");
+EXEC SQL CLOSE C11511;
+CHCKOK ();
+printf("\n");
+
+/* This is more meaningful -- how many people work too hard? */
+
+printf("dstmt=\"SELECT COUNT(*) FROM WORKWEEK WHERE HOURS > 40\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM WORKWEEK WHERE HOURS > 40    ");
+
+printf("PREPARE S11512 FROM :dstmt;\n");
+EXEC SQL PREPARE S11512 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11512 CURSOR FOR S11512;\n");
+EXEC SQL DECLARE C11512 CURSOR FOR S11512;
+printf("\n");
+
+printf("OPEN C11512;\n");
+EXEC SQL OPEN C11512;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11512 INTO :int1;\n");
+EXEC SQL FETCH C11512 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+printf("CLOSE C11512;\n");
+EXEC SQL CLOSE C11512;
+CHCKOK ();
+printf("\n");
+
+/* Removal of leveling rule 2a of Subclause 7.4 */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNAME FROM HU.STAFF, WORKWEEK'    ||
+       '  WHERE HU.STAFF.EMPNUM = WORKWEEK.EMPNUM' ||
+       '  AND HOURS = 12'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11513 FROM :longst;\n");
+EXEC SQL PREPARE S11513 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11513 CURSOR FOR S11513;\n");
+EXEC SQL DECLARE C11513 CURSOR FOR S11513;
+printf("\n");
+
+printf("OPEN C11513;\n");
+EXEC SQL OPEN C11513;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch2, "aaaaaaaaaaaaaaaaaaaa");
+printf("FETCH C11513 INTO :ch2;\n");
+EXEC SQL FETCH C11513 INTO :ch2;
+CHCKOK ();
+ch2[20] = '\0';
+printf("ch2 should be Alice; its value is %s\n\n", ch2);
+if (strncmp (ch2, "Alice", 5) != 0)
+  flag = 0;
+
+printf("CLOSE C11513;\n");
+EXEC SQL CLOSE C11513;
+CHCKOK ();
+printf("\n");
+
+/* Removal of leveling rule 2c of Subclause 7.9 */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*), MAX(EMPNUM), MIN(EMPNUM), AVG(HOURS)' ||
+       ' FROM WORKWEEK'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11514 FROM :longst;\n");
+EXEC SQL PREPARE S11514 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11514 CURSOR FOR S11514;\n");
+EXEC SQL DECLARE C11514 CURSOR FOR S11514;
+printf("\n");
+
+printf("OPEN C11514;\n");
+EXEC SQL OPEN C11514;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+strcpy (ch1, "xxx");
+strcpy (ch4, "xxx");
+printf("FETCH C11514 INTO :int1, :ch1, :ch4, :int2;\n");
+EXEC SQL FETCH C11514 INTO :int1, :ch1, :ch4, :int2;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n", int1);
+printf ("ch1 should be 'E4 '; its value is '%s'\n", ch1);
+printf ("ch4 should be 'E1 '; its value is '%s'\n", ch4);
+printf ("int2 should be 43; its value is %ld\n\n", int2);
+if (int1 != 10 || strcmp (ch1, "E4 ") != 0)
+  flag = 0;
+if (strcmp (ch4, "E1 ") != 0 || int2 != 43)
+  flag = 0;
+
+printf("CLOSE C11514;\n");
+EXEC SQL CLOSE C11514;
+CHCKOK ();
+printf("\n");
+
+/* Removal of leveling rule 2a of Subclause 7.11 */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNAME FROM HU.STAFF WHERE EMPNUM =' ||
+       '  (SELECT EMPNUM FROM WORKWEEK'              ||
+       '   WHERE HOURS = 12)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11515 FROM :longst;\n");
+EXEC SQL PREPARE S11515 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11515 CURSOR FOR S11515;\n");
+EXEC SQL DECLARE C11515 CURSOR FOR S11515;
+printf("\n");
+
+printf("OPEN C11515;\n");
+EXEC SQL OPEN C11515;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch2, "aaaaaaaaaaaaaaaaaaaa");
+printf("FETCH C11515 INTO :ch2;\n");
+EXEC SQL FETCH C11515 INTO :ch2;
+CHCKOK ();
+ch2[20] = '\0';
+printf("ch2 should be Alice; its value is %s\n\n", ch2);
+if (strncmp (ch2, "Alice", 5) != 0)
+  flag = 0;
+
+printf("CLOSE C11515;\n");
+EXEC SQL CLOSE C11515;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNAME FROM HU.STAFF WHERE EMPNUM =' ||
+       '  (SELECT EMPNUM FROM HU.WORKS'              ||
+       '   GROUP BY EMPNUM, HOURS'                   ||
+       '   HAVING HOURS = 12)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11516 FROM :longst;\n");
+EXEC SQL PREPARE S11516 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11516 CURSOR FOR S11516;\n");
+EXEC SQL DECLARE C11516 CURSOR FOR S11516;
+printf("\n");
+
+printf("OPEN C11516;\n");
+EXEC SQL OPEN C11516;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch2, "aaaaaaaaaaaaaaaaaaaa");
+printf("FETCH C11516 INTO :ch2;\n");
+EXEC SQL FETCH C11516 INTO :ch2;
+CHCKOK ();
+ch2[20] = '\0';
+printf("ch2 should be Alice; its value is %s\n\n", ch2);
+if (strncmp (ch2, "Alice", 5) != 0)
+  flag = 0;
+
+printf("CLOSE C11516;\n");
+EXEC SQL CLOSE C11516;
+CHCKOK ();
+printf("\n");
+
+/* Generic test case */
+
+ctr1 = 3;
+ctr2 = 1;
+ctr3 = 4;
+
+printf ("The following cursor scan should return 3 three times\n");
+printf ("and 1 once, then we should get NO DATA (02000).\n\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM WORKWEEK GROUP BY HOURS\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM WORKWEEK GROUP BY HOURS      ");
+
+printf("PREPARE S11517 FROM :dstmt;\n");
+EXEC SQL PREPARE S11517 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11517 CURSOR FOR S11517;\n");
+EXEC SQL DECLARE C11517 CURSOR FOR S11517;
+printf("\n");
+
+printf("OPEN C11517;\n");
+EXEC SQL OPEN C11517;
+CHCKOK ();
+printf("\n");
+
+P100:
+int1 = -1;
+printf("FETCH C11517 INTO :int1;\n");
+EXEC SQL FETCH C11517 INTO :int1;
+printf ("SQLCODE is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE is %s\n", SQLSTATE);
+if (SQLCODE != 0)
+  goto P101;
+printf ("int1 is %ld\n\n", int1);
+ctr3 = ctr3 - 1;
+if (int1 == 1)
+  ctr2 = ctr2 - 1;
+if (int1 == 3)
+  ctr1 = ctr1 - 1;
+goto P100;
+
+P101:
+if (ctr1 != 0 || ctr2 != 0 || ctr3 != 0)
+  flag = 0;
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Let the commit close the cursor */
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP VIEW WORKWEEK CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP VIEW WORKWEEK CASCADE                        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0636','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml115.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0636','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0636 *********************/
+/******************** BEGIN TEST0638 ********************/
+flag = 1;
+
+     printf("                  TEST0638 \n");
+     printf("Feature 14, Qualified * in select list (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 14\n");
+     printf("     7.9  LR.2.b\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW QUALSTAR AS'                            ||
+       '  SELECT HU.STAFF.*, HOURS FROM HU.STAFF, HU.WORKS' ||
+       '  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW CORRQUALSTAR AS'                         ||
+       '  SELECT BLAH.*, HOURS FROM HU.STAFF BLAH, HU.WORKS' ||
+       '  WHERE BLAH.EMPNUM = HU.WORKS.EMPNUM'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW SUBQ2 AS' ||
+       '  SELECT DISTINCT * FROM QUALSTAR'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW CORRSUBQ2 AS' ||
+       '  SELECT DISTINCT * FROM CORRQUALSTAR'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM QUALSTAR\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM QUALSTAR                     ");
+
+printf("PREPARE S11521 FROM :dstmt;\n");
+EXEC SQL PREPARE S11521 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11521 CURSOR FOR S11521;\n");
+EXEC SQL DECLARE C11521 CURSOR FOR S11521;
+printf("\n");
+
+printf("OPEN C11521;\n");
+EXEC SQL OPEN C11521;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11521 INTO :int1;\n");
+EXEC SQL FETCH C11521 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+printf("CLOSE C11521;\n");
+EXEC SQL CLOSE C11521;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM SUBQ2\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM SUBQ2                        ");
+
+printf("PREPARE S11522 FROM :dstmt;\n");
+EXEC SQL PREPARE S11522 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11522 CURSOR FOR S11522;\n");
+EXEC SQL DECLARE C11522 CURSOR FOR S11522;
+printf("\n");
+
+printf("OPEN C11522;\n");
+EXEC SQL OPEN C11522;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11522 INTO :int1;\n");
+EXEC SQL FETCH C11522 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+printf("CLOSE C11522;\n");
+EXEC SQL CLOSE C11522;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM, GRADE, CITY, HOURS' ||
+       '  FROM QUALSTAR WHERE EMPNAME = ''Carmen'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11523 FROM :longst;\n");
+EXEC SQL PREPARE S11523 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11523 CURSOR FOR S11523;\n");
+EXEC SQL DECLARE C11523 CURSOR FOR S11523;
+printf("\n");
+
+printf("OPEN C11523;\n");
+EXEC SQL OPEN C11523;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("FETCH C11523 INTO :ch1, :int1, :ch3, :int2;\n");
+EXEC SQL FETCH C11523 INTO :ch1, :int1, :ch3, :int2;
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+printf("CLOSE C11523;\n");
+EXEC SQL CLOSE C11523;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT HU.STAFF.*, HOURS FROM HU.STAFF, HU.WORKS' ||
+       '  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM'        ||
+       '  AND EMPNAME > ''Betty'' ORDER BY EMPNAME'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE SJOANS FROM :longst;\n");
+EXEC SQL PREPARE SJOANS FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE CJOANS CURSOR FOR SJOANS;\n\n");
+EXEC SQL DECLARE CJOANS CURSOR FOR SJOANS;
+
+printf("OPEN CJOANS;\n");
+EXEC SQL OPEN CJOANS;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xxx");
+strcpy (ch2, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("FETCH CJOANS INTO :ch1, :ch2, :int1, :ch3, :int2;\n");
+EXEC SQL FETCH CJOANS INTO :ch1, :ch2, :int1, :ch3, :int2;
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("ch2 should be 'Carmen              '; its value is '%s'\n", ch2);
+if (strcmp (ch2, "Carmen              ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+printf("CLOSE CJOANS;\n");
+EXEC SQL CLOSE CJOANS;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM CORRQUALSTAR\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM CORRQUALSTAR                 ");
+
+printf("PREPARE S11524 FROM :dstmt;\n");
+EXEC SQL PREPARE S11524 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11524 CURSOR FOR S11524;\n");
+EXEC SQL DECLARE C11524 CURSOR FOR S11524;
+printf("\n");
+
+printf("OPEN C11524;\n");
+EXEC SQL OPEN C11524;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11524 INTO :int1;\n");
+EXEC SQL FETCH C11524 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+printf("CLOSE C11524;\n");
+EXEC SQL CLOSE C11524;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM CORRSUBQ2\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM CORRSUBQ2                    ");
+
+printf("PREPARE S11525 FROM :dstmt;\n");
+EXEC SQL PREPARE S11525 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11525 CURSOR FOR S11525;\n");
+EXEC SQL DECLARE C11525 CURSOR FOR S11525;
+printf("\n");
+
+printf("OPEN C11525;\n");
+EXEC SQL OPEN C11525;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11525 INTO :int1;\n");
+EXEC SQL FETCH C11525 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+printf("CLOSE C11525;\n");
+EXEC SQL CLOSE C11525;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM, GRADE, CITY, HOURS' ||
+       '  FROM CORRQUALSTAR WHERE EMPNAME = ''Carmen'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11526 FROM :longst;\n");
+EXEC SQL PREPARE S11526 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11526 CURSOR FOR S11526;\n");
+EXEC SQL DECLARE C11526 CURSOR FOR S11526;
+printf("\n");
+
+printf("OPEN C11526;\n");
+EXEC SQL OPEN C11526;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("FETCH C11526 INTO :ch1, :int1, :ch3, :int2;\n");
+EXEC SQL FETCH C11526 INTO :ch1, :int1, :ch3, :int2;
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+printf("CLOSE C11526;\n");
+EXEC SQL CLOSE C11526;
+CHCKOK ();
+printf("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP VIEW QUALSTAR CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP VIEW QUALSTAR CASCADE                        ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP VIEW CORRQUALSTAR CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP VIEW CORRQUALSTAR CASCADE                    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0638','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml115.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0638','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0638 *********************/
+/******************** BEGIN TEST0640 ********************/
+flag = 1;
+
+     printf("                  TEST0640 \n");
+     printf("  Feature 15, Lowercase Identifiers (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 15\n");
+     printf("    5.2  LR.2.b\n");
+     printf("    5.2 SR.15 -- Lowercase keywords are Entry SQL\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'Create view Staff (Empnum, empname, Grade, City) as' ||
+       '  select empnum, EMPNAME, Grade, cItY from Hu.Staff'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("exec sql commit work;\n");
+exec sql commit work;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT Count(*) FROM STAFF\"\n");
+     strcpy (dstmt,
+     "SELECT Count(*) FROM STAFF                        ");
+
+printf("Prepare s11531 FROM :dstmt;\n");
+EXEC SQL Prepare s11531 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("Exec SQL Declare c11531 cursor for s11531;\n");
+Exec SQL Declare c11531 cursor for s11531;
+printf("\n");
+
+printf("OPEN C11531;\n");
+EXEC SQL OPEN C11531;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11531 INTO :int1;\n");
+EXEC SQL FETCH C11531 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+printf("CLOSE C11531;\n");
+EXEC SQL CLOSE C11531;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EMPNUM, GRADE, CITY' ||
+       '  FROM Flater.staff WHERE EMPNAME > ''Betty''' ||
+       '  ORDER BY EMPNUM'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11532 FROM :longst;\n");
+EXEC SQL PREPARE S11532 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE c11532 CURSOR FOR S11532;\n");
+EXEC SQL DECLARE c11532 CURSOR FOR S11532;
+printf("\n");
+
+printf("OPEN C11532;\n");
+EXEC SQL OPEN C11532;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+printf("FETCH C11532 INTO :ch1, :int1, :ch3;\n");
+EXEC SQL FETCH C11532 INTO :ch1, :int1, :ch3;
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+
+printf("CLOSE C11532;\n");
+EXEC SQL CLOSE C11532;
+CHCKOK ();
+printf("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP VIEW STAFF CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP VIEW STAFF CASCADE                           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0640','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml115.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0640','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0640 *********************/
+/******************** BEGIN TEST0642 ********************/
+flag = 1;
+
+     printf("                  TEST0642 \n");
+     printf("  Feature 16, PRIMARY KEY enhancement (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 16\n");
+     printf("    11.7  LR.2.a\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE FEAT16 ('     ||
+       '  EMPNUM INT PRIMARY KEY,' ||
+       '  PNUM   INT UNIQUE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO FEAT16 VALUES (?, ?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO FEAT16 VALUES (?, ?)                  ");
+
+printf("PREPARE S11541 FROM :dstmt;\n");
+EXEC SQL PREPARE S11541 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+int1 = 1;
+int2 = 10;
+printf ("int1 = %ld; int2 = %ld\n", int1, int2);
+printf("EXECUTE S11541 USING :int1, :int2;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+int1 = 2;
+int2 = 20;
+printf ("int1 = %ld; int2 = %ld\n", int1, int2);
+printf("EXECUTE S11541 USING :int1, :int2;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+int1 = 1;
+int2 = 30;
+printf ("int1 = %ld; int2 = %ld\n", int1, int2);
+printf("EXECUTE S11541 USING :int1, :int2;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+int1 = 3;
+int2 = 20;
+printf ("int1 = %ld; int2 = %ld\n", int1, int2);
+printf("EXECUTE S11541 USING :int1, :int2;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Multiple nulls are OK -- See 8.9 GR.2 */
+
+int1 = 3;
+indic1 = -1;
+printf ("int1 = %ld; indic1 = -1\n", int1, indic1);
+printf("EXECUTE S11541 USING :int1, :int2:indic1;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2:indic1;
+CHCKOK ();
+printf("\n");
+
+int1 = 4;
+indic1 = -1;
+printf ("int1 = %ld; indic1 = -1\n", int1, indic1);
+printf("EXECUTE S11541 USING :int1, :int2:indic1;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2:indic1;
+CHCKOK ();
+printf("\n");
+
+int1 = 5;
+indic1 = -1;
+printf ("int1 = %ld; indic1 = -1\n", int1, indic1);
+printf("EXECUTE S11541 USING :int1, :int2:indic1;\n");
+EXEC SQL EXECUTE S11541 USING :int1, :int2:indic1;
+CHCKOK ();
+printf("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE FEAT16 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE FEAT16 CASCADE                         ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0642','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml115.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0642','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0642 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

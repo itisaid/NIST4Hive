@@ -1,0 +1,339 @@
+/*  EMBEDDED C (file "YTS773.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS773.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  This routine tests Access to SQL_LANGUAGES view              */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    21.2.26    SQL_LANGUAGES view                              */ 
+/*    21.3.26    SQL_LANGUAGES base table                        */
+/*    F#35       Intermediate information schema                 */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-13                                    */
+/*    Added rollback after authid                                */
+/*    Removed EXEC SQL from inside printf                        */
+/*    Fixed bad schema ref                                       */
+/*    Fixed logic error                                          */
+/*    Removed problematic subtest                                */
+/*    Removed redundant subtest                                  */
+/*    More output                                                */
+/*    Integrated errata                                          */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+short co1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts773.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7555 ********************/
+flag = 1;
+
+     printf("                  TEST7555 \n");
+     printf("   Access to SQL_LANGUAGES view\n");
+     printf("References:\n");
+     printf("    21.2.26   SQL_LANGUAGES view\n");
+     printf("    21.3.26   SQL_LANGUAGES base tables\n");
+     printf("    F#35      Intermediate information schema\n");
+     printf("    TC #2 21.3.26 -- Typos in standard\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+SQLCODE = -1;
+strcpy (SQLSTATE, "xxxxx");
+
+/* check in all rows SQL_LANGUAGE_SOURCE is non null */
+
+co1 = 99;
+printf("SELECT COUNT (*) INTO :co1\n");
+printf("FROM INFORMATION_SCHEMA.SQL_LANGUAGES\n");
+printf("WHERE SQL_LANGUAGE_SOURCE IS NULL\n");
+EXEC SQL SELECT COUNT (*) INTO :co1
+FROM INFORMATION_SCHEMA.SQL_LANGUAGES
+WHERE SQL_LANGUAGE_SOURCE IS NULL;
+CHCKOK ();
+printf("co1 should be 0; its value is %d\n\n", co1);
+if (co1 != 0)
+   flag = 0;
+
+/* check row exists for current language and binding style */
+
+co1 = 0;
+printf("SELECT COUNT (*) INTO :co1\n");
+printf("FROM INFORMATION_SCHEMA.SQL_LANGUAGES\n");
+printf("WHERE SQL_LANGUAGE_BINDING_STYLE = 'EMBEDDED'\n");
+printf("AND SQL_LANGUAGE_PROGRAMMING_LANGUAGE = 'C';\n");
+EXEC SQL SELECT COUNT (*) INTO :co1
+FROM INFORMATION_SCHEMA.SQL_LANGUAGES
+WHERE SQL_LANGUAGE_BINDING_STYLE = 'EMBEDDED'
+AND SQL_LANGUAGE_PROGRAMMING_LANGUAGE = 'C';
+CHCKOK ();
+printf("co1 should NOT be 0; its value is %d\n\n", co1);
+if (co1 == 0)
+   flag = 0;
+
+/* check SQL_LANGUAGES_STANDARD_VALID_CHECK is satisfied */
+/* THIS WILL NEED TO BE MODIFIED TO ACCEPT SQL3 IMPLEMENTATIONS */
+
+co1 = 99;
+printf("SELECT COUNT (*) INTO :co1\n");
+printf("FROM INFORMATION_SCHEMA.SQL_LANGUAGES\n");
+printf("WHERE NOT\n");
+printf("(( SQL_LANGUAGE_SOURCE = 'ISO 9075' AND\n");
+printf("    SQL_LANGUAGE_YEAR IS NOT NULL AND\n");
+printf("    SQL_LANGUAGE_CONFORMANCE IS NOT NULL AND\n");
+printf("    SQL_LANGUAGE_IMPLEMENTATION IS NULL AND\n");
+printf("    ( ( SQL_LANGUAGE_YEAR = '1987' AND\n");
+printf("        SQL_LANGUAGE_CONFORMANCE IN ( '1', '2' ) AND\n");
+printf("        SQL_LANGUAGE_INTEGRITY IS NULL AND\n");
+printf("        ( (SQL_LANGUAGE_BINDING_STYLE = 'DIRECT' AND\n");
+printf("           SQL_LANGUAGE_PROGRAMMING_LANGUAGE IS NULL )\n");
+printf("          OR\n");
+printf("           (SQL_LANGUAGE_BINDING_STYLE IN \n");
+printf("           ( 'EMBEDDED', 'MODULE' ) AND\n");
+printf("           SQL_LANGUAGE_PROGRAMMING_LANGUAGE IN\n");
+printf("           ( 'COBOL', 'FORTRAN', 'PASCAL', 'PLI' ) ) ) )\n");
+printf("      OR\n");
+printf("      ( SQL_LANGUAGE_YEAR = '1989' AND\n");
+printf("        SQL_LANGUAGE_CONFORMANCE IN ( '1', '2' ) AND\n");
+printf("        SQL_LANGUAGE_INTEGRITY IN ('NO', 'YES') AND\n");
+printf("        ( ( SQL_LANGUAGE_BINDING_STYLE  = 'DIRECT' AND\n");
+printf("            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IS NULL )\n");
+printf("         OR\n");
+printf("          ( SQL_LANGUAGE_BINDING_STYLE  IN \n");
+printf("          ( 'EMBEDDED', 'MODULE' ) AND\n");
+printf("            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IN\n");
+printf("            ( 'COBOL', 'FORTRAN', 'PASCAL', 'PLI' ) ) ) )\n");
+printf("       OR\n");
+printf("      ( SQL_LANGUAGE_YEAR = '1992' AND\n");
+printf("        SQL_LANGUAGE_CONFORMANCE IN \n");
+printf("            ( 'ENTRY', 'INTERMEDIATE', 'FULL' ) AND\n");
+printf("        SQL_LANGUAGE_INTEGRITY IS NULL AND\n");
+printf("        ( ( SQL_LANGUAGE_BINDING_STYLE  = 'DIRECT' AND\n");
+printf("            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IS NULL )\n");
+printf("         OR\n");
+printf("          ( SQL_LANGUAGE_BINDING_STYLE  IN \n");
+printf("           ( 'EMBEDDED', 'MODULE' ) AND\n");
+printf("            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IN\n");
+printf("            ( 'ADA', 'C', 'COBOL', \n");
+printf("              'FORTRAN', 'MUMPS',  'PASCAL', 'PLI' ) ) ) ) ) )\n");
+printf("   OR\n");
+printf("   (SQL_LANGUAGE_SOURCE <> 'ISO 9075'));\n");
+EXEC SQL SELECT COUNT (*) INTO :co1
+FROM INFORMATION_SCHEMA.SQL_LANGUAGES
+WHERE NOT
+(( SQL_LANGUAGE_SOURCE = 'ISO 9075' AND
+    SQL_LANGUAGE_YEAR IS NOT NULL AND
+    SQL_LANGUAGE_CONFORMANCE IS NOT NULL AND
+    SQL_LANGUAGE_IMPLEMENTATION IS NULL AND
+    ( ( SQL_LANGUAGE_YEAR = '1987' AND
+        SQL_LANGUAGE_CONFORMANCE IN ( '1', '2' ) AND
+        SQL_LANGUAGE_INTEGRITY IS NULL AND
+        ( (SQL_LANGUAGE_BINDING_STYLE = 'DIRECT' AND
+           SQL_LANGUAGE_PROGRAMMING_LANGUAGE IS NULL )
+          OR
+           (SQL_LANGUAGE_BINDING_STYLE IN 
+           ( 'EMBEDDED', 'MODULE' ) AND
+           SQL_LANGUAGE_PROGRAMMING_LANGUAGE IN
+           ( 'COBOL', 'FORTRAN', 'PASCAL', 'PLI' ) ) ) )
+      OR
+      ( SQL_LANGUAGE_YEAR = '1989' AND
+        SQL_LANGUAGE_CONFORMANCE IN ( '1', '2' ) AND
+        SQL_LANGUAGE_INTEGRITY IN ('NO', 'YES') AND
+        ( ( SQL_LANGUAGE_BINDING_STYLE  = 'DIRECT' AND
+            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IS NULL )
+         OR
+          ( SQL_LANGUAGE_BINDING_STYLE  IN 
+          ( 'EMBEDDED', 'MODULE' ) AND
+            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IN
+            ( 'COBOL', 'FORTRAN', 'PASCAL', 'PLI' ) ) ) )
+       OR
+      ( SQL_LANGUAGE_YEAR = '1992' AND
+        SQL_LANGUAGE_CONFORMANCE IN 
+            ( 'ENTRY', 'INTERMEDIATE', 'FULL' ) AND
+        SQL_LANGUAGE_INTEGRITY IS NULL AND
+        ( ( SQL_LANGUAGE_BINDING_STYLE  = 'DIRECT' AND
+            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IS NULL )
+         OR
+          ( SQL_LANGUAGE_BINDING_STYLE  IN 
+           ( 'EMBEDDED', 'MODULE' ) AND
+            SQL_LANGUAGE_PROGRAMMING_LANGUAGE IN
+            ( 'ADA', 'C', 'COBOL', 
+              'FORTRAN', 'MUMPS',  'PASCAL', 'PLI' ) ) ) ) ) )
+   OR
+   (SQL_LANGUAGE_SOURCE <> 'ISO 9075'));
+
+CHCKOK ();
+printf("co1 should be 0; its value is %d\n\n", co1);
+if (co1 != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts773.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7555','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts773.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7555','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7555 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}
+

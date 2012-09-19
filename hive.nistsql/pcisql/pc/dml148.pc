@@ -1,0 +1,1341 @@
+/*  EMBEDDED C (file "DML148.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/2/6 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML148.PC                                                    */
+/*  WRITTEN BY:  Joan Sullivan (mostly)                          */
+/*  Embedded C by David Flater                                   */
+/*                                                               */
+/*  This routine tests the ordering of columns in joins.         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char en[4];
+char pn[4];
+char pn2[4];
+char ename[21];
+char pname[21];
+char pt[7];
+char ct[16];
+char tc[11];
+long hr;
+long gr;
+long bu;
+long int1;
+long int2;
+short indic1;
+short indic2;
+float flt1;
+float flt2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml148.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0843 ********************/
+flag = 1;
+
+     printf("                  TEST0843 \n");
+     printf("     Ordering of column names in joins\n");
+     printf("References:\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("    7.5 SR.6.f -- Ordering of columns\n");
+     printf("    7.5 SR.5 -- Ordering of columns\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("DECLARE C14811 CURSOR FOR\n");
+printf("  SELECT * FROM HU.WORKS NATURAL LEFT JOIN HU.PROJ\n");
+printf("  ORDER BY EMPNUM DESC, PNUM;\n\n");
+EXEC SQL DECLARE C14811 CURSOR FOR
+  SELECT * FROM HU.WORKS NATURAL LEFT JOIN HU.PROJ
+  ORDER BY EMPNUM DESC, PNUM;
+
+printf("OPEN C14811;\n");
+EXEC SQL OPEN C14811;
+CHCKOK ();
+printf("\n");
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+hr = -1;
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pt, "xxxxxx");
+bu = -1;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("FETCH C14811 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;\n");
+EXEC SQL FETCH C14811 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;
+CHCKOK ();
+printf ("pn should be P2; its value is %s\n", pn);
+printf ("en should be E4; its value is %s\n", en);
+printf ("hr should be 20; its value is %ld\n", hr);
+printf ("pname should be CALM; its value is %s\n", pname);
+printf ("pt should be Code; its value is %s\n", pt);
+printf ("bu should be 30000; its value is %ld\n", bu);
+printf ("ct should be Vienna; its value is %s\n\n", ct);
+if (strncmp (pn, "P2", 2) != 0 || strncmp (en, "E4", 2) != 0)
+  flag = 0;
+if (hr != 20 || strncmp (pname, "CALM", 4) != 0)
+  flag = 0;
+if (strncmp (pt, "Code", 4) != 0 || bu != 30000)
+  flag = 0;
+if (strncmp (ct, "Vienna", 6) != 0)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+hr = -1;
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pt, "xxxxxx");
+bu = -1;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("FETCH C14811 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;\n");
+EXEC SQL FETCH C14811 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;
+CHCKOK ();
+printf ("pn should be P4; its value is %s\n", pn);
+printf ("en should be E4; its value is %s\n", en);
+printf ("hr should be 40; its value is %ld\n", hr);
+printf ("pname should be SDP; its value is %s\n", pname);
+printf ("pt should be Design; its value is %s\n", pt);
+printf ("bu should be 20000; its value is %ld\n", bu);
+printf ("ct should be Deale; its value is %s\n\n", ct);
+if (strncmp (pn, "P4", 2) != 0 || strncmp (en, "E4", 2) != 0)
+  flag = 0;
+if (hr != 40 || strncmp (pname, "SDP", 3) != 0)
+  flag = 0;
+if (strncmp (pt, "Design", 6) != 0 || bu != 20000)
+  flag = 0;
+if (strncmp (ct, "Deale", 5) != 0)
+  flag = 0;
+
+printf("CLOSE C14811;\n");
+EXEC SQL CLOSE C14811;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14812 CURSOR FOR\n");
+printf("  SELECT * FROM HU.WORKS JOIN HU.PROJ USING (PNUM)\n");
+printf("  ORDER BY EMPNUM DESC, PNUM;\n\n");
+EXEC SQL DECLARE C14812 CURSOR FOR
+  SELECT * FROM HU.WORKS JOIN HU.PROJ USING (PNUM)
+  ORDER BY EMPNUM DESC, PNUM;
+
+printf("OPEN C14812;\n");
+EXEC SQL OPEN C14812;
+CHCKOK ();
+printf("\n");
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+hr = -1;
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pt, "xxxxxx");
+bu = -1;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("FETCH C14812 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;\n");
+EXEC SQL FETCH C14812 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;
+CHCKOK ();
+printf ("pn should be P2; its value is %s\n", pn);
+printf ("en should be E4; its value is %s\n", en);
+printf ("hr should be 20; its value is %ld\n", hr);
+printf ("pname should be CALM; its value is %s\n", pname);
+printf ("pt should be Code; its value is %s\n", pt);
+printf ("bu should be 30000; its value is %ld\n", bu);
+printf ("ct should be Vienna; its value is %s\n\n", ct);
+if (strncmp (pn, "P2", 2) != 0 || strncmp (en, "E4", 2) != 0)
+  flag = 0;
+if (hr != 20 || strncmp (pname, "CALM", 4) != 0)
+  flag = 0;
+if (strncmp (pt, "Code", 4) != 0 || bu != 30000)
+  flag = 0;
+if (strncmp (ct, "Vienna", 6) != 0)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+hr = -1;
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pt, "xxxxxx");
+bu = -1;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("FETCH C14812 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;\n");
+EXEC SQL FETCH C14812 INTO :pn, :en, :hr, :pname, :pt, :bu, :ct;
+CHCKOK ();
+printf ("pn should be P4; its value is %s\n", pn);
+printf ("en should be E4; its value is %s\n", en);
+printf ("hr should be 40; its value is %ld\n", hr);
+printf ("pname should be SDP; its value is %s\n", pname);
+printf ("pt should be Design; its value is %s\n", pt);
+printf ("bu should be 20000; its value is %ld\n", bu);
+printf ("ct should be Deale; its value is %s\n\n", ct);
+if (strncmp (pn, "P4", 2) != 0 || strncmp (en, "E4", 2) != 0)
+  flag = 0;
+if (hr != 40 || strncmp (pname, "SDP", 3) != 0)
+  flag = 0;
+if (strncmp (pt, "Design", 6) != 0 || bu != 20000)
+  flag = 0;
+if (strncmp (ct, "Deale", 5) != 0)
+  flag = 0;
+
+printf("CLOSE C14812;\n");
+EXEC SQL CLOSE C14812;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14813 CURSOR FOR\n");
+printf("  SELECT * FROM HU.WORKS RIGHT JOIN HU.PROJ\n");
+printf("  ON HU.WORKS.PNUM = HU.PROJ.PNUM\n");
+printf("  ORDER BY 1 DESC, 2;\n\n");
+EXEC SQL DECLARE C14813 CURSOR FOR
+  SELECT * FROM HU.WORKS RIGHT JOIN HU.PROJ
+  ON HU.WORKS.PNUM = HU.PROJ.PNUM
+  ORDER BY 1 DESC, 2;
+
+printf("OPEN C14813;\n");
+EXEC SQL OPEN C14813;
+
+strcpy (pn, "xxx");
+strcpy (pn2, "xxx");
+strcpy (en, "xxx");
+hr = -1;
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pt, "xxxxxx");
+bu = -1;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("FETCH C14813 INTO :en, :pn, :hr, :pn2, :pname, :pt, :bu, :ct;\n");
+EXEC SQL FETCH C14813 INTO :en, :pn, :hr, :pn2, :pname, :pt, :bu, :ct;
+CHCKOK ();
+printf ("en should be E4; its value is %s\n", en);
+printf ("pn should be P2; its value is %s\n", pn);
+printf ("hr should be 20; its value is %ld\n", hr);
+printf ("pn2 should be P2; its value is %s\n", pn2);
+printf ("pname should be CALM; its value is %s\n", pname);
+printf ("pt should be Code; its value is %s\n", pt);
+printf ("bu should be 30000; its value is %ld\n", bu);
+printf ("ct should be Vienna; its value is %s\n\n", ct);
+if (strncmp (en, "E4", 2) != 0 || strncmp (pn, "P2", 2) != 0)
+  flag = 0;
+if (hr != 20 || strncmp (pname, "CALM", 4) != 0)
+  flag = 0;
+if (strncmp (pt, "Code", 4) != 0 || bu != 30000)
+  flag = 0;
+if (strncmp (ct, "Vienna", 6) != 0 || strncmp (pn2, "P2", 2) != 0)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (pn2, "xxx");
+strcpy (en, "xxx");
+hr = -1;
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pt, "xxxxxx");
+bu = -1;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("FETCH C14813 INTO :en, :pn, :hr, :pn2, :pname, :pt, :bu, :ct;\n");
+EXEC SQL FETCH C14813 INTO :en, :pn, :hr, :pn2, :pname, :pt, :bu, :ct;
+CHCKOK ();
+printf ("en should be E4; its value is %s\n", en);
+printf ("pn should be P4; its value is %s\n", pn);
+printf ("hr should be 40; its value is %ld\n", hr);
+printf ("pn2 should be P4; its value is %s\n", pn2);
+printf ("pname should be SDP; its value is %s\n", pname);
+printf ("pt should be Design; its value is %s\n", pt);
+printf ("bu should be 20000; its value is %ld\n", bu);
+printf ("ct should be Deale; its value is %s\n\n", ct);
+if (strncmp (en, "E4", 2) != 0 || strncmp (pn, "P4", 2) != 0)
+  flag = 0;
+if (hr != 40 || strncmp (pname, "SDP", 3) != 0)
+  flag = 0;
+if (strncmp (pt, "Design", 6) != 0 || bu != 20000)
+  flag = 0;
+if (strncmp (ct, "Deale", 5) != 0 || strncmp (pn2, "P4", 2) != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0843','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml148.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0843','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0843 *********************/
+/******************** BEGIN TEST0844 ********************/
+flag = 1;
+
+     printf("                  TEST0844 \n");
+     printf("          Outer join predicates\n");
+     printf("References:\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE SEVEN_TYPES (\n");
+printf("    T_INT     INTEGER,\n");
+printf("    T_CHAR    CHAR(10),\n");
+printf("    T_SMALL   SMALLINT,\n");
+printf("    T_DECIMAL DECIMAL(10,2),\n");
+printf("    T_REAL    REAL,\n");
+printf("    T_FLOAT   FLOAT,\n");
+printf("    T_DOUBLE  DOUBLE PRECISION);\n");
+EXEC SQL CREATE TABLE SEVEN_TYPES (
+    T_INT     INTEGER,
+    T_CHAR    CHAR(10),
+    T_SMALL   SMALLINT,
+    T_DECIMAL DECIMAL(10,2),
+    T_REAL    REAL,
+    T_FLOAT   FLOAT,
+    T_DOUBLE  DOUBLE PRECISION);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DELETE FROM SEVEN_TYPES;\n\n");
+EXEC SQL DELETE FROM SEVEN_TYPES;
+
+printf("INSERT INTO SEVEN_TYPES VALUES (1, 'E1',-11,   2,  3,   4,   5);\n");
+EXEC SQL INSERT INTO SEVEN_TYPES VALUES (1, 'E1',-11,   2,  3,   4,   5);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SEVEN_TYPES VALUES (2, 'E2', -5,  13, 33,-444, -55);\n");
+EXEC SQL INSERT INTO SEVEN_TYPES VALUES (2, 'E2', -5,  13, 33,-444, -55);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SEVEN_TYPES VALUES (3, 'E6', -3,-222,333,  44, 555);\n");
+EXEC SQL INSERT INTO SEVEN_TYPES VALUES (3, 'E6', -3,-222,333,  44, 555);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SEVEN_TYPES VALUES (12,'DUP', 0,   0, -1,   1,1E+1);\n");
+EXEC SQL INSERT INTO SEVEN_TYPES VALUES (12,'DUP', 0,   0, -1,   1,1E+1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SEVEN_TYPES VALUES (12,'DUP', 0,   0, -1,   1,1E+1);\n");
+EXEC SQL INSERT INTO SEVEN_TYPES VALUES (12,'DUP', 0,   0, -1,   1,1E+1);
+CHCKOK ();
+printf("\n");
+
+/* Subtest number one */
+/* BETWEEN predicate */
+
+printf("DECLARE C14821 CURSOR FOR\n");
+printf("  SELECT EMPNAME, CITY, T_DECIMAL\n");
+printf("  FROM HU.STAFF LEFT OUTER JOIN SEVEN_TYPES \n");
+printf("  ON -GRADE / 11 BETWEEN T_REAL AND T_DECIMAL\n");
+printf("  ORDER BY EMPNAME;\n\n");
+EXEC SQL DECLARE C14821 CURSOR FOR
+  SELECT EMPNAME, CITY, T_DECIMAL
+  FROM HU.STAFF LEFT OUTER JOIN SEVEN_TYPES 
+  ON -GRADE / 11 BETWEEN T_REAL AND T_DECIMAL
+  ORDER BY EMPNAME;
+
+printf("OPEN C14821;\n");
+EXEC SQL OPEN C14821;
+CHCKOK ();
+printf("\n");
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+int1 = 48;
+indic1 = 48;
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+CHCKOK ();
+printf ("ename should be Alice; its value is %s\n", ename);
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strncmp (ename, "Alice", 5) != 0 || strncmp (ct, "Deale", 5) != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+int1 = 48;
+indic1 = 48;
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+CHCKOK ();
+printf ("ename should be Betty; its value is %s\n", ename);
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strncmp (ename, "Betty", 5) != 0 || strncmp (ct, "Vienna", 6) != 0)
+  flag = 0;
+if (int1 != 0 || indic1 != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+int1 = 48;
+indic1 = 48;
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+CHCKOK ();
+printf ("ename should be Betty; its value is %s\n", ename);
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("int1 should be 0; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strncmp (ename, "Betty", 5) != 0 || strncmp (ct, "Vienna", 6) != 0)
+  flag = 0;
+if (int1 != 0 || indic1 != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+int1 = 48;
+indic1 = 48;
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+CHCKOK ();
+printf ("ename should be Carmen; its value is %s\n", ename);
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strncmp (ename, "Carmen", 6) != 0 || strncmp (ct, "Vienna", 6) != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+int1 = 48;
+indic1 = 48;
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+CHCKOK ();
+printf ("ename should be Don; its value is %s\n", ename);
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strncmp (ename, "Don", 3) != 0 || strncmp (ct, "Deale", 5) != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+int1 = 48;
+indic1 = 48;
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+CHCKOK ();
+printf ("ename should be Ed; its value is %s\n", ename);
+printf ("ct should be Akron; its value is %s\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strncmp (ename, "Ed", 2) != 0 || strncmp (ct, "Akron", 5) != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+printf("FETCH C14821 INTO :ename, :ct, :int1:indic1;\n");
+EXEC SQL FETCH C14821 INTO :ename, :ct, :int1:indic1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14821;\n");
+EXEC SQL CLOSE C14821;
+CHCKOK ();
+printf("\n");
+
+/* Subtest number two */
+/* Comparable CHAR types */
+/* IN predicate, with literals and variable value */
+
+printf("int1 = 10;\n");
+int1 = 10;
+printf("DECLARE C14822 CURSOR FOR\n");
+printf("  SELECT T_INT, T_CHAR, EMPNAME, EMPNUM, GRADE \n");
+printf("  FROM SEVEN_TYPES RIGHT JOIN HU.STAFF\n");
+printf("  ON GRADE IN (:int1, 11, 13) AND EMPNUM = T_CHAR\n");
+printf("  ORDER BY EMPNAME, T_INT;\n\n");
+EXEC SQL DECLARE C14822 CURSOR FOR
+  SELECT T_INT, T_CHAR, EMPNAME, EMPNUM, GRADE 
+  FROM SEVEN_TYPES RIGHT JOIN HU.STAFF
+  ON GRADE IN (:int1, 11, 13) AND EMPNUM = T_CHAR
+  ORDER BY EMPNAME, T_INT;
+
+printf("OPEN C14822;\n");
+EXEC SQL OPEN C14822;
+CHCKOK ();
+printf("\n");
+
+int1 = 49;
+indic1 = 49;
+strcpy (tc, "xxxxxxxxxx");
+indic2 = 49;
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (en, "xxx");
+gr = 49;
+printf("FETCH C14822 INTO :int1:indic1, :tc:indic2, :ename, :en, :gr;\n");
+EXEC SQL FETCH C14822 INTO :int1:indic1, :tc:indic2, :ename, :en, :gr;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n", indic2);
+printf ("ename should be Alice; its value is %s\n", ename);
+printf ("en should be E1; its value is %s\n", en);
+printf ("gr should be 12; its value is %ld\n\n", gr);
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+if (strncmp (ename, "Alice", 5) != 0 || strncmp (en, "E1", 2) != 0)
+  flag = 0;
+if (gr != 12)
+  flag = 0;
+
+int1 = 49;
+indic1 = 49;
+strcpy (tc, "xxxxxxxxxx");
+indic2 = 49;
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (en, "xxx");
+gr = 49;
+printf("FETCH C14822 INTO :int1:indic1, :tc:indic2, :ename, :en, :gr;\n");
+EXEC SQL FETCH C14822 INTO :int1:indic1, :tc:indic2, :ename, :en, :gr;
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n", indic2);
+printf ("int1 should be 2; its value is %ld\n", int1);
+printf ("tc should be E2; its value is %s\n", tc);
+printf ("ename should be Betty; its value is %s\n", ename);
+printf ("en should be E2; its value is %s\n", en);
+printf ("gr should be 10; its value is %ld\n\n", gr);
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+if (int1 != 2 || strncmp (tc, "E2", 2) != 0)
+  flag = 0;
+if (strncmp (ename, "Betty", 5) != 0 || strncmp (en, "E2", 2) != 0)
+  flag = 0;
+if (gr != 10)
+  flag = 0;
+
+int1 = 49;
+indic1 = 49;
+strcpy (tc, "xxxxxxxxxx");
+indic2 = 49;
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (en, "xxx");
+gr = 49;
+printf("FETCH C14822 INTO :int1:indic1, :tc:indic2, :ename, :en, :gr;\n");
+EXEC SQL FETCH C14822 INTO :int1:indic1, :tc:indic2, :ename, :en, :gr;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n", indic2);
+printf ("ename should be Carmen; its value is %s\n", ename);
+printf ("en should be E3; its value is %s\n", en);
+printf ("gr should be 13; its value is %ld\n\n", gr);
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+if (strncmp (ename, "Carmen", 6) != 0 || strncmp (en, "E3", 2) != 0)
+  flag = 0;
+if (gr != 13)
+  flag = 0;
+
+printf("CLOSE C14822;\n");
+EXEC SQL CLOSE C14822;
+CHCKOK ();
+printf("\n");
+
+/* Subtest number three */
+/* Subquery with outer reference and correlation names */
+
+printf("DECLARE C14823 CURSOR FOR\n");
+printf("  SELECT XX.PNUM, BUDGET, HOURS, EMPNUM\n");
+printf("  FROM HU.PROJ XX LEFT JOIN HU.WORKS YY\n");
+printf("  ON  XX.PNUM = YY.PNUM AND\n");
+printf("  HOURS * BUDGET / 160000 > (SELECT GRADE FROM HU.STAFF\n");
+printf("  WHERE YY.EMPNUM = HU.STAFF.EMPNUM)\n");
+printf("  ORDER BY 1;\n\n");
+EXEC SQL DECLARE C14823 CURSOR FOR
+  SELECT XX.PNUM, BUDGET, HOURS, EMPNUM
+  FROM HU.PROJ XX LEFT JOIN HU.WORKS YY
+  ON  XX.PNUM = YY.PNUM AND
+  HOURS * BUDGET / 160000 > (SELECT GRADE FROM HU.STAFF
+  WHERE YY.EMPNUM = HU.STAFF.EMPNUM)
+  ORDER BY 1;
+
+printf("OPEN C14823;\n");
+EXEC SQL OPEN C14823;
+CHCKOK ();
+printf("\n");
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+bu = 5;
+hr = 5;
+indic1 = 5;
+indic2 = 5;
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+CHCKOK ();
+printf ("pn should be P1; its value is %s\n", pn);
+printf ("bu should be 10000; its value is %ld\n", bu);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (pn, "P1", 2) != 0 || bu != 10000)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+bu = 5;
+hr = 5;
+indic1 = 5;
+indic2 = 5;
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+CHCKOK ();
+printf ("pn should be P2; its value is %s\n", pn);
+printf ("bu should be 30000; its value is %ld\n", bu);
+printf ("hr should be 80; its value is %ld\n", hr);
+printf ("en should be E2; its value is %s\n", en);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (strncmp (pn, "P2", 2) != 0 || bu != 30000)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+if (hr != 80 || strncmp (en, "E2", 2) != 0)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+bu = 5;
+hr = 5;
+indic1 = 5;
+indic2 = 5;
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+CHCKOK ();
+printf ("pn should be P3; its value is %s\n", pn);
+printf ("bu should be 30000; its value is %ld\n", bu);
+printf ("hr should be 80; its value is %ld\n", hr);
+printf ("en should be E1; its value is %s\n", en);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (strncmp (pn, "P3", 2) != 0 || bu != 30000)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+if (hr != 80 || strncmp (en, "E1", 2) != 0)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+bu = 5;
+hr = 5;
+indic1 = 5;
+indic2 = 5;
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+CHCKOK ();
+printf ("pn should be P4; its value is %s\n", pn);
+printf ("bu should be 20000; its value is %ld\n", bu);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (pn, "P4", 2) != 0 || bu != 20000)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+bu = 5;
+hr = 5;
+indic1 = 5;
+indic2 = 5;
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+CHCKOK ();
+printf ("pn should be P5; its value is %s\n", pn);
+printf ("bu should be 10000; its value is %ld\n", bu);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (pn, "P5", 2) != 0 || bu != 10000)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (pn, "xxx");
+strcpy (en, "xxx");
+bu = 5;
+hr = 5;
+indic1 = 5;
+indic2 = 5;
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+CHCKOK ();
+printf ("pn should be P6; its value is %s\n", pn);
+printf ("bu should be 50000; its value is %ld\n", bu);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (pn, "P6", 2) != 0 || bu != 50000)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+printf("FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;\n");
+EXEC SQL FETCH C14823 INTO :pn, :bu, :hr:indic1, :en:indic2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14823;\n");
+EXEC SQL CLOSE C14823;
+CHCKOK ();
+printf("\n");
+
+/* Subtest number four */
+
+printf("DECLARE C14824 CURSOR FOR\n");
+printf("  SELECT HU.STAFF.CITY,EMPNAME,PNAME,BUDGET\n");
+printf("  FROM HU.STAFF LEFT JOIN HU.PROJ\n");
+printf("  ON HU.STAFF.CITY = HU.PROJ.CITY\n");
+printf("    AND HU.STAFF.CITY <> 'Vienna'\n");
+printf("    AND EMPNAME <> 'Don'\n");
+printf("  WHERE BUDGET > 15000 OR BUDGET IS NULL\n");
+printf("  ORDER BY HU.STAFF.CITY, EMPNAME, BUDGET;\n\n");
+EXEC SQL DECLARE C14824 CURSOR FOR
+  SELECT HU.STAFF.CITY,EMPNAME,PNAME,BUDGET
+  FROM HU.STAFF LEFT JOIN HU.PROJ
+  ON HU.STAFF.CITY = HU.PROJ.CITY
+    AND HU.STAFF.CITY <> 'Vienna'
+    AND EMPNAME <> 'Don'
+  WHERE BUDGET > 15000 OR BUDGET IS NULL
+  ORDER BY HU.STAFF.CITY, EMPNAME, BUDGET;
+
+printf("OPEN C14824;\n");
+EXEC SQL OPEN C14824;
+CHCKOK ();
+printf("\n");
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Akron; its value is %s\n", ct);
+printf ("ename should be Ed; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Akron", 5) != 0 || strncmp (ename, "Ed", 2) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("ename should be Alice; its value is %s\n", ename);
+printf ("pname should be SDP; its value is %s\n", pname);
+printf ("bu should be 20000; its value is %ld\n", bu);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (strncmp (ct, "Deale", 5) != 0 || strncmp (ename, "Alice", 5) != 0)
+  flag = 0;
+if (strncmp (pname, "SDP", 3) != 0 || bu != 20000)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("ename should be Alice; its value is %s\n", ename);
+printf ("pname should be PAYR; its value is %s\n", pname);
+printf ("bu should be 50000; its value is %ld\n", bu);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (strncmp (ct, "Deale", 5) != 0 || strncmp (ename, "Alice", 5) != 0)
+  flag = 0;
+if (strncmp (pname, "PAYR", 4) != 0 || bu != 50000)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("ename should be Don; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Deale", 5) != 0 || strncmp (ename, "Don", 3) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("ename should be Betty; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Vienna", 6) != 0 || strncmp (ename, "Betty", 5) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("ename should be Carmen; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Vienna", 6) != 0 || strncmp (ename, "Carmen", 6) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+printf("FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14824 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14824;\n");
+EXEC SQL CLOSE C14824;
+CHCKOK ();
+printf("\n");
+
+/* Subtest number five */
+/* Difference between WHERE and ON */
+
+printf("DECLARE C14825 CURSOR FOR\n");
+printf("  SELECT HU.STAFF.CITY,EMPNAME,PNAME,BUDGET\n");
+printf("  FROM HU.STAFF LEFT JOIN HU.PROJ\n");
+printf("  ON HU.STAFF.CITY = HU.PROJ.CITY\n");
+printf("    AND HU.STAFF.CITY <> 'Vienna'\n");
+printf("  WHERE (BUDGET > 15000 OR BUDGET IS NULL)\n");
+printf("    AND EMPNAME <> 'Don'\n");
+printf("  ORDER BY HU.STAFF.CITY, EMPNAME, BUDGET;\n\n");
+EXEC SQL DECLARE C14825 CURSOR FOR
+  SELECT HU.STAFF.CITY,EMPNAME,PNAME,BUDGET
+  FROM HU.STAFF LEFT JOIN HU.PROJ
+  ON HU.STAFF.CITY = HU.PROJ.CITY
+    AND HU.STAFF.CITY <> 'Vienna'
+  WHERE (BUDGET > 15000 OR BUDGET IS NULL)
+    AND EMPNAME <> 'Don'
+  ORDER BY HU.STAFF.CITY, EMPNAME, BUDGET;
+
+printf("OPEN C14825;\n");
+EXEC SQL OPEN C14825;
+CHCKOK ();
+printf("\n");
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Akron; its value is %s\n", ct);
+printf ("ename should be Ed; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Akron", 5) != 0 || strncmp (ename, "Ed", 2) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("ename should be Alice; its value is %s\n", ename);
+printf ("pname should be SDP; its value is %s\n", pname);
+printf ("bu should be 20000; its value is %ld\n", bu);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (strncmp (ct, "Deale", 5) != 0 || strncmp (ename, "Alice", 5) != 0)
+  flag = 0;
+if (strncmp (pname, "SDP", 3) != 0 || bu != 20000)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Deale; its value is %s\n", ct);
+printf ("ename should be Alice; its value is %s\n", ename);
+printf ("pname should be PAYR; its value is %s\n", pname);
+printf ("bu should be 50000; its value is %ld\n", bu);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 0; its value is %d\n\n", indic2);
+if (strncmp (ct, "Deale", 5) != 0 || strncmp (ename, "Alice", 5) != 0)
+  flag = 0;
+if (strncmp (pname, "PAYR", 4) != 0 || bu != 50000)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("ename should be Betty; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Vienna", 6) != 0 || strncmp (ename, "Betty", 5) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (pname, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+bu = 28;
+printf("FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+CHCKOK ();
+printf ("ct should be Vienna; its value is %s\n", ct);
+printf ("ename should be Carmen; its value is %s\n", ename);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strncmp (ct, "Vienna", 6) != 0 || strncmp (ename, "Carmen", 6) != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+printf("FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;\n");
+EXEC SQL FETCH C14825 INTO :ct, :ename, :pname:indic1, :bu:indic2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14825;\n");
+EXEC SQL CLOSE C14825;
+CHCKOK ();
+printf("\n");
+
+/* Subtest number six */
+/* Correlation name with self-JOIN */
+
+printf("DECLARE C14826 CURSOR FOR\n");
+printf("  SELECT XX.T_INT, YY.T_INT\n");
+printf("  FROM SEVEN_TYPES XX RIGHT OUTER JOIN SEVEN_TYPES YY\n");
+printf("  ON XX.T_INT = YY.T_INT +1\n");
+printf("  ORDER BY YY.T_INT;\n\n");
+EXEC SQL DECLARE C14826 CURSOR FOR
+  SELECT XX.T_INT, YY.T_INT
+  FROM SEVEN_TYPES XX RIGHT OUTER JOIN SEVEN_TYPES YY
+  ON XX.T_INT = YY.T_INT +1
+  ORDER BY YY.T_INT;
+
+printf("OPEN C14826;\n");
+EXEC SQL OPEN C14826;
+CHCKOK ();
+printf("\n");
+
+int1 = 0;
+indic1 = 40;
+int2 = 0;
+printf("FETCH C14826 INTO :int1:indic1, :int2;\n");
+EXEC SQL FETCH C14826 INTO :int1:indic1, :int2;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("int2 should be 1; its value is %ld\n\n", int2);
+if (int1 != 2 || indic1 != 0)
+  flag = 0;
+if (int2 != 1)
+  flag = 0;
+
+int1 = 0;
+indic1 = 40;
+int2 = 0;
+printf("FETCH C14826 INTO :int1:indic1, :int2;\n");
+EXEC SQL FETCH C14826 INTO :int1:indic1, :int2;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("int2 should be 2; its value is %ld\n\n", int2);
+if (int1 != 3 || indic1 != 0)
+  flag = 0;
+if (int2 != 2)
+  flag = 0;
+
+int1 = 0;
+indic1 = 40;
+int2 = 0;
+printf("FETCH C14826 INTO :int1:indic1, :int2;\n");
+EXEC SQL FETCH C14826 INTO :int1:indic1, :int2;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("int2 should be 3; its value is %ld\n\n", int2);
+if (indic1 != -1 || int2 != 3)
+  flag = 0;
+
+printf("CLOSE C14826;\n");
+EXEC SQL CLOSE C14826;
+CHCKOK ();
+printf("\n");
+
+/* Subtest number seven */
+/* Nested booleans */
+/* Data types are merely comparable */
+
+printf("DECLARE C14827 CURSOR FOR\n");
+printf("  SELECT GRADE, T_FLOAT, T_DOUBLE\n");
+printf("  FROM HU.STAFF LEFT JOIN SEVEN_TYPES T7\n");
+printf("    ON GRADE * -40 > T7.T_FLOAT\n");
+printf("    OR (T_DOUBLE -542.5 < GRADE AND T_DOUBLE -541.5 > GRADE)\n");
+printf("    ORDER BY GRADE;\n\n");
+EXEC SQL DECLARE C14827 CURSOR FOR
+  SELECT GRADE, T_FLOAT, T_DOUBLE
+  FROM HU.STAFF LEFT JOIN SEVEN_TYPES T7
+    ON GRADE * -40 > T7.T_FLOAT
+    OR (T_DOUBLE -542.5 < GRADE AND T_DOUBLE -541.5 > GRADE)
+    ORDER BY GRADE;
+
+printf("OPEN C14827;\n");
+EXEC SQL OPEN C14827;
+CHCKOK ();
+printf("\n");
+
+gr = 0;
+flt1 = 0.0;
+flt2 = 0.0;
+indic1 = 40;
+indic2 = 40;
+printf("FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;\n");
+EXEC SQL FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;
+CHCKOK ();
+printf ("gr should be 10; its value is %ld\n", gr);
+printf ("flt1 should be -444 +- 0.1; its value is %f\n", flt1);
+printf ("flt2 should be -55 +- 0.1; its value is %f\n\n", flt2);
+if (gr != 10)
+  flag = 0;
+if (flt1 < -444.1 || flt1 > -443.9)
+  flag = 0;
+if (flt2 < -55.1 || flt2 > -54.9)
+  flag = 0;
+
+gr = 0;
+flt1 = 0.0;
+flt2 = 0.0;
+indic1 = 40;
+indic2 = 40;
+printf("FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;\n");
+EXEC SQL FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;
+CHCKOK ();
+printf ("gr should be 12; its value is %ld\n", gr);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (gr != 12)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+gr = 0;
+flt1 = 0.0;
+flt2 = 0.0;
+indic1 = 40;
+indic2 = 40;
+printf("FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;\n");
+EXEC SQL FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;
+CHCKOK ();
+printf ("gr should be 12; its value is %ld\n", gr);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (gr != 12)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+gr = 0;
+flt1 = 0.0;
+flt2 = 0.0;
+indic1 = 40;
+indic2 = 40;
+printf("FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;\n");
+EXEC SQL FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;
+CHCKOK ();
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("flt1 should be 44 +- 0.1; its value is %f\n", flt1);
+printf ("flt2 should be 555 +- 0.1; its value is %f\n\n", flt2);
+if (gr != 13)
+  flag = 0;
+if (flt1 < 43.9 || flt1 > 44.1)
+  flag = 0;
+if (flt2 < 554.9 || flt2 > 555.1)
+  flag = 0;
+
+gr = 0;
+flt1 = 0.0;
+flt2 = 0.0;
+indic1 = 40;
+indic2 = 40;
+printf("FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;\n");
+EXEC SQL FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;
+CHCKOK ();
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("flt1 should be 44 +- 0.1; its value is %f\n", flt1);
+printf ("flt2 should be 555 +- 0.1; its value is %f\n\n", flt2);
+if (gr != 13)
+  flag = 0;
+if (flt1 < 43.9 || flt1 > 44.1)
+  flag = 0;
+if (flt2 < 554.9 || flt2 > 555.1)
+  flag = 0;
+
+printf("FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;\n");
+EXEC SQL FETCH C14827 INTO :gr, :flt1:indic1, :flt2:indic2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE SEVEN_TYPES CASCADE;\n");
+EXEC SQL DROP TABLE SEVEN_TYPES CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0844','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml148.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0844','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0844 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,605 @@
+/*  EMBEDDED C (file "DML108.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/11/10 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML108.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests more DATETIME features in Transitional    */
+/*  SQL.  This is the non-dynamic version of DML109.             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml108.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0617 ********************/
+flag = 1;
+
+     printf("                  TEST0617 \n");
+     printf("     DATETIME with predicates, set fns (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 5, 20\n");
+     printf("    COR1 7.1 <row value constructor>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TEMPS (\n");
+printf("  ENTERED  TIMESTAMP,\n");
+printf("  START    DATE,\n");
+printf("  APPT     INTERVAL DAY,\n");
+printf("  HOUR_IN  TIME,\n");
+printf("  HOUR_OUT TIME,\n");
+printf("  LUNCH    INTERVAL HOUR TO MINUTE);\n");
+EXEC SQL CREATE TABLE TEMPS (
+  ENTERED  TIMESTAMP,
+  START    DATE,
+  APPT     INTERVAL DAY,
+  HOUR_IN  TIME,
+  HOUR_OUT TIME,
+  LUNCH    INTERVAL HOUR TO MINUTE);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW SUBQ1 AS\n");
+printf("  SELECT MIN (HOUR_IN) AS TOO_EARLY,\n");
+printf("  MAX (ALL START) AS LATEST,\n");
+printf("  AVG (LUNCH) AS AVGLUNCH,\n");
+printf("  AVG (DISTINCT LUNCH) AS D_AVGLUNCH,\n");
+printf("  SUM (APPT) AS SUMAPPT FROM TEMPS;\n");
+EXEC SQL CREATE VIEW SUBQ1 AS
+  SELECT MIN (HOUR_IN) AS TOO_EARLY,
+  MAX (ALL START) AS LATEST,
+  AVG (LUNCH) AS AVGLUNCH,
+  AVG (DISTINCT LUNCH) AS D_AVGLUNCH,
+  SUM (APPT) AS SUMAPPT
+  FROM TEMPS;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMPS VALUES (\n");
+printf("  TIMESTAMP '1993-11-10 12:25:14',\n");
+printf("  DATE '1993-11-12',\n");
+printf("  INTERVAL '4' DAY,\n");
+printf("  TIME '08:30:00',\n");
+printf("  TIME '16:30:00',\n");
+printf("  INTERVAL '1:00' HOUR TO MINUTE);\n");
+
+EXEC SQL INSERT INTO TEMPS VALUES (
+  TIMESTAMP '1993-11-10 12:25:14',
+  DATE '1993-11-12',
+  INTERVAL '4' DAY,
+  TIME '08:30:00',
+  TIME '16:30:00',
+  INTERVAL '1:00' HOUR TO MINUTE);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMPS VALUES (\n");
+printf("  TIMESTAMP '1993-11-10 13:15:14',\n");
+printf("  DATE '1993-11-15',\n");
+printf("  INTERVAL '5' DAY,\n");
+printf("  TIME '08:30:00',\n");
+printf("  TIME '17:30:00',\n");
+printf("  INTERVAL '0:30' HOUR TO MINUTE);\n");
+
+EXEC SQL INSERT INTO TEMPS VALUES (
+  TIMESTAMP '1993-11-10 13:15:14',
+  DATE '1993-11-15',
+  INTERVAL '5' DAY,
+  TIME '08:30:00',
+  TIME '17:30:00',
+  INTERVAL '0:30' HOUR TO MINUTE);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMPS VALUES (\n");
+printf("  TIMESTAMP '1993-11-17 09:56:48',\n");
+printf("  DATE '1994-11-18',\n");
+printf("  INTERVAL '3' DAY,\n");
+printf("  TIME '09:00:00',\n");
+printf("  TIME '17:00:00',\n");
+printf("  INTERVAL '1:00' HOUR TO MINUTE);\n");
+
+EXEC SQL INSERT INTO TEMPS VALUES (
+  TIMESTAMP '1993-11-17 09:56:48',
+  DATE '1994-11-18',
+  INTERVAL '3' DAY,
+  TIME '09:00:00',
+  TIME '17:00:00',
+  INTERVAL '1:00' HOUR TO MINUTE);
+
+CHCKOK ();
+printf("\n");
+
+/* = <> < > <= >= */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  LUNCH < INTERVAL '1:00' HOUR TO MINUTE;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  LUNCH < INTERVAL '1:00' HOUR TO MINUTE;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  LUNCH <= INTERVAL '1:00' HOUR TO MINUTE;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  LUNCH <= INTERVAL '1:00' HOUR TO MINUTE;
+
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  START <> DATE '1993-11-15' AND\n");
+printf("  START <> DATE '1993-11-12';\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  START <> DATE '1993-11-15' AND
+  START <> DATE '1993-11-12';
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  START = DATE '1993-11-15' OR\n");
+printf("  START = DATE '1993-11-12';\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  START = DATE '1993-11-15' OR
+  START = DATE '1993-11-12';
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  HOUR_OUT > TIME '17:00:00';\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  HOUR_OUT > TIME '17:00:00';
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  HOUR_OUT >= TIME '17:00:00';\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  HOUR_OUT >= TIME '17:00:00';
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* BETWEEN */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  ENTERED BETWEEN TIMESTAMP '1993-11-10 00:00:00' AND\n");
+printf("                  TIMESTAMP '1993-11-10 23:59:59';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  ENTERED BETWEEN TIMESTAMP '1993-11-10 00:00:00' AND
+                  TIMESTAMP '1993-11-10 23:59:59';
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* IN */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  HOUR_OUT IN\n");
+printf("  (SELECT HOUR_IN + INTERVAL '8' HOUR FROM TEMPS);\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  HOUR_OUT IN
+  (SELECT HOUR_IN + INTERVAL '8' HOUR FROM TEMPS);
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* IS NULL -- see test 0621 */
+
+/* OVERLAPS (tested once already in DML106-7) */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  (START, APPT) OVERLAPS\n");
+printf("  (DATE '1993-11-14', INTERVAL '2' DAY);\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  (START, APPT) OVERLAPS
+  (DATE '1993-11-14', INTERVAL '2' DAY);
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* ALL, SOME, ANY qualifiers (brief test) */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  HOUR_OUT = ANY\n");
+printf("  (SELECT HOUR_IN + INTERVAL '8' HOUR FROM TEMPS);\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  HOUR_OUT = ANY
+  (SELECT HOUR_IN + INTERVAL '8' HOUR FROM TEMPS);
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  EXTRACT (YEAR FROM ENTERED) <> SOME\n");
+printf("  (SELECT EXTRACT (YEAR FROM START)\n");
+printf("  FROM TEMPS);\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  EXTRACT (YEAR FROM ENTERED) <> SOME
+  (SELECT EXTRACT (YEAR FROM START)
+  FROM TEMPS);
+
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+/* The following query would be helpful in finding errors in */
+/* the data.                                                 */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TEMPS WHERE\n");
+printf("  EXTRACT (YEAR FROM START) <> ALL\n");
+printf("  (SELECT EXTRACT (YEAR FROM ENTERED)\n");
+printf("   FROM TEMPS);\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TEMPS WHERE
+  EXTRACT (YEAR FROM START) <> ALL
+  (SELECT EXTRACT (YEAR FROM ENTERED)
+   FROM TEMPS);
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/* Set Functions */
+
+/* Find the most insanely early hour of the morning that anybody */
+/* has to work                                                   */
+
+printf("SELECT EXTRACT (HOUR FROM TOO_EARLY)\n");
+printf("  * 100 + EXTRACT (MINUTE FROM TOO_EARLY)\n");
+printf("  INTO :int1 FROM SUBQ1;\n");
+
+int1 = -1;
+EXEC SQL SELECT EXTRACT (HOUR FROM TOO_EARLY)
+  * 100 + EXTRACT (MINUTE FROM TOO_EARLY)
+  INTO :int1 FROM SUBQ1;
+
+CHCKOK ();
+printf("int1 should be 830; its value is %ld\n\n", int1);
+if (int1 != 830)
+  flag = 0;
+
+/* Find the start date of the latest-starting appointment */
+
+printf("SELECT EXTRACT (YEAR FROM LATEST),\n");
+printf("  EXTRACT (MONTH FROM LATEST) * 100 +\n");
+printf("  EXTRACT (DAY FROM LATEST)\n");
+printf("  INTO :int1, :int2 FROM SUBQ1;\n");
+
+int1 = -1;
+int2 = -1;
+EXEC SQL SELECT EXTRACT (YEAR FROM LATEST),
+  EXTRACT (MONTH FROM LATEST) * 100 +
+  EXTRACT (DAY FROM LATEST)
+  INTO :int1, :int2 FROM SUBQ1;
+
+CHCKOK ();
+printf("int1 should be 1994; its value is %ld\n", int1);
+if (int1 != 1994)
+  flag = 0;
+printf("int2 should be 1118; its value is %ld\n\n", int2);
+if (int2 != 1118)
+  flag = 0;
+
+/* Find the average lunch period. */
+
+printf("SELECT EXTRACT (HOUR FROM AVGLUNCH)\n");
+printf("  * 100 + EXTRACT (MINUTE FROM AVGLUNCH)\n");
+printf("  INTO :int1 FROM SUBQ1;\n");
+
+int1 = -1;
+EXEC SQL SELECT EXTRACT (HOUR FROM AVGLUNCH)
+  * 100 + EXTRACT (MINUTE FROM AVGLUNCH)
+  INTO :int1 FROM SUBQ1;
+
+/* Numeric truncation might result in a 49 here.  4.4.1 says that */
+/* the choice of whether to truncate or round is implementation-  */
+/* defined.                                                       */
+
+CHCKOK ();
+printf("int1 should be 50; its value is %ld\n\n", int1);
+if (int1 == 49)
+{
+  printf ("Numeric truncation is allowed.  49 is OK.\n\n");
+}
+if (int1 != 50 && int1 != 49)
+  flag = 0;
+
+/* Test DISTINCT */
+
+printf("SELECT EXTRACT (HOUR FROM D_AVGLUNCH)\n");
+printf("  * 100 + EXTRACT (MINUTE FROM D_AVGLUNCH)\n");
+printf("  INTO :int1 FROM SUBQ1;\n");
+
+int1 = -1;
+EXEC SQL SELECT EXTRACT (HOUR FROM D_AVGLUNCH)
+  * 100 + EXTRACT (MINUTE FROM D_AVGLUNCH)
+  INTO :int1 FROM SUBQ1;
+
+CHCKOK ();
+printf("int1 should be 45; its value is %ld\n\n", int1);
+if (int1 != 45)
+  flag = 0;
+
+/* Find total number of days appointed */
+
+printf("SELECT EXTRACT (DAY FROM SUMAPPT)\n");
+printf("  INTO :int1 FROM\n");
+printf("  SUBQ1;\n");
+
+int1 = -1;
+EXEC SQL SELECT EXTRACT (DAY FROM SUMAPPT)
+  INTO :int1 FROM
+  SUBQ1;
+
+CHCKOK ();
+printf("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+/* Finally, COUNT */
+
+int1 = -1;
+printf("SELECT COUNT (DISTINCT LUNCH) INTO :int1 FROM TEMPS;\n");
+EXEC SQL SELECT COUNT (DISTINCT LUNCH) INTO :int1 FROM TEMPS;
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TEMPS CASCADE;\n");
+EXEC SQL DROP TABLE TEMPS CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0617','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml108.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0617','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0617 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

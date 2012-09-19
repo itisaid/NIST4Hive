@@ -1,0 +1,45 @@
+                             DIFFERENCES
+                     Between Version 5.1 and 6.0
+                         NIST SQL Test Suite
+
+ 1.  Version 6.0 supports conformance testing through FIPS and ISO
+     Intermediate SQL.  All previously supported profiles are still
+     supported.
+
+ 2.  The current version of TEd, 5.1, fixes an old pattern-matching
+     limitation that persisted through version 5.0.
+
+ 3.  The Ada binding for SQL has changed as documented in Technical
+     Corrigendum #2.  The "erratum" forces an immediate upgrade to
+     Ada 95 in order to pass the Embedded SQL Ada or Module Ada tests.
+
+ 4.  schem11 has been added for Transitional testing.  The following
+     new schemas have been added for Intermediate testing:  schem12,
+     cts5sch1, cts5sch2, cts5sch3, cts5sch4, and cts5sch5.  The new
+     dataload programs are sc11tab, sc12tab, and cts5tab.
+
+ 5.  The following new testing accounts are needed for Intermediate
+     testing:  CTS1, CTS2, CTS3, CTS4, CTS5, T7013PC.
+
+ 6.  There are 3 new tests for FIPS Entry SQL, improving coverage over
+     Version 5.1.  There are 11 new tests for Transitional SQL.
+
+ 7.  182 new tests in programs ADA013, DML160 through DML186, ISI001
+     through ISI008, XTS700 through XTS799, and YTS750 through YTS814 have
+     been added for Intermediate SQL.  As with version 5.1, the new
+     tests are not available in Embedded SQL Pascal, Module Language
+     FORTRAN, and Module Language Pascal.
+
+ 8.  A number of special steps must be taken when running the new
+     Intermediate tests.  These are detailed in the User's Guide.
+
+ 9.  The data type of variable errcnt has been changed in C programs
+     from long to int.
+
+10.  Version 5.1 maintenance has been applied to all Version 6.0 files.
+
+11.  Many of the files in the OTHER directory have been relocated into
+     two new directories:  SCHEMA and REPORT.  This reorganization of files
+     from the OTHER directory makes it easier to understand the structure
+     of the test suite and to locate files for the schema creation and
+     reporting steps.

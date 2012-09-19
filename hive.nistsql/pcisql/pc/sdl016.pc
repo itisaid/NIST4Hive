@@ -1,0 +1,120 @@
+/*  EMBEDDED C (file "SDL016.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/12/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL016.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 6. Schema Definition Language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     EMPNO1[4];
+     char     EMPNA1[21];
+     char     USERID[20];
+     long     i;
+     long     ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     i2;
+     long     i3;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl016.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("                     TEST0152     \n");
+     printf("         (CREATE VIEW WITH CHECK OPTION)   \n");
+     printf("  Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+     printf("  *** CREATE VIEW STAFFV2 \n");
+     printf("  *** AS SELECT  *  FROM STAFF \n");
+     printf("  ***    WHERE  GRADE >= 12 \n");
+     printf("  *** WITH CHECK OPTION \n");
+
+     EXEC SQL INSERT INTO STAFFV2
+              VALUES('E6','Ling',15,'Xian');
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :i
+              FROM   STAFFV2;
+
+     EXEC SQL INSERT INTO STAFFV2
+              VALUES('E7','Gallagher',10,'Rockville');
+
+     i2 = SQLCODE;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :ii
+              FROM   STAFFV2;
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf(" i = %ld, ii = %ld, i2 = %ld\n\n", i, ii, i2);
+     printf("The correct answer should be i = ii = 5 & i2 < 0 \n");
+
+     if ( i == 5 && ii == 5 && i2 < 0 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0152','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl016.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0152','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+}

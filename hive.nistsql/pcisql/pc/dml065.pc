@@ -1,0 +1,209 @@
+/*  EMBEDDED C (file "DML065.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/07/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML065.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE CHARACTER & INTEGER DATA WITH       */
+/*  VARIOUS FORMAT.                                              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.6  <target specification>           */
+/*                              <parameter specificatio>         */
+/*                          or  <variable specification>         */
+/*                 SECTION 5.11 <comparison predicate>           */
+/*                 SECTION 8.7  <insert statement>               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char EMPNA1[21];
+        char EMPNA2[3];
+        long grade1;
+        long grade2;
+        long grade3;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml065.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0284 ********************/
+
+    printf("         INSERT,SELECT char. strings with blank\n");
+    printf("Reference X3.135-1989 sections 5.6,5.11,8.7 \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0284     \n");
+    printf("    Reference 5.11 GR 5, 8.7 GR 7 b)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E6','Ed');
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E7','Ed ');
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E8','Ed                  ');
+strcpy(EMPNA2,"Ed");
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E9',:EMPNA2);
+strcpy(EMPNA1,"Ed");
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E10',:EMPNA1);
+strcpy(EMPNA1,"Ed ");
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E11',:EMPNA1);
+strcpy(EMPNA1,"Ed                  ");
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME)
+         VALUES ('E12',:EMPNA1);
+strcpy(EMPNA1,"Ed");
+EXEC SQL SELECT COUNT(*) INTO :grade1
+                  FROM STAFF
+                  WHERE EMPNAME = :EMPNA1;
+strcpy(EMPNA1,"Ed ");
+EXEC SQL SELECT COUNT(*) INTO :grade2
+                  FROM STAFF
+                  WHERE EMPNAME = :EMPNA1;
+strcpy(EMPNA1,"Ed                  ");
+EXEC SQL SELECT COUNT(*) INTO :grade3
+                  FROM STAFF
+                  WHERE EMPNAME = :EMPNA1;
+EXEC SQL SELECT EMPNAME INTO :EMPNA2
+                  FROM STAFF
+                  WHERE EMPNUM = 'E10';
+
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("          grade1 = 8\n");
+printf("          grade2 = 8\n");
+printf("          grade3 = 8\n");
+printf("          EMPNA2 = Ed\n");
+printf(" Your answer is :\n");
+
+printf("        grade1 = %ld\n",grade1);
+printf("        grade2 = %ld\n",grade2);
+printf("        grade3 = %ld\n",grade3);
+printf("        EMPNA2 = %s\n", EMPNA2);
+if(grade1 == 8 && grade2 == 8 && grade3 == 8 && strcmp(EMPNA2,"Ed") == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0284','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml065.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0284','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0284 ********************/
+
+
+
+/******************** BEGIN TEST0285 ********************/
+
+    printf("         INSERT,SELECT integer with various formats\n");
+    printf("Reference X3.135-1989 sections 5.6, 8.7 \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0285     \n");
+    printf("    Reference  8.7 GR 7 c)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+EXEC SQL INSERT INTO STAFF(EMPNUM,GRADE)
+         VALUES ('E6',25);
+EXEC SQL INSERT INTO STAFF(EMPNUM,GRADE)
+         VALUES ('E7',25.0);
+EXEC SQL INSERT INTO STAFF(EMPNUM,GRADE)
+         VALUES ('E8',-25);
+EXEC SQL INSERT INTO STAFF(EMPNUM,GRADE)
+         VALUES ('E9',25.000);
+grade1 = 25;
+EXEC SQL INSERT INTO STAFF(EMPNUM,GRADE)
+         VALUES ('E10',:grade1);
+grade1 = -25;
+EXEC SQL INSERT INTO STAFF(EMPNUM,GRADE)
+         VALUES ('E11',:grade1);
+EXEC SQL UPDATE STAFF
+         SET GRADE = -GRADE
+         WHERE GRADE < 0;
+grade2 = 25;
+EXEC SQL SELECT COUNT(*) INTO :grade1
+                  FROM STAFF
+                  WHERE GRADE = :grade2;
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("          grade1 = 6\n");
+printf(" Your answer is :\n");
+
+printf("        grade1 = %ld\n",grade1);
+    if (grade1 == 6)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0285','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml065.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0285','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0285 ********************/
+
+
+
+
+
+
+
+exit(errcnt);
+}

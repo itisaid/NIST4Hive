@@ -1,0 +1,179 @@
+! ----------------------------------------------------------------------
+!                     IDENTIFICATION SECTION                  
+!       SQL Schemas and All Programming language Interfaces
+! ----------------------------------------------------------------------
+!
+sub *.* /59-byte ID/
+/59-byte ID/___________________________________________________________/
+!
+! Document version of TEd used, for audit purposes.
+!
+sub *.* /TEd Version #/ -m
+"TEd Version #"TEd Version $ver"
+!
+!
+! ----------------------------------------------------------------------
+!                     MAINTENANCE SECTION                  
+! ----------------------------------------------------------------------
+!
+! Use the  -t  option on TEd to apply the official maintenance file.
+! Then use a second  -t  option on TEd to apply this file.
+!      OR     
+! Insert the entire maintenance file in this position.
+!
+! ----------------------------------------------------------------------
+!                     LOGIN SECTION                  
+! ----------------------------------------------------------------------
+!
+! Changes to accomplish login and to establish the ANSI-standard environment
+!   are coded here.  You are allowed to insert code at the beginning of each
+!   schema file, each SQL module, each program file, and each Interactive
+!   SQL command file.
+!
+! Examples for schema files and for Embedded SQL C are:
+!          ins< *.std /CREATE SCHEMA/
+!                  SET DEFAULT SCHEMA MODE ANSI;
+!          ins< *.pc /AUTHID(uid)/
+!                  EXEC SQL SET DEFAULT MODE ANSI;
+!          rep  *.pc /AUTHID(uid)/
+!                  EXEC SQL CONNECT :uid IDENTIFIED BY :uid;
+!                  EXEC SQL SET ISOLATION TO SERIALIZABLE;
+!
+! See the sample TEd files for other test suite types for more examples.
+!
+! ----------------------------------------------------------------------
+!                     IMPLEMENTOR-DEFINED SECTION
+! ----------------------------------------------------------------------
+!
+! Install implementor-defined data type for indicator variable:
+! For example, to install "long" as the C indicator data type, code
+!            sub *.[ps]c /indic/
+!            /short/long/
+!
+! Install implementor-defined precision of SQLCODE for COBOL only:
+!            sub *.[ps]c /SQLCODE/
+!            /S9(9)/S9(4)/
+!
+! Modify program dml063 to declare vendor-reserved key words:
+! For example, to declare UPDATE vendor-reserved in Embedded SQL C, code 
+!            del *dml063.pc /char UPDATE[4]/
+!            del *dml063.pc /:UPDATE/,UPDATE)/
+!
+! Install vendor-supplied extensions to demonstrate FIPS Flagging:
+! (Replace the underscores with vendor-supplied extensions.)
+! 
+sub *flg005.pc //
+/SUBSTR(EMPNAME,1,3) = 'Ali'/____________________/
+/ABS(GRADE) = 12/_________________/
+!
+! Change 18-character AUTHORIZATION ID to max supported in this DBMS/OS:
+!            sub *.* /CANWEPARSELENGTH18/
+!            /CANWEPARSELENGTH18/WECANPARSE12/
+!
+! Remove schema elements exceeding 
+! implementation-defined limits which cause schema to fail:
+! Removal is allowed after proof (error messages or documentation)
+! that an implementation-defined limit has been exceeded.
+!
+!     del *schema1c1.* /TEXT256/
+!     del *schema1c1.* /TEXT512/
+!     del *schema1c1.* /TEXT1024/
+!     del *schema5c1.s* /TINY/
+!
+! Change COBOL programs to specify correct source and object computers:
+!            sub *.[ps]co /-COMPUTER./
+!            /xyz/______________/
+!
+! SQLSTATE may be abbreviated SQLSTA if the FORTRAN compiler does not
+!   support identifier names of length 8 (this is not an SQL nonconformity):
+!            sub *dml081.[ps]fo /SQLSTATE/
+!            /SQLSTATE/SQLSTA/
+!
+! See the sample TEd files for other test suite types for more examples.
+!
+! ----------------------------------------------------------------------
+!                     APPROVED CHANGES SECTION
+! ----------------------------------------------------------------------
+!
+! Include here any changes approved by NIST for this validation:
+!
+! For example, to lengthen concurrency test #0230 (according to documentation),
+!   to allow interleaving for a DBMS using "burst" mode CPU allocation:
+!            sub *mp?001.[ps]* /keymax/ -i
+!            /50/300/
+!
+! ----------------------------------------------------------------------
+!                     SCHEMA PRIVILEGE VIOLATION PROCESSING SECTION
+! ----------------------------------------------------------------------
+!
+! Use the *.pv1, *.pv2, ..., *.ok series for each standard schema, if possible.
+! Otherwise, read the instructions in the documentation and in file
+! schema/chgsch.ted 
+!
+! ----------------------------------------------------------------------
+!                     DATE-TIME STAMP SECTION
+! ----------------------------------------------------------------------
+!
+! See the sample TEd files for other test suite types for examples.
+!
+! ----------------------------------------------------------------------
+!                     SCHEMA SYNTAX DEFICIENCIES SECTION                  
+! ----------------------------------------------------------------------
+!
+! If a schema file cannot be executed because the SQL implementation issues 
+!   a fatal syntax error message for a minor deficiency which is not
+!   the purpose of the test case, propose a change to NIST.  
+! A syntax change should be made to allow an SQL implementation 
+!   to demonstrate functionality, i.e. semantic conformance.
+! [A global change will be counted as a single deficiency.]
+!
+! Note that the use of schema files with file extension "smi" counts as one
+!   schema deficiency:  "Additional nonstandard syntax (semicolon) needed
+!                    after each create table, create view, grant."
+!
+! Note that the use of schema1.nc counts as a second schema deficiency:
+!                    "UNIQUE syntax not supported.  Additional nonstandard
+!                    syntax needed to support unique column(s)."
+!
+! Remove new schema features which MIGHT cause schemas to fail.
+! !!!  Removal constitutes nonconformity  !!!!
+!
+!     del *schema5c1.s*  /CREATE VIEW DV1 AS/DISTINCT HOURS FROM HU.WORKS/
+!     del *schema5c1.s* /CREATE VIEW "SULLIVAN.SELECT"/"SULLIVAN.SELECT" TO/
+!
+!  
+! ----------------------------------------------------------------------
+!                     SYNTAX DEFICIENCIES SECTION                  
+! ----------------------------------------------------------------------
+!
+!
+! If a program cannot be executed because the precompiler issues 
+!   a fatal syntax error message for a minor deficiency which is not
+!   the purpose of the test case, propose a change to NIST.  
+! A syntax change should be made to allow an SQL implementation 
+!   to demonstrate functionality, i.e. semantic conformance.
+! A global change will be counted as a single deficiency.
+!  
+! For example, to replace the SQLCODE declaration,
+!          ins< *.pc /<stdio.h>/
+!          #define SQLCODE sqlca.sqlcode
+!          rep *.pc /*long*SQLCODE*/ -p
+!          EXEC SQL INCLUDE SQLCA;
+!
+! See the sample TEd files for other test suite types for more examples.
+!
+! ----------------------------------------------------------------------
+!                     DELETED TESTS SECTION                  
+! ----------------------------------------------------------------------
+!
+! If a program cannot be executed because the precompiler issues
+!   a fatal syntax error message for one of the tests, either propose a
+!   change to NIST or delete the entire test so that the rest of the tests
+!   in the program may execute.  If this test is required, and not a FIPS
+!   Flagger test, it will appear as a deficiency on REPORT 4.
+!
+! For example, to remove test number 278 in Embedded SQL C, code
+!            del *dml061.pc /BEGIN TEST0278/END TEST0278/
+!
+! See the sample TEd files for other test suite types for more examples.
+!

@@ -1,0 +1,346 @@
+                                                  Updated December 31, 1996
+
+-- NIST SQL Test Suite, V6.0, Control Totals for Major Profiles, report.tot
+
+   These pages represent control totals for the following profiles:
+
+      FIPS 127-2 Entry SQL
+      Sizing Tests - Entry
+      FIPS 127-2 Transitional SQL
+      Sizing Tests - Transitional
+      FIPS 127-2 Intermediate SQL
+      Sizing Tests - Intermediate
+      XPG4 SQL Profile without IEF
+      XPG4 SQL Profile with IEF
+      Optional/Informational Tests
+
+   In most cases, a "nogo" (on your actual TOTALS report) counts as a "pass",
+      after proper documentation.
+   For some profiles, a "missing" (TEST 0399 for PC)
+      counts as a "pass" after proper documentation.
+
+
+   If your report totals do not match up to the appropriate profile below,
+      be sure to verify that the static reporting tables have been 
+      correctly loaded.  Verify the following counts:
+
+      select count(*) from reportfeature;
+--        should be     79   
+      select count(*) from implication;
+--        should be     90   
+      select count(*) from testprog;
+--        should be    464   
+      select count(*) from testcase;
+--        should be    899   
+      select count(*) from testfeature;
+--        should be   1458   
+ 
+   Updated December 31, 1996, to show Version 6.0 counts.
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>>>>>> FIPS 127-2 Entry SQL <<<<<<<<<<<<<<<<<<<
+ 
+ 
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA
+REQUIRED
+ pass       435    433    437    426    427    441    443    445    436    435
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      1      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+OPTIONAL
+ pass         0      0      1      0      0      0      0      1      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+ 
+NA           50     52     47     59     58     44     41     39     49     50
+DL            0      0      0      0      0      0      0      0      0      0
+WD            0      0      0      0      0      0      0      0      0      0
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----
+            485    485    485    485    485    485    485    485    485    485
+ 
+Grand total = 4850
+Problem total = 1
+ 
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>>>>>> Sizing Tests - Entry <<<<<<<<<<<<<<<<<<<
+ 
+ 
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA
+REQUIRED
+ pass        44     44     45     44     44     44     44     45     44     44
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+OPTIONAL
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+ 
+NA            1      1      0      1      1      1      1      0      1      1
+DL            0      0      0      0      0      0      0      0      0      0
+WD            0      0      0      0      0      0      0      0      0      0
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----
+             45     45     45     45     45     45     45     45     45     45
+ 
+Grand total = 450
+Problem total = 0
+ 
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>>> FIPS 127-2 Transitional SQL <<<<<<<<<<<<<<<
+ 
+ 
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA
+REQUIRED
+ pass       578    584    580    426    427    584    594    588    579    435
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      1      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+OPTIONAL
+ pass         0      0      1      0      0      0      0      1      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+ 
+NA           59     53     56    211    210     53     42     48     58    202
+DL            0      0      0      0      0      0      0      0      0      0
+WD            0      0      0      0      0      0      0      0      0      0
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----
+            637    637    637    637    637    637    637    637    637    637
+ 
+Grand total = 6370
+Problem total = 1
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>>> Sizing Tests - Transitional <<<<<<<<<<<<<<<
+ 
+ 
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA
+REQUIRED
+ pass        50     52     51     44     44     50     52     51     50     44
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+OPTIONAL
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+ 
+NA            3      1      2      9      9      3      1      2      3      9
+DL            0      0      0      0      0      0      0      0      0      0
+WD            0      0      0      0      0      0      0      0      0      0
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----
+             53     53     53     53     53     53     53     53     53     53
+ 
+Grand total = 530
+Problem total = 0
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+
+>>>>>>>>>>>>>>>> FIPS 127-2 Intermediate SQL <<<<<<<<<<<<<<<
+
+
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA  
+REQUIRED
+ pass       745    752    747    426    427    750    761    754    745    435
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      1      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+OPTIONAL
+ pass         0      0      1      0      0      0      0      1      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+
+NA           60     53     57    379    378     55     43     50     60    370 
+DL            0      0      0      0      0      0      0      0      0      0 
+WD            0      0      0      0      0      0      0      0      0      0 
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----- 
+            805    805    805    805    805    805    805    805    805    805 
+
+Grand total = 8050
+Problem total = 1
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>>> Sizing Tests - Intermediate <<<<<<<<<<<<<<<
+
+
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA  
+REQUIRED
+ pass        63     65     64     44     44     63     65     64     63     44 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+OPTIONAL
+ pass         0      0      0      0      0      0      0      0      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+
+NA            3      1      2     22     22      3      1      2      3     22 
+DL            0      0      0      0      0      0      0      0      0      0 
+WD            0      0      0      0      0      0      0      0      0      0 
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----- 
+             66     66     66     66     66     66     66     66     66     66 
+
+Grand total = 660
+Problem total = 0
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>> XPG4 SQL Profile without IEF <<<<<<<<<<<<<<<
+ 
+ 
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA
+REQUIRED
+ pass         0      0      0      0      0      0    417    416      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      1      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+OPTIONAL
+ pass         0      0      0      0      0      0      0      1      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0
+ fail         0      0      0      0      0      0      0      0      0      0
+ missing      0      0      0      0      0      0      0      0      0      0
+ nogo         0      0      0      0      0      0      0      0      0      0
+ 
+NA          463    463    463    463    463    463     45     46    463    463
+DL            0      0      0      0      0      0      0      0      0      0
+WD            0      0      0      0      0      0      0      0      0      0
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----
+            463    463    463    463    463    463    463    463    463    463
+ 
+Grand total = 4630
+Problem total = 1
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>>>> XPG4 SQL Profile with IEF <<<<<<<<<<<<<<<<
+
+
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA  
+REQUIRED
+ pass         0      0      0      0      0      0    503    502      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      1      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+OPTIONAL
+ pass         0      0      0      0      0      0      0      1      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+
+NA          549    549    549    549    549    549     45     46    549    549 
+DL            0      0      0      0      0      0      0      0      0      0 
+WD            0      0      0      0      0      0      0      0      0      0 
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----- 
+            549    549    549    549    549    549    549    549    549    549 
+
+Grand total = 5490
+Problem total = 1
+
+
+************************************************************
+************************** TOTALS **************************
+************************************************************
+
+>>>>>>>>>>>>>>> Optional/Informational Tests <<<<<<<<<<<<<<<
+
+
+            MAD     MC    MCO    MFO    MPA    PAD     PC    PCO    PFO    PPA  
+REQUIRED
+ pass        11      8      8      8      8     11      8      8      8      8 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+OPTIONAL
+ pass         0      0      0      0      0      0      0      0      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+UNDER REVIEW
+ pass         0      0      0      0      0      0      0      0      0      0 
+ fail         0      0      0      0      0      0      0      0      0      0 
+ missing      0      0      0      0      0      0      0      0      0      0 
+ nogo         0      0      0      0      0      0      0      0      0      0 
+
+NA            0      3      3      3      3      0      3      3      3      3 
+DL            0      0      0      0      0      0      0      0      0      0 
+WD            0      0      0      0      0      0      0      0      0      0 
+            -----  -----  -----  -----  -----  -----  -----  -----  -----  ----- 
+             11     11     11     11     11     11     11     11     11     11 
+
+Grand total = 110
+Problem total = 0
+

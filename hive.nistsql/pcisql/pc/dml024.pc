@@ -1,0 +1,418 @@
+/*  EMBEDDED C (file "DML024.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML024.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SEARCH CONDITIONS FOR SQL.          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 5.18 <search condition>              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char     EMPNO1[4];
+     char     SCITY[16];
+     char     WEMP[4];
+     char     WPNUM[4];
+     long     ii;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     i;
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml024.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0108 ********************/
+
+printf("                   TEST0108\n");
+printf(" Reference ANSI X3.135-1989 5.18 <search condition> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Select all from a table \n");
+printf ("*** SELECT EMPNUM, CITY \n");
+printf ("*** FROM   STAFF \n");
+printf ("*** WHERE  EMPNUM='E1' OR NOT(EMPNUM='E1') \n");
+
+EXEC SQL DECLARE S1 CURSOR FOR
+          SELECT EMPNUM,CITY
+          FROM   STAFF
+          WHERE  EMPNUM='E1' OR NOT(EMPNUM='E1');
+EXEC SQL OPEN S1;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     CITY \n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S1 INTO
+               :EMPNO1,:SCITY;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s\n",EMPNO1,SCITY);
+          }
+     }
+EXEC SQL CLOSE S1;
+
+if ( i == 5)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0108','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml024.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0108','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0108 ********************/
+/******************** BEGIN TEST0109 ********************/
+  
+
+printf("                   TEST0109\n");
+printf(" Reference ANSI X3.135-1989 5.18 <search condition> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Select nothing from a table \n");
+printf ("*** SELECT EMPNUM, CITY \n");
+printf ("*** FROM   STAFF \n");
+printf ("*** WHERE  EMPNUM='E1' AND NOT(EMPNUM='E1') \n");
+
+EXEC SQL DECLARE S2 CURSOR FOR
+          SELECT EMPNUM,CITY
+          FROM   STAFF
+          WHERE  EMPNUM='E1' AND NOT(EMPNUM='E1');
+EXEC SQL OPEN S2;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     CITY\n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S2 INTO
+               :EMPNO1,:SCITY;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s\n",EMPNO1,SCITY);
+          }
+     }
+EXEC SQL CLOSE S2;
+
+if ( i == 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0109','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml024.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0109','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0109 ********************/
+/******************** BEGIN TEST0110 ********************/
+ 
+printf("                   TEST0110\n");
+printf(" Reference ANSI X3.135-1989 5.18 <search condition> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** unknown OR NOT(unknown) \n");
+printf ("*** INSERT INTO WORKS \n");
+printf ("*** VALUES ('E8','P8',NULL) \n");
+printf ("*** SELECT EMPNUM,PNUM \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  HOURS < (SELECT HOURS FROM WORKS \n");
+printf ("***               WHERE  EMPNUM = 'E8') \n");
+printf ("*** OR NOT(HOURS < (SELECT HOURS FROM WORKS \n");
+printf ("***               WHERE  EMPNUM = 'E8') \n");
+
+
+EXEC SQL INSERT INTO WORKS
+          VALUES('E8','P8',NULL);
+
+EXEC SQL DECLARE S3 CURSOR FOR
+          SELECT EMPNUM,PNUM
+          FROM   WORKS
+          WHERE HOURS < (SELECT HOURS FROM WORKS
+                    WHERE EMPNUM = 'E8')
+          OR NOT(HOURS< (SELECT HOURS FROM WORKS
+                    WHERE EMPNUM = 'E8'));
+EXEC SQL OPEN S3;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     PNUM\n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S3 INTO
+               :WEMP,:WPNUM;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s\n",WEMP,WPNUM);
+          }
+     }
+
+EXEC SQL ROLLBACK WORK;
+
+if ( i == 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0110','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml024.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0110','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0110 ********************/
+/******************** BEGIN TEST0111 ********************/
+
+printf("                   TEST0111\n");
+printf(" Reference ANSI X3.135-1989 5.18 <search condition> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** unknown  AND NOT(unknown) \n");
+printf ("*** SELECT EMPNUM,PNUM \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  HOURS < (SELECT HOURS FROM WORKS \n");
+printf ("***               WHERE  EMPNUM = 'E8') \n");
+printf ("*** AND NOT(HOURS < (SELECT HOURS FROM WORKS \n");
+printf ("***               WHERE  EMPNUM = 'E8') \n");
+
+EXEC SQL INSERT INTO WORKS
+          VALUES('E8','P8',NULL);
+
+EXEC SQL DECLARE S4 CURSOR FOR
+          SELECT EMPNUM,PNUM
+          FROM   WORKS
+          WHERE HOURS < (SELECT HOURS FROM WORKS
+                    WHERE EMPNUM = 'E8')
+          AND NOT(HOURS< (SELECT HOURS FROM WORKS
+                    WHERE EMPNUM = 'E8'));
+EXEC SQL OPEN S4;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     PNUM\n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S4 INTO
+               :WEMP,:WPNUM;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s\n",WEMP,WPNUM);
+          }
+     }
+
+EXEC SQL ROLLBACK WORK;
+
+if ( i == 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0111','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml024.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0111','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0111 ********************/
+/******************** BEGIN TEST0112 ********************/
+ 
+printf("                   TEST0112\n");
+printf(" Reference ANSI X3.135-1989 5.18 <search condition> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** unknown  AND true \n");
+printf ("*** SELECT EMPNUM,PNUM \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  HOURS < (SELECT HOURS FROM WORKS \n");
+printf ("***               WHERE  EMPNUM = 'E8') \n");
+printf ("*** AND    HOURS IN (SELECT HOURS FROM WORKS) \n");
+
+EXEC SQL INSERT INTO WORKS
+          VALUES('E8','P8',NULL);
+
+EXEC SQL DECLARE S5 CURSOR FOR
+          SELECT EMPNUM,PNUM
+          FROM   WORKS
+          WHERE HOURS < (SELECT HOURS FROM WORKS
+                    WHERE EMPNUM = 'E8')
+          AND   HOURS IN (SELECT HOURS FROM WORKS);
+EXEC SQL OPEN S5;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     PNUM\n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S5 INTO
+               :WEMP,:WPNUM;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s\n",WEMP,WPNUM);
+          }
+     }
+
+EXEC SQL ROLLBACK WORK;
+
+if ( i == 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0112','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml024.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0112','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0112 ********************/
+/******************** BEGIN TEST0113 ********************/
+ 
+printf("                   TEST0113\n");
+printf(" Reference ANSI X3.135-1989 5.18 <search condition> GR\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** unknown  OR true \n");
+printf ("*** SELECT EMPNUM,PNUM \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  HOURS < (SELECT HOURS FROM WORKS \n");
+printf ("***               WHERE  EMPNUM = 'E8') \n");
+printf ("*** OR     HOURS IN (SELECT HOURS FROM WORKS) \n");
+
+EXEC SQL INSERT INTO WORKS
+          VALUES('E8','P8',NULL);
+
+EXEC SQL DECLARE S6 CURSOR FOR
+          SELECT EMPNUM,PNUM
+          FROM   WORKS
+          WHERE HOURS < (SELECT HOURS FROM WORKS
+                    WHERE EMPNUM = 'E8')
+          OR    HOURS IN (SELECT HOURS FROM WORKS);
+EXEC SQL OPEN S6;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     PNUM\n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S6 INTO
+               :WEMP,:WPNUM;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s\n",WEMP,WPNUM);
+          }
+     }
+
+printf("     \n\n sqlcode = %ld,     i = %ld\n",SQLCODE,i);
+
+EXEC SQL ROLLBACK WORK;
+
+if ( i == 12)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0113','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml024.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0113','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0113 ********************/
+
+exit(errcnt);
+
+}

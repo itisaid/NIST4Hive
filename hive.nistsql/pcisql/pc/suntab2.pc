@@ -1,0 +1,332 @@
+/*  EMBEDDED C (file "SUNTAB2.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SUNTAB2.PC                                                   */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*   This routine initializes the contents of tables:            */
+/*        SIZ1_P, SIZ1_F                                         */
+/*        SIZ2_P, SIZ2_F1 through SIZ2_F10                       */
+/*        SIZ3_P1 through SIZ3_P10, SIZ3_F                       */
+/*   This routine may be run at any time to re-initialize tables.*/
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+long err;
+
+main()
+{
+strcpy(uid,"SUN");
+AUTHID(uid);
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, suntab2.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+EXEC SQL DELETE FROM SIZ1_F;
+EXEC SQL DELETE FROM SIZ1_P;
+EXEC SQL DELETE FROM SIZ2_F1;
+EXEC SQL DELETE FROM SIZ2_F2;
+EXEC SQL DELETE FROM SIZ2_F3;
+EXEC SQL DELETE FROM SIZ2_F4;
+EXEC SQL DELETE FROM SIZ2_F5;
+EXEC SQL DELETE FROM SIZ2_F6;
+EXEC SQL DELETE FROM SIZ2_F7;
+EXEC SQL DELETE FROM SIZ2_F8;
+EXEC SQL DELETE FROM SIZ2_F9;
+EXEC SQL DELETE FROM SIZ2_F10;
+EXEC SQL DELETE FROM SIZ2_P;
+EXEC SQL DELETE FROM SIZ3_F;
+EXEC SQL DELETE FROM SIZ3_P1;
+EXEC SQL DELETE FROM SIZ3_P2;
+EXEC SQL DELETE FROM SIZ3_P3;
+EXEC SQL DELETE FROM SIZ3_P4;
+EXEC SQL DELETE FROM SIZ3_P5;
+EXEC SQL DELETE FROM SIZ3_P6;
+EXEC SQL DELETE FROM SIZ3_P7;
+EXEC SQL DELETE FROM SIZ3_P8;
+EXEC SQL DELETE FROM SIZ3_P9;
+EXEC SQL DELETE FROM SIZ3_P10;
+
+
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E1','TTT',1,'SSS',10,'RRR','HHH','YYY',20);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E1','TTS',1,'SSS',10,'RRR','HHH','YYY',21);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E2','TTT',1,'SSS',10,'RRR','HHH','YYY',22);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E3','TTT',1,'SSS',11,'RRR','HHH','YYY',23);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E4','TTT',2,'SSS',10,'RRR','HHH','YYY',24);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E1','TTS',3,'SSS',10,'RRR','HHH','YYY',25);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E2','TTT',1,'SSS',10,'TRR','HHH','YYY',26);
+EXEC SQL INSERT INTO SIZ1_P VALUES
+         ('E3','TTT',4,'SSS',11,'RRR','HHH','YYY',27);
+
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E1','TTT',1,'SSS',10,'RRR','YYY',90,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E1','TTS',1,'SSS',10,'RRR','YYY',91,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E2','TTT',1,'SSS',10,'RRR','YYY',92,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E3','TTT',1,'SSS',11,'RRR','YYY',93,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E4','TTT',2,'SSS',10,'RRR','YYY',94,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E1','TTS',3,'SSS',10,'RRR','YYY',95,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E2','TTT',1,'SSS',10,'TRR','YYY',96,20);
+EXEC SQL INSERT INTO SIZ1_F VALUES
+         ('E2','TTT',1,'SSS',10,'TRR','YYY',97,20);
+
+EXEC SQL INSERT INTO SIZ2_P VALUES
+         ('  A','  B',1,'  C',2,'  D','  E',3,4,5,'TTT');
+EXEC SQL INSERT INTO SIZ2_P VALUES
+         ('  B','  C',2,'  D',3,'  E','  F',4,5,6,'TTT');
+EXEC SQL INSERT INTO SIZ2_P VALUES
+         ('  C','  D',3,'  E',4,'  F','  G',5,6,7,'TTT');
+EXEC SQL INSERT INTO SIZ2_P VALUES
+         ('  D','  E',4,'  F',5,'  G','  H',6,7,8,'TTT');
+
+EXEC SQL INSERT INTO SIZ2_F1 VALUES ('  A','AAA');
+EXEC SQL INSERT INTO SIZ2_F1 VALUES ('  C','AAB');
+EXEC SQL INSERT INTO SIZ2_F1 VALUES ('  C','AAC');
+EXEC SQL INSERT INTO SIZ2_F1 VALUES ('  D','AAD');
+
+EXEC SQL INSERT INTO SIZ2_F2 VALUES ('  E','BBA');
+EXEC SQL INSERT INTO SIZ2_F2 VALUES ('  E','BBB');
+EXEC SQL INSERT INTO SIZ2_F2 VALUES ('  C','BBC');
+EXEC SQL INSERT INTO SIZ2_F2 VALUES ('  D','BBD');
+
+EXEC SQL INSERT INTO SIZ2_F3 VALUES (1,'CCA');
+EXEC SQL INSERT INTO SIZ2_F3 VALUES (1,'CCB');
+EXEC SQL INSERT INTO SIZ2_F3 VALUES (2,'CCC');
+EXEC SQL INSERT INTO SIZ2_F3 VALUES (3,'CCD');
+
+EXEC SQL INSERT INTO SIZ2_F4 VALUES ('  E','DDA');
+EXEC SQL INSERT INTO SIZ2_F4 VALUES ('  F','DDB');
+EXEC SQL INSERT INTO SIZ2_F4 VALUES ('  C','DDC');
+EXEC SQL INSERT INTO SIZ2_F4 VALUES ('  D','DDD');
+
+EXEC SQL INSERT INTO SIZ2_F5 VALUES (4,'EEA');
+EXEC SQL INSERT INTO SIZ2_F5 VALUES (4,'EEB');
+EXEC SQL INSERT INTO SIZ2_F5 VALUES (2,'EEC');
+EXEC SQL INSERT INTO SIZ2_F5 VALUES (3,'EED');
+
+EXEC SQL INSERT INTO SIZ2_F6 VALUES ('  E','FFA');
+EXEC SQL INSERT INTO SIZ2_F6 VALUES ('  F','FFB');
+EXEC SQL INSERT INTO SIZ2_F6 VALUES ('  G','FFC');
+EXEC SQL INSERT INTO SIZ2_F6 VALUES ('  D','FFD');
+
+EXEC SQL INSERT INTO SIZ2_F7 VALUES ('  H','GGA');
+EXEC SQL INSERT INTO SIZ2_F7 VALUES ('  F','GGB');
+EXEC SQL INSERT INTO SIZ2_F7 VALUES ('  G','GGC');
+EXEC SQL INSERT INTO SIZ2_F7 VALUES ('  H','GGD');
+
+EXEC SQL INSERT INTO SIZ2_F8 VALUES (4,'HHA');
+EXEC SQL INSERT INTO SIZ2_F8 VALUES (4,'HHB');
+EXEC SQL INSERT INTO SIZ2_F8 VALUES (5,'HHC');
+EXEC SQL INSERT INTO SIZ2_F8 VALUES (3,'HHD');
+
+EXEC SQL INSERT INTO SIZ2_F9 VALUES (4,'JJA');
+EXEC SQL INSERT INTO SIZ2_F9 VALUES (4,'JJB');
+EXEC SQL INSERT INTO SIZ2_F9 VALUES (6,'JJC');
+EXEC SQL INSERT INTO SIZ2_F9 VALUES (7,'JJD');
+
+EXEC SQL INSERT INTO SIZ2_F10 VALUES (5,'KKA');
+EXEC SQL INSERT INTO SIZ2_F10 VALUES (5,'KKB');
+EXEC SQL INSERT INTO SIZ2_F10 VALUES (7,'KKC');
+EXEC SQL INSERT INTO SIZ2_F10 VALUES (8,'KKD');
+
+EXEC SQL INSERT INTO SIZ3_P1 VALUES ('  A','AAA');
+EXEC SQL INSERT INTO SIZ3_P1 VALUES ('  B','AAB');
+EXEC SQL INSERT INTO SIZ3_P1 VALUES ('  C','AAC');
+EXEC SQL INSERT INTO SIZ3_P1 VALUES ('  D','AAD');
+
+EXEC SQL INSERT INTO SIZ3_P2 VALUES ('  B','BBA');
+EXEC SQL INSERT INTO SIZ3_P2 VALUES ('  C','BBB');
+EXEC SQL INSERT INTO SIZ3_P2 VALUES ('  D','BBC');
+EXEC SQL INSERT INTO SIZ3_P2 VALUES ('  E','BBD');
+
+EXEC SQL INSERT INTO SIZ3_P3 VALUES (1,'CCA');
+EXEC SQL INSERT INTO SIZ3_P3 VALUES (2,'CCB');
+EXEC SQL INSERT INTO SIZ3_P3 VALUES (3,'CCC');
+EXEC SQL INSERT INTO SIZ3_P3 VALUES (4,'CCD');
+
+EXEC SQL INSERT INTO SIZ3_P4 VALUES ('  E','DDA');
+EXEC SQL INSERT INTO SIZ3_P4 VALUES ('  F','DDB');
+EXEC SQL INSERT INTO SIZ3_P4 VALUES ('  C','DDC');
+EXEC SQL INSERT INTO SIZ3_P4 VALUES ('  D','DDD');
+
+EXEC SQL INSERT INTO SIZ3_P5 VALUES (4,'EEA');
+EXEC SQL INSERT INTO SIZ3_P5 VALUES (5,'EEB');
+EXEC SQL INSERT INTO SIZ3_P5 VALUES (2,'EEC');
+EXEC SQL INSERT INTO SIZ3_P5 VALUES (3,'EED');
+
+EXEC SQL INSERT INTO SIZ3_P6 VALUES ('  E','FFA');
+EXEC SQL INSERT INTO SIZ3_P6 VALUES ('  F','FFB');
+EXEC SQL INSERT INTO SIZ3_P6 VALUES ('  G','FFC');
+EXEC SQL INSERT INTO SIZ3_P6 VALUES ('  D','FFD');
+
+EXEC SQL INSERT INTO SIZ3_P7 VALUES ('  H','GGA');
+EXEC SQL INSERT INTO SIZ3_P7 VALUES ('  F','GGB');
+EXEC SQL INSERT INTO SIZ3_P7 VALUES ('  G','GGC');
+EXEC SQL INSERT INTO SIZ3_P7 VALUES ('  E','GGD');
+
+EXEC SQL INSERT INTO SIZ3_P8 VALUES (4,'HHA');
+EXEC SQL INSERT INTO SIZ3_P8 VALUES (6,'HHB');
+EXEC SQL INSERT INTO SIZ3_P8 VALUES (5,'HHC');
+EXEC SQL INSERT INTO SIZ3_P8 VALUES (3,'HHD');
+
+EXEC SQL INSERT INTO SIZ3_P9 VALUES (4,'JJA');
+EXEC SQL INSERT INTO SIZ3_P9 VALUES (5,'JJB');
+EXEC SQL INSERT INTO SIZ3_P9 VALUES (6,'JJC');
+EXEC SQL INSERT INTO SIZ3_P9 VALUES (7,'JJD');
+
+EXEC SQL INSERT INTO SIZ3_P10 VALUES (5,'KKA');
+EXEC SQL INSERT INTO SIZ3_P10 VALUES (6,'KKB');
+EXEC SQL INSERT INTO SIZ3_P10 VALUES (7,'KKC');
+EXEC SQL INSERT INTO SIZ3_P10 VALUES (8,'KKD');
+
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  A','  B',1,'  C',2,'  D','  E',3,4,5,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  B','  C',2,'  D',3,'  E','  F',4,5,6,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  C','  D',3,'  E',4,'  F','  G',5,6,7,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  D','  E',4,'  F',5,'  G','  H',6,7,8,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  B','  B',1,'  C',2,'  D','  E',3,4,5,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  C','  C',2,'  D',3,'  E','  F',4,5,6,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  C','  D',3,'  E',4,'  F','  G',5,6,7,'TTT');
+EXEC SQL INSERT INTO SIZ3_F VALUES
+     ('  D','  E',4,'  F',5,'  G','  H',6,7,8,'TTT');
+
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ1_P;
+err = 0;
+if (count1 != 8)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ1_F;
+if (count1 != 8)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_P;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F1;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F2;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F3;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F4;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F5;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F6;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F7;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F8;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F9;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ2_F10;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P1;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P2;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P3;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P4;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P5;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P6;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P7;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P8;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P9;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_P10;
+if (count1 != 4)
+    err = err + 1;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM SIZ3_F;
+if (count1 != 8)
+    err = err + 1;
+
+if (err == 0)
+  {
+  printf("SIZ1_P, SIZ1_F, SIZ2_P, SIZ2_F1 through SIZ2_F10,\n"); 
+  printf("       SIZ3_P1 through SIZ3_P10 and SIZ3_F\n");
+  printf("       were created successfully!\n");
+  }
+else
+  {
+    printf("***********************************************\n");
+    printf("*  ERROR in SIZ1_P, SIZ1_F,                   *\n");
+    printf("*           SIZ2_P, SIZ2_F1 through SIZ2_F10, *\n");
+    printf("*  SIZ3_P1 through SIZ3_P10, or  SIZ3_F  !!!  *\n");
+    printf("***********************************************\n");
+  }
+
+EXEC SQL COMMIT WORK;
+
+exit(errcnt);
+}

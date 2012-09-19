@@ -1,0 +1,1987 @@
+/*  EMBEDDED C (file "DML112.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/11/10 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML112.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests NULLs with DATETIME data types and in     */
+/*  outer joins, datetimes in a <default clause>, TRIM, and also */
+/*  some schema manipulation statements.                         */
+/*  This is the non-dynamic version of DML113.PC.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+short indic1;
+char chx[2];
+char ch3[3];
+char ch9[10];
+char ch10[11];
+char chtime[9];
+char ch1[12];
+char ch2[15];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml112.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0621 ********************/
+flag = 1;
+
+     printf("                  TEST0621 \n");
+     printf("            DATETIME NULLs (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 5,20\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE MERCH (\n");
+printf("  ITEMKEY INT,\n");
+printf("  ORDERED DATE,\n");
+printf("  RDATE DATE,\n");
+printf("  RTIME TIME,\n");
+printf("  SOLD TIMESTAMP);\n");
+
+EXEC SQL CREATE TABLE MERCH (
+  ITEMKEY INT,
+  ORDERED DATE,
+  RDATE DATE,
+  RTIME TIME,
+  SOLD TIMESTAMP);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE TURNAROUND (\n");
+printf("  ITEMKEY INT,\n");
+printf("  MWAIT INTERVAL MONTH,\n");
+printf("  DWAIT INTERVAL DAY TO HOUR);\n");
+
+EXEC SQL CREATE TABLE TURNAROUND (
+  ITEMKEY INT,
+  MWAIT INTERVAL MONTH,
+  DWAIT INTERVAL DAY TO HOUR);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Do this with an outer join in a combined test later. */
+/* For FSQL, use SELECT DISTINCT (all that stuff)       */
+
+printf("CREATE VIEW INVENTORY AS\n");
+printf("  SELECT MERCH.ITEMKEY AS ITEMKEY, ORDERED,\n");
+printf("  MWAIT, DWAIT FROM MERCH, TURNAROUND COR1 WHERE RDATE\n");
+printf("  IS NOT NULL AND SOLD IS NULL AND\n");
+printf("  MERCH.ITEMKEY = COR1.ITEMKEY\n");
+printf("         UNION\n");
+printf("  SELECT ITEMKEY, ORDERED,\n");
+printf("  CAST (NULL AS INTERVAL MONTH),\n");
+printf("  CAST (NULL AS INTERVAL DAY TO HOUR) FROM\n");
+printf("  MERCH WHERE RDATE IS NOT NULL AND SOLD IS NULL\n");
+printf("  AND MERCH.ITEMKEY NOT IN (SELECT ITEMKEY\n");
+printf("  FROM TURNAROUND);\n");
+
+EXEC SQL CREATE VIEW INVENTORY AS
+  SELECT MERCH.ITEMKEY AS ITEMKEY, ORDERED,
+  MWAIT, DWAIT FROM MERCH, TURNAROUND COR1 WHERE RDATE
+  IS NOT NULL AND SOLD IS NULL AND
+  MERCH.ITEMKEY = COR1.ITEMKEY
+         UNION
+  SELECT ITEMKEY, ORDERED,
+  CAST (NULL AS INTERVAL MONTH),
+  CAST (NULL AS INTERVAL DAY TO HOUR) FROM
+  MERCH WHERE RDATE IS NOT NULL AND SOLD IS NULL
+  AND MERCH.ITEMKEY NOT IN (SELECT ITEMKEY
+  FROM TURNAROUND);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Something ordered but not received */
+
+printf("INSERT INTO MERCH VALUES (\n");
+printf("  0, DATE '1993-11-23',\n");
+printf("  NULL, NULL, NULL);\n");
+
+EXEC SQL INSERT INTO MERCH VALUES (
+  0, DATE '1993-11-23',
+  NULL, NULL, NULL);
+
+CHCKOK ();
+printf("\n");
+
+/* Something we don't know what time it arrived */
+
+strcpy (chtime, "12:34:56");
+printf("chtime is 12:34:56\n");
+indic1 = -1;
+printf("indic1 = -1;\n");
+printf("INSERT INTO MERCH VALUES (\n");
+printf("  1, DATE '1993-12-10',\n");
+printf("  DATE '1994-01-03',\n");
+printf("  CAST (:chtime:indic1 AS TIME), NULL);\n");
+
+EXEC SQL INSERT INTO MERCH VALUES (
+  1, DATE '1993-12-10',
+  DATE '1994-01-03',
+  CAST (:chtime:indic1 AS TIME), NULL);
+
+CHCKOK ();
+printf("\n");
+
+/* Something back-ordered */
+
+printf("INSERT INTO MERCH VALUES (\n");
+printf("  2, DATE '1993-12-11',\n");
+printf("  NULL, NULL,\n");
+printf("  CAST ('TIMESTAMP ''1993-12-11 13:00:00''' AS TIMESTAMP));\n");
+
+EXEC SQL INSERT INTO MERCH VALUES (
+  2, DATE '1993-12-11',
+  NULL, NULL,
+  CAST ('TIMESTAMP ''1993-12-11 13:00:00''' AS TIMESTAMP));
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MERCH VALUES (\n");
+printf("  4, DATE '1993-01-26', DATE '1993-01-27',\n");
+printf("  NULL, NULL);\n");
+  
+EXEC SQL INSERT INTO MERCH VALUES (
+  4, DATE '1993-01-26', DATE '1993-01-27',
+  NULL, NULL);
+  
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TURNAROUND VALUES (\n");
+printf("  2, INTERVAL '1' MONTH, INTERVAL '20:0' DAY TO HOUR);\n");
+
+EXEC SQL INSERT INTO TURNAROUND VALUES (
+  2, INTERVAL '1' MONTH, INTERVAL '20:0' DAY TO HOUR);
+
+CHCKOK ();
+printf("\n");
+
+/* We have only a vague idea of the turnaround for this thing */
+
+printf ("chtime is 20:0\n");
+strcpy (chtime, "20:0    ");
+printf("indic1 = -1;\n");
+indic1 = -1;
+
+printf("INSERT INTO TURNAROUND VALUES (\n");
+printf("  5, INTERVAL '5' MONTH,\n");
+printf("  CAST (:chtime:indic1 AS INTERVAL DAY TO HOUR));\n");
+
+EXEC SQL INSERT INTO TURNAROUND VALUES (
+  5, INTERVAL '5' MONTH,
+  CAST (:chtime:indic1 AS INTERVAL DAY TO HOUR));
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TURNAROUND VALUES (\n");
+printf("  6, INTERVAL '2' MONTH, NULL);\n");
+
+EXEC SQL INSERT INTO TURNAROUND VALUES (
+  6, INTERVAL '2' MONTH, NULL);
+
+CHCKOK ();
+printf("\n");
+
+printf("SELECT COUNT(*) INTO :int1 FROM\n");
+printf("  MERCH A, MERCH B WHERE A.SOLD = B.SOLD;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM
+  MERCH A, MERCH B WHERE A.SOLD = B.SOLD;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1 FROM\n");
+printf("  MERCH A, MERCH B WHERE A.RTIME = B.RTIME;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM
+  MERCH A, MERCH B WHERE A.RTIME = B.RTIME;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1 FROM\n");
+printf("  MERCH WHERE RDATE IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM
+  MERCH WHERE RDATE IS NULL;
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1 FROM\n");
+printf("  TURNAROUND WHERE DWAIT IS NOT NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM
+  TURNAROUND WHERE DWAIT IS NOT NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT EXTRACT (DAY FROM RDATE) INTO :int1:indic1\n");
+printf("  FROM MERCH, TURNAROUND WHERE MERCH.ITEMKEY =\n");
+printf("  TURNAROUND.ITEMKEY;\n");
+
+int1 = -1;
+indic1 = 2;
+EXEC SQL SELECT EXTRACT (DAY FROM RDATE) INTO :int1:indic1
+  FROM MERCH, TURNAROUND WHERE MERCH.ITEMKEY =
+  TURNAROUND.ITEMKEY;
+
+CHCKOK ();
+printf("indic1 should be -1; its value is %ld\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("DECLARE C11211 CURSOR FOR\n");
+printf("  SELECT ITEMKEY FROM MERCH WHERE SOLD IS NOT NULL;\n");
+
+EXEC SQL DECLARE C11211 CURSOR FOR
+  SELECT ITEMKEY FROM MERCH WHERE SOLD IS NOT NULL;
+
+printf ("\n");
+
+printf("OPEN C11211;\n");
+EXEC SQL OPEN C11211;
+  
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("FETCH C11211 INTO :int1;\n");
+EXEC SQL FETCH C11211 INTO :int1;
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* Cursor left open. */
+
+printf("DECLARE C11212 CURSOR FOR\n");
+printf("  SELECT EXTRACT (HOUR FROM AVG (DWAIT))\n");
+printf("   FROM MERCH, TURNAROUND WHERE\n");
+printf("   MERCH.ITEMKEY = TURNAROUND.ITEMKEY OR\n");
+printf("   TURNAROUND.ITEMKEY NOT IN\n");
+printf("     (SELECT ITEMKEY FROM MERCH);\n");
+   
+EXEC SQL DECLARE C11212 CURSOR FOR
+  SELECT EXTRACT (HOUR FROM AVG (DWAIT))
+   FROM MERCH, TURNAROUND WHERE
+   MERCH.ITEMKEY = TURNAROUND.ITEMKEY OR
+   TURNAROUND.ITEMKEY NOT IN
+     (SELECT ITEMKEY FROM MERCH);
+   
+printf ("\n");
+
+printf("OPEN C11212;\n");
+EXEC SQL OPEN C11212;
+
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE can be 00000 or 01003; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "00000", 5)!=0 && strncmp(SQLSTATE,"01003",5)!=0)
+  flag=0;
+
+/* DML083 set the precedent for requiring 01003 on the fetches. */
+/* One might argue that it ought to be returned just on the     */
+/* open and never again.  DML083 is under dispute, so status    */
+/* codes are checked loosely here.                              */
+
+int1 = -1;
+printf("FETCH C11212 INTO :int1;\n");
+EXEC SQL FETCH C11212 INTO :int1;
+
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE can be 00000 or 01003; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "00000", 5)!=0 && strncmp(SQLSTATE,"01003",5)!=0)
+  flag=0;
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INVENTORY WHERE MWAIT IS NULL\n");
+printf("  AND DWAIT IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INVENTORY WHERE MWAIT IS NULL
+  AND DWAIT IS NULL;
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE MERCH CASCADE;\n");
+EXEC SQL DROP TABLE MERCH CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TURNAROUND CASCADE;\n");
+EXEC SQL DROP TABLE TURNAROUND CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0621','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml112.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0621','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0621 *********************/
+/******************** BEGIN TEST0623 ********************/
+flag = 1;
+
+     printf("                  TEST0623 \n");
+     printf("OUTER JOINs with NULLs and empty tables (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE JNULL1 (C1 INT, C2 INT);\n");
+EXEC SQL CREATE TABLE JNULL1 (C1 INT, C2 INT);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE JNULL2 (D1 INT, D2 INT);\n");
+EXEC SQL CREATE TABLE JNULL2 (D1 INT, D2 INT);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW JNULL3 AS\n");
+printf("  SELECT C1, D1, D2 FROM JNULL1 LEFT OUTER JOIN JNULL2\n");
+printf("  ON C2 = D2;\n");
+
+EXEC SQL CREATE VIEW JNULL3 AS
+  SELECT C1, D1, D2 FROM JNULL1 LEFT OUTER JOIN JNULL2
+  ON C2 = D2;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW JNULL4 AS\n");
+printf("  SELECT D1, D2 AS C2 FROM JNULL2;\n");
+
+EXEC SQL CREATE VIEW JNULL4 AS
+  SELECT D1, D2 AS C2 FROM JNULL2;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW JNULL5 AS\n");
+printf("  SELECT C1, D1, C2 FROM JNULL1 RIGHT OUTER JOIN JNULL4\n");
+printf("  USING (C2);\n");
+
+EXEC SQL CREATE VIEW JNULL5 AS
+  SELECT C1, D1, C2 FROM JNULL1 RIGHT OUTER JOIN JNULL4
+  USING (C2);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW JNULL6 AS\n");
+printf("  SELECT * FROM JNULL1 LEFT OUTER JOIN JNULL4\n");
+printf("  USING (C2);\n");
+
+EXEC SQL CREATE VIEW JNULL6 AS
+  SELECT * FROM JNULL1 LEFT OUTER JOIN JNULL4
+  USING (C2);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO JNULL1 VALUES (NULL, NULL);\n");
+EXEC SQL INSERT INTO JNULL1 VALUES (NULL, NULL);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO JNULL1 VALUES (1, NULL);\n");
+EXEC SQL INSERT INTO JNULL1 VALUES (1, NULL);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO JNULL1 VALUES (NULL, 1);\n");
+EXEC SQL INSERT INTO JNULL1 VALUES (NULL, 1);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO JNULL1 VALUES (1, 1);\n");
+EXEC SQL INSERT INTO JNULL1 VALUES (1, 1);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO JNULL1 VALUES (2, 2);\n");
+EXEC SQL INSERT INTO JNULL1 VALUES (2, 2);
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM JNULL3;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM JNULL3;
+
+CHCKOK ();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM JNULL3\n");
+printf("  WHERE D2 IS NOT NULL OR D1 IS NOT NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM JNULL3
+  WHERE D2 IS NOT NULL OR D1 IS NOT NULL;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1 FROM JNULL5;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM JNULL5;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1 FROM\n");
+printf("  JNULL6\n");
+printf("   WHERE C2 IS NOT NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM
+  JNULL6
+   WHERE C2 IS NOT NULL;
+
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+/* Nonempty table */
+
+printf("INSERT INTO JNULL2\n");
+printf("  SELECT * FROM JNULL1;\n");
+
+EXEC SQL INSERT INTO JNULL2
+  SELECT * FROM JNULL1;
+
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE JNULL2\n");
+printf("  SET D2 = 1 WHERE D2 = 2;\n");
+
+EXEC SQL UPDATE JNULL2
+  SET D2 = 1 WHERE D2 = 2;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM JNULL3;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM JNULL3;
+
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n\n", int1);
+if (int1 != 9)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM JNULL3 WHERE C1 IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM JNULL3 WHERE C1 IS NULL;
+
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM JNULL3 WHERE D1 IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM JNULL3 WHERE D1 IS NULL;
+
+CHCKOK ();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM JNULL3 WHERE D2 IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM JNULL3 WHERE D2 IS NULL;
+
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+printf("SELECT AVG(D1) * 10 INTO :int1\n");
+printf("  FROM JNULL3;\n");
+
+int1 = -1;
+EXEC SQL SELECT AVG(D1) * 10 INTO :int1
+  FROM JNULL3;
+
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 01003; its value is %s\n", SQLSTATE);
+if (strncmp(SQLSTATE,"01003",5)!=0)
+  flag=0;
+printf("int1 should be 15; its value is %ld\n\n", int1);
+if (int1 != 15)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM JNULL6\n");
+printf("   WHERE C2 = 1;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM JNULL6
+   WHERE C2 = 1;
+
+CHCKOK ();
+printf("int1 should be 6; its value is %ld\n\n", int1);
+if (int1 != 6)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM JNULL6\n");
+printf("   WHERE C2 IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM JNULL6
+   WHERE C2 IS NULL;
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM JNULL6\n");
+printf("   WHERE C2 = C1 AND\n");
+printf("  D1 IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM JNULL6
+   WHERE C2 = C1 AND
+  D1 IS NULL;
+
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE JNULL1 CASCADE;\n");
+EXEC SQL DROP TABLE JNULL1 CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE JNULL2 CASCADE;\n");
+EXEC SQL DROP TABLE JNULL2 CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0623','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml112.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0623','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0623 *********************/
+/******************** BEGIN TEST0625 ********************/
+flag = 1;
+
+     printf("                  TEST0625 \n");
+     printf("       ADD COLUMN and DROP COLUMN (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 3\n");
+     printf("    11.11 <add column definition>\n");
+     printf("    11.15 <drop column definition>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE CHANGG\n");
+printf("  (NAAM CHAR (14) NOT NULL PRIMARY KEY, AGE INT);\n");
+EXEC SQL CREATE TABLE CHANGG
+  (NAAM CHAR (14) NOT NULL PRIMARY KEY, AGE INT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW CHANGGVIEW AS\n");
+printf("  SELECT * FROM CHANGG;\n");
+EXEC SQL CREATE VIEW CHANGGVIEW AS
+  SELECT * FROM CHANGG;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* should not be able to drop CHANGG.NAAM RESTRICT due to 11.15 SR.4 */
+printf("ALTER TABLE CHANGG\n");
+printf("  DROP NAAM RESTRICT;\n");
+EXEC SQL ALTER TABLE CHANGG
+  DROP NAAM RESTRICT;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 42000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+printf("\n");
+
+printf("INSERT INTO CHANGG VALUES ('RALPH', 22);\n");
+EXEC SQL INSERT INTO CHANGG VALUES ('RALPH', 22);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CHANGG VALUES ('RUDOLPH', 54);\n");
+EXEC SQL INSERT INTO CHANGG VALUES ('RUDOLPH', 54);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CHANGG VALUES ('QUEEG', 33);\n");
+EXEC SQL INSERT INTO CHANGG VALUES ('QUEEG', 33);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CHANGG VALUES ('BESSIE', 106);\n");
+EXEC SQL INSERT INTO CHANGG VALUES ('BESSIE', 106);
+
+CHCKOK ();
+printf("\n");
+
+/* This select should fail */
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM CHANGG WHERE DIVORCES IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM CHANGG WHERE DIVORCES IS NULL;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be '42000'; its value is '%s'\n\n", SQLSTATE);
+if (SQLCODE >= 0)
+  flag = 0;
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("ALTER TABLE CHANGG ADD NUMBRR CHAR(11);\n");
+EXEC SQL ALTER TABLE CHANGG ADD NUMBRR CHAR(11);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT MAX(AGE) INTO :int1 FROM CHANGGVIEW;\n");
+EXEC SQL SELECT MAX(AGE) INTO :int1 FROM CHANGGVIEW;
+CHCKOK ();
+printf ("int1 should be 106; its value is %ld\n\n", int1);
+if (int1 != 106)
+  flag = 0;
+
+/* 11.11 GR.2:  This statement should fail. */
+
+printf("SELECT NUMBRR INTO :ch1 FROM CHANGGVIEW;\n");
+EXEC SQL SELECT NUMBRR INTO :ch1 FROM CHANGGVIEW;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be '42000'; its value is '%s'\n\n", SQLSTATE);
+if (SQLCODE >= 0)
+  flag = 0;
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW CHANGGVIEW CASCADE;\n");
+EXEC SQL DROP VIEW CHANGGVIEW CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Optional keyword! */
+
+printf("ALTER TABLE CHANGG\n");
+printf("  ADD COLUMN DIVORCES INT DEFAULT 0;\n");
+EXEC SQL ALTER TABLE CHANGG
+  ADD COLUMN DIVORCES INT DEFAULT 0;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Check that defaults are correct */
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM CHANGG WHERE NUMBRR IS NOT NULL\n");
+printf("  OR DIVORCES <> 0;\n");
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM CHANGG WHERE NUMBRR IS NOT NULL
+  OR DIVORCES <> 0;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+/* Do some uncomplicated things */
+
+printf("UPDATE CHANGG\n");
+printf("  SET NUMBRR = '837-47-1847', DIVORCES = 3\n");
+printf("  WHERE NAAM = 'RUDOLPH';\n");
+EXEC SQL UPDATE CHANGG
+  SET NUMBRR = '837-47-1847', DIVORCES = 3
+  WHERE NAAM = 'RUDOLPH';
+
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE CHANGG\n");
+printf("  SET NUMBRR = '738-47-1847', DIVORCES = NULL\n");
+printf("  WHERE NAAM = 'QUEEG';\n");
+EXEC SQL UPDATE CHANGG
+  SET NUMBRR = '738-47-1847', DIVORCES = NULL
+  WHERE NAAM = 'QUEEG';
+
+CHCKOK ();
+printf("\n");
+
+printf("DELETE FROM CHANGG\n");
+printf("  WHERE NUMBRR IS NULL;\n");
+EXEC SQL DELETE FROM CHANGG
+  WHERE NUMBRR IS NULL;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CHANGG (NAAM, AGE, NUMBRR)\n");
+printf("  VALUES ('GOOBER', 16, '000-10-0001');\n");
+EXEC SQL INSERT INTO CHANGG (NAAM, AGE, NUMBRR)
+  VALUES ('GOOBER', 16, '000-10-0001');
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CHANGG\n");
+printf("  VALUES ('OLIVIA', 20, '111-11-1111', 0);\n");
+EXEC SQL INSERT INTO CHANGG
+  VALUES ('OLIVIA', 20, '111-11-1111', 0);
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+strcpy (ch1, "xxxxxxxxxxx");
+printf("SELECT AGE, NUMBRR, DIVORCES\n");
+printf("  INTO :int1, :ch1, :int2\n");
+printf("  FROM CHANGG\n");
+printf("  WHERE NAAM = 'RUDOLPH';\n");
+EXEC SQL SELECT AGE, NUMBRR, DIVORCES
+  INTO :int1, :ch1, :int2
+  FROM CHANGG
+  WHERE NAAM = 'RUDOLPH';
+
+ch1[11] = '\0';
+CHCKOK ();
+printf ("int1 should be 54; its value is %ld\n", int1);
+printf ("int2 should be 3; its value is %ld\n", int2);
+printf ("ch1 should be '837-47-1847'; its value is '%s'\n\n", ch1);
+if (int1 != 54 || int2 != 3)
+  flag = 0;
+if (strcmp (ch1, "837-47-1847") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+indic1 = 10;
+strcpy (ch1, "xxxxxxxxxxx");
+printf("SELECT AGE, NUMBRR, DIVORCES\n");
+printf("  INTO :int1, :ch1, :int2:indic1\n");
+printf("  FROM CHANGG\n");
+printf("  WHERE NAAM = 'QUEEG';\n");
+EXEC SQL SELECT AGE, NUMBRR, DIVORCES
+  INTO :int1, :ch1, :int2:indic1
+  FROM CHANGG
+  WHERE NAAM = 'QUEEG';
+
+ch1[11] = '\0';
+CHCKOK ();
+printf ("int1 should be 33; its value is %ld\n", int1);
+printf ("indic1 should be -1; its value is %ld\n", indic1);
+printf ("ch1 should be '738-47-1847'; its value is '%s'\n\n", ch1);
+if (int1 != 33 || indic1 != -1)
+  flag = 0;
+if (strcmp (ch1, "738-47-1847") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+strcpy (ch1, "xxxxxxxxxxx");
+printf("SELECT AGE, NUMBRR, DIVORCES\n");
+printf("  INTO :int1, :ch1, :int2\n");
+printf("  FROM CHANGG\n");
+printf("  WHERE NAAM = 'GOOBER';\n");
+EXEC SQL SELECT AGE, NUMBRR, DIVORCES
+  INTO :int1, :ch1, :int2
+  FROM CHANGG
+  WHERE NAAM = 'GOOBER';
+
+ch1[11] = '\0';
+CHCKOK ();
+printf ("int1 should be 16; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n", int2);
+printf ("ch1 should be '000-10-0001'; its value is '%s'\n\n", ch1);
+if (int1 != 16 || int2 != 0)
+  flag = 0;
+if (strcmp (ch1, "000-10-0001") != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+strcpy (ch1, "xxxxxxxxxxx");
+printf("SELECT AGE, NUMBRR, DIVORCES\n");
+printf("  INTO :int1, :ch1, :int2\n");
+printf("  FROM CHANGG\n");
+printf("  WHERE NAAM = 'OLIVIA';\n");
+EXEC SQL SELECT AGE, NUMBRR, DIVORCES
+  INTO :int1, :ch1, :int2
+  FROM CHANGG
+  WHERE NAAM = 'OLIVIA';
+
+ch1[11] = '\0';
+CHCKOK ();
+printf ("int1 should be 20; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n", int2);
+printf ("ch1 should be '111-11-1111'; its value is '%s'\n\n", ch1);
+if (int1 != 20 || int2 != 0)
+  flag = 0;
+if (strcmp (ch1, "111-11-1111") != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM CHANGG;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM CHANGG;
+
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Age is nobody's business! */
+
+printf("ALTER TABLE CHANGG DROP AGE CASCADE;\n");
+EXEC SQL ALTER TABLE CHANGG DROP AGE CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Optional keyword! */
+
+printf("ALTER TABLE CHANGG DROP COLUMN DIVORCES RESTRICT;\n");
+EXEC SQL ALTER TABLE CHANGG DROP COLUMN DIVORCES RESTRICT;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* This select should fail */
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM CHANGG WHERE AGE > 30;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM CHANGG WHERE AGE > 30;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be '42000'; its value is '%s'\n\n", SQLSTATE);
+if (SQLCODE >= 0)
+  flag = 0;
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+/* This select should fail too */
+
+strcpy (SQLSTATE, "xxxxx");
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM CHANGG WHERE DIVORCES IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM CHANGG WHERE DIVORCES IS NULL;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be '42000'; its value is '%s'\n\n", SQLSTATE);
+if (SQLCODE >= 0)
+  flag = 0;
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+strcpy (ch2, "xxxxxxxxxxxxxx");
+printf("SELECT NAAM INTO :ch2\n");
+printf("  FROM CHANGG\n");
+printf("  WHERE NUMBRR LIKE '%%000%%';\n");
+EXEC SQL SELECT NAAM INTO :ch2
+  FROM CHANGG
+  WHERE NUMBRR LIKE '%000%';
+ch2[14] = '\0';
+CHCKOK ();
+printf ("ch2 should be 'GOOBER        '; its value is '%s'\n\n", ch2);
+if (strcmp (ch2, "GOOBER        ") != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* create a referential constraint on table CHANGG */
+
+printf("CREATE TABLE REFERENCE_CHANGG (\n");
+printf("    NAAM CHAR (14) NOT NULL PRIMARY KEY\n");
+printf("    REFERENCES CHANGG);\n");
+EXEC SQL CREATE TABLE REFERENCE_CHANGG (
+    NAAM CHAR (14) NOT NULL PRIMARY KEY
+    REFERENCES CHANGG);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* verify referential constraint */
+printf("INSERT INTO REFERENCE_CHANGG VALUES ('NO SUCH NAAM');\n");
+EXEC SQL INSERT INTO REFERENCE_CHANGG VALUES ('NO SUCH NAAM');
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 23000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("COMMIT WORK;\n\n");
+EXEC SQL COMMIT WORK;
+
+/* should not be able to drop CHANGG.NAAM RESTRICT due to RI constraint */
+printf("ALTER TABLE CHANGG\n");
+printf("  DROP NAAM RESTRICT;\n");
+EXEC SQL ALTER TABLE CHANGG
+  DROP NAAM RESTRICT;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 42000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+printf("\n");
+
+/* should be able to drop CHANGG.NAAM CASCADE */
+printf("ALTER TABLE CHANGG\n");
+printf("  DROP NAAM CASCADE;\n");
+EXEC SQL ALTER TABLE CHANGG
+  DROP NAAM CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* verify referential constraint was a dropped object */
+printf("INSERT INTO REFERENCE_CHANGG VALUES ('NO SUCH NAAM');\n");
+EXEC SQL INSERT INTO REFERENCE_CHANGG VALUES ('NO SUCH NAAM');
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* TEd Hook #1  Check 11.15 SR.3 (can't drop all the columns) */
+/* This is a syntax error.  If it is rejected at compile time,  */
+/* save the error and use the TEd hooks to remove this subtest. */
+printf("ALTER TABLE CHANGG\n");
+printf("  DROP NUMBRR RESTRICT;\n");
+EXEC SQL ALTER TABLE CHANGG
+  DROP NUMBRR RESTRICT;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 42000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+printf("\n");
+
+/* TEd Hook #2 */
+
+printf("DROP TABLE CHANGG CASCADE;\n");
+EXEC SQL DROP TABLE CHANGG CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* 11.18 SR.4 -- only the constraint, not the referencing */
+/* table, was dropped. */
+
+printf("DROP TABLE REFERENCE_CHANGG CASCADE;\n");
+EXEC SQL DROP TABLE REFERENCE_CHANGG CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0625','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml112.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0625','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0625 *********************/
+/******************** BEGIN TEST0631 ********************/
+flag = 1;
+
+     printf("                  TEST0631 \n");
+     printf("      Datetimes in a <default clause> (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 5\n");
+     printf("    11.5 <default clause>\n");
+     printf("    6.8  <datetime value function>\n");
+     printf("    5.3  <literal>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE OBITUARIES (\n");
+printf("    NAAM CHAR (14) NOT NULL PRIMARY KEY,\n");
+printf("    BORN DATE DEFAULT DATE '1880-01-01',\n");
+printf("    DIED DATE DEFAULT CURRENT_DATE,\n");
+printf("    ENTERED TIMESTAMP DEFAULT CURRENT_TIMESTAMP);\n");
+
+EXEC SQL CREATE TABLE OBITUARIES (
+    NAAM CHAR (14) NOT NULL PRIMARY KEY,
+    BORN DATE DEFAULT DATE '1880-01-01',
+    DIED DATE DEFAULT CURRENT_DATE,
+    ENTERED TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    TESTING1 DATE,
+    TESTING2 TIMESTAMP);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE BIRTHS (\n");
+printf("    NAAM CHAR (14) NOT NULL PRIMARY KEY,\n");
+printf("    CHECKIN TIME (0)\n");
+printf("        DEFAULT TIME '00:00:00',\n");
+printf("    LABOR INTERVAL HOUR\n");
+printf("        DEFAULT INTERVAL '4' HOUR,\n");
+printf("    CHECKOUT TIME\n");
+printf("        DEFAULT CURRENT_TIME);\n");
+
+EXEC SQL CREATE TABLE BIRTHS (
+    NAAM CHAR (14) NOT NULL PRIMARY KEY,
+    CHECKIN TIME (0)
+        DEFAULT TIME '00:00:00',
+    LABOR INTERVAL HOUR
+        DEFAULT INTERVAL '4' HOUR,
+    CHECKOUT TIME
+        DEFAULT CURRENT_TIME,
+    TESTING TIME);
+
+/* The <default option> must be a <literal> or a <datetime value  */
+/* function> so I can't use a CAST to change CURRENT_TIME to have */
+/* no fractional seconds.                                         */
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO OBITUARIES (NAAM, TESTING1, TESTING2)\n");
+printf("  VALUES ('KEITH', CURRENT_DATE, CURRENT_TIMESTAMP);\n");
+EXEC SQL INSERT INTO OBITUARIES (NAAM, TESTING1, TESTING2)
+  VALUES ('KEITH', CURRENT_DATE, CURRENT_TIMESTAMP);
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO BIRTHS (NAAM, TESTING)\n");
+printf("  VALUES ('BJORN', CURRENT_TIME);\n");
+EXEC SQL INSERT INTO BIRTHS (NAAM, TESTING)
+  VALUES ('BJORN', CURRENT_TIME);
+
+CHCKOK ();
+printf("\n");
+
+printf("SELECT EXTRACT (HOUR FROM CHECKIN) +\n");
+printf("                EXTRACT (MINUTE FROM CHECKIN) +\n");
+printf("                EXTRACT (SECOND FROM CHECKIN)\n");
+printf("   INTO :int1 FROM BIRTHS;\n");
+
+int1 = -1;
+EXEC SQL SELECT EXTRACT (HOUR FROM CHECKIN) +
+                EXTRACT (MINUTE FROM CHECKIN) +
+                EXTRACT (SECOND FROM CHECKIN)
+   INTO :int1 FROM BIRTHS;
+
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("SELECT EXTRACT (HOUR FROM LABOR) INTO :int1 FROM BIRTHS;\n");
+int1 = -1;
+EXEC SQL SELECT EXTRACT (HOUR FROM LABOR) INTO :int1 FROM BIRTHS;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("SELECT COUNT (*) INTO :int1 FROM BIRTHS\n");
+printf("  WHERE TESTING <> CHECKOUT OR CHECKOUT IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT (*) INTO :int1 FROM BIRTHS
+  WHERE TESTING <> CHECKOUT OR CHECKOUT IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("SELECT COUNT (*) INTO :int1 FROM OBITUARIES\n");
+printf("  WHERE BORN <> DATE '1880-01-01'\n");
+printf("  OR BORN IS NULL\n");
+printf("  OR DIED <> TESTING1\n");
+printf("  OR DIED IS NULL\n");
+printf("  OR ENTERED <> TESTING2\n");
+printf("  OR ENTERED IS NULL;\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT (*) INTO :int1 FROM OBITUARIES
+  WHERE BORN <> DATE '1880-01-01'
+  OR BORN IS NULL
+  OR DIED <> TESTING1
+  OR DIED IS NULL
+  OR ENTERED <> TESTING2
+  OR ENTERED IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE BIRTHS CASCADE;\n");
+EXEC SQL DROP TABLE BIRTHS CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE OBITUARIES CASCADE;\n");
+EXEC SQL DROP TABLE OBITUARIES CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0631','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml112.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0631','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0631 *********************/
+/******************** BEGIN TEST0633 ********************/
+flag = 1;
+
+     printf("                  TEST0633 \n");
+     printf("          TRIM function (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 7\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE WEIRDPAD (\n");
+printf("    NAAM CHAR (14),\n");
+printf("    SPONSOR CHAR (14),\n");
+printf("    PADCHAR CHAR (1));\n");
+
+EXEC SQL CREATE TABLE WEIRDPAD (
+    NAAM CHAR (14),
+    SPONSOR CHAR (14),
+    PADCHAR CHAR (1));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO WEIRDPAD (NAAM, SPONSOR) VALUES\n");
+printf("  ('KATEBBBBBBBBBB', '000000000KEITH');\n");
+EXEC SQL INSERT INTO WEIRDPAD (NAAM, SPONSOR) VALUES
+  ('KATEBBBBBBBBBB', '000000000KEITH');
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO WEIRDPAD (NAAM, SPONSOR) VALUES\n");
+printf("  ('    KEITH     ', 'XXXXKATEXXXXXX');\n");
+EXEC SQL INSERT INTO WEIRDPAD (NAAM, SPONSOR) VALUES
+  ('    KEITH     ', 'XXXXKATEXXXXXX');
+
+CHCKOK ();
+printf("\n");
+
+strcpy (ch2, "BLAHBLAHBLAHBL");
+printf("SELECT TRIM ('X' FROM SPONSOR) INTO :ch2\n");
+printf("  FROM WEIRDPAD\n");
+printf("  WHERE TRIM (NAAM) = 'KEITH';\n");
+
+EXEC SQL SELECT TRIM ('X' FROM SPONSOR) INTO :ch2
+  FROM WEIRDPAD
+  WHERE TRIM (NAAM) = 'KEITH';
+CHCKOK ();
+ch2[14] = '\0';
+printf ("ch2 should be 'KATE          '; its value is '%s'\n\n", ch2);
+
+/* In languages with variable length strings, the result should */
+/* not have trailing blanks.                                    */
+/*    if (strcmp (ch2, "KATE") != 0)                            */
+
+if (strncmp (ch2, "KATE          ", 14) != 0)
+  flag = 0;
+
+/* repeat with CURSOR */
+strcpy (ch2, "BLAHBLAHBLAHBL");
+printf("DECLARE WWW CURSOR FOR \n");
+printf("SELECT TRIM ('X' FROM SPONSOR)\n");
+printf("  FROM WEIRDPAD\n");
+printf("  WHERE TRIM (NAAM) = 'KEITH';\n\n");
+
+EXEC SQL DECLARE WWW CURSOR FOR
+ SELECT TRIM ('X' FROM SPONSOR)
+  FROM WEIRDPAD
+  WHERE TRIM (NAAM) = 'KEITH';
+
+printf("OPEN WWW;\n");
+EXEC SQL OPEN WWW;
+CHCKOK();
+printf ("\n");
+
+printf("FETCH WWW INTO :ch2;\n");
+EXEC SQL FETCH WWW INTO :ch2;
+CHCKOK();
+
+ch2[14] = '\0';
+printf ("ch2 should be 'KATE          '; its value is '%s'\n\n", ch2);
+
+/* In languages with variable length strings, the result should */
+/* not have trailing blanks.                                    */
+/*    if (strcmp (ch2, "KATE") != 0)                            */
+
+if (strncmp (ch2, "KATE          ", 14) != 0)
+  flag = 0;
+
+strcpy (ch2, "BLAHBLAHBLAHBL");
+printf("SELECT TRIM (LEADING 'X' FROM SPONSOR) INTO :ch2\n");
+printf("  FROM WEIRDPAD\n");
+printf("  WHERE TRIM (TRAILING FROM NAAM) = '    KEITH';\n");
+
+EXEC SQL SELECT TRIM (LEADING 'X' FROM SPONSOR) INTO :ch2
+  FROM WEIRDPAD
+  WHERE TRIM (TRAILING FROM NAAM) = '    KEITH';
+CHCKOK ();
+ch2[14] = '\0';
+printf ("ch2 should be 'KATEXXXXXX'; its value is '%s'\n\n", ch2);
+
+/* In languages with variable length strings, the result should */
+/* not have trailing blanks.                                    */
+/*    if (strcmp (ch2, "KATEXXXXXX") != 0)                            */
+
+if (strncmp (ch2, "KATEXXXXXX    ", 14) != 0)
+  flag = 0;
+
+strcpy (ch2, "BLAHBLAHBLAHBL");
+printf("SELECT TRIM (LEADING 'X' FROM SPONSOR) INTO :ch2\n");
+printf("  FROM WEIRDPAD\n");
+printf("  WHERE TRIM (TRAILING 'X' FROM SPONSOR) = 'XXXXKATE';\n");
+
+EXEC SQL SELECT TRIM (LEADING 'X' FROM SPONSOR) INTO :ch2
+  FROM WEIRDPAD
+  WHERE TRIM (TRAILING 'X' FROM SPONSOR) = 'XXXXKATE';
+CHCKOK ();
+ch2[14] = '\0';
+printf ("ch2 should be 'KATEXXXXXX    '; its value is '%s'\n\n", ch2);
+
+/* In languages with variable length strings, the result should */
+/* not have trailing blanks.                                    */
+/*    if (strcmp (ch2, "KATEXXXXXX") != 0)                            */
+
+if (strncmp (ch2, "KATEXXXXXX    ", 14) != 0)
+  flag = 0;
+
+printf("SELECT TRIM (LEADING FROM B.NAAM) INTO :ch10 FROM WEIRDPAD A,\n");
+printf("  WEIRDPAD B WHERE TRIM (BOTH 'B' FROM A.NAAM)\n");
+printf("  = TRIM (BOTH 'X' FROM B.SPONSOR);\n");
+
+strcpy(ch10,"BLAHBLAHBL");
+EXEC SQL SELECT TRIM (LEADING FROM B.NAAM) INTO :ch10 FROM WEIRDPAD A,
+  WEIRDPAD B WHERE TRIM (BOTH 'B' FROM A.NAAM)
+  = TRIM (BOTH 'X' FROM B.SPONSOR);
+CHCKOK ();
+printf ("ch10 should be 'KEITH     '; its value is %s\n\n", ch10);
+if (strncmp(ch10,"KEITH     ",10) != 0)
+  flag = 0;
+
+printf("SELECT TRIM (LEADING FROM B.NAAM)\n");
+printf(" INTO :ch9 :indic1 FROM WEIRDPAD A,\n");
+printf("  WEIRDPAD B WHERE TRIM (BOTH 'B' FROM A.NAAM)\n");
+printf("  = TRIM (BOTH 'X' FROM B.SPONSOR);\n");
+
+strcpy(ch9,"BLAHBLAHB");
+EXEC SQL SELECT TRIM (LEADING FROM B.NAAM) INTO :ch9 :indic1 FROM WEIRDPAD A,
+  WEIRDPAD B WHERE TRIM (BOTH 'B' FROM A.NAAM)
+  = TRIM (BOTH 'X' FROM B.SPONSOR);
+
+printf ("SQLSTATE should be '01004'; its value is %s\n", SQLSTATE);
+if (strncmp(SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+printf ("indic1 should be 10; its value is %d\n", indic1);
+if (indic1 != 10)
+  flag = 0;
+printf ("ch9 should be 'KEITH    '; its value is %s\n\n", ch9);
+if (strncmp(ch9,"KEITH    ",9) != 0)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1 FROM WEIRDPAD A,\n");
+printf("  WEIRDPAD B WHERE TRIM (LEADING '0' FROM A.SPONSOR)\n");
+printf("  = TRIM (' ' FROM B.NAAM);\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM WEIRDPAD A,
+  WEIRDPAD B WHERE TRIM (LEADING '0' FROM A.SPONSOR)
+  = TRIM (' ' FROM B.NAAM);
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT TRIM ('BB' FROM NAAM)\n");
+printf("  INTO :ch2 FROM WEIRDPAD WHERE NAAM LIKE 'KATE%%';\n");
+EXEC SQL SELECT TRIM ('BB' FROM NAAM)
+  INTO :ch2 FROM WEIRDPAD WHERE NAAM LIKE 'KATE%';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22027; its value is %s\n\n", SQLSTATE);
+if (SQLCODE >= 0 || strncmp (SQLSTATE, "22027", 5) != 0)
+  flag = 0;
+
+/* TEd Hook #3 this may cause legitimate compilation error */
+strcpy (ch3, "BB");
+printf("SELECT TRIM (:ch3 FROM NAAM)\n");
+printf("  INTO :ch2 FROM WEIRDPAD WHERE NAAM LIKE 'KATE%%';\n");
+EXEC SQL SELECT TRIM (:ch3 FROM NAAM)
+  INTO :ch2 FROM WEIRDPAD WHERE NAAM LIKE 'KATE%';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22027; its value is %s\n\n", SQLSTATE);
+if (SQLCODE >= 0 || strncmp (SQLSTATE, "22027", 5) != 0)
+  flag = 0;
+/* TEd Hook #4 */
+
+printf("INSERT INTO WEIRDPAD (NAAM, SPONSOR)\n");
+printf("  SELECT DISTINCT TRIM (LEADING 'D' FROM HU.STAFF.CITY),\n"); 
+printf("                  TRIM (TRAILING 'n' FROM PTYPE)\n");
+printf("  FROM HU.STAFF, HU.PROJ \n");
+printf("  WHERE EMPNAME = 'Alice';\n");
+EXEC SQL INSERT INTO WEIRDPAD (NAAM, SPONSOR)
+  SELECT DISTINCT TRIM (LEADING 'D' FROM HU.STAFF.CITY), 
+                  TRIM (TRAILING 'n' FROM PTYPE)
+  FROM HU.STAFF, HU.PROJ 
+  WHERE EMPNAME = 'Alice';
+CHCKOK();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM WEIRDPAD;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM WEIRDPAD;
+CHCKOK();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+strcpy(chx,"X");
+printf("UPDATE WEIRDPAD\n");
+printf("  SET SPONSOR = TRIM (:chx FROM SPONSOR),\n");
+printf("          NAAM = TRIM ('B' FROM NAAM);\n");
+EXEC SQL UPDATE WEIRDPAD
+  SET SPONSOR = TRIM (:chx FROM SPONSOR),
+          NAAM = TRIM ('B' FROM NAAM);
+CHCKOK();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM WEIRDPAD\n");
+printf("  WHERE NAAM = 'KATE' OR SPONSOR = 'KATE';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM WEIRDPAD
+  WHERE NAAM = 'KATE' OR SPONSOR = 'KATE';
+CHCKOK();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+strcpy(ch2,"Kest");
+printf("DELETE FROM WEIRDPAD WHERE\n");
+printf("  TRIM(LEADING 'K' FROM :ch2) = TRIM('T' FROM SPONSOR);\n");
+EXEC SQL DELETE FROM WEIRDPAD WHERE
+  TRIM(LEADING 'K' FROM :ch2) = TRIM('T' FROM SPONSOR);
+CHCKOK();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM WEIRDPAD;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM WEIRDPAD;
+CHCKOK();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("UPDATE WEIRDPAD\n");
+printf("   SET PADCHAR = '0'\n");
+printf("  WHERE SPONSOR = '000000000KEITH'\n");
+printf("     OR NAAM    = 'eale';\n");
+EXEC SQL UPDATE WEIRDPAD
+   SET PADCHAR = '0'
+  WHERE SPONSOR = '000000000KEITH'
+     OR NAAM    = 'eale';
+CHCKOK();
+printf ("\n");
+
+printf("UPDATE WEIRDPAD\n");
+printf("   SET SPONSOR = NULL\n");
+printf("  WHERE SPONSOR = 'Desig';\n");
+EXEC SQL UPDATE WEIRDPAD
+   SET SPONSOR = NULL
+  WHERE SPONSOR = 'Desig';
+CHCKOK();
+printf ("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM WEIRDPAD\n");
+printf("  WHERE TRIM (PADCHAR FROM SPONSOR) IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM WEIRDPAD
+  WHERE TRIM (PADCHAR FROM SPONSOR) IS NULL;
+CHCKOK();
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM WEIRDPAD\n");
+printf("  WHERE TRIM (PADCHAR FROM SPONSOR) = 'KEITH';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM WEIRDPAD
+  WHERE TRIM (PADCHAR FROM SPONSOR) = 'KEITH';
+CHCKOK();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE WEIRDPAD CASCADE;\n");
+EXEC SQL DROP TABLE WEIRDPAD CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0633','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml112.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0633','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0633 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

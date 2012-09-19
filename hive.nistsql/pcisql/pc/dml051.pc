@@ -1,0 +1,156 @@
+/*  EMBEDDED C (file "DML051.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/15 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML051.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE BETWEEN PREDICATES IN COMMON ELEMENT*/
+/*  OF THE SQL LANGUAGE.                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.12                                  */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char PNO1[4];
+    char PNO2[4];
+    char CITY1[16];
+    char CITY2[16];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml051.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0227 ********************/
+
+  printf("\n                   TEST0227      \n");
+  printf("       between predicate (character string)     \n");
+  printf("reference X3.135-1989 section 5.12 General Rules 2) \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT PNUM
+     INTO   :PNO1
+     FROM   PROJ
+     WHERE  PNAME BETWEEN 'A' AND 'F';
+
+  EXEC SQL SELECT PNUM
+     INTO   :PNO2
+     FROM   PROJ
+     WHERE PNAME >= 'A' AND PNAME <= 'F';
+
+  printf("  PNO1 = %s; PNO2 = %s \n\n", PNO1, PNO2);
+  printf("The correct answer should be PNO1=PNO2=P2 \n");
+  
+  if (strncmp(PNO1,"P2",2) == 0 && strncmp(PNO2,"P2",2) == 0)
+    {
+    printf("\n\n                 *** pass ***   \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0227','pass','PC');
+    }
+  else
+    {
+    printf("\n\n       dml051.pc  *** fail ***   \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0227','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("==================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0227 ********************/
+
+/******************** BEGIN TEST0228 ********************/
+
+
+  printf("\n                    TEST0228      \n");
+  printf("        between predicate (character string)    \n");
+  printf("reference X3.135-1989 section 5.12 General Rules 3) \n"); 
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY1
+     FROM   STAFF
+     WHERE  EMPNAME NOT BETWEEN 'A' AND 'E';
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY2
+     FROM   STAFF
+     WHERE  NOT( EMPNAME BETWEEN 'A' AND 'E' );
+
+  printf("  CITY1 = %s,  CITY2 = %s \n\n", CITY1, CITY2);
+  printf("The correct answer should be CITY1=CITY2=Akron \n");
+
+  if (strncmp(CITY1,"Akron",5)==0 && strncmp(CITY2,"Akron",5)==0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0228','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml051.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0228','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("====================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0228 ********************/
+
+  exit(errcnt);
+}
+

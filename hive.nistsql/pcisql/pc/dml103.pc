@@ -1,0 +1,1009 @@
+/*  EMBEDDED C (file "DML103.PC")  */
+
+/* THIS PROGRAM IS AN OPTIONAL SUBSTITUTE FOR MP?012.  IT CONTAINS */
+/* MANY EXTENSIONS AND OPTIONAL FEATURES.                          */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/08/02 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML103.PC -- a CTS-based program                             */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  TWO (2) copies of this program should be started at the same */
+/*  time.  This routine tests SET TRANSACTION ISOLATION LEVEL    */
+/*  for dynamic SQL.                                             */
+/*                                                               */
+/*  References:                                                  */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992 14.1 <set transaction statement>             */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+#ifdef __VMS
+#include unixlib
+#else
+#include <unistd.h>
+#endif
+
+EXEC SQL BEGIN DECLARE SECTION;
+char uid[19];
+char uidx[19];
+long SQLCODE;
+char SQLSTATE[6];
+long PID;
+char testno[5];
+long ctst1;
+long next;
+long int1;
+long int2;
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long fails;
+long minpid;
+long ssflag;
+long ssok;
+long noss;
+long norm1;
+long norm2;
+long SQLTMP;
+long countr;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml103.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* getpid will return a unique value.  If you can't use it, you'll have */
+/* to find some other way to assign unique values to PID.               */
+PID = getpid ();
+
+/* Put the test number in this string, or else different concurrency */
+/* tests will interfere with one another.                            */
+strcpy (testno, "0590");
+
+/******************** BEGIN TEST0590 ********************/
+flag = 1;
+
+/* SQL-92 14.1 GR.5 says that a transaction at a particular */
+/* isolation level must not exhibit phenomena which are not */
+/* supposed to be possible at that level, but does not      */
+/* require transactions to exhibit those phenomena which    */
+/* are possible.  A conforming implementation could simply  */
+/* ignore all SET TRANSACTION ISOLATION LEVEL statements    */
+/* and treat all transactions as SERIALIZABLE.  The         */
+/* phenomena are defined in SQL-92 4.28.                    */
+
+     printf("                  TEST0590 \n");
+     printf("       SET TR ISOLATION LEVEL (dynamic)\n");
+     printf("Reference:\n");
+     printf("  FIPS PUB 127-2 14.1 Transitional SQL features 1, 3, 11\n");
+     printf("  ANSI SQL-1992 14.1 <set transaction statement>\n");
+     printf("                4.28 SQL-transactions\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+SQLCODE = 0;
+strcpy (SQLSTATE, "00000");
+fails = 0;
+ssflag = 0;
+ssok = 0;
+noss = 0;
+countr = 0;
+
+printf ("My PID is %ld.\n", PID);
+
+P102:
+if (noss == 1)
+  sleep (10);
+     strcpy (dstmt,
+     "DELETE FROM SYNCH.REGISTRY WHERE PID = ?          ");
+EXEC SQL PREPARE SYC1 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P100;
+     strcpy (dstmt,
+     "INSERT INTO SYNCH.REGISTRY VALUES (?, ?)          ");
+EXEC SQL PREPARE SYC2 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P100;
+     strcpy (dstmt,
+     "SELECT TOKEN FROM SYNCH.SYTAB WHERE TEST = ?      ");
+EXEC SQL PREPARE SYC3 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P100;
+     strcpy (dstmt,
+     "INSERT INTO SYNCH.SYTAB VALUES (?, ?)             ");
+EXEC SQL PREPARE SYC4 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P100;
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'DELETE FROM SYNCH.REGISTRY WHERE TEST = ? AND PID <> ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+EXEC SQL PREPARE SYC5 FROM :longst;
+if (SQLCODE < 0)
+  goto P100;
+     strcpy (dstmt,
+     "SELECT PID FROM SYNCH.REGISTRY WHERE TEST = ?     ");
+EXEC SQL PREPARE SYC6 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P100;
+     strcpy (dstmt,
+     "UPDATE SYNCH.SYTAB SET TOKEN = ? WHERE TEST = ?   ");
+EXEC SQL PREPARE SYC7 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P100;
+EXEC SQL DECLARE CYC3 CURSOR FOR SYC3;
+EXEC SQL DECLARE CYC6 CURSOR FOR SYC6;
+
+/* This is to verify that the schema exists in case preparing */
+/* statements and declaring cursors is not enough to trigger  */
+/* an error.  It is not meant to have any other effect than   */
+/* to generate an error if the schema is missing.             */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'UPDATE SYNCH.SYTAB SET TOKEN = 1 WHERE TOKEN IS NULL'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+EXEC SQL EXECUTE IMMEDIATE :longst;
+if (SQLCODE != 100)
+  goto P100;
+
+if (ssflag == 0)
+{
+  printf ("Found scratch space.\n");
+  fails = 0;
+  goto P101;
+}
+if (ssok == 0)
+  printf ("Somebody beat me to it!\n");
+else
+  printf ("Scratch space successfully created.\n");
+fails = 0;
+EXEC SQL COMMIT WORK;
+goto P101;
+
+P100:
+if (noss == 0)
+  goto P110;
+printf ("SQLCODE is %ld\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+fails = fails + 1;
+printf ("%ld failure(s) waiting for scratch space to appear\n", fails);
+if (fails < 5)
+  goto P102;
+printf ("I give up!!!\n");
+goto P199;
+
+P110:
+if (fails == 0)
+  printf ("Can't access scratch space.\n");
+printf ("Creating scratch space....\n");
+ssflag = 1;
+EXEC SQL ROLLBACK WORK;
+/* ON DELETE is FIPS feature #19 for TSQL */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE SCHEMA SYNCH '                               ||
+       '  CREATE TABLE SYTAB ('                             ||
+       '    TEST CHAR (4) NOT NULL UNIQUE,'                 ||
+       '    TOKEN NUMERIC(15) NOT NULL REFERENCES REGISTRY (PID) '  ||
+       '    ON DELETE CASCADE) '                            ||
+       '  CREATE TABLE REGISTRY ('                          ||
+       '    TEST CHAR (4) NOT NULL,'                        ||
+       '    PID NUMERIC(15) NOT NULL UNIQUE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+EXEC SQL EXECUTE IMMEDIATE :longst;
+if (SQLCODE < 0)
+  goto P105;
+/* CTS TEd Hook #1 */
+     strcpy (dstmt,
+     "GRANT ALL PRIVILEGES ON SYNCH.SYTAB TO PUBLIC     ");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+if (SQLCODE < 0)
+  goto P105;
+     strcpy (dstmt,
+     "GRANT ALL PRIVILEGES ON SYNCH.REGISTRY TO PUBLIC  ");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+if (SQLCODE < 0)
+  goto P105;
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+  goto P105;
+ssok = 1;
+goto P102;
+
+P105:
+printf ("SQLCODE is %ld\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+fails = fails + 1;
+printf ("%ld failure(s) creating scratch space\n", fails);
+if (fails < 5)
+  goto P102;
+printf ("Could not create scratch space.\n");
+printf ("Waiting for somebody else to do it.\n");
+noss = 1;
+ssflag = 0;
+fails = 0;
+goto P102;
+
+P103:
+printf ("SQLCODE was %ld\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+printf ("(Sleeping to reduce contention)\n");
+/* Sorry for the untranslatableness, but it's the only */
+/* thing that makes sense to do here. */
+sleep (5 + PID % 10);
+P101:
+SQLTMP = 0;
+
+/* If there's no token, claim it and wipe out the */
+/* registration table.  If a token was left lying */
+/* around which references a line in registration */
+/* which was also left lying around, it will have */
+/* to stay that way until it is detected as a     */
+/* crash.                                         */
+
+ctst1 = -1;
+EXEC SQL OPEN CYC3 USING :testno;
+if (SQLCODE < 0)
+  goto P103;
+EXEC SQL FETCH CYC3 INTO :ctst1;
+if (SQLCODE < 0)
+  goto P103;
+SQLTMP = SQLCODE;
+EXEC SQL CLOSE CYC3;
+if (SQLCODE < 0)
+  goto P103;
+if (SQLTMP == 0 && ctst1 == PID)
+{
+  /* Can't wipe registry if token is inherited since others may */
+  /* already have registered. */
+  printf ("I seem to have inherited a token!  Will lose it later.\n");
+  printf ("Proceeding to registration.\n");
+  EXEC SQL ROLLBACK WORK;
+  goto P122;
+}
+if (SQLTMP != 100)
+{
+  printf ("Existing token belongs to %ld\n", ctst1);
+  EXEC SQL ROLLBACK WORK;
+  goto P122;
+}
+printf ("No token -- claiming token for self and cleaning registry.\n");
+printf ("(Registration occurs as part of same transaction)\n");
+
+/* At this point we have an open transaction in */
+/* which we have inspected the token table and  */
+/* found no token.  If the transaction commits, */
+/* it implies that nobody else succeeded in     */
+/* claiming the token before us.  (All of this  */
+/* assumes that the database's serialization    */
+/* algorithms are working properly.)            */
+
+/* Have to register ourselves to claim token. */
+/* First we delete any existing records.      */
+
+EXEC SQL EXECUTE SYC1 USING :PID;
+if (SQLCODE < 0)
+  goto P103;
+
+EXEC SQL EXECUTE SYC2 USING :testno, :PID;
+if (SQLCODE < 0)
+  goto P103;
+
+/* Claim the token. */
+EXEC SQL EXECUTE SYC4 USING :testno, :PID;
+if (SQLCODE < 0)
+  goto P103;
+
+/* Wipe the registration table (except us) */
+EXEC SQL EXECUTE SYC5 USING :testno, :PID;
+if (SQLCODE < 0)
+  goto P103;
+EXEC SQL COMMIT WORK;
+if (SQLCODE == 0)
+{
+  printf ("Transaction succeeded.\n");
+  goto P107;
+}
+goto P103;
+
+P122:
+printf ("Registering....\n");
+EXEC SQL EXECUTE SYC1 USING :PID;
+if (SQLCODE < 0)
+  goto P106;
+EXEC SQL EXECUTE SYC2 USING :testno, :PID;
+if (SQLCODE < 0)
+  goto P106;
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+  goto P106;
+goto P107;
+
+P106:
+printf ("SQLCODE is %ld\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+fails = fails + 1;
+printf ("%ld failure(s) registering PID\n", fails);
+if (fails < 5)
+{
+  printf ("(Sleeping to reduce contention)\n");
+  /* Sorry for the untranslatableness, but it's the only */
+  /* thing that makes sense to do here. */
+  sleep (5 + PID % 10);
+  goto P101;
+}
+printf ("Could not register -- quitting.\n");
+goto P199;
+
+P107:
+
+fails = 0;
+
+/* Okay, we registered. */
+
+printf ("Waiting for everybody to get here....\n");
+sleep (20);
+printf ("Listing registrations.\n");
+countr = 0;
+ctst1 = -1;
+ssflag = 0;
+minpid = PID;
+next = PID;
+EXEC SQL OPEN CYC6 USING :testno;
+if (SQLCODE < 0)
+  goto P130;
+
+P132:
+EXEC SQL FETCH CYC6 INTO :ctst1;
+if (SQLCODE == 100)
+  goto P160;
+if (SQLCODE != 0)
+  goto P130;
+if (ctst1 == PID)
+  ssflag = 1;
+if (ctst1 < minpid)
+  minpid = ctst1;
+if (next == PID && ctst1 > PID)
+  next = ctst1;
+if (ctst1 > PID && ctst1 < next)
+  next = ctst1;
+printf ("Registered:  %ld\n", ctst1);
+countr = countr + 1;
+goto P132;
+
+P160:
+EXEC SQL CLOSE CYC6;
+EXEC SQL COMMIT WORK;
+if (ssflag == 0)
+{
+  printf ("ERROR!  Somebody deleted my registration!!!\n");
+  printf ("I refuse to work under these conditions.  Quitting.\n");
+  goto P133;
+}
+if (countr != 2)
+{
+  printf ("There should be TWO copies of this program running\n");
+  printf ("Found %ld\n", countr);
+  printf ("Clear SYNCH.REGISTRY manually if this is incorrect,\n");
+  printf ("and make sure all programs are started simultaneously.\n");
+  printf ("Exiting.\n");
+  goto P133;
+}
+countr = 0;
+if (next == PID)
+  next = minpid;
+goto P139;
+
+P130:
+printf ("SQLCODE = %ld while listing registrations\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+
+P139:
+fails = 0;
+ssok = -1;
+
+/* We want program 'B' to start first so it can set up the table. */
+if (countr != 0)
+  goto P131;
+
+if (next < PID)
+{
+  printf ("Waiting for 'A' to waive token.\n");
+  sleep (5);
+  goto P131;
+}
+
+P192:
+printf ("Forcing token on %ld.\n", next);
+EXEC SQL EXECUTE SYC7 USING :next, :testno;
+if (SQLCODE < 0)
+  goto P127;
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+  goto P127;
+fails = 0;
+goto P131;
+
+P127:
+printf ("SQLCODE = %ld\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+fails = fails + 1;
+if (fails < 10)
+  goto P192;
+printf ("Can't give token to B -- giving up.\n");
+goto P133;
+
+/* The following is the normal "waiting for the token" loop. */
+
+P131:
+ctst1 = -1;
+EXEC SQL OPEN CYC3 USING :testno;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P131;
+}
+EXEC SQL FETCH CYC3 INTO :ctst1;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P131;
+}
+if (SQLCODE == 100)
+{
+  printf ("Token has been lost.  Recovering token....\n");
+  EXEC SQL EXECUTE SYC4 USING :testno, :PID;
+  EXEC SQL COMMIT WORK;
+  goto P139;
+}
+EXEC SQL CLOSE CYC3;
+EXEC SQL ROLLBACK WORK;
+if (ctst1 == PID)
+  goto P140;
+if (ctst1 == ssok)
+  goto P141;
+ssok = ctst1;
+printf ("%ld has the token.\n", ctst1);
+sleep (1);
+goto P131;
+
+P141:
+printf ("%ld _still_ has the token.\n", ctst1);
+fails = fails + 1;
+if (fails > 10)
+{
+  printf ("I think %ld is gone -- deleting its registration.\n", ctst1);
+  printf ("(This should lose the token too.)\n");
+  EXEC SQL EXECUTE SYC1 USING :ctst1;
+  EXEC SQL COMMIT WORK;
+  goto P139;
+}
+sleep (fails);
+goto P131;
+
+P140:
+printf ("Got the token.\n");
+fails = 0;
+
+/* Separate program 'A' from program 'B' */
+if (next < PID)
+  goto P172;
+
+/************************ Program 'A' ********************/
+
+/* The token is exchanged up front to synchronize, then the two */
+/* programs try to run concurrently.                            */
+P135:
+printf ("Passing token to %ld and running concurrently....\n", next);
+EXEC SQL EXECUTE SYC7 USING :next, :testno;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE = %ld\n", SQLCODE);
+  fails = fails + 1;
+  if (fails < 10)
+    goto P135;
+  printf ("Can't give token to B -- keeping it.\n");
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE = %ld\n", SQLCODE);
+  fails = fails + 1;
+  if (fails < 10)
+    goto P135;
+  printf ("Can't give token to B -- keeping it.\n");
+}
+fails = 0;
+
+printf ("Starting phase %ld.\n", countr);
+
+/* countr is used to figure out which part of the test we are */
+/* in now.                                                    */
+if (countr > 0)
+  goto P153;
+
+/* Check for dirty read */
+P137:
+printf("dstmt=\"SET TRANSACTION ISOLATION LEVEL READ COMMITTED\"\n");
+     strcpy (dstmt,
+     "SET TRANSACTION ISOLATION LEVEL READ COMMITTED    ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  printf ("Failure on transaction statement = failure of test\n");
+  flag = 0;
+  EXEC SQL ROLLBACK WORK;
+  goto P150;
+}
+/* Give 'B' a chance to do its damage. */
+sleep (5);
+/* Check for dirty read. */
+int1 = -1;
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM USG103 WHERE C1 = 589 AND C_1 = 985'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1031 FROM :longst;\n");
+EXEC SQL PREPARE S1031 FROM :longst;
+
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P137;
+}
+printf("DECLARE C1031 CURSOR FOR S1031;\n");
+EXEC SQL DECLARE C1031 CURSOR FOR S1031;
+printf("OPEN C1031;\n");
+EXEC SQL OPEN C1031;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P137;
+}
+printf("FETCH C1031 INTO :int1;\n");
+EXEC SQL FETCH C1031 INTO :int1;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P137;
+}
+printf("CLOSE C1031;\n");
+EXEC SQL CLOSE C1031;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P137;
+}
+printf ("int1 should be 0; its value is %ld\n", int1);
+if (int1 != 0)
+  flag = 0;
+goto P176;
+
+/* Check for non-repeatable read */
+P153:
+if (countr > 1)
+  goto P173;
+printf("dstmt=\"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ\"\n");
+     strcpy (dstmt,
+     "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ   ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  printf ("Failure on transaction statement = failure of test\n");
+  flag = 0;
+  EXEC SQL ROLLBACK WORK;
+  goto P150;
+}
+/* Check for non-repeatable read. */
+int1 = -1;
+printf("dstmt=\"SELECT COUNT(*) FROM USG103 WHERE C_1 = 600\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM USG103 WHERE C_1 = 600       ");
+printf("PREPARE S1032 FROM :dstmt;\n");
+EXEC SQL PREPARE S1032 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P152;
+printf("DECLARE C1032 CURSOR FOR S1032;\n");
+EXEC SQL DECLARE C1032 CURSOR FOR S1032;
+printf("OPEN C1032;\n");
+EXEC SQL OPEN C1032;
+if (SQLCODE < 0)
+  goto P152;
+printf("FETCH C1032 INTO :int1;\n");
+EXEC SQL FETCH C1032 INTO :int1;
+if (SQLCODE < 0)
+  goto P152;
+printf("CLOSE C1032;\n");
+EXEC SQL CLOSE C1032;
+if (SQLCODE < 0)
+  goto P152;
+printf ("int1 is %ld\n", int1);
+printf ("Waiting for 'B' to commit....\n");
+sleep (20);
+int2 = -1;
+printf("OPEN C1032;\n");
+EXEC SQL OPEN C1032;
+if (SQLCODE < 0)
+  goto P152;
+printf("FETCH C1032 INTO :int2;\n");
+EXEC SQL FETCH C1032 INTO :int2;
+if (SQLCODE < 0)
+  goto P152;
+printf("CLOSE C1032;\n");
+EXEC SQL CLOSE C1032;
+if (SQLCODE < 0)
+  goto P152;
+printf ("int2 is %ld\n", int2);
+printf ("You fail if int1 != int2.\n");
+if (int1 != int2)
+  flag = 0;
+goto P176;
+
+P152:
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  goto P153;
+
+/* Check for phantom read */
+P173:
+if (countr > 2)
+  goto P189;
+printf("dstmt=\"SET TRANSACTION ISOLATION LEVEL SERIALIZABLE\"\n");
+     strcpy (dstmt,
+     "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE      ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  printf ("Failure on transaction statement = failure of test\n");
+  flag = 0;
+  EXEC SQL ROLLBACK WORK;
+  goto P150;
+}
+int1 = -1;
+printf("dstmt=\"SELECT COUNT(*) FROM USG103\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM USG103                       ");
+printf("PREPARE S1033 FROM :dstmt;\n");
+EXEC SQL PREPARE S1033 FROM :dstmt;
+if (SQLCODE < 0)
+  goto P177;
+printf("DECLARE C1033 CURSOR FOR S1033;\n");
+EXEC SQL DECLARE C1033 CURSOR FOR S1033;
+printf("OPEN C1033;\n");
+EXEC SQL OPEN C1033;
+if (SQLCODE < 0)
+  goto P177;
+printf("FETCH C1033 INTO :int1;\n");
+EXEC SQL FETCH C1033 INTO :int1;
+if (SQLCODE < 0)
+  goto P177;
+printf("CLOSE C1033;\n");
+EXEC SQL CLOSE C1033;
+if (SQLCODE < 0)
+  goto P177;
+printf ("int1 is %ld\n", int1);
+printf ("Waiting for 'B' to commit....\n");
+sleep (20);
+int2 = -1;
+printf("OPEN C1033;\n");
+EXEC SQL OPEN C1033;
+if (SQLCODE < 0)
+  goto P177;
+printf("FETCH C1033 INTO :int2;\n");
+EXEC SQL FETCH C1033 INTO :int2;
+if (SQLCODE < 0)
+  goto P177;
+printf("CLOSE C1033;\n");
+EXEC SQL CLOSE C1033;
+if (SQLCODE < 0)
+  goto P177;
+printf ("int2 is %ld\n", int2);
+printf ("You fail if int1 != int2.\n");
+if (int1 != int2)
+  flag = 0;
+goto P176;
+
+P189:
+/* Make sure syntax of READ UNCOMMITTED is accepted.  There's nothing */
+/* else to test since its semantics allow ANYTHING.                   */
+if (countr > 3)
+  goto P150;
+printf("The following syntax should be accepted.\n");
+printf("dstmt=\"SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED\"\n");
+     strcpy (dstmt,
+     "SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED  ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  printf ("Failure on transaction statement = failure of test\n");
+  flag = 0;
+  EXEC SQL ROLLBACK WORK;
+}
+goto P150;
+
+P177:
+  printf ("SQLCODE is %ld\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P173;
+
+/************************ Program 'B' ********************/
+P172:
+if (countr > 0)
+  goto P174;
+
+/* Set-up.  Don't use USIG in case DML102 runs simultaneously. */
+/* If it already exists, big deal.  Ignore error. */
+     strcpy (dstmt,
+     "CREATE TABLE USG103 (C1 INT, C_1 INT)             ");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+/* In case it already exists. */
+     strcpy (dstmt,
+     "DELETE FROM USG103                                ");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+     strcpy (dstmt,
+     "INSERT INTO USG103 VALUES (589, 600)              ");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+goto P176;
+
+P174:
+if (countr > 1)
+  goto P193;
+/* Try to generate dirty read. */
+printf("dstmt=\"INSERT INTO USG103 VALUES (589, 985)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO USG103 VALUES (589, 985)              ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("'A' should try to read 589, 985 now.\n");
+sleep (10);
+printf("dstmt=\"DELETE FROM USG103 WHERE C_1 = 985\"\n");
+     strcpy (dstmt,
+     "DELETE FROM USG103 WHERE C_1 = 985                ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+printf ("SQLCODE is %ld\n", SQLCODE);
+goto P176;
+
+P193:
+if (countr > 2)
+  goto P194;
+/* Try to generate a non-repeatable read. */
+printf("'A' should do a read now.\n");
+sleep (10);
+printf("dstmt=\"UPDATE USG103 SET C_1 = 1000 WHERE C_1 = 600\"\n");
+     strcpy (dstmt,
+     "UPDATE USG103 SET C_1 = 1000 WHERE C_1 = 600      ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("'A' can do another read now.\n");
+goto P176;
+
+P194:
+/* Try to generate a phantom read. */
+if (countr > 3)
+  goto P133;
+printf ("'A' should select count now.\n");
+sleep (10);
+printf("dstmt=\"INSERT INTO USG103 VALUES (589, 5555)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO USG103 VALUES (589, 5555)             ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("'A' should select count again now.\n");
+goto P176;
+
+/* End of transaction */
+P176:
+printf ("Committing transaction....\n");
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE is %ld -- transaction voided.\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  goto P131;
+}
+P175:
+printf ("Transaction complete.\n");
+countr = countr + 1;
+
+/* Program 'A' has already passed the token. */
+if (next >= PID)
+  goto P139;
+
+fails = 0;
+P121:
+printf ("Passing token to %ld....\n", next);
+EXEC SQL EXECUTE SYC7 USING :next, :testno;
+if (SQLCODE < 0)
+  goto P151;
+EXEC SQL COMMIT WORK;
+if (SQLCODE == 0)
+  goto P139;
+
+P151:
+printf ("SQLCODE is %ld\n", SQLCODE);
+EXEC SQL ROLLBACK WORK;
+fails = fails + 1;
+if (fails < 5)
+  goto P121;
+printf ("%ld has exited or failed -- deleting its registration.\n", next);
+printf ("(This should lose the token too.)\n");
+EXEC SQL EXECUTE SYC1 USING :next;
+EXEC SQL COMMIT WORK;
+goto P139;
+
+P150:
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0590','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml103.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0590','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+
+P133:
+/* Clean up after ourselves. */
+EXEC SQL EXECUTE SYC1 USING :PID;
+EXEC SQL COMMIT WORK;
+
+     printf("===============================================\n\n");
+
+/******************** END TEST0590 *********************/
+
+P199:
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

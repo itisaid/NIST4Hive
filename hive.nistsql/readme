@@ -1,0 +1,8 @@
+The project transfer nist sql test suit(./pcisql) script to hive test framework.
+
+step by step:
+1. execute schema & loaddata file(./mysql) in mysql database. It will create table and import data to mysql database.
+2. execute DMLConvertor, It will create select script for hive test.
+3. execute LoadData, It will create SQLDefinition.java for hive test framework and csv data file(in ./sql).
+4. copy these file to hive project.
+

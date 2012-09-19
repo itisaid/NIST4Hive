@@ -1,0 +1,617 @@
+/*  EMBEDDED C (file "DML092.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/07/08 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML092.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests the functionality of the VARCHAR (or      */
+/*  CHARACTER VARYING) data type for Transitional SQL.  This     */
+/*  is the Static SQL version of DML093.  To run this test,      */
+/*  you must support features 3 and 6 for TSQL as listed in      */
+/*  FIPS PUB 127-2.  The test may be run without feature 3 by    */
+/*  removing the schema statements from the test and creating    */
+/*  the table 'manually' by whatever means is supported, as long */
+/*  as the three aliases for VARCHAR are all used.               */
+/*                                                               */
+/*  VARCHAR is only applicable to C, PLI, and MUMPS.             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char fx1[11];
+char fx2[11];
+char fx3[11];
+VARCHAR x1[11];
+varchar x2[11];
+Varchar x3[11];
+VarChar x4[16];
+VARchaR   x5[5];
+  char part1[61];
+  char part2[61];
+  char part3[61];
+  char part4[61];
+  char part5[15];
+  varchar str254[255];
+  varchar str255[255];
+short indic1;
+short indic2;
+short indic3;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml092.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0565 ********************/
+flag = 1;
+
+     printf("                  TEST0565 \n");
+     printf("       VARCHAR for Transitional SQL\n");
+     printf("(VARCHAR is only applicable to C, PLI, and MUMPS.)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 3, 6\n");
+     printf("    ANSI SQL-1992 6.1 <data type>\n");
+     printf("                  12.4 Calls to a <procedure>\n");
+     printf("                  9  Data assignment rules\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE VCH2 (\n");
+printf("  VCH2A CHARACTER VARYING (10),\n");
+printf("  VCH2B CHAR VARYING (10),\n");
+printf("  VCH2C VARCHAR (10));\n");
+
+EXEC SQL CREATE TABLE VCH2 (
+  VCH2A CHARACTER VARYING (10),
+  VCH2B CHAR VARYING (10),
+  VCH2C VARCHAR (10));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* First we use literals; later we use host language variables. */
+/* See 5.3 SR.9 Note on zero-length strings */
+
+printf("INSERT INTO VCH2\n");
+printf("  VALUES ('FOO', '', '0123456789');\n");
+
+EXEC SQL INSERT INTO VCH2
+  VALUES ('FOO', '', '0123456789');
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x3, "xxxxxxxxxx");
+
+printf("SELECT VCH2A, VCH2B, VCH2C\n");
+printf("  INTO :x1, :x2, :x3 FROM VCH2;\n");
+EXEC SQL SELECT VCH2A, VCH2B, VCH2C
+  INTO :x1, :x2, :x3 FROM VCH2;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be ''; its value is '%s'\n", x2);
+printf ("x3 should be '0123456789'; its value is '%s'\n\n", x3);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "") != 0)
+  flag = 0;
+if (strcmp (x3, "0123456789") != 0)
+  flag = 0;
+
+strcpy (fx1, "xxxxxxxxxx");
+strcpy (fx2, "xxxxxxxxxx");
+strcpy (fx3, "xxxxxxxxxx");
+
+printf("SELECT VCH2A, VCH2B, VCH2C\n");
+printf("  INTO :fx1, :fx2, :fx3 FROM VCH2;\n");
+EXEC SQL SELECT VCH2A, VCH2B, VCH2C
+  INTO :fx1, :fx2, :fx3 FROM VCH2;
+
+fx1[10] = '\0';
+fx2[10] = '\0';
+fx3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf ("fx1 should be 'FOO       '; its value is '%s'\n", fx1);
+printf ("fx2 should be '          '; its value is '%s'\n", fx2);
+printf ("fx3 should be '0123456789'; its value is '%s'\n\n", fx3);
+
+if (strcmp (fx1, "FOO       ") != 0)
+  flag = 0;
+if (strcmp (fx2, "          ") != 0)
+  flag = 0;
+if (strcmp (fx3, "0123456789") != 0)
+  flag = 0;
+
+/* 9.1 GR.3.e */
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x5, "xxxx");
+
+printf("x5 is too short.\n");
+printf("SELECT VCH2A, VCH2B, VCH2C\n");
+printf("  INTO :x1, :x2, :x5 FROM VCH2;\n");
+EXEC SQL SELECT VCH2A, VCH2B, VCH2C
+  INTO :x1, :x2, :x5 FROM VCH2;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x5[4] = '\0';
+
+printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 01004; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be ''; its value is '%s'\n", x2);
+printf ("x5 should be '0123'; its value is '%s'\n\n", x5);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "") != 0)
+  flag = 0;
+if (strcmp (x5, "0123") != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.ii */
+
+printf("INSERT INTO VCH2\n");
+printf("  VALUES ('FOO', 'FOO', 'LITTLETOOLONG');\n");
+EXEC SQL INSERT INTO VCH2
+  VALUES ('FOO', 'FOO', 'LITTLETOOLONG');
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+/* The subclass is significant! */
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.i */
+
+printf("DELETE FROM VCH2;\n");
+EXEC SQL DELETE FROM VCH2;
+
+printf("INSERT INTO VCH2\n");
+printf("  VALUES ('FOO', 'BAR   ', 'BLANKS       ');\n");
+EXEC SQL INSERT INTO VCH2
+  VALUES ('FOO', 'BAR   ', 'BLANKS       ');
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x5, "xxxx");
+strcpy (x3, "xxxxxxxxxx");
+indic1 = 5;
+indic2 = 5;
+indic3 = 5;
+
+printf("SELECT VCH2A, VCH2B, VCH2C\n");
+printf("  INTO :x1:indic1, :x5:indic2, :x3:indic3 FROM VCH2;\n");
+EXEC SQL SELECT VCH2A, VCH2B, VCH2C
+  INTO :x1:indic1, :x5:indic2, :x3:indic3 FROM VCH2;
+
+x1[10] = '\0';
+x5[4] = '\0';
+x3[10] = '\0';
+
+printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 01004; its value is %s\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 6; its value is %d\n", indic2);
+printf ("indic3 should be 0; its value is %d\n", indic3);
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x5 should be 'BAR '; its value is '%s'\n", x5);
+printf ("x3 should be 'BLANKS    '; its value is '%s'\n\n", x3);
+
+if (indic1 != 0 || indic2 != 6 || indic3 != 0)
+  flag = 0;
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x5, "BAR ") != 0)
+  flag = 0;
+if (strcmp (x3, "BLANKS    ") != 0)
+  flag = 0;
+
+printf("DELETE FROM VCH2;\n");
+EXEC SQL DELETE FROM VCH2;
+
+printf("strcpy (x1, \"FOO\");\n");
+printf("strcpy (x2, \"\");\n");
+printf("strcpy (x3, \"0123456789\");\n");
+
+strcpy (x1, "FOO");
+strcpy (x2, "");
+strcpy (x3, "0123456789");
+
+printf("INSERT INTO VCH2 VALUES (:x1, :x2, :x3);\n");
+EXEC SQL INSERT INTO VCH2 VALUES (:x1, :x2, :x3);
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x3, "xxxxxxxxxx");
+
+printf("SELECT VCH2A, VCH2B, VCH2C\n");
+printf("  INTO :x1, :x2, :x3 FROM VCH2;\n");
+EXEC SQL SELECT VCH2A, VCH2B, VCH2C
+  INTO :x1, :x2, :x3 FROM VCH2;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be ''; its value is '%s'\n", x2);
+printf ("x3 should be '0123456789'; its value is '%s'\n\n", x3);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "") != 0)
+  flag = 0;
+if (strcmp (x3, "0123456789") != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.ii */
+
+printf("strcpy (x4, \"LITTLETOOLONG\");\n");
+strcpy (x4, "LITTLETOOLONG");
+
+printf("INSERT INTO VCH2 VALUES ('FOO', 'FOO', :x4);\n");
+EXEC SQL INSERT INTO VCH2 VALUES ('FOO', 'FOO', :x4);
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+/* The subclass is significant! */
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.i */
+
+printf("DELETE FROM VCH2;\n");
+EXEC SQL DELETE FROM VCH2;
+
+printf("strcpy (x2, \"BAR   \");\n");
+strcpy (x2, "BAR   ");
+printf("strcpy (x4, \"BLANKS       \");\n");
+strcpy (x4, "BLANKS       ");
+
+printf("INSERT INTO VCH2 VALUES ('FOO', :x2, :x4);\n");
+EXEC SQL INSERT INTO VCH2 VALUES ('FOO', :x2, :x4);
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x3, "xxxxxxxxxx");
+
+printf("SELECT VCH2A, VCH2B, VCH2C\n");
+printf("  INTO :x1, :x2, :x3 FROM VCH2;\n");
+EXEC SQL SELECT VCH2A, VCH2B, VCH2C
+  INTO :x1, :x2, :x3 FROM VCH2;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be 'BAR   '; its value is '%s'\n", x2);
+printf ("x3 should be 'BLANKS    '; its value is '%s'\n\n", x3);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "BAR   ") != 0)
+  flag = 0;
+if (strcmp (x3, "BLANKS    ") != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE VCH2 CASCADE;\n");
+EXEC SQL DROP TABLE VCH2 CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0565','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml092.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0565','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0565 *********************/
+/******************** BEGIN TEST0584 ********************/
+flag = 1;
+
+     printf("                  TEST0584 \n");
+     printf(" FIPS sizing, VARCHAR (254) strings (static)\n");
+     printf("(VARCHAR is only applicable to C, PLI, and MUMPS.)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 3, 6\n");
+     printf("                   16.6 Sizing for database constructs\n");
+     printf("    Test 0222 (DML047)\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE T254 (STR254 VARCHAR (254));\n");
+EXEC SQL CREATE TABLE T254 (STR254 VARCHAR (254));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+strcpy(part1,"Two guys were playing golf.  The first guy, who was losing b");
+strcpy(part2,"y one stroke, had the audacity to make a hole-in-one.  Inste");
+strcpy(part3,"ad of having a nervous breakdown, the second guy reached int");
+strcpy(part4,"o his pocket and brought out a bright green golfball.  He sa");
+strcpy(part5,"id, I'll bet y");
+strcpy(str254,part1);
+strcat(str254,part2);
+strcat(str254,part3);
+strcat(str254,part4);
+strcat(str254,part5);
+
+  printf("str254=%s \n\n",str254);
+
+printf("INSERT INTO T254 VALUES (:str254);\n");
+EXEC SQL INSERT INTO T254 VALUES (:str254);
+
+CHCKOK ();
+printf("\n");
+
+strcpy (str255, "xxxxxx");
+
+printf("SELECT STR254 INTO :str255 FROM T254;\n");
+EXEC SQL SELECT STR254 INTO :str255 FROM T254;
+str255[254] = '\0';
+
+CHCKOK ();
+printf(" str255=%s \n",str254);
+printf("Should be identical to str254 above.\n\n");
+
+if (strncmp (str255, str254, 254) != 0)
+  flag = 0;
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("DROP TABLE T254 CASCADE;\n");
+EXEC SQL DROP TABLE T254 CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0584','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml092.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0584','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0584 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

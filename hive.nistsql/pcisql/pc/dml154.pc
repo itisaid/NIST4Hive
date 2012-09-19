@@ -1,0 +1,561 @@
+/*  EMBEDDED C (file "DML154.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/09/08 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML154.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests Transitional SQL features.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+     char dstmt[51];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml154.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0849 ********************/
+flag = 1;
+
+     printf("                  TEST0849 \n");
+     printf("Descriptors:  datetime length in positions\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 5 -- DATETIME data types\n");
+     printf("    4.5 PP.4 -- Definition of length in positions\n");
+     printf("    6.1 SR.27 -- Clarification of length in positions\n");
+     printf("    X3H2-95-104 -- Erratum, length of interval types\n");
+     printf("     6.1 -- <data type> esp. temporal types\n");
+     printf("    10.1 -- <interval qualifier>\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.9 -- <using clause>\n");
+     printf("    17.2 GR.3 -- limit on descriptor areas is\n");
+     printf("                 implementation-defined\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE LOTSA_DATETIMES (\n");
+printf("  C1 DATE, C2 TIME, C3 TIMESTAMP,\n");
+printf("  C4 INTERVAL YEAR, C5 INTERVAL MONTH, C6 INTERVAL DAY,\n");
+printf("  C7 INTERVAL HOUR, C8 INTERVAL MINUTE, C9 INTERVAL SECOND,\n");
+printf("  C10 INTERVAL YEAR TO MONTH,\n");
+printf("  C11 INTERVAL DAY TO HOUR,\n");
+printf("  C12 INTERVAL DAY TO MINUTE,\n");
+printf("  C13 INTERVAL DAY TO SECOND,\n");
+printf("  C14 INTERVAL HOUR TO MINUTE,\n");
+printf("  C15 INTERVAL HOUR TO SECOND,\n");
+printf("  C16 INTERVAL MINUTE TO SECOND);\n");
+EXEC SQL CREATE TABLE LOTSA_DATETIMES (
+  C1 DATE, C2 TIME, C3 TIMESTAMP,
+  C4 INTERVAL YEAR, C5 INTERVAL MONTH, C6 INTERVAL DAY,
+  C7 INTERVAL HOUR, C8 INTERVAL MINUTE, C9 INTERVAL SECOND,
+  C10 INTERVAL YEAR TO MONTH,
+  C11 INTERVAL DAY TO HOUR,
+  C12 INTERVAL DAY TO MINUTE,
+  C13 INTERVAL DAY TO SECOND,
+  C14 INTERVAL HOUR TO MINUTE,
+  C15 INTERVAL HOUR TO SECOND,
+  C16 INTERVAL MINUTE TO SECOND);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("ALLOCATE DESCRIPTOR 'D15411' WITH MAX 16;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D15411' WITH MAX 16;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009!\n");
+  printf ("This test must be rewritten by NIST (in the event of\n");
+  printf ("a validation) to accomodate implementation-defined\n");
+  printf ("limit on <occurrences>.\n");
+}
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM LOTSA_DATETIMES\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM LOTSA_DATETIMES                     ");
+
+printf("PREPARE S15411 FROM :dstmt;\n");
+EXEC SQL PREPARE S15411 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE OUTPUT S15411 USING SQL DESCRIPTOR 'D15411';\n");
+EXEC SQL DESCRIBE OUTPUT S15411 USING SQL DESCRIPTOR 'D15411';
+CHCKOK ();
+printf("\n");
+
+/* Lengths of temporal data types   */
+/* as defined in 4.5 and clarified  */
+/* by 6.1 SR.27:                    */
+
+/* DATE                        = 10  */
+/* TIME                        = 8   */
+/* TIMESTAMP                   = 26  */
+/* INTERVAL YEAR              >= 2   */
+/* INTERVAL MONTH             >= 2   */
+/* INTERVAL DAY               >= 2   */
+/* INTERVAL HOUR              >= 2   */
+/* INTERVAL MINUTE            >= 2   */
+/* INTERVAL SECOND            >= 9   */
+/* INTERVAL YEAR TO MONTH     >= 5   */
+/* INTERVAL DAY TO HOUR       >= 5   */
+/* INTERVAL DAY TO MINUTE     >= 8   */
+/* INTERVAL DAY TO SECOND     >= 18  */
+/* INTERVAL HOUR TO MINUTE    >= 5   */
+/* INTERVAL HOUR TO SECOND    >= 15  */
+/* INTERVAL MINUTE TO SECOND  >= 12  */
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 1 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 1 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 2 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 2 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be 8; its value is %ld\n\n", int1);
+if (int1 != 8)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 3 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 3 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be 26; its value is %ld\n\n", int1);
+if (int1 != 26)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 4 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 4 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 2; its value is %ld\n\n", int1);
+if (int1 < 2)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 5 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 5 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 2; its value is %ld\n\n", int1);
+if (int1 < 2)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 6 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 6 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 2; its value is %ld\n\n", int1);
+if (int1 < 2)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 7 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 7 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 2; its value is %ld\n\n", int1);
+if (int1 < 2)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 8 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 8 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 2; its value is %ld\n\n", int1);
+if (int1 < 2)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 9 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 9 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 9; its value is %ld\n\n", int1);
+if (int1 < 9)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 10 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 10 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 5; its value is %ld\n\n", int1);
+if (int1 < 5)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 11 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 11 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 5; its value is %ld\n\n", int1);
+if (int1 < 5)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 12 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 12 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 8; its value is %ld\n\n", int1);
+if (int1 < 8)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 13 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 13 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 18; its value is %ld\n\n", int1);
+if (int1 < 18)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 14 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 14 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 5; its value is %ld\n\n", int1);
+if (int1 < 5)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 15 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 15 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 15; its value is %ld\n\n", int1);
+if (int1 < 15)
+  flag = 0;
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D15411' VALUE 16 :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D15411' VALUE 16 :int1 = LENGTH;
+CHCKOK ();
+printf ("int1 should be >= 12; its value is %ld\n\n", int1);
+if (int1 < 12)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE LOTSA_DATETIMES CASCADE;\n");
+EXEC SQL DROP TABLE LOTSA_DATETIMES CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0849','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml154.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0849','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0849 *********************/
+/******************** BEGIN TEST0852 ********************/
+flag = 1;
+
+     printf("                  TEST0852 \n");
+     printf("Transitive grant in COLUMN_PRIV, TABLE_PRIV\n");
+     printf("References:\n");
+     printf("    F# 2 -- Basic information schema\n");
+     printf("    F# 23 -- Privilege tables\n");
+     printf("    21.2.10 -- TABLE_PRIVILEGES view\n");
+     printf("    21.2.11 -- COLUMN_PRIVILEGES view\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* We were GRANT SELECT ON HU.STAFF TO FLATER by SULLIVAN1 */
+/* We also are GRANT ALL PRIVILEGES ON STAFF TO PUBLIC */
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFO_SCHEM.TABLE_PRIVILEGES\n");
+printf("  WHERE TABLE_SCHEM = 'HU' AND TABLE_NAME = 'STAFF'\n");
+printf("  AND GRANTOR = 'SULLIVAN1' AND GRANTEE = 'FLATER'\n");
+printf("  AND IS_GRANTABLE = 'NO';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFO_SCHEM.TABLE_PRIVILEGES
+  WHERE TABLE_SCHEM = 'HU' AND TABLE_NAME = 'STAFF'
+  AND GRANTOR = 'SULLIVAN1' AND GRANTEE = 'FLATER'
+  AND IS_GRANTABLE = 'NO';
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("  WHERE TABLE_SCHEM = 'HU' AND TABLE_NAME = 'STAFF'\n");
+printf("  AND GRANTOR = 'SULLIVAN1' AND GRANTEE = 'FLATER'\n");
+printf("  AND IS_GRANTABLE = 'NO';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFO_SCHEM.COLUMN_PRIVILEGES
+  WHERE TABLE_SCHEM = 'HU' AND TABLE_NAME = 'STAFF'
+  AND GRANTOR = 'SULLIVAN1' AND GRANTEE = 'FLATER'
+  AND IS_GRANTABLE = 'NO';
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0852','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml154.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0852','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0852 *********************/
+/******************** BEGIN TEST0854 ********************/
+flag = 1;
+
+     printf("         OPTIONAL TEST0854 \n");
+     printf("    Informational:  mixing SDL and DML\n");
+     printf("References:\n");
+     printf("    4.28 PP.2 -- Imp-defined whether can mix SDL and DML\n");
+     printf("    12.3 GR.7 -- Invalid transaction state if not supported\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf ("It is implementation-defined whether an SQL-data statement may\n");
+printf ("occur within the same transaction as an SQL-schema statement.\n");
+printf ("If it is not supported, a 25000 SQLSTATE is supposed to be\n");
+printf ("issued.  However, even if it is supported, there can be other\n");
+printf ("implementation-defined restrictions, requirements, and\n");
+printf ("conditions.  An example is only allowing one SQL-schema statement\n");
+printf ("per transaction.  If such a restriction is violated, the returned\n");
+printf ("SQLSTATE is implementation-defined.\n\n");
+
+printf("CREATE TABLE TRANSIENT (WINDOW_ID INT);\n");
+EXEC SQL CREATE TABLE TRANSIENT (WINDOW_ID INT);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TRANSIENT VALUES (1);\n");
+EXEC SQL INSERT INTO TRANSIENT VALUES (1);
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW CTRANS (WIN_COUNT) AS\n");
+printf("  SELECT COUNT(*) FROM TRANSIENT;\n");
+EXEC SQL CREATE VIEW CTRANS (WIN_COUNT) AS
+  SELECT COUNT(*) FROM TRANSIENT;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TRANSIENT VALUES (2);\n");
+EXEC SQL INSERT INTO TRANSIENT VALUES (2);
+CHCKOK ();
+printf("\n");
+ 
+int1 = 0;
+printf("SELECT * INTO :int1 FROM CTRANS;\n");
+EXEC SQL SELECT * INTO :int1 FROM CTRANS;
+CHCKOK ();
+printf("\n");
+printf("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("DROP TABLE TRANSIENT CASCADE;\n");
+EXEC SQL DROP TABLE TRANSIENT CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0854','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml154.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0854','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0854 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

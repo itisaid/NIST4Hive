@@ -1,0 +1,118 @@
+/*  EMBEDDED C (file "DML053.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/15 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML053.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE TABLE WHICH IS A MULTI-SET OF ROWS. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 4.4 Tables                            */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    long III;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long i;
+    long ii;
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml053.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0233 ********************/
+
+  printf("\n                TEST0233      \n");
+  printf("     Reference X3.135-1989 section 4.4: \n");
+  printf("        A table is a multi-set of rows.   \n");    
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO TEMP_S
+       VALUES('E1',11,'Deale');
+
+  i = SQLCODE;
+
+  EXEC SQL INSERT INTO TEMP_S
+       VALUES('E1',11,'Deale');
+
+  ii = SQLCODE;
+
+  EXEC SQL SELECT COUNT(*)
+           INTO :III
+           FROM TEMP_S
+           WHERE EMPNUM='E1' AND GRADE=11 AND CITY='Deale';
+
+  EXEC SQL ROLLBACK WORK;
+ 
+  printf("i = %ld, ii = %ld, III = %ld \n\n",i,ii,III);
+
+  printf("The correct answer should be i = 0, ii = 0 and III = 2 \n");
+
+  if (i == 0 && ii == 0 && III == 2)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0233','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml053.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0233','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0233 ********************/
+
+  exit(errcnt);
+}
+

@@ -1,0 +1,256 @@
+/*  EMBEDDED C (file "XOP721.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/06/06 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP721.PC                                                    */
+/*  WRITTEN BY: E. Pratt                                         */
+/*                                                               */
+/*  REVOKE ALL with optional PRIVILEGES omitted.                 */
+/*  To determine that when ALL (without the optional keyword     */
+/*  PRIVILEGES) is specified in a REVOKE statement, the statement*/
+/*  may be executed.                                             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open CAE SQL                                         */
+/*        SECTION 5.3.10                                         */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   02/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+/* This program should be run under authorization id XOPEN2 */
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char HCV[37];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+
+/* nosubclass variables */
+char NORMSQ[6];
+char ALPNUM[37];
+long norm1;
+long norm2;
+
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation defined    */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+
+norm1 = 2;
+/* subclass begins in position 3 of char array NORMSQ    */
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+    }
+
+    if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+        goto P213;
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+    for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+    }
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+    for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-z */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+        NORMSQ[norm1] = '0';
+     }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01). These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+    if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+        NORMSQ[1] = '0';
+P213:
+    return;
+}
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) == 0 &&
+strncmp (NORMSQ, SQLSTATE, 5) != 0)
+printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+
+
+main()
+{
+printf("\nThis Test Program must be run after xop719.pc and\n");
+printf("xop720.pc but before xop722.pc and xop723.pc\n");
+printf("\n");
+
+/* Log in as user XOPEN2 */
+     strcpy(uid,"XOPEN2");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+     EXEC SQL COMMIT WORK;
+errcnt = 0;
+errflg = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop721.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* initialise NOSUBCLASS comparison variable */
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0721 ********************/
+
+     printf("\n                     TEST0721             \n");
+     printf(" X/O,REVOKE ALL with optional PRIVILEGES omitted \n");
+     printf(" X/Open CAE SQL SEC. 5.3.10\n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("   *** REVOKE ALL ON XOPEN1.AAA FROM XOPEN3 CASCADE;\n");
+     printf("   *** REVOKE ALL ON XOPEN1.BBB FROM XOPEN3\n");
+     printf("   *** REVOKE ALL ON XOPEN1.CCC FROM XOPEN3 RESTRICT;\n");
+     printf("\n\n=================================================\n");
+
+/* Check that the privileges previously granted to XOPEN3 */
+/* can be revoked */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL REVOKE ALL ON XOPEN1.AAA FROM XOPEN3 CASCADE;
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0 && SQLCODE != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 1) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+     printf("\n\n=================================================\n");
+
+/* Check that the privileges previously granted to XOPEN3 */
+/* can be revoked - using dynamic SQL */
+     strcpy(HCV,"                                    ");
+     strcpy(HCV,"REVOKE ALL ON XOPEN1.BBB FROM XOPEN3");
+     HCV[36] = '\0';
+     strcpy(SQLSTATE,"x");
+     EXEC SQL COMMIT WORK;
+     EXEC SQL PREPARE SV FROM :HCV;
+     EXEC SQL EXECUTE SV;
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0 && SQLCODE != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 2) ! *** \n");
+     errflg = errflg + 1;
+     }
+     EXEC SQL COMMIT WORK;
+
+     printf("\n\n=================================================\n");
+
+/* Check that the REVOKE does not work, XOPEN3 has no */
+/* privileges on CCC to revoke */
+     strcpy(SQLSTATE,"x");
+     EXEC SQL REVOKE ALL ON XOPEN1.CCC FROM XOPEN3 RESTRICT;
+     SQLSTATE[5] = '\0';
+     printf("SQLSTATE should be 01006 , it is %s\n",SQLSTATE);
+
+     if (strncmp(SQLSTATE,"01006",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 3) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+     EXEC SQL COMMIT WORK;
+
+/* No ROLLBACK - This program is part of a set, run */
+/* together, xop719.pc and xop720.pc to xop723.pc */
+
+/* Display the number of errors */
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 3 ###\n");
+
+     if (errflg==0)
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0721','pass','PC');
+ printf("\n\n      xop721.pc      *** pass ***     ");
+ }
+ else
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0721','fail','PC');
+ errcnt = errcnt + 1;
+ printf("\n\n      xop721.pc      *** fail ***     ");
+ }
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0721 ********************/
+
+     exit(errcnt);
+
+}
+

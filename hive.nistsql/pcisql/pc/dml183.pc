@@ -1,0 +1,430 @@
+/*  EMBEDDED C (file "DML183.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-22 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML183.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char enuum[4];
+long casgrd;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml183.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0896 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0896\n");
+     printf("FIPS sizing, 50 WHEN clauses in a CASE expression\n");
+     printf("References:\n");
+     printf("FIPS 16.6 -- Sizing #38, WHEN clauses in a CASE expression\n");
+     printf("F#26 -- CASE expression\n");
+     printf("6.9 -- <case expression>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+casgrd = 0;
+strcpy (enuum, "xxx");
+printf("SELECT EMPNUM,\n");
+printf("  CASE GRADE\n");
+printf("    WHEN 0 THEN 1000\n");
+printf("    WHEN 1 THEN 997\n");
+printf("    WHEN 2 THEN 994\n");
+printf("    WHEN 3 THEN 991\n");
+printf("    WHEN 4 THEN 988\n");
+printf("    WHEN 5 THEN 985\n");
+printf("    WHEN 6 THEN 982\n");
+printf("    WHEN 7 THEN 979\n");
+printf("    WHEN 8 THEN 976\n");
+printf("    WHEN 9 THEN 973\n");
+printf("    WHEN 10 THEN 970\n");
+printf("    WHEN 11 THEN 967\n");
+printf("    WHEN 12 THEN 964\n");
+printf("    WHEN 13 THEN 961\n");
+printf("    WHEN 14 THEN 958\n");
+printf("    WHEN 15 THEN 955\n");
+printf("    WHEN 16 THEN 952\n");
+printf("    WHEN 17 THEN 949\n");
+printf("    WHEN 18 THEN 946\n");
+printf("    WHEN 19 THEN 943\n");
+printf("    WHEN 20 THEN 940\n");
+printf("    WHEN 21 THEN 937\n");
+printf("    WHEN 22 THEN 934\n");
+printf("    WHEN 23 THEN 931\n");
+printf("    WHEN 24 THEN 928\n");
+printf("    WHEN 25 THEN 925\n");
+printf("    WHEN 26 THEN 922\n");
+printf("    WHEN 27 THEN 919\n");
+printf("    WHEN 28 THEN 916\n");
+printf("    WHEN 29 THEN 913\n");
+printf("    WHEN 30 THEN 910\n");
+printf("    WHEN 31 THEN 907\n");
+printf("    WHEN 32 THEN 904\n");
+printf("    WHEN 33 THEN 901\n");
+printf("    WHEN 34 THEN 898\n");
+printf("    WHEN 35 THEN 895\n");
+printf("    WHEN 36 THEN 892\n");
+printf("    WHEN 37 THEN 889\n");
+printf("    WHEN 38 THEN 886\n");
+printf("    WHEN 39 THEN 883\n");
+printf("    WHEN 40 THEN 880\n");
+printf("    WHEN 41 THEN 877\n");
+printf("    WHEN 42 THEN 874\n");
+printf("    WHEN 43 THEN 871\n");
+printf("    WHEN 44 THEN 868\n");
+printf("    WHEN 45 THEN 865\n");
+printf("    WHEN 46 THEN 862\n");
+printf("    WHEN 47 THEN 859\n");
+printf("    WHEN 48 THEN 856\n");
+printf("    WHEN 49 THEN 853\n");
+printf("  END\n");
+printf("  INTO :enuum, :casgrd\n");
+printf("  FROM HU.STAFF\n");
+printf("  WHERE EMPNAME = 'Betty';\n");
+EXEC SQL SELECT EMPNUM,
+  CASE GRADE
+    WHEN 0 THEN 1000
+    WHEN 1 THEN 997
+    WHEN 2 THEN 994
+    WHEN 3 THEN 991
+    WHEN 4 THEN 988
+    WHEN 5 THEN 985
+    WHEN 6 THEN 982
+    WHEN 7 THEN 979
+    WHEN 8 THEN 976
+    WHEN 9 THEN 973
+    WHEN 10 THEN 970
+    WHEN 11 THEN 967
+    WHEN 12 THEN 964
+    WHEN 13 THEN 961
+    WHEN 14 THEN 958
+    WHEN 15 THEN 955
+    WHEN 16 THEN 952
+    WHEN 17 THEN 949
+    WHEN 18 THEN 946
+    WHEN 19 THEN 943
+    WHEN 20 THEN 940
+    WHEN 21 THEN 937
+    WHEN 22 THEN 934
+    WHEN 23 THEN 931
+    WHEN 24 THEN 928
+    WHEN 25 THEN 925
+    WHEN 26 THEN 922
+    WHEN 27 THEN 919
+    WHEN 28 THEN 916
+    WHEN 29 THEN 913
+    WHEN 30 THEN 910
+    WHEN 31 THEN 907
+    WHEN 32 THEN 904
+    WHEN 33 THEN 901
+    WHEN 34 THEN 898
+    WHEN 35 THEN 895
+    WHEN 36 THEN 892
+    WHEN 37 THEN 889
+    WHEN 38 THEN 886
+    WHEN 39 THEN 883
+    WHEN 40 THEN 880
+    WHEN 41 THEN 877
+    WHEN 42 THEN 874
+    WHEN 43 THEN 871
+    WHEN 44 THEN 868
+    WHEN 45 THEN 865
+    WHEN 46 THEN 862
+    WHEN 47 THEN 859
+    WHEN 48 THEN 856
+    WHEN 49 THEN 853
+  END
+  INTO :enuum, :casgrd
+  FROM HU.STAFF
+  WHERE EMPNAME = 'Betty';
+CHCKOK ();
+printf ("enuum should be 'E2 '; its value is '%s'\n", enuum);
+if (strcmp (enuum, "E2 ") != 0)
+  flag = 0;
+printf ("casgrd should be 970; its value is %ld\n\n", casgrd);
+if (casgrd != 970)
+  flag = 0;
+
+casgrd = 0;
+strcpy (enuum, "xxx");
+printf("SELECT EMPNUM,\n");
+printf("  CASE\n");
+printf("    WHEN GRADE = 0 THEN 1000\n");
+printf("    WHEN GRADE = 1 THEN 997\n");
+printf("    WHEN GRADE = 2 THEN 994\n");
+printf("    WHEN GRADE = 3 THEN 991\n");
+printf("    WHEN GRADE = 4 THEN 988\n");
+printf("    WHEN GRADE = 5 THEN 985\n");
+printf("    WHEN GRADE = 6 THEN 982\n");
+printf("    WHEN GRADE = 7 THEN 979\n");
+printf("    WHEN GRADE = 8 THEN 976\n");
+printf("    WHEN GRADE = 9 THEN 973\n");
+printf("    WHEN GRADE = 11 THEN 967\n");
+printf("    WHEN GRADE = 12 THEN 964\n");
+printf("    WHEN GRADE = 13 THEN 961\n");
+printf("    WHEN GRADE = 14 THEN 958\n");
+printf("    WHEN GRADE = 15 THEN 955\n");
+printf("    WHEN GRADE = 16 THEN 952\n");
+printf("    WHEN GRADE = 17 THEN 949\n");
+printf("    WHEN GRADE = 18 THEN 946\n");
+printf("    WHEN GRADE = 19 THEN 943\n");
+printf("    WHEN GRADE = 20 THEN 940\n");
+printf("    WHEN GRADE = 21 THEN 937\n");
+printf("    WHEN GRADE = 22 THEN 934\n");
+printf("    WHEN GRADE = 23 THEN 931\n");
+printf("    WHEN GRADE = 24 THEN 928\n");
+printf("    WHEN GRADE = 25 THEN 925\n");
+printf("    WHEN GRADE = 26 THEN 922\n");
+printf("    WHEN GRADE = 27 THEN 919\n");
+printf("    WHEN GRADE = 28 THEN 916\n");
+printf("    WHEN GRADE = 29 THEN 913\n");
+printf("    WHEN GRADE = 30 THEN 910\n");
+printf("    WHEN GRADE = 31 THEN 907\n");
+printf("    WHEN GRADE = 32 THEN 904\n");
+printf("    WHEN GRADE = 33 THEN 901\n");
+printf("    WHEN GRADE = 34 THEN 898\n");
+printf("    WHEN GRADE = 35 THEN 895\n");
+printf("    WHEN GRADE = 36 THEN 892\n");
+printf("    WHEN GRADE = 37 THEN 889\n");
+printf("    WHEN GRADE = 38 THEN 886\n");
+printf("    WHEN GRADE = 39 THEN 883\n");
+printf("    WHEN GRADE = 40 THEN 880\n");
+printf("    WHEN GRADE = 41 THEN 877\n");
+printf("    WHEN GRADE = 42 THEN 874\n");
+printf("    WHEN GRADE = 43 THEN 871\n");
+printf("    WHEN GRADE = 44 THEN 868\n");
+printf("    WHEN GRADE = 45 THEN 865\n");
+printf("    WHEN GRADE = 46 THEN 862\n");
+printf("    WHEN GRADE = 47 THEN 859\n");
+printf("    WHEN GRADE = 48 THEN 856\n");
+printf("    WHEN GRADE = 49 THEN 853\n");
+printf("    WHEN GRADE = 10 THEN 970\n");
+printf("  END\n");
+printf("  INTO :enuum, :casgrd\n");
+printf("  FROM HU.STAFF\n");
+printf("  WHERE EMPNAME = 'Betty';\n");
+EXEC SQL SELECT EMPNUM,
+  CASE
+    WHEN GRADE = 0 THEN 1000
+    WHEN GRADE = 1 THEN 997
+    WHEN GRADE = 2 THEN 994
+    WHEN GRADE = 3 THEN 991
+    WHEN GRADE = 4 THEN 988
+    WHEN GRADE = 5 THEN 985
+    WHEN GRADE = 6 THEN 982
+    WHEN GRADE = 7 THEN 979
+    WHEN GRADE = 8 THEN 976
+    WHEN GRADE = 9 THEN 973
+    WHEN GRADE = 11 THEN 967
+    WHEN GRADE = 12 THEN 964
+    WHEN GRADE = 13 THEN 961
+    WHEN GRADE = 14 THEN 958
+    WHEN GRADE = 15 THEN 955
+    WHEN GRADE = 16 THEN 952
+    WHEN GRADE = 17 THEN 949
+    WHEN GRADE = 18 THEN 946
+    WHEN GRADE = 19 THEN 943
+    WHEN GRADE = 20 THEN 940
+    WHEN GRADE = 21 THEN 937
+    WHEN GRADE = 22 THEN 934
+    WHEN GRADE = 23 THEN 931
+    WHEN GRADE = 24 THEN 928
+    WHEN GRADE = 25 THEN 925
+    WHEN GRADE = 26 THEN 922
+    WHEN GRADE = 27 THEN 919
+    WHEN GRADE = 28 THEN 916
+    WHEN GRADE = 29 THEN 913
+    WHEN GRADE = 30 THEN 910
+    WHEN GRADE = 31 THEN 907
+    WHEN GRADE = 32 THEN 904
+    WHEN GRADE = 33 THEN 901
+    WHEN GRADE = 34 THEN 898
+    WHEN GRADE = 35 THEN 895
+    WHEN GRADE = 36 THEN 892
+    WHEN GRADE = 37 THEN 889
+    WHEN GRADE = 38 THEN 886
+    WHEN GRADE = 39 THEN 883
+    WHEN GRADE = 40 THEN 880
+    WHEN GRADE = 41 THEN 877
+    WHEN GRADE = 42 THEN 874
+    WHEN GRADE = 43 THEN 871
+    WHEN GRADE = 44 THEN 868
+    WHEN GRADE = 45 THEN 865
+    WHEN GRADE = 46 THEN 862
+    WHEN GRADE = 47 THEN 859
+    WHEN GRADE = 48 THEN 856
+    WHEN GRADE = 49 THEN 853
+    WHEN GRADE = 10 THEN 970
+  END
+  INTO :enuum, :casgrd
+  FROM HU.STAFF
+  WHERE EMPNAME = 'Betty';
+CHCKOK ();
+printf ("enuum should be 'E2 '; its value is '%s'\n", enuum);
+if (strcmp (enuum, "E2 ") != 0)
+  flag = 0;
+printf ("casgrd should be 970; its value is %ld\n\n", casgrd);
+if (casgrd != 970)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0896','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml183.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0896','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0896 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

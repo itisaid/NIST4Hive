@@ -1,0 +1,1584 @@
+/*  EMBEDDED C (file "DML063.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/05/06 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML063.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE USE OF HOST IDENTIFIERS (variables) */
+/*  WHICH ARE SQL RESERVED WORDS.                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    AMERICAN NATIONAL STANDARD database language Embedded SQL  */
+/*                          X3.168-1989                          */
+/*                                                               */
+/*      Sections 9.3 through 9.7 SR 3, except 9.6 SR 4           */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+       char ADA[4];
+       char ALL[4];
+       char AND[4];
+       char ANY[4];
+       char AS[4];
+       char ASC[4];
+       char AUTHORIZATION[4];
+       char AVG[4];
+       char BEGIN[4];
+       char BETWEEN[4];
+       char BY[4];
+       char C[4];
+       char CHAR[4];
+       char CHARACTER[4];
+       char CHECK[4];
+       char CLOSE[4];
+       char COBOL[4];
+       char COMMIT[4];
+       char CONTINUE[4];
+       char COUNT[4];
+       char CREATE[4];
+       char CURRENT[4];
+       char CURSOR[4];
+       char DEC[4];
+       char DECIMAL[4];
+       char DECLARE[4];
+       char DEFAULT[4];
+       char DELETE[4];
+       char DESC[4];
+       char DISTINCT[4];
+       char DOUBLE[4];
+       char END[4];
+       char ESCAPE[4];
+       char EXEC[4]; 
+       char EXISTS[4];
+       char FETCH[4];
+       char FLOAT[4];
+       char FOR[4];
+       char FOREIGN[4];
+       char FORTRAN[4];
+       char FOUND[4];
+       char FROM[4];
+       char GO[4];
+       char GOTO[4];
+       char GRANT[4];
+       char GROUP[4];
+       char HAVING[4];
+       char IN[4];
+       char INDICATOR[4];
+       char INSERT[4];
+       char INT[4];
+       char INTEGER[4];
+       char INTO[4];
+       char IS[4];
+       char KEY[4];
+       char LANGUAGE[4];
+       char LIKE[4];
+       char MAX[4];
+       char MIN[4];
+       char MODULE[4];
+       char NOT[4];
+       char NUMERIC[4];
+       char OF[4];
+       char ON[4];
+       char OPEN[4];
+       char OPTION[4];
+       char OR[4];
+       char ORDER[4];
+       char PASCAL[4];
+       char PLI[4];
+       char PRECISION[4];
+       char PRIMARY[4];
+       char PRIVILEGES[4];
+       char PROCEDURE[4];
+       char PUBLIC[4];
+       char REAL[4];
+       char REFERENCES[4];
+       char ROLLBACK[4];
+       char SCHEMA[4];
+       char SECTION[4];
+       char SELECT[4];
+       char SET[4];
+       char SMALLINT[4];
+       char SOME[4];
+       char SQL[4];
+       char SQLERROR[4];
+       char SUM[4];
+       char TABLE[4];
+       char TO[4];
+       char UNION[4];
+       char UNIQUE[4];
+       char UPDATE[4];
+       char USER[4];
+       char VALUES[4];
+       char VIEW[4];
+       char WHENEVER[4];
+       char WHERE[4];
+       char WITH[4];
+       char WORK[4];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  wdcnt;
+            char TESTNO[4];
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml063.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0280 ********************/
+
+     printf("\n                TEST0280             \n");
+     printf("reference X3.168-1989 9.3-9.7 SR3, except 9.6 SR4\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     wdcnt = 0;
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ADA
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ADA);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ADA          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ADA          ----               Vendor reserved\n");
+        }
+
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ALL
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ALL);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ALL          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ALL          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :AND
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,AND);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("AND          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("AND          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ANY
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ANY);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ANY          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ANY          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :AS
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,AS);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("AS           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("AS           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ASC
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ASC);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ASC          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ASC          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :AUTHORIZATION
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,AUTHORIZATION);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("AUTHORIZATION---- Not Reserved \n");
+        }
+      else
+        {
+printf("AUTHORIZATION----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :AVG
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,AVG);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("AVG          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("AVG          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :BEGIN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,BEGIN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("BEGIN        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("BEGIN        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :BETWEEN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,BETWEEN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("BETWEEN      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("BETWEEN      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :BY 
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,BY);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("BY           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("BY           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :C
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,C);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("C            ---- Not Reserved \n");
+        }
+      else
+        {
+printf("C            ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CHAR
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CHAR);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CHAR         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CHAR         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CHARACTER
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CHARACTER);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CHARACTER    ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CHARACTER    ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CHECK
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CHECK);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CHECK        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CHECK        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CLOSE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CLOSE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CLOSE        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CLOSE        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :COBOL
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,COBOL);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("COBOL        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("COBOL        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :COMMIT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,COMMIT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("COMMIT       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("COMMIT       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CONTINUE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CONTINUE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CONTINUE     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CONTINUE     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :COUNT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,COUNT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("COUNT        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("COUNT        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CREATE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CREATE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CREATE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CREATE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CURRENT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CURRENT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CURRENT      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CURRENT      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :CURSOR
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,CURSOR);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("CURSOR       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("CURSOR       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DEC
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DEC);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DEC          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DEC          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DECIMAL
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DECIMAL);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DECIMAL      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DECIMAL      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DECLARE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DECLARE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DECLARE      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DECLARE      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DEFAULT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DEFAULT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DEFAULT      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DEFAULT      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DELETE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DELETE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DELETE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DELETE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DESC
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DESC);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DESC         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DESC         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DISTINCT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DISTINCT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DISTINCT     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DISTINCT     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :DOUBLE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,DOUBLE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("DOUBLE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("DOUBLE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :END
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,END);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("END          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("END          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ESCAPE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ESCAPE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ESCAPE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ESCAPE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :EXEC
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,EXEC);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("EXEC         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("EXEC         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :EXISTS
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,EXISTS);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("EXISTS       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("EXISTS       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FETCH
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FETCH);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FETCH        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FETCH        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FLOAT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FLOAT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FLOAT        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FLOAT        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FOR
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FOR);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FOR          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FOR          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FOREIGN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FOREIGN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FOREIGN      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FOREIGN      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FORTRAN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FORTRAN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FORTRAN      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FORTRAN      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FOUND
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FOUND);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FOUND        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FOUND        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :FROM
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,FROM);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("FROM         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("FROM         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :GO
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,GO);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("GO           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("GO           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :GOTO
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,GOTO);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("GOTO         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("GOTO         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :GRANT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,GRANT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("GRANT        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("GRANT        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :GROUP
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,GROUP);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("GROUP        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("GROUP        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :HAVING
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,HAVING);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("HAVING       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("HAVING       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :IN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,IN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("IN           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("IN           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :INDICATOR
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,INDICATOR);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("INDICATOR    ---- Not Reserved \n");
+        }
+      else
+        {
+printf("INDICATOR    ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :INSERT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,INSERT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("INSERT       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("INSERT       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :INT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,INT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("INT          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("INT          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :INTEGER
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,INTEGER);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("INTEGER      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("INTEGER      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :INTO
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,INTO);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("INTO         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("INTO         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :IS
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,IS);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("IS           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("IS           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :KEY
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,KEY);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("KEY          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("KEY          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :LANGUAGE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,LANGUAGE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("LANGUAGE     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("LANGUAGE     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :LIKE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,LIKE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("LIKE         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("LIKE         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :MAX
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,MAX);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("MAX          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("MAX          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :MIN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,MIN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("MIN          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("MIN          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :MODULE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,MODULE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("MODULE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("MODULE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :NOT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,NOT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("NOT          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("NOT          ----               Vendor reserved\n");
+        }
+printf("NULL         ----               C Compiler reserved\n");
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :NUMERIC
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,NUMERIC);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("NUMERIC      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("NUMERIC      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :OF
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,OF);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("OF           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("OF           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ON
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ON);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ON           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ON           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :OPEN
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,OPEN);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("OPEN         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("OPEN         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :OPTION
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,OPTION);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("OPTION       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("OPTION       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :OR
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,OR);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("OR           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("OR           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ORDER
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ORDER);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ORDER        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ORDER        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PASCAL
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PASCAL);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PASCAL       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PASCAL       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PLI
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PLI);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PLI          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PLI          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PRECISION
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PRECISION);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PRECISION    ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PRECISION    ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PRIMARY
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PRIMARY);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PRIMARY      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PRIMARY      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PRIVILEGES
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PRIVILEGES);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PRIVILEGES   ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PRIVILEGES   ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PROCEDURE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PROCEDURE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PROCEDURE    ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PROCEDURE    ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :PUBLIC
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,PUBLIC);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("PUBLIC       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("PUBLIC       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :REAL
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,REAL);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("REAL         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("REAL         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :REFERENCES
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,REFERENCES);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("REFERENCES   ---- Not Reserved \n");
+        }
+      else
+        {
+printf("REFERENCES   ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :ROLLBACK
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,ROLLBACK);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("ROLLBACK     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("ROLLBACK     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SCHEMA
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SCHEMA);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SCHEMA       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SCHEMA       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SECTION
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SECTION);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SECTION      ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SECTION      ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SELECT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SELECT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SELECT       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SELECT       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SET
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SET);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SET          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SET          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SMALLINT
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SMALLINT);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SMALLINT     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SMALLINT     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SOME
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SOME);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SOME         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SOME         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SQL
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SQL);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SQL          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SQL          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SQLERROR
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SQLERROR);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SQLERROR     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SQLERROR     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :SUM
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,SUM);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("SUM          ---- Not Reserved \n");
+        }
+      else
+        {
+printf("SUM          ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :TABLE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,TABLE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("TABLE        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("TABLE        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :TO
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,TO);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("TO           ---- Not Reserved \n");
+        }
+      else
+        {
+printf("TO           ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :UNION
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,UNION);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("UNION        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("UNION        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :UNIQUE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,UNIQUE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("UNIQUE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("UNIQUE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :UPDATE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,UPDATE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("UPDATE       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("UPDATE       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :USER
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,USER);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("USER         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("USER         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :VALUES
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,VALUES);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("VALUES       ---- Not Reserved \n");
+        }
+      else
+        {
+printf("VALUES       ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :VIEW
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,VIEW);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("VIEW         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("VIEW         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :WHENEVER
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,WHENEVER);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("WHENEVER     ---- Not Reserved \n");
+        }
+      else
+        {
+printf("WHENEVER     ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :WHERE
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,WHERE);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("WHERE        ---- Not Reserved \n");
+        }
+      else
+        {
+printf("WHERE        ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :WITH
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,WITH);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("WITH         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("WITH         ----               Vendor reserved\n");
+        }
+     strcpy(TESTNO,"NV");
+     EXEC SQL SELECT EMPNUM INTO :WORK
+              FROM WORKS
+              WHERE PNUM = 'P6';
+     strcpy(TESTNO,WORK);
+     if(strncmp(TESTNO,"E1",2) == 0)
+        {
+            wdcnt = wdcnt + 1;
+printf("WORK         ---- Not Reserved \n");
+        }
+      else
+        {
+printf("WORK         ----               Vendor reserved\n");
+        }
+
+printf("\n\n %ld SQL key words supported as host variables.\n",wdcnt);
+
+     if (wdcnt > 66)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0280','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0280','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml063.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0280 ********************/
+
+     exit(errcnt);
+
+}
+

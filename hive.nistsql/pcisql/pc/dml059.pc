@@ -1,0 +1,508 @@
+/*  EMBEDDED C (file "DML059.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/07/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML059.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SET FUNCTION SPECIFICATION IN       */
+/*  COMMON ELEMENTS OF THE SQL LANGUAGE.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.8 <set function specification>      */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        long int1;
+        long int2;
+        long int3;
+char uidx[19];
+char uid[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long flag;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml059.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0257 ********************/
+
+    printf("         Set Function Specification   \n");
+    printf("Reference X3.135-1989 section 5.8 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0257     \n");
+    printf("    Reference 5.8 General Rules 1)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("\n");
+printf("            INSERT INTO VTABLE\n");
+printf("            VALUES (10,11,12,13,15);\n");
+printf("\n");
+printf("            INSERT INTO VTABLE\n");
+printf("            VALUES (100,111,1112,113,115);\n");
+printf("\n");
+printf("        DECLARE SUN CURSOR \n");
+printf("        FOR   SELECT COL1,MAX(COL2 + COL3),MIN(COL3 - COL2)\n");
+printf("                  FROM VTABLE\n");
+printf("                  GROUP BY COL1\n");
+printf("                  ORDER BY COL1;\n");
+
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (10,11,12,13,15);
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (100,111,1112,113,115);
+    EXEC SQL DECLARE SUN CURSOR 
+            FOR   SELECT COL1,MAX(COL2 + COL3),MIN(COL3 - COL2)
+                  FROM VTABLE
+                  GROUP BY COL1
+                  ORDER BY COL1;
+    EXEC SQL OPEN SUN;    
+printf(" The correct answer is :\n");
+printf("           0,    3,      1\n");
+printf("          10,   50,      1\n");
+printf("         100, 1223,    100\n");
+printf("        1000, 1000,   5000\n");
+printf(" Your answer is :\n");
+
+flag = 0;
+
+    EXEC SQL FETCH SUN INTO :int1,:int2,:int3;
+printf("        %ld,  %ld,  %ld\n",int1,int2,int3);
+     if (int1 == 0 && int2 == 3 && int3 == 1)
+        {
+           flag = flag;
+        }
+     else
+        flag = 1; 
+
+    EXEC SQL FETCH SUN INTO :int1,:int2,:int3;
+printf("        %ld,  %ld,  %ld\n",int1,int2,int3);
+     if (int1 == 10 && int2 == 50 && int3 == 1)
+       {
+           flag = flag;
+       }
+     else 
+        flag = 1; 
+
+    EXEC SQL FETCH SUN INTO :int1,:int2,:int3;
+printf("        %ld,  %ld,  %ld\n",int1,int2,int3);
+     if (int1 == 100 && int2 == 1223 && int3 == 100)
+        {
+           flag = flag;
+        }
+     else 
+       flag = 1; 
+
+    EXEC SQL FETCH SUN INTO :int1,:int2,:int3;
+printf("        %ld,  %ld,  %ld\n",int1,int2,int3);
+     if (int1 == 1000 && int2 == 1000 && int3 == 5000)
+        {
+           flag = flag;
+        }
+     else 
+       flag = 1; 
+
+    EXEC SQL CLOSE SUN;
+    EXEC SQL ROLLBACK WORK;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0257','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml059.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0257','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0257 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0258 ********************/
+
+    printf("         Set Function Specification   \n");
+    printf("Reference X3.135-1989 section 5.8 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0258     \n");
+    printf("    Reference 5.8 General Rules 1)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("\n");
+printf("            INSERT INTO VTABLE\n");
+printf("            VALUES (10,11,12,13,15);\n");
+printf("\n");
+printf("            INSERT INTO VTABLE\n");
+printf("            VALUES (100,111,1112,113,115);\n");
+printf("\n");
+printf("            DECLARE UN CURSOR \n");
+printf("            FOR   SELECT COL1,SUM(:int3 * COL2 * COL3)\n");
+printf("                  FROM VTABLE\n");
+printf("                  GROUP BY COL1\n");
+printf("                  HAVING SUM(COL2 * COL3) > 2000 \n");
+printf("                  OR SUM(COL2 * COL3) < -2000\n");
+printf("                  ORDER BY COL1;\n");
+printf("\n");
+
+int3 = 2;
+
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (10,11,12,13,15);
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (100,111,1112,113,115);
+    EXEC SQL DECLARE UN CURSOR 
+            FOR   SELECT COL1,SUM(:int3 * COL2 * COL3)
+                  FROM VTABLE
+                  GROUP BY COL1
+                  HAVING SUM(COL2 * COL3) > 2000 
+                  OR SUM(COL2 * COL3) < -2000
+                  ORDER BY COL1;
+    EXEC SQL OPEN UN;    
+printf(" The correct answer is :\n");
+printf("          100, 366864\n");
+printf("         1000, -12000000\n");
+printf(" Your answer is :\n");
+
+flag = 0;
+
+    EXEC SQL FETCH UN INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 100 && int2 == 366864)
+        {
+           flag = flag;
+         }
+     else 
+       flag = 1; 
+
+    EXEC SQL FETCH UN INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 1000 && int2 == -12000000)
+         {
+           flag = flag;
+          }
+     else  
+       flag = 1; 
+
+    EXEC SQL CLOSE UN;
+    EXEC SQL ROLLBACK WORK;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0258','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml059.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0258','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0258 ********************/
+
+
+
+
+
+
+
+
+/******************** BEGIN TEST0259 ********************/
+
+    printf("         ANY, SOME in HAVING Clause   \n");
+    printf("Reference X3.135-1989 section 5.23 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0259     \n");
+    printf("    Reference 5.8 General Rules 1)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("\n");
+printf("     INSERT INTO VTABLE\n");
+printf("     VALUES (10,11,12,13,15);\n");
+printf("\n");
+printf("     INSERT INTO VTABLE\n");
+printf("     VALUES (100,111,1112,113,115);\n");
+printf("\n");
+printf("     DECLARE SUN1 CURSOR \n");
+printf("     FOR SELECT COL1,MAX(COL2)\n");
+printf("         FROM VTABLE\n");
+printf("         GROUP BY COL1\n");
+printf("         HAVING MAX(COL2) > ANY (SELECT GRADE FROM STAFF) \n");
+printf("            AND MAX(COL2) < SOME (SELECT HOURS FROM WORKS)\n");
+printf("         ORDER BY COL1;\n");
+printf("\n");
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (10,11,12,13,15);
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (100,111,1112,113,115);
+    EXEC SQL DECLARE SUN1 CURSOR 
+            FOR   SELECT COL1,MAX(COL2)
+                  FROM VTABLE
+                  GROUP BY COL1
+                  HAVING MAX(COL2) > ANY (SELECT GRADE FROM STAFF) 
+                  AND MAX(COL2) < SOME (SELECT HOURS FROM WORKS)
+                  ORDER BY COL1;
+    EXEC SQL OPEN SUN1;    
+printf(" The correct answer is :\n");
+printf("          10, 20\n");
+printf(" Your answer is :\n");
+
+flag = 0;
+
+    EXEC SQL FETCH SUN1 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 10 && int2 == 20)
+        {
+           flag = flag;
+        }
+     else 
+       flag = 1; 
+
+    EXEC SQL CLOSE SUN1;
+    EXEC SQL ROLLBACK WORK;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0259','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml059.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0259','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0259 ********************/
+
+
+
+
+
+
+
+/******************** BEGIN TEST0260 ********************/
+
+    printf("         EXISTS in HAVING Clause   \n");
+    printf("Reference X3.135-1989 section 5.8 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0260     \n");
+    printf("    Reference 5.23 General Rules 3)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("\n");
+printf("     INSERT INTO VTABLE\n");
+printf("     VALUES (10,11,12,13,15);\n");
+printf("\n");
+printf("     INSERT INTO VTABLE\n");
+printf("     VALUES (100,111,1112,113,115);\n");
+printf("\n");
+printf("     DECLARE SUN2 CURSOR \n");
+printf("     FOR SELECT COL1,MAX(COL2)\n");
+printf("         FROM VTABLE\n");
+printf("         GROUP BY COL1\n");
+printf("                 HAVING EXISTS (SELECT * FROM STAFF\n");
+printf("                                WHERE EMPNUM = 'E1') \n");
+printf("                     AND MAX(COL2) BETWEEN 10 AND 90\n");
+printf("         ORDER BY COL1;\n");
+printf("\n");
+int1 = 0;
+int2 = 0;
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (10,11,12,13,15);
+    EXEC SQL INSERT INTO VTABLE
+            VALUES (100,111,1112,113,115);
+    EXEC SQL DECLARE SUN2 CURSOR 
+            FOR   SELECT COL1,MAX(COL2)
+                  FROM VTABLE
+                  GROUP BY COL1
+                  HAVING EXISTS (SELECT * FROM STAFF
+                                 WHERE EMPNUM = 'E1') 
+                         AND MAX(COL2) BETWEEN 10 AND 90
+                  ORDER BY COL1;
+    EXEC SQL OPEN SUN2;    
+printf(" The correct answer is :\n");
+printf("          10, 20\n");
+printf(" Your answer is :\n");
+
+flag = 0;
+
+    EXEC SQL FETCH SUN2 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 10 && int2 == 20)
+        {
+           flag = flag;
+        }
+     else 
+       flag = 1; 
+
+    EXEC SQL CLOSE SUN2;
+    EXEC SQL ROLLBACK WORK;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0260','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml059.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0260','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0260 ********************/
+
+
+
+
+
+
+/******************** BEGIN TEST0264 ********************/
+
+    printf("<where clause>, <having clause>, without <group by clause>\n");
+    printf("Reference X3.135-1989 section 5.8 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0264     \n");
+    printf("    Reference 5.23 General Rules 1)\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("        EXEC SQL DECLARE SUN3 CURSOR FOR\n");
+printf("               SELECT SUM(COL1)\n");
+printf("               FROM VTABLE\n");
+printf("               WHERE  :int3 + COL1 > COL2\n");
+printf("               HAVING MAX(COL1) > 100;\n");
+printf("\n");
+printf("\n");
+int1 = 0;
+int3 = 10;
+flag = 0;
+    EXEC SQL DECLARE SUN3 
+               CURSOR FOR SELECT SUM(COL1)
+               FROM VTABLE
+               WHERE  :int3 + COL1 > COL2
+               HAVING MAX(COL1) > 100;
+
+EXEC SQL OPEN SUN3;
+
+EXEC SQL FETCH SUN3 INTO :int1;
+
+EXEC SQL CLOSE SUN3;
+
+printf(" The correct answer is :\n");
+printf("          1000\n");
+printf("          1110\n");
+printf(" Your answer is :\n");
+
+
+printf("        %ld\n",int1);
+     if (int1 == 1000)
+        {
+           flag = flag;
+        }
+     else 
+       flag = 1; 
+    int1 = 0;
+    int3 = 1000;
+
+EXEC SQL OPEN SUN3;
+
+EXEC SQL FETCH SUN3 INTO :int1;
+
+printf("        %ld\n",int1);
+     if (int1 == 1110)
+         {
+           flag = flag;
+         }
+     else 
+       flag = 1; 
+
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0264','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml059.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0264','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0264 ********************/
+
+
+
+    exit(errcnt);
+}

@@ -1,0 +1,268 @@
+/*  EMBEDDED C (file "DML078.PC")  */ 
+ 
+/*****************************************************************/ 
+/*                                                               */ 
+/*                  COMMENT SECTION                              */ 
+/*                                                               */ 
+/*  DATE 1991/08/19 EMBEDDED C LANGUAGE                          */ 
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */ 
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */ 
+/*  DML078.PC                                                    */ 
+/*  WRITTEN BY: YOLANDA HERD                                     */ 
+/*                                                               */ 
+/*  This routine test how the SQL language handles the length of */
+/*    several C alphanumeric character strings.                  */
+/*                                                               */ 
+/*  REFERENCES                                                   */ 
+/*        AMERICAN NATIONAL STANDARD database language           */ 
+/*        X3.135-1989                                            */ 
+/*        X3.168-1989                                            */ 
+/*                                                               */ 
+/*****************************************************************/ 
+ 
+ 
+#include <stdio.h> 
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+     
+EXEC SQL BEGIN DECLARE SECTION; 
+  char IN256[257];
+  char IN512[513];
+  char IN1024[1025];
+  char OUT256[257];
+  char OUT512[513];
+  char OUT1024[1025];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  char XYZ1[81];
+  char XYZ2[53];
+  char XYZ3[109];
+  char XYZ4[17];
+  char XYZ5[257];
+  char XYZ6[257];
+  char XYZ7[257];
+  char aa256[81];
+  char bb256[53];
+  char cc256[109];
+  char dd256[17];
+  char aa512[81];
+  char bb512[53];
+  char cc512[109];
+  char dd512[17];
+  char ee512[257];
+  char aa1024[81];
+  char bb1024[53];
+  char cc1024[109];
+  char dd1024[17];
+  char ee1024[257];
+  char ff1024[257];
+  char gg1024[257];
+
+ 
+main() 
+{ 
+ 
+strcpy(uid,"HU"); 
+AUTHID(uid); 
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml078.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+ 
+strcpy(XYZ1,"NOTE:  Additional SQL language is planned for later addenda ");
+strcat(XYZ1,"to this standard.  M");
+
+strcpy(XYZ2,"ajor topics under consideration for such addenda inc");
+
+strcpy(XYZ3,"lude referential integrity, enhanced transaction management,");
+strcat(XYZ3," specification of certain implementor-defined ru");
+ 
+strcpy(XYZ4,"les, enhanced ch");
+
+strcpy(XYZ5,"aracter handling facilities, and support for national charac");
+strcat(XYZ5,"ter sets.  Annexes to this standard specify embedded syntax ");
+strcat(XYZ5,"for including SQL data manipulation language statements in a");
+strcat(XYZ5,"n otherwise standard application program.  Such embedded syn");
+strcat(XYZ5,"tax is defined t");
+
+strcpy(XYZ6,"o be a shorthand notation for a standard application program");
+strcat(XYZ6," in which the embedded SQL statements have been replaced wit");
+strcat(XYZ6,"h explicit <calls> of database procedures that contain the S");
+strcat(XYZ6,"QL statements.  This standard applies to implementations tha");
+strcat(XYZ6,"t exist in an en");
+
+strcpy(XYZ7,"vironment that may include application programming languages");
+strcat(XYZ7,", end-user query languages, report generator systems, data d");
+strcat(XYZ7,"ictionary systems, program library systems, and distributed ");
+strcat(XYZ7,"communication systems, as well as various tools for database");
+strcat(XYZ7," design,........");
+
+printf("       Testing C character string lengths\n");
+printf("     Reference X3.135-1989 SECTION 5.5 SR 5)\n");
+printf("    Reference X3.168-1989 SECTION 9.4 SR 4)c)\n");
+printf("---------------------------------------------------\n\n");
+
+strcpy(aa256,XYZ1);
+strcpy(aa512,XYZ1);
+strcpy(aa1024,XYZ1);
+
+strcpy(bb256,XYZ2);
+strcpy(bb512,XYZ2);
+strcpy(bb1024,XYZ2);
+
+strcpy(cc256,XYZ3);
+strcpy(cc512,XYZ3);
+strcpy(cc1024,XYZ3);
+
+strcpy(dd256,XYZ4);
+strcpy(dd512,XYZ4);
+strcpy(dd1024,XYZ4);
+
+strcpy(ee512,XYZ5);
+strcpy(ee1024,XYZ5);
+
+strcpy(ff1024,XYZ6);
+
+strcpy(gg1024,XYZ7);
+
+strcpy(IN256,aa256);
+strcat(IN256,bb256);
+strcat(IN256,cc256);
+strcat(IN256,dd256);
+
+strcpy(IN512,aa512);
+strcat(IN512,bb512);
+strcat(IN512,cc512);
+strcat(IN512,dd512);
+strcat(IN512,ee512);
+
+strcpy(IN1024,aa1024);
+strcat(IN1024,bb1024);
+strcat(IN1024,cc1024);
+strcat(IN1024,dd1024);
+strcat(IN1024,ee1024);
+strcat(IN1024,ff1024);
+strcat(IN1024,gg1024);
+
+/******************** BEGIN TEST0189 ********************/ 
+printf("\n              OPTIONAL TEST0189         \n");
+printf("                    CHAR (256)         \n");
+printf("\n");
+
+EXEC SQL DELETE FROM TEXT256;
+
+EXEC SQL INSERT INTO TEXT256(TEXXT) VALUES(:IN256);
+
+EXEC SQL SELECT TEXXT INTO :OUT256 FROM TEXT256;
+ 
+printf("%s\n",OUT256);
+
+  if (strncmp(OUT256,IN256,256) == 0) 
+       { 
+       EXEC SQL INSERT INTO TESTREPORT 
+          VALUES('0189','pass','PC'); 
+       printf("\n\n                 *** pass ***     "); 
+       } 
+     else 
+       { 
+       EXEC SQL INSERT INTO TESTREPORT 
+          VALUES('0189','fail','PC'); 
+          errcnt = errcnt + 1;
+       printf("\n\n       dml078.pc  *** fail ***     "); 
+       } 
+     printf("\n================================================"); 
+ 
+     printf("\n\n\n\n"); 
+     EXEC SQL COMMIT WORK; 
+ 
+/******************** END TEST0189 ********************/ 
+ 
+/******************** BEGIN TEST0190 ********************/ 
+printf("\n              OPTIONAL TEST0190             \n"); 
+printf("                    CHAR (512)           \n");
+printf("\n");
+
+EXEC SQL DELETE FROM TEXT512;
+
+EXEC SQL INSERT INTO TEXT512(TEXXT) VALUES(:IN512);
+
+EXEC SQL SELECT TEXXT INTO :OUT512 FROM TEXT512;
+
+printf("%s\n",OUT512);
+
+if (strncmp(OUT512,IN512,512) == 0) 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0190','pass','PC'); 
+    printf("\n\n                 *** pass ***     "); 
+  } 
+else 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0190','fail','PC'); 
+          errcnt = errcnt + 1;
+    printf("\n\n       dml078.pc  *** fail ***     "); 
+  } 
+printf("\n================================================"); 
+ 
+printf("\n\n\n\n"); 
+EXEC SQL COMMIT WORK; 
+ 
+/******************** END TEST0190 ********************/ 
+ 
+/******************** BEGIN TEST0191 ********************/ 
+printf("\n              OPTIONAL TEST0191              \n");
+printf("                    CHAR (1024)           \n");
+printf("\n");
+
+EXEC SQL DELETE FROM TEXT1024;
+
+EXEC SQL INSERT INTO TEXT1024(TEXXT) VALUES(:IN1024);
+
+EXEC SQL SELECT TEXXT INTO :OUT1024 FROM TEXT1024;
+
+printf("%s\n",OUT1024);
+ 
+if (strncmp(OUT1024,IN1024,1024) == 0)
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0191','pass','PC'); 
+    printf("\n\n                 *** pass ***     "); 
+  } 
+else 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0191','fail','PC'); 
+          errcnt = errcnt + 1;
+    printf("\n\n       dml078.pc  *** fail ***     "); 
+  } 
+printf("\n================================================"); 
+ 
+printf("\n\n\n\n"); 
+EXEC SQL COMMIT WORK; 
+ 
+/******************** END TEST0191 ********************/ 
+ 
+exit(errcnt);
+} 

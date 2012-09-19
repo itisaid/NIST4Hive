@@ -1,0 +1,1167 @@
+/*  EMBEDDED C (file "DML104.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/08/04 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML104.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests Fips Feature #4 for static TSQL.  Fips    */
+/*  Feature #4 is "joined table."                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992 7.5 <joined table>                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml104.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0591 ********************/
+flag = 1;
+
+     printf("                  TEST0591 \n");
+     printf("     NATURAL JOIN (feature 4) (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE GROUPS1\n");
+printf("  (EMPNUM INT, GRP INT);\n");
+EXEC SQL CREATE TABLE GROUPS1
+  (EMPNUM INT, GRP INT);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE NAMES1\n");
+printf("  (EMPNUM INT, NAAM CHAR(5));\n");
+EXEC SQL CREATE TABLE NAMES1
+  (EMPNUM INT, NAAM CHAR(5));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW NAMGRP1 AS\n");
+printf("  SELECT * FROM NAMES1 NATURAL JOIN GROUPS1;\n");
+EXEC SQL CREATE VIEW NAMGRP1 AS
+  SELECT * FROM NAMES1 NATURAL JOIN GROUPS1;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS1 VALUES (0, 10);\n");
+EXEC SQL INSERT INTO GROUPS1 VALUES (0, 10);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS1 VALUES (1, 20);\n");
+EXEC SQL INSERT INTO GROUPS1 VALUES (1, 20);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS1 VALUES (2, 30);\n");
+EXEC SQL INSERT INTO GROUPS1 VALUES (2, 30);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS1 VALUES (3, 40);\n");
+EXEC SQL INSERT INTO GROUPS1 VALUES (3, 40);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES1 VALUES (5, 'HARRY');\n");
+EXEC SQL INSERT INTO NAMES1 VALUES (5, 'HARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES1 VALUES (1, 'MARY');\n");
+EXEC SQL INSERT INTO NAMES1 VALUES (1, 'MARY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES1 VALUES (7, 'LARRY');\n");
+EXEC SQL INSERT INTO NAMES1 VALUES (7, 'LARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES1 VALUES (0, 'KERI');\n");
+EXEC SQL INSERT INTO NAMES1 VALUES (0, 'KERI');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES1 VALUES (9, 'BARRY');\n");
+EXEC SQL INSERT INTO NAMES1 VALUES (9, 'BARRY');
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT EMPNUM INTO :int1\n");
+printf("  FROM NAMGRP1\n");
+printf("  WHERE NAAM = 'KERI'\n");
+printf("  AND GRP = 10;\n");
+EXEC SQL SELECT EMPNUM INTO :int1
+  FROM NAMGRP1
+  WHERE NAAM = 'KERI'
+  AND GRP = 10;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT EMPNUM INTO :int1\n");
+printf("  FROM NAMGRP1\n");
+printf("  WHERE NAAM = 'MARY'\n");
+printf("  AND GRP = 20;\n");
+EXEC SQL SELECT EMPNUM INTO :int1
+  FROM NAMGRP1
+  WHERE NAAM = 'MARY'
+  AND GRP = 20;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP1
+  WHERE (NAAM <> 'MARY'
+  AND NAAM <> 'KERI')
+  OR GRP <> 20
+  AND GRP <> 10
+  OR EMPNUM <> 0
+  AND EMPNUM <> 1
+  OR NAAM IS NULL
+  OR GRP IS NULL
+  OR EMPNUM IS NULL;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP1\n");
+printf("  WHERE (NAAM <> 'MARY'\n");
+printf("  AND NAAM <> 'KERI')\n");
+printf("  OR GRP <> 20\n");
+printf("  AND GRP <> 10\n");
+printf("  OR EMPNUM <> 0\n");
+printf("  AND EMPNUM <> 1\n");
+printf("  OR NAAM IS NULL\n");
+printf("  OR GRP IS NULL\n");
+printf("  OR EMPNUM IS NULL;\n");
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("DROP TABLE NAMES1 CASCADE;\n");
+EXEC SQL DROP TABLE NAMES1 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE GROUPS1 CASCADE;\n");
+EXEC SQL DROP TABLE GROUPS1 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0591','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml104.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0591','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0591 *********************/
+/******************** BEGIN TEST0592 ********************/
+flag = 1;
+
+     printf("                  TEST0592 \n");
+     printf("     INNER JOIN (feature 4) (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE GROUPS2\n");
+printf("  (EMPNUM SMALLINT, GRP INT);\n");
+EXEC SQL CREATE TABLE GROUPS2
+  (EMPNUM SMALLINT, GRP INT);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE NAMES2\n");
+printf("  (EMPNUM INT, NAAM CHAR(5));\n");
+EXEC SQL CREATE TABLE NAMES2
+  (EMPNUM INT, NAAM CHAR(5));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW NAMGRP2 AS\n");
+printf("  SELECT * FROM NAMES2 INNER JOIN GROUPS2 USING (EMPNUM);\n");
+EXEC SQL CREATE VIEW NAMGRP2 AS
+  SELECT * FROM NAMES2 INNER JOIN GROUPS2 USING (EMPNUM);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Inner is implicit -- 7.5 SR.3 */
+printf("CREATE VIEW NMGRP2 AS\n");
+printf("  SELECT * FROM NAMES2 JOIN GROUPS2\n");
+printf("    USING (EMPNUM) WHERE EMPNUM > 0;\n");
+EXEC SQL CREATE VIEW NMGRP2 AS
+  SELECT * FROM NAMES2 JOIN GROUPS2
+    USING (EMPNUM) WHERE EMPNUM > 0;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS2 VALUES (0, 10);\n");
+EXEC SQL INSERT INTO GROUPS2 VALUES (0, 10);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS2 VALUES (1, 20);\n");
+EXEC SQL INSERT INTO GROUPS2 VALUES (1, 20);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS2 VALUES (2, 30);\n");
+EXEC SQL INSERT INTO GROUPS2 VALUES (2, 30);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS2 VALUES (3, 40);\n");
+EXEC SQL INSERT INTO GROUPS2 VALUES (3, 40);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES2 VALUES (5, 'HARRY');\n");
+EXEC SQL INSERT INTO NAMES2 VALUES (5, 'HARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES2 VALUES (1, 'MARY');\n");
+EXEC SQL INSERT INTO NAMES2 VALUES (1, 'MARY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES2 VALUES (7, 'LARRY');\n");
+EXEC SQL INSERT INTO NAMES2 VALUES (7, 'LARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES2 VALUES (0, 'KERI');\n");
+EXEC SQL INSERT INTO NAMES2 VALUES (0, 'KERI');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES2 VALUES (9, 'BARRY');\n");
+EXEC SQL INSERT INTO NAMES2 VALUES (9, 'BARRY');
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT EMPNUM INTO :int1\n");
+printf("  FROM NAMGRP2\n");
+printf("  WHERE NAAM = 'KERI'\n");
+printf("  AND GRP = 10;\n");
+EXEC SQL SELECT EMPNUM INTO :int1
+  FROM NAMGRP2
+  WHERE NAAM = 'KERI'
+  AND GRP = 10;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT EMPNUM INTO :int1\n");
+printf("  FROM NAMGRP2\n");
+printf("  WHERE NAAM = 'MARY'\n");
+printf("  AND GRP = 20;\n");
+EXEC SQL SELECT EMPNUM INTO :int1
+  FROM NAMGRP2
+  WHERE NAAM = 'MARY'
+  AND GRP = 20;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP2
+  WHERE NAAM <> 'MARY'
+  AND NAAM <> 'KERI'
+  OR GRP <> 20
+  AND GRP <> 10
+  OR EMPNUM <> 0
+  AND EMPNUM <> 1
+  OR NAAM IS NULL
+  OR GRP IS NULL
+  OR EMPNUM IS NULL;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP2\n");
+printf("  WHERE NAAM <> 'MARY'\n");
+printf("  AND NAAM <> 'KERI'\n");
+printf("  OR GRP <> 20\n");
+printf("  AND GRP <> 10\n");
+printf("  OR EMPNUM <> 0\n");
+printf("  AND EMPNUM <> 1\n");
+printf("  OR NAAM IS NULL\n");
+printf("  OR GRP IS NULL\n");
+printf("  OR EMPNUM IS NULL;\n");
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT EMPNUM INTO :int1\n");
+printf("  FROM NMGRP2\n");
+printf("  WHERE NAAM = 'MARY'\n");
+printf("  AND GRP = 20;\n");
+EXEC SQL SELECT EMPNUM INTO :int1
+  FROM NMGRP2
+  WHERE NAAM = 'MARY'
+  AND GRP = 20;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP2\n");
+printf("  WHERE NAAM <> 'MARY'\n");
+printf("  OR GRP <> 20\n");
+printf("  OR EMPNUM <> 1\n");
+printf("  OR NAAM IS NULL\n");
+printf("  OR GRP IS NULL\n");
+printf("  OR EMPNUM IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP2
+  WHERE NAAM <> 'MARY'
+  OR GRP <> 20
+  OR EMPNUM <> 1
+  OR NAAM IS NULL
+  OR GRP IS NULL
+  OR EMPNUM IS NULL;
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("DROP TABLE NAMES2 CASCADE;\n");
+EXEC SQL DROP TABLE NAMES2 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE GROUPS2 CASCADE;\n");
+EXEC SQL DROP TABLE GROUPS2 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP and NMGRP2 should go away on their own due to implicit CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0592','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml104.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0592','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0592 *********************/
+/******************** BEGIN TEST0593 ********************/
+flag = 1;
+
+     printf("                  TEST0593 \n");
+     printf("     LEFT OUTER JOIN (feature 4) (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+
+printf("CREATE TABLE GROUPS3\n");
+printf("  (EMPNUM INT, GRP INT);\n");
+EXEC SQL CREATE TABLE GROUPS3
+  (EMPNUM INT, GRP INT);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE NAMES3\n");
+printf("  (EMPNUM INT, NAAM CHAR(5));\n");
+EXEC SQL CREATE TABLE NAMES3
+  (EMPNUM INT, NAAM CHAR(5));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW NAMGRP3 AS\n");
+printf("  SELECT * FROM NAMES3 LEFT OUTER JOIN GROUPS3 USING (EMPNUM);\n");
+EXEC SQL CREATE VIEW NAMGRP3 AS
+  SELECT * FROM NAMES3 LEFT OUTER JOIN GROUPS3 USING (EMPNUM);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* This is just to see if ON is also supported */
+printf("CREATE VIEW NMGRP3 AS\n");
+printf("  SELECT NAAM, GRP FROM NAMES3 LEFT OUTER JOIN GROUPS3\n");
+printf("  ON NAMES3.EMPNUM < GROUPS3.EMPNUM\n");
+printf("  WHERE NAAM <> 'KERI';\n");
+EXEC SQL CREATE VIEW NMGRP3 AS
+  SELECT NAAM, GRP FROM NAMES3 LEFT OUTER JOIN GROUPS3
+  ON NAMES3.EMPNUM < GROUPS3.EMPNUM
+  WHERE NAAM <> 'KERI';
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS3 VALUES (0, 10);\n");
+EXEC SQL INSERT INTO GROUPS3 VALUES (0, 10);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS3 VALUES (1, 20);\n");
+EXEC SQL INSERT INTO GROUPS3 VALUES (1, 20);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS3 VALUES (2, 30);\n");
+EXEC SQL INSERT INTO GROUPS3 VALUES (2, 30);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS3 VALUES (3, 40);\n");
+EXEC SQL INSERT INTO GROUPS3 VALUES (3, 40);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES3 VALUES (5, 'HARRY');\n");
+EXEC SQL INSERT INTO NAMES3 VALUES (5, 'HARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES3 VALUES (1, 'MARY');\n");
+EXEC SQL INSERT INTO NAMES3 VALUES (1, 'MARY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES3 VALUES (7, 'LARRY');\n");
+EXEC SQL INSERT INTO NAMES3 VALUES (7, 'LARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES3 VALUES (0, 'KERI');\n");
+EXEC SQL INSERT INTO NAMES3 VALUES (0, 'KERI');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES3 VALUES (9, 'BARRY');\n");
+EXEC SQL INSERT INTO NAMES3 VALUES (9, 'BARRY');
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP3\n");
+printf("  WHERE EMPNUM = 0\n");
+printf("  AND NAAM = 'KERI'\n");
+printf("  AND GRP = 10;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP3
+  WHERE EMPNUM = 0
+  AND NAAM = 'KERI'
+  AND GRP = 10;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP3\n");
+printf("  WHERE EMPNUM = 1\n");
+printf("  AND NAAM = 'MARY'\n");
+printf("  AND GRP = 20;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP3
+  WHERE EMPNUM = 1
+  AND NAAM = 'MARY'
+  AND GRP = 20;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP3\n");
+printf("  WHERE EMPNUM = 5\n");
+printf("  AND NAAM = 'HARRY'\n");
+printf("  AND GRP IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP3
+  WHERE EMPNUM = 5
+  AND NAAM = 'HARRY'
+  AND GRP IS NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP3\n");
+printf("  WHERE EMPNUM = 7\n");
+printf("  AND NAAM = 'LARRY'\n");
+printf("  AND GRP IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP3
+  WHERE EMPNUM = 7
+  AND NAAM = 'LARRY'
+  AND GRP IS NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP3\n");
+printf("  WHERE EMPNUM = 9\n");
+printf("  AND NAAM = 'BARRY'\n");
+printf("  AND GRP IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP3
+  WHERE EMPNUM = 9
+  AND NAAM = 'BARRY'
+  AND GRP IS NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP3;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP3;
+
+CHCKOK ();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP3\n");
+printf("  WHERE NAAM = 'HARRY'\n");
+printf("  AND GRP IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP3
+  WHERE NAAM = 'HARRY'
+  AND GRP IS NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP3\n");
+printf("  WHERE NAAM = 'MARY'\n");
+printf("  AND GRP = 30;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP3
+  WHERE NAAM = 'MARY'
+  AND GRP = 30;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP3\n");
+printf("  WHERE NAAM = 'MARY'\n");
+printf("  AND GRP = 40;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP3
+  WHERE NAAM = 'MARY'
+  AND GRP = 40;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP3\n");
+printf("  WHERE NAAM = 'BARRY'\n");
+printf("  AND GRP IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP3
+  WHERE NAAM = 'BARRY'
+  AND GRP IS NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP3\n");
+printf("  WHERE NAAM = 'LARRY'\n");
+printf("  AND GRP IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP3
+  WHERE NAAM = 'LARRY'
+  AND GRP IS NULL;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NMGRP3;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NMGRP3;
+
+CHCKOK ();
+printf("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("DROP TABLE NAMES3 CASCADE;\n");
+EXEC SQL DROP TABLE NAMES3 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE GROUPS3 CASCADE;\n");
+EXEC SQL DROP TABLE GROUPS3 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP should go away on its own due to CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0593','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml104.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0593','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0593 *********************/
+/******************** BEGIN TEST0594 ********************/
+flag = 1;
+
+     printf("                  TEST0594 \n");
+     printf("     RIGHT OUTER JOIN (feature 4) (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 4\n");
+     printf("    ANSI SQL-1992 7.5 <joined table>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+
+printf("CREATE TABLE GROUPS4\n");
+printf("  (EMPNUM INT, GRP INT);\n");
+EXEC SQL CREATE TABLE GROUPS4
+  (EMPNUM INT, GRP INT);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE NAMES4\n");
+printf("  (EMPNUM DECIMAL (4, 2), NAAM CHAR(5));\n");
+EXEC SQL CREATE TABLE NAMES4
+  (EMPNUM DECIMAL (4, 2), NAAM CHAR(5));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW NAMGRP4 AS\n");
+printf("  SELECT * FROM NAMES4 RIGHT OUTER JOIN GROUPS4 USING (EMPNUM);\n");
+EXEC SQL CREATE VIEW NAMGRP4 AS
+  SELECT * FROM NAMES4 RIGHT OUTER JOIN GROUPS4 USING (EMPNUM);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS4 VALUES (0, 10);\n");
+EXEC SQL INSERT INTO GROUPS4 VALUES (0, 10);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS4 VALUES (1, 20);\n");
+EXEC SQL INSERT INTO GROUPS4 VALUES (1, 20);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS4 VALUES (2, 30);\n");
+EXEC SQL INSERT INTO GROUPS4 VALUES (2, 30);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GROUPS4 VALUES (3, 40);\n");
+EXEC SQL INSERT INTO GROUPS4 VALUES (3, 40);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES4 VALUES (5.0, 'HARRY');\n");
+EXEC SQL INSERT INTO NAMES4 VALUES (5.0, 'HARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES4 VALUES (1.0, 'MARY');\n");
+EXEC SQL INSERT INTO NAMES4 VALUES (1.0, 'MARY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES4 VALUES (7.0, 'LARRY');\n");
+EXEC SQL INSERT INTO NAMES4 VALUES (7.0, 'LARRY');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES4 VALUES (0.0, 'KERI');\n");
+EXEC SQL INSERT INTO NAMES4 VALUES (0.0, 'KERI');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO NAMES4 VALUES (9.0, 'BARRY');\n");
+EXEC SQL INSERT INTO NAMES4 VALUES (9.0, 'BARRY');
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP4\n");
+printf("  WHERE EMPNUM = 0\n");
+printf("  AND NAAM = 'KERI'\n");
+printf("  AND GRP = 10;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP4
+  WHERE EMPNUM = 0
+  AND NAAM = 'KERI'
+  AND GRP = 10;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP4\n");
+printf("  WHERE EMPNUM = 1\n");
+printf("  AND NAAM = 'MARY'\n");
+printf("  AND GRP = 20;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP4
+  WHERE EMPNUM = 1
+  AND NAAM = 'MARY'
+  AND GRP = 20;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP4\n");
+printf("  WHERE EMPNUM = 2\n");
+printf("  AND NAAM IS NULL\n");
+printf("  AND GRP = 30;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP4
+  WHERE EMPNUM = 2
+  AND NAAM IS NULL
+  AND GRP = 30;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP4\n");
+printf("  WHERE EMPNUM = 3\n");
+printf("  AND NAAM IS NULL\n");
+printf("  AND GRP = 40;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP4
+  WHERE EMPNUM = 3
+  AND NAAM IS NULL
+  AND GRP = 40;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NAMGRP4;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NAMGRP4;
+
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("DROP TABLE NAMES4 CASCADE;\n");
+EXEC SQL DROP TABLE NAMES4 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE GROUPS4 CASCADE;\n");
+EXEC SQL DROP TABLE GROUPS4 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* NAMGRP should go away on its own due to CASCADE. */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0594','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml104.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0594','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0594 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

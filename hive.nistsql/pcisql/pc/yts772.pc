@@ -1,0 +1,321 @@
+/*  EMBEDDED C (file "YTS772.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS772.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  This routine tests Access to ASSERTIONS view                 */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    21.2.17  ASSERTIONS view                                   */
+/*    F#35     Intermediate information schema                   */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-13                                    */
+/*    Added rollback after authid                                */
+/*    Renamed variables                                          */
+/*    More output                                                */
+/*    Removed EXEC SQL from inside printf                        */
+/*    Rearranged, cleaned up                                     */
+/*    Fixed syntax error                                         */
+/*    Changed code to do what the comments said it should do     */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+short co1;
+char cc[129];
+char cs[129];
+char cn[129];
+char id[19];
+char inid[19];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+short    i;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts772.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7554 ********************/
+flag = 1;
+
+     printf("                  TEST7554 \n");
+     printf("   Access to ASSERTIONS view\n");
+     printf("References:\n");
+     printf("    21.2.17   ASSERTIONS view\n");
+     printf("    F#35      Intermediate information schema\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("The ASSERTIONS view is required in Intermediate SQL F#35,\n");
+printf("but actual assertions are not required until Full SQL F#52.\n");
+printf("The ASSERTIONS view does not have to contain anything for\n");
+printf("Intermediate conformance, but if it does, it has to be valid\n");
+printf("data.\n\n");
+
+SQLCODE = -1;
+strcpy (SQLSTATE, "xxxxx");
+
+/* initialise variables */
+
+for (i = 0; i < 128; i++)
+{
+cc[i] = 'x';
+cs[i] = 'x';
+cn[i] = 'x';
+}
+
+cc[128] = '\0';
+cs[128] = '\0';
+cn[128] = '\0';
+
+for (i = 0; i < 18; i++)
+{
+id[i] = 'x';
+inid[i] = 'x';
+}
+
+id[18] = '\0';
+inid[18] = '\0';
+
+/* check IS_DEFERRABLE contains no NULL values */
+
+co1 = 99;
+printf("SELECT COUNT (*) INTO :co1\n");
+printf("FROM INFORMATION_SCHEMA.ASSERTIONS\n");
+printf("WHERE  IS_DEFERRABLE IS NULL;\n");
+EXEC SQL SELECT COUNT (*) INTO :co1
+FROM INFORMATION_SCHEMA.ASSERTIONS
+WHERE IS_DEFERRABLE IS NULL;
+CHCKOK ();
+printf("co1 should be 0; its value is %d\n\n", co1);
+if (co1 != 0)
+   flag = 0;
+
+/* check INITIALLY_DEFERRED contains no NULL values */
+
+co1 = 99;
+printf("SELECT COUNT (*) INTO :co1\n");
+printf("FROM INFORMATION_SCHEMA.ASSERTIONS\n");
+printf("WHERE INITIALLY_DEFERRED IS NULL;\n");
+EXEC SQL SELECT COUNT (*) INTO :co1
+FROM INFORMATION_SCHEMA.ASSERTIONS
+WHERE INITIALLY_DEFERRED IS NULL;
+CHCKOK ();
+printf("co1 should be 0; its value is %d\n\n", co1);
+if (co1 != 0)
+    flag = 0;
+
+/* declare cursor to return all rows of ASSERTIONS view */
+
+printf("DECLARE data772 CURSOR FOR\n");
+printf("SELECT CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA,\n");
+printf("CONSTRAINT_NAME, IS_DEFERRABLE, INITIALLY_DEFERRED\n");
+printf("FROM INFORMATION_SCHEMA.ASSERTIONS;\n\n");
+
+EXEC SQL DECLARE data772 CURSOR FOR
+SELECT CONSTRAINT_CATALOG, CONSTRAINT_SCHEMA,
+CONSTRAINT_NAME, IS_DEFERRABLE, INITIALLY_DEFERRED
+FROM INFORMATION_SCHEMA.ASSERTIONS;
+
+printf("OPEN data772;\n");
+EXEC SQL OPEN data772;
+CHCKOK ();
+printf("\n");
+
+/* check IS_DEFERRABLE and INITIALLY_DEFERRED */
+/* contain acceptable values */
+
+printf ("For the following fetches, if id is NO, then inid must also\n");
+printf ("be NO.\n\n");
+
+P101:
+printf("FETCH data772 INTO :cc, :cs, :cn, :id, :inid;\n");
+EXEC SQL FETCH data772 INTO :cc, :cs, :cn, :id, :inid;
+if (SQLCODE != 0)
+  goto P100;
+CHCKOK ();
+printf ("id should be YES or NO; its value is %s\n", id);
+printf ("inid should be YES or NO; its value is %s\n\n", inid);
+if (strncmp (id, "NO", 2) != 0 && strncmp (id, "YES", 3) != 0)
+  flag = 0;
+if (strncmp (inid, "NO", 2) != 0 && strncmp (inid, "YES", 3) != 0)
+  flag = 0;
+if (strncmp (id, "NO", 2) == 0 && strncmp (inid, "NO", 2) != 0)
+  flag = 0;
+goto P101;
+
+P100:
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts772.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7554','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts772.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7554','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7554 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}
+

@@ -1,0 +1,126 @@
+/*  EMBEDDED C (file "DML005.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML005.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE FETCH STATEMENT IN THE LANGUAGE OF  */
+/*  SQL.  THE FORMAT:                                            */
+/*           FETCH <cursor name> INTO <fetch target list>        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*          X3.135-1989 and FIPS 127-1  (sizing - DECIMAL(15))   */
+/*                                                               */
+/*                        SECTION 8.1 <close statement>          */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          long HOURS1;
+          long HOURS2;
+          long i;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml005.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0011 ********************/
+
+/*   EXEC SQL DROP TABLE LONGINT;                             */
+/*   EXEC SQL CREATE TABLE LONGINT(LONG_INT DECIMAL(15));     */
+     HOURS1 = 0;
+     HOURS2 = 0;
+
+     EXEC SQL DELETE FROM LONGINT;
+
+     EXEC SQL INSERT INTO  LONGINT
+          VALUES(123456789012345.);
+
+     if (SQLCODE < 0)
+        printf(" Insert of 15-digit value failed !!! \n");
+
+     printf("\n        FIPS sizing TEST0011 \n");
+     printf("             fetch exact numeric data \n");
+     printf("reference X3.135-1989 section 8.6 General Rules 10) d)\n");
+     printf("    - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT LONG_INT / 1000000, LONG_INT - 123456789000000. 
+              FROM   LONGINT;
+     EXEC SQL OPEN X;
+     
+     EXEC SQL FETCH X INTO :HOURS1, :HOURS2;
+     printf("     sqlcode=%ld, HOURS1=%ld\n",SQLCODE,HOURS1);
+     printf("                  HOURS2=%ld \n\n",HOURS2);
+     printf("    The answer should be HOURS1=123456789\n");
+     printf("                         HOURS2=12345\n");
+     if (HOURS1==123456789 && HOURS2==12345)
+       {
+       printf("\n\n                    *** pass *** \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0011','pass','PC');
+       }
+     else
+       {
+       printf("\n\n          dml005.pc  *** fail *** \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0011','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     EXEC SQL CLOSE X;
+     printf("======================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0011 ********************/
+
+     exit(errcnt);
+}

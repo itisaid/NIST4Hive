@@ -1,0 +1,2746 @@
+                    NIST SQL Test Suite
+            Cross References to the SQL-92 Standard
+
+
+
+TEST   PROGRAM DESCRIPTION
+NUMBER NAME
+-----------------------------------------------------------
+0001   DML001  CURSOR with ORDER BY DESC
+         ref : 13.1 GR.3.a
+         ref : 13.1 FT.8 DESC
+
+
+0002   DML001  CURSOR with ORDER BY integer ASC
+         ref : 13.1 GR.3.a <unsigned integer>
+         ref : 13.1 FT.8   DESC
+
+
+0003   DML001  CURSOR with ORDER BY DESC integer, named column
+         ref : 13.1 GR.3.a <unsigned integer><column name>
+         ref : 13.1 FT.8   DESC
+
+
+0004   DML001  CURSOR with UNION: ORDER by integer DESC
+         ref : 7.10 GR.1.b
+         ref : 13.1 GR.3
+         ref : 7.10 FT.7    <unsigned integer>
+
+0005   DML001  CURSOR with UNION ALL
+         ref : 7.10 GR.1.b
+         ref : 13.1 GR.1
+
+
+0006   DML002  Error for second consecutive OPEN without CLOSE
+         ref : 13.2 GR.1
+
+
+0007   DML003  Error for second consecutive CLOSE
+         ref : 13.4 GR.1
+         ref : 13.4 SR.1
+
+
+0008   DML004  SQLCODE = 100: FETCH on empty table
+         ref : 13.3 GR.5.b.ii
+
+
+0009   DML004  FETCH NULL value, get indicator = -1
+         ref : 13.3 GR.8
+         ref :  9.1 GR.1.a
+         ref : 13.3 FT.1
+
+
+0010   DML004  FETCH truncated CHAR column with indicator
+         ref : 13.3 SR.6
+         ref : 13.3 GR.8
+         ref :  9.1 GR.2.a
+
+
+0011   DML005  FIPS sizing - DECIMAL(15)
+         ref : 9.1 GR.3.k  exact numeric
+         ref : 13.3 FT.3
+         ref : FIPS 16.6 Sizing Id 9
+
+
+0012   DML006  SQLCODE < 0: DELETE CURRENT at end-of-data
+         ref : 13.6 FT.1
+         ref : 13.6 SR.1
+         ref : 13.6 GR.2
+
+
+0013   DML005  DELETE CURRENT row twice
+         ref : 13.6 FT.1
+         ref : 13.6 GR.3
+         ref : 13.6 SR.1
+
+
+0014   DML007  UPDATE CURRENT
+         ref : 13.9 FT.1
+         ref : 13.9 GR.3
+         ref : 13.9 GR.8
+         ref : 13.9 SR.1
+
+
+0015   DML007  UPDATE CURRENT - view with check and unique
+         ref : 11.19 SR.12
+         ref : 11.19 GR.12
+
+
+0016   DML008  SQLCODE < 0: 2 rows selected by single-row SELECT
+         ref : 13.5 FT.1
+         ref : 13.5 SR.3
+         ref : 13.5 GR.1
+         ref : 13.5 GR.2.a
+
+
+0017   DML008  SELECT DISTINCT
+         ref : 7.9 FT.1
+         ref : 7.9 GR.1.a.ii.2
+
+
+0018   DML008  SQLCODE = 100: SELECT with no data
+         ref : 13.5 GR.2.b
+         ref : 13.5 FT.1
+         ref : 13.5 SR.3
+         ref : 13.5 SR.1
+
+
+0019   DML008  SQLCODE = 0: SELECT with data
+         ref : 13.5 GR.2.c
+         ref : 13.5 GR.6
+         ref : 13.5 FT.1
+         ref : 13.5 SR.3
+
+
+0020   DML008  SELECT NULL value, get indicator = -1
+         ref : 13.5 GR.8
+         ref :  9.1 GR.1.a
+         ref :  9.1 SR.2
+
+
+
+0021   DML008  SELECT CHAR(M) col. into short var., get indic = M
+         ref :  9.1 GR.3.b
+         ref : 13.5 SR.2
+         ref : 13.5 GR.8
+
+
+
+0022   DML009  INSERT (column list) VALUES (literals and NULL)
+         ref : 13.8 FT.1
+         ref : 13.8 SR.3
+         ref : 13.8 SR.4
+         ref : 13.8 FT.2
+         ref : 13.8 FT.3
+         ref :  9.2 GR.2
+         ref :  9.2 GR.3.a
+
+
+0023   DML009  SQLCODE < 0 if left-truncate DEC (>= col.def.)
+         ref : 13.8 FT.1
+         ref : 13.8 SR.5
+         ref : 13.8 GR.4.iii
+         ref : 9.2 GR.3.k
+
+
+0024   DML009  SQLCODE = 100: INSERT query spec. is empty
+         ref : 13.8 GR.4.a
+
+
+0025   DML009  SQLCODE = 0:  INSERT query spec. is not empty
+         ref : 13.8 GR.4.b.ii
+         ref : 13.8 GR.4.b.iv
+         ref : 13.8 GR.3
+
+
+0026   DML009  INSERT into view, check option & unique violations
+         ref : 13.8 GR.4.b.iv
+         ref : 11.9 SR.12
+         ref : 11.9 SR.14
+         ref : 11.9 GR.12
+         ref : 11.9 GR.11.a
+
+
+0027   DML010  INSERT short string into long column-space padding
+         ref : 13.8 GR.4.b.iii
+         ref : 13.8 SR.5
+         ref :  9.2 GR.3.c
+
+
+0028   DML010  INSERT string that exactly fits in column
+         ref : 13.8 GR.4.b.iii
+         ref :  9.2 GR.3.a
+
+
+0031   DML010  INSERT (column list) VALUES (variables and NULL)
+         ref : 13.8 GR.4.b.iii
+         ref : 13.8 SR.3
+
+
+0033   DML011  UPDATE view without WHERE clause - all rows
+         ref : 13.10 FT.1
+         ref : 13.10 SR.4
+         ref : 13.10 GR.2.a
+
+
+0034   DML011  UPDATE table with SET column in WHERE clause
+         ref : 13.10 FT.1
+         ref : 13.10 GR.2.b
+         ref : 13.10 GR.7
+
+
+0035   DML011  UPDATE with correlated subquery in WHERE clause
+         ref : 13.10 GR.2.b  <subquery>
+
+
+0036   DML011  UPDATE view globally with check option violation
+         ref : 13.10 GR.7
+         ref : 11.19 GR.7
+         ref : 11.19 GR.12
+
+
+0037   DML012  DELETE without WHERE clause - all rows
+         ref : 13.7 FT.1
+         ref : 13.7 SR.2
+         ref : 13.7 GR.2.a
+         ref : 13.7 GR.4
+
+
+0038   DML012  DELETE with correlated subquery in WHERE clause
+         ref : 13.7 GR.2.b  <subquery>
+
+
+0039   DML013  COUNT DISTINCT function
+         ref : 6.5 FT.1
+         ref : 6.5 FT.4
+         ref : 6.5 SR.4
+         ref : 6.5 SR.7
+         ref : 6.5 GR.2.a
+
+
+0040   DML013  SUM function with WHERE clause
+         ref : 6.5 FT.3
+         ref : 6.5 SR.5.b
+         ref : 6.5 SR.9.b
+         ref : 6.5 GR.2.b.v
+
+
+0041   DML013  MAX function in subquery
+         ref : 6.5 GR.b.iv   MAX
+
+
+0042   DML013  MIN function in subquery
+         ref : 6.5 GR.b.iv   MIN
+
+
+0043   DML013  AVG function
+         ref : 6.5 FT.2
+         ref : 6.5 FT.3
+         ref : 6.5 SR.9.c
+         ref : 6.5 GR.2.b.ii
+
+
+0044   DML013  AVG function: empty result NULL value
+         ref : 6.5 GR.1.b.i  AVG
+
+
+0045   DML014  BETWEEN predicate
+         ref : 8.3 FT.1
+         ref : 8.3 SR.2
+         ref : 8.3 SR.3
+         ref : 8.3 SR.6
+
+
+0046   DML014  NOT BETWEEN predicate
+         ref : 8.3 FT.1
+         ref : 8.3 SR.2
+         ref : 8.3 SR.3
+         ref : 8.3 SR.5
+
+
+0047   DML014  IN predicate with subquery
+         ref : 8.4 FT.1
+         ref : 8.4 FT.2
+         ref : 8.4 SR.2
+
+
+
+0048   DML014  NOT IN predicate with subquery
+         ref : 8.4 SR.3
+
+
+0049   DML014  IN predicate with value list
+         ref : 8.4 SR.1
+         ref : 8.4 SR.3
+
+
+0050   DML014  LIKE predicate with % (percent)
+         ref : 8.5 FT.1
+         ref : 8.5 FT.4
+         ref : 8.5 GR.3.a.ii   <percent>
+         ref : 8.5 GR.3.b
+         ref : 8.5 GR.5
+
+
+0051   DML014  LIKE predicate with _ (underscore)
+         ref : 8.5 FT.1
+         ref : 8.5 FT.4
+         ref : 8.5 GR.3.a.ii   <underscore>
+         ref : 8.5 GR.3.b
+         ref : 8.5 GR.5
+
+
+0052   DML014  LIKE predicate with ESCAPE character
+         ref : 8.5 FT.4
+         ref : 8.5 GR.3.b
+         ref : 8.5 GR.5
+
+
+0053   DML014  NOT LIKE predicate
+         ref : 8.5 SR.3
+         ref : 8.5 FT.1
+
+
+0054   DML014  IS NULL predicate
+         ref : 8.6 FT.1
+         ref : 8.6 GR.2
+
+
+0055   DML014  NOT NULL predicate
+         ref : 8.6 FT.1
+         ref : 8.6 GR.3
+
+
+0056   DML014  NOT EXISTS predicate
+         ref : 8.6 FT.1
+         ref : 8.6 GR.2
+
+
+0057   DML014  ALL quantifier
+         ref : 8.7 FT.1
+         ref : 8.7 FT.3
+         ref : 8.7 GR.2.c
+
+
+0058   DML014  SOME quantifier
+         ref : 8.7 FT.2
+         ref : 8.7 FT.4
+         ref : 8.7 GR.2.c
+
+
+0059   DML014  ANY quantifier
+         ref : 8.7 FT.2
+         ref : 8.7 FT.4
+         ref : 8.7 GR.2.c
+
+
+0060   DML015  COMMIT WORK closes cursors
+         ref : 14.3 FT.1
+         ref : 14.3 GR.2
+
+
+0061   DML015  COMMIT WORK keeps changes to database
+         ref : 14.3 FT.1
+         ref : 14.3 GR.5.c
+
+
+0062   DML015  ROLLBACK WORK cancels changes to database
+         ref : 14.4 FT.1
+         ref : 14.4 GR.3
+
+
+0063   DML015  ROLLBACK WORK closes cursors
+         ref : 14.4 FT.1
+         ref : 14.4 GR.2
+
+
+0064   DML016  SELECT USER
+         ref : 6.2 FT.3
+         ref : 6.2 SR.3
+         ref : 6.2 GR.5
+
+
+0065   DML016  SELECT CHAR literal, term with numeric literal
+         ref : 6.2 FT.4
+         ref : 6.2 GR.4   character literal
+
+
+0066   DML016  SELECT numeric literal
+         ref : 6.2 FT.4
+         ref : 6.2 GR.4    numeric literal
+
+
+0067   DML017  WHENEVER NOT FOUND(SQLCODE=100), GOTO and CONTINUE
+         ref : 19.2 FT.1
+         ref : 19.2 FT.2
+         ref : 19.2 FT.3
+         ref : 19.2 FT.4
+         ref : 19.2 SR.1
+         ref : 19.2 SR.2
+         ref : 19.2 GR.1.a
+         ref : 19.2 GR.1.c
+
+
+0068   DML017  WHENEVER SQLERROR (SQLCODE< 0), GOTO and CONTINUE
+         ref : 19.2 GR.1.b
+         ref : 19.2 GR.1.c
+
+
+0069   DML018  HAVING COUNT with WHERE, GROUP BY
+         ref : 7.8 FT.1
+         ref : 7.8 SR.3
+         ref : 7.8 GR.2
+
+
+0070   DML018  HAVING COUNT with GROUP BY
+         ref : 7.8 FT.1
+         ref : 7.8 SR.1
+         ref : 7.8 GR.2
+
+
+0071   DML018  HAVING MIN, MAX with GROUP BY 3 columns
+         ref : 7.8 SR.3
+         ref : 7.8 GR.3
+
+
+0072   DML018  Nested HAVING IN, with no outer reference
+         ref : 7.8 GR.4
+
+
+0073   DML018  HAVING MIN with no GROUP BY
+         ref : 7.8 GR.1
+
+
+0074   DML019  GROUP BY column: SELECT column, SUM
+         ref : 7.7 FT.1
+         ref : 7.7 SR.2
+         ref : 7.7 GR.1 sum a column while grouping
+
+
+0075   DML019  GROUP BY clause
+         ref : 7.7 FT.1
+         ref : 7.7 SR.2
+         ref : 7.7 GR.2 simple group by
+
+
+0076   DML019  GROUP BY 2 columns
+         ref : 7.7 FT.2
+         ref : 7.7 SR.2
+         ref : 7.7 GR.2 group by two columns
+
+
+0077   DML019  GROUP BY all columns, with SELECT *
+         ref : 7.7 SR.2
+         ref : 7.7 GR.1
+         ref : 7.7 GR.2 group by all columns and select all
+
+
+0078   DML019  GROUP BY 3 columns, SELECT 2 of them
+         ref : 7.7 FT.2
+         ref : 7.7 SR.2
+         ref : 7.7 GR.2 group by all columns and select all
+
+
+0079   DML019  GROUP BY NULL value
+         ref : 7.7 FT.3
+         ref : 7.7 GR.2
+         ref : 8.6 GR.2 group by null value
+
+
+0080   DML020  Simple 2-table join
+         ref : 7.4 FT.1
+         ref : 7.4 SR.2
+         ref : 7.4 GR.1.b join on non-key
+
+
+0081   DML020  Simple 2-table join with 1-table predicate
+         ref : 7.4 FT.1
+         ref : 7.4 SR.2
+         ref : 7.4 GR.1.b join on non-key, restrict
+
+
+0082   DML020  Join 3 tables
+         ref : 7.4 SR.2
+         ref : 7.4 GR.1.b join 3 tables
+
+
+0083   DML020  Join a table with itself
+         ref : 7.4 SR.2
+         ref : 7.4 GR.1.b self-join
+
+
+0084   DML021  Data type CHAR(20)
+         ref : 6.1 FT.2
+         ref : 6.1 SR.1
+
+
+0085   DML021  Data type CHARACTER(20)
+         ref : 6.1 FT.2
+         ref : 6.1 SR.7
+
+
+0086   DML021  Data type INTEGER
+         ref : 6.1 FT.6
+         ref : 6.1 SR.19
+
+
+0087   DML021  Data type INT
+         ref : 6.1 FT.6
+         ref : 6.1 SR.1
+
+
+0088   DML034  Data type REAL
+         ref : 6.1 FT.7
+         ref : 6.1 SR.22
+         ref : 6.1 SR.24
+
+
+0089   DML021  Data type SMALLINT
+         ref : 6.1 FT.6
+         ref : 6.1 SR.20
+
+
+0090   DML034  Data type DOUBLE PRECISION
+         ref : 6.1 FT.7
+         ref : 6.1 FT.23
+         ref : 6.1 FT.24
+
+
+0091   DML034  Data type FLOAT
+         ref : 6.1 FT.7
+         ref : 6.1 SR.21
+         ref : 6.1 SR.24
+
+
+0092   DML034  Data type FLOAT(32)
+         ref : 6.1 FT.7
+         ref : 6.1 FT.21
+
+
+0093   DML034  Data type NUMERIC(13,6)
+         ref : 6.1 FT.6
+         ref : 6.1 SR.17
+
+
+0094   DML034  Data type DECIMAL(13,6)
+         ref : 6.1 FT.6
+         ref : 6.1 SR.16
+
+
+0095   DML034  Data type DEC(13,6)
+         ref : 6.1 FT.6
+         ref : 6.1 SR.8
+
+
+0096   DML022  Subquery with MAX in < comparison predicate
+         ref : 7.11 FT.1
+         ref : 7.11 FT.4
+         ref : 7.11 SR.1
+         ref : 8.2 GR.1.b.v  Comparison predicate < ,  MAX function
+
+
+0097   DML022  Subquery with AVG - 1 in <= comparison predicate
+         ref : 7.11 FT.1
+         ref : 7.11 FT.4
+         ref : 7.11 SR.1
+         ref : 7.11 GR.1
+         ref : 8.2 GR.1.b.v  Comparison predicate <= , AVG function
+
+
+0098   DML022  IN predicate with simple subquery
+         ref : 7.11 FT.3
+         ref : 7.11 SR.4  IN predicate, simple subquery
+         ref : 8.4  SR.4
+
+
+0099   DML022  Nested IN predicate - 2 levels
+         ref : 7.11 FT.3
+         ref : 7.11 SR.4  IN predicate, nested subquery, 2 levels
+         ref : 8.4  SR.4
+
+
+0100   DML022  Nested IN predicate - 6 levels
+         ref : 7.11 FT.3
+         ref : 7.11 SR.4  IN predicate, nested subquery, 6 levels
+         ref : 8.4  SR.4
+
+
+0101   DML022  Quantified predicate <= ALL with AVG and GROUP BY
+         ref : 7.11 FT.1
+         ref : 7.11 SR.1  Quantified predicate, NULL
+         ref : 8.7  GR.2.a
+
+
+0102   DML022  Nested NOT EXISTS with corr. subqueries, DISTINCT
+         ref : 7.11 FT.3
+         ref : 7.11 SR.4
+         ref : 8.8  GR.2  Not exists with subquery
+
+
+0103   DML023  Subquery with = comparison predicate
+         ref : 7.11 FT.1
+         ref : 7.11 SR.3
+         ref : 8.2 GR.1.b.i  Comparison predicate =
+
+
+0104   DML023  SQLCODE < 0: subquery with more than 1 value
+         ref : 7.11 GR.1
+
+
+0105   DML023  Subquery in comparison predicate is empty
+         ref : 7.11 GR.1  result of subquery is empty
+
+
+0106   DML023  Comparison predicate <> (not equal)
+         ref : 8.2 FT.1
+         ref : 8.2 SR.3
+         ref : GR.1.b.ii
+
+
+0107   DML023  Short string logically blank-padded in = pred.
+         ref : 8.2 GR.3.a
+
+
+0108   DML024  Search condition true OR NOT (true)
+         ref : 8.12 FT.1
+         ref : 8.12 FT.6
+         ref : 8.12 GR.1
+         ref : 8.12 GR.2  Table 14
+
+
+0109   DML024  Search condition true AND NOT (true)
+         ref : 8.12 FT.2
+         ref : 8.12 FT.3
+         ref : 8.12 SR.1
+         ref : 8.12 GR.2  Table 13
+
+
+0110   DML024  Search condition unknown OR NOT (unknown)
+         ref : 8.12 GR.2
+         ref : 8.12 FT.1  Table 14
+
+
+0111   DML024  Search condition unknown AND NOT (unknown)
+         ref : 8.12 FT.2
+         ref : 8.12 GR.2  Table 13
+
+
+0112   DML024  Search condition unknown AND true
+         ref : 8.12 GR.2  Table 13
+
+
+0113   DML024  Search condition unknown OR true
+         ref : 8.12 GR.2  Table 14
+
+
+0114   DML025  Set functions without GROUP BY returns 1 row
+         ref : 7.9 FT.1
+         ref : 7.9 SR.6
+         ref : 7.9 GR.2.a.i
+
+
+0115   DML025  GROUP BY 0 groups returns 0 rows: SEL col.,AVG...
+         ref : 7.9 SR.7
+         ref : 7.9 GR.1.b.i  SELECT col., AVG
+
+
+0116   DML025  GROUP BY 0 groups returns 0 rows: SELECT set fnc.
+         ref : 7.9 SR.7
+         ref : 7.9 GR.1.b.i  set function
+
+
+0117   DML025  Set functions with GROUP BY several groups
+         ref : 7.9 GR.1.b.ii
+
+
+0118   DML026  Monadic arithmetic operator + (plus)
+         ref : 6.12 FT.1
+         ref : 6.12 FT.3
+         ref : 6.12 SR.4
+         ref : 6.12 GR.3  plus sign
+
+
+0119   DML026  Monadic arithmetic operator - (minus)
+         ref : 6.12 GR.3  minus sign
+
+
+0120   DML026  Value expression with NULL primary yields NULL
+         ref : 6.12 FT.4
+         ref : 6.12 GR.1
+         ref : 6.12 GR.2  NULL value
+
+
+0121   DML026  Dyadic arithmetic operators +, -, *, /
+         ref : 6.12 FT.1
+         ref : 6.12 FT.2
+         ref : 6.12 SR.2
+         ref : 6.12 GR.4
+
+
+0122   DML026  SQLCODE < 0: divisor shall not be zero
+         ref : 6.12 GR.5  division by zero in exception condition
+
+
+0123   DML026  Evaluation order of expression
+         ref : 6.12 FT.1
+         ref : 6.12 FT.2
+         ref : 6.12 GR.4
+         ref : 6.12 GR.5
+
+
+0124   DML027  UPDATE UNIQUE column (key=key+1) interim conflict
+         ref : 13.10 FT.1
+         ref : 13.10 SR.4
+         ref : 13.10 GR.2.a  requires defereed integreity constraint checking
+
+
+0125   DML027  UPDATE UNIQUE column (key+1): no interim conflict
+         ref : 13.10 SR.1
+         ref : 13.10 SR.3
+         ref : 13.10 GR.2.b
+
+
+0126   DML028  CLOSE, OPEN, FETCH returns first row
+         ref : 13.2 FT.1
+         ref : 13.2 SR.1
+         ref : 13.2 GR.3.e  OPEN, CLOSE, OPEN again
+
+
+0127   DML028  OPEN 2 cursors at same time
+         ref : 13.2 GR.3  Two cursors OPENed at the same time
+
+
+0128   DML028  OPEN 3 cursors at same time
+         ref : 13.2 GR.3  Three cursors OPENed at the same time
+
+
+0129   DML029  Double quote mark (') in character string literal
+         ref : 5.3 FT.4
+         ref : 5.3 FT.8
+         ref : 5.3 SR.1
+         ref : 5.3 GR.1
+
+
+0130   DML029  Approximate numeric literal <mantissa>E<exponent>
+         ref : 5.3 FT.18
+         ref : 5.3 SR.14
+         ref : 5.3 GR.4
+
+
+0131   DML029  Approximate numeric literal with neg. exponent
+         ref : 5.3 FT.20
+         ref : 5.3 GR.5   negative exponent
+
+
+0135   DML033  Upper and lower case letters are distinct
+         ref : 5.1 FT.5
+         ref : 5.1 FT.6  upper and lower case are distinct
+
+
+0137   SDL001  CREATE SCHEMA
+         ref : 11.1 FT.1
+         ref : 11.1 GR.1
+         ref : 11.1 GR.2
+
+
+0138   SDL002  GRANT ALL PRIVILEGES TO PUBLIC (SELECT, INSERT)
+         ref : 11.36 GR.1    SELECT, INSERT  <tablename>
+
+
+0139   SDL003  GRANT ALL PRIVILEGES TO PUBLIC (SELECT, UPDATE)
+         ref : 11.36 GR.1    SELECT, UPDATE  <tablename>
+
+
+0140   SDL004  Priv.violation: GRANT SELECT TO PUBLIC, no INSERT
+         ref : 11.36 GR      SELECT to PUBLIC, NO INSERT
+
+
+0141   SDL005  GRANT SELECT and UPDATE to individual
+         ref : 11.36 GR      SELECT and UPDATE to INDIVIDUAL
+
+
+0142   SDL006  GRANT SELECT and UPDATE WITH GRANT OPTION
+         ref : 11.36 GR.4
+         ref : 11.36 GR.7
+         ref : 11.36 GR.11.b
+
+
+0143   SDL007  GRANT SELECT and UPDATE on VIEW
+         ref : 11.36 GR.6
+
+
+0144   SDL008  Priv.violation: colunm not in UPDATE column list
+         ref : 11.36 GR.14
+
+
+0145   SDL009  Fully qualified column specification
+         ref : 11.36 GR.3
+
+
+0146   SDL010  GRANT SELECT, DELETE, INSERT
+         ref : 11.36 GR
+
+
+0147   SDL011  CREATE SCHEMA
+         ref : 11.1 FT.1
+         ref : 11.1 GR.1
+         ref : 11.1 GR.3
+
+
+0148   SDL012  CREATE TABLE with NOT NULL
+         ref : 11.3 FT.1
+         ref : 11.3 GR.3
+         ref : 11.4 FT.3
+         ref : 11.4 GR.9.a
+
+
+0149   SDL013  CREATE TABLE with NOT NULL UNIQUE
+         ref : 11.4 GR.9.a   with UNIQUE
+
+
+0150   SDL014  CREATE TABLE with UNIQUE(...): INSERT VALUES
+         ref : 11.7 FT.1
+         ref : 11.7 SR.3
+
+
+0151   SDL015  CREATE VIEW
+         ref : 11.7 FT.1
+         ref : 11.7 GR.1
+
+
+0152   SDL016  CREATE VIEW with CHECK OPTION
+         ref : 11.7 FT.1
+         ref : 11.7 GR.1
+         ref : 11.7 GR.11
+
+
+0153   SDL017  CREATE VIEW joining 3 tables
+         ref : 11.7 GR    VIEW joining 3 tables
+
+
+0154   SDL018  Schema def.- same table name for different schemas
+         ref : 11.1 GR.1   same table name for different schemas
+
+
+0155   SDL019  CREATE TABLE with UNIQUE(...): INSERT via SELECT
+         ref : 11.7 FT.2
+         ref : 11.7 GR.3   INSERT via SELECT
+         ref : 22.2        SQLCODE negative values
+
+
+0156   SDL020  Tables are multi-sets, dup. INSERTed via subquery
+         ref : 4.9
+
+
+0157   DML035  CURSOR with ORDER BY approximate numeric
+         ref : 13.1 FT.4
+         ref : 13.1 SR.10
+         ref : 13.1 GR.3.a   DESC, sort by appr. numeric
+
+
+0158   DML001  CURSOR with UNION and NOT EXISTS subquery
+         ref : 7.10 FT.2
+         ref : 7.10 SR.3
+         ref : 7.10 GR.1.b.ii.1
+         ref : 8.8  GR.2
+
+
+0159   DML001  CURSOR with 2 UNIONs, ORDER BY 2 integers
+         ref : 7.10 GR.1.b.ii.1  Two unions
+         ref : 13.1 GR.3         DESC by two integers
+
+
+0160   DML001  CURSOR with UNION, UNION ALL and ORDER BY
+         ref : 7.10 GR.1.b.ii.1  UNION
+         ref : 7.10 GR.1.b.iii.1 UNION ALL
+
+
+0161   DML004  SQLCODE < 0: FETCH NULL value without indicator
+         ref : 13.3 FT.1
+         ref : 13.3 SR.2
+         ref : 13.3 GR.8
+         ref : 9.1  GR.1.b
+
+
+0162   DML004  FETCH NULL value with INDICATOR syntax
+         ref : 13.3 FT.1
+         ref : 13.3 SR.5
+         ref : 9.1  GR.1.a
+         ref : 13.3 GR.8
+
+
+0163   DML006  SQLCODE < 0: DELETE CURRENT without FETCH
+         ref : 13.3 FT.1
+         ref : 13.3 SR.1
+         ref : 13.3 GR.2
+         ref : 13.2 GR.e.ii
+
+
+0164   DML008  Default of SELECT is ALL, not DISTINCT
+         ref : 7.9 SR.2
+         ref : 7.9 GR.1.a.i
+
+
+0165   DML008  Truncate CHAR column SELECTed into shorter var.
+         ref : 13.5 GR.8
+         ref : 9.1  GR.3.b
+
+
+0166   DML036  INSERT NULL value with indicator = -1
+         ref : 13.8 FT.1
+         ref : 9.1  GR.1.a
+
+
+0167   DML013  SUM ALL function
+         ref : 6.5 FT.3
+         ref : 6.5 SR.9.b
+         ref : 6.5 GR.2.b.iv  ALL is specified
+
+
+0168   DML013  SUM function
+         ref : 6.5 FT.3
+         ref : 6.5 SR.1
+         ref : 6.5 GR.2.b.iv
+
+
+0169   DML013  COUNT (*) function
+         ref : 6.5 FT.1
+         ref : 6.5 SR.7
+         ref : 6.5 GR.1.a
+
+
+0170   DML013  SUM DISTINCT function with WHERE clause
+         ref : 6.5 FT.4
+         ref : 6.5 GR.2.b.iv
+         ref : 7.6 GR.2
+
+
+0171   DML013  SUM (column) + literal
+         ref : 6.5 GR.2.b.iv   SUM + numeric literal
+         ref : 5.3 GR.3
+
+
+0172   DML016  SELECT USER into short variable
+         ref : 6.2 GR.11
+
+
+0173   DML021  Data type CHAR
+         ref : 6.1 FT.2
+         ref : 6.1 SR.1
+
+
+0174   DML021  Data type CHARACTER
+
+         ref : 6.1 FT.2
+         ref : 6.1 SR.7  Select that datatype
+
+
+0175   DML021  Data type NUMERIC
+         ref : 6.1 FT.5
+         ref : 6.1 SR.17  Select that datatype
+
+
+0176   DML021  Data type NUMERIC(9): SELECT *
+         ref : 6.1 FT.5   Datatype size specified
+         ref : 6.1 SR.17  Select * of that datatype
+         ref : 7.9 SR.3
+
+
+0177   DML021  Data type NUMERIC(9): SELECT column
+         ref : 6.1 FT.5
+         ref : 6.1 SR.17  Select a column of that datatype
+         ref : 7.9 GR.1.a.i
+
+
+0178   DML021  Data type DECIMAL
+         ref : 6.1 FT.6
+         ref : 6.1 SR.18  Select that datatype
+
+
+0179   DML021  Data type DECIMAL(8)
+         ref : 6.1 FT.6   Datatype size specified
+         ref : 6.1 SR.18  Select that datatype
+
+
+0180   DML023  NULLs sort together in ORDER BY
+         ref : 8.2 GR.1.a
+
+
+0181   DML023  NULLs are equal for DISTINCT
+         ref : 7.9 GR.1.ii.2  NULLs are equal for DISTINCT
+
+
+0182   DML029  Approx. num. literal with neg. mantissa and exp.
+         ref : 5.3 FT.18   neg. manissa, neg. exponent
+         ref : 5.3 FT.19
+         ref : 5.3 FT.20
+         ref : 5.3 SR.14
+         ref : 5.3 GR.4
+         ref : 5.3 GR.5
+
+
+0183   CCC001  C language embedded host identifiers
+         ref : 19.4 SR.3
+         ref : 19.1 SR.10
+
+
+0184   CCC002  C language NULL terminator
+         ref : 19.4 SR.11
+
+
+0185   COB001  COBOL - embedded host identifiers
+         ref : 19.5 SR.3
+         ref : 19.1 SR.10
+
+
+0186   COB002  COBOL - CHAR(80)
+         ref :  6.1 SR.7
+         ref : 19.5 SR.7   Length 80
+
+
+0187   COB002  COBOL - CHAR(132)
+         ref :  6.1 SR.7
+         ref : 19.5 SR.7   Length 132
+
+
+0188   COB002  COBOL - CHAR(240)
+         ref :  6.1 SR.7
+         ref : 19.5 SR.7   Length 240
+
+
+0189   DML078  OPTIONAL - CHAR(256)
+         ref : 6.1  SR.7
+         ref : 6.1  SR.9      size 256
+         ref : 19.4 SR.10
+
+
+0190   DML078  OPTIONAL - CHAR(512)
+         ref : 6.1  SR.7
+         ref : 6.1  SR.9      size 512
+         ref : 19.4 SR.10
+
+
+0191   DML078  OPTIONAL - CHAR(1024)
+         ref : 6.1  SR.7
+         ref : 6.1  SR.9      size 1024
+         ref : 19.4 SR.10
+
+
+0192   CCC003  C language continuation of SQL char. literal
+         ref : 19.1 SR.5
+
+
+0193   CCC003  C language comments within embedded SQL statement
+         ref : 19.1 SR.5   C
+
+
+0194   CCC004  C language EXTERN storage class
+         ref : 19.4  EXTERN storage class
+
+
+0195   CCC005  C language STATIC storage class
+         ref : 19.4  STATIC storage class
+
+
+0196   COB004  COBOL PIC S9(12) precision test
+         ref : 19.5 SR.9  Size 12
+
+
+0197   COB004  COBOL PIC S9(18) precision test
+         ref : 19.5 SR.9  Size 18
+
+
+0198   CCC006  C language AUTO storage class
+         ref : 19.4  AUTO storage class
+
+
+0199   SDL021  Priv.violation: GRANT SELECT to PUBLIC, no DELETE
+         ref : 11.36 GR     SELECT to PUBLIC, no DELETE
+
+
+0200   SDL022  Priv.violation: GRANT INSERT to indiv., no SELECT
+         ref : 11.36 GR     INSERT to INDIVIDUAL, no SELECT
+
+
+0201   SDL023  Priv.violation: GRANT without GRANT OPTION
+         ref : 11.36 GR     no GRANT option
+
+
+0202   DML037  Host variable names same as column names
+         ref : 19.3 SR.3
+         ref : 19.4 SR.3
+         ref : 19.5 SR.3
+         ref : 19.6 SR.4
+         ref : 19.8 SR.3
+
+
+0203   SDL024  CREATE VIEW on VIEW
+         ref : 11.19 GR.9
+         ref : 11.19 GR.11   VIEW on VIEW
+
+
+0204   SDL025  Updatable VIEW with AND, OR in CHECK clause
+         ref : 11.19 SR.12
+         ref : 11.19 GR.8    AND, OR in CHECK clause
+
+
+0205   DML038  Cartesian product is produced without WHERE
+         ref : 7.4 FT.1
+         ref : 7.4 SR.1.b
+         ref : 7.4 GR.1.b
+
+
+0206   COB005  COBOL - continuation of SQL char. literal
+         ref : 19.1 SR.5   COBOL
+
+
+0207   COB006  COBOL - comments within embedded SQL statement
+         ref : 19.1 SR.5   COBOL
+
+
+0208   DML039  LIKE predicate with underscore is case sensitive
+         ref : 8.5 GR.3.b   Characters are case sensitive
+
+
+0209   DML040  Join 2 tables from different schemas
+         ref : 5.4 FT.14
+         ref : 7.4 GR.1.b   2 tables from different schemas
+
+
+0210   COB007  COBOL - PIC S9(1) syntax
+         ref :  6.1 SR.17
+         ref : 19.5 SR.9  datatype NUMERIC(1)
+
+
+0211   COB007  COBOL - PIC S9(7) syntax
+         ref :  6.1 SR.17
+         ref : 19.5 SR.9  datatype NUMERIC(7)
+
+
+0212   DML041  Enforcement of CHECK clauses in nested views
+         ref : 11.19 FT.1
+         ref : 11.19 SR.12
+         ref : 11.19 GR.11
+         ref : 11.19 GR.12
+
+
+0213   DML042  FIPS sizing - 100 columns in a row
+         ref : FIPS 13.5
+         ref : FIPS 16.6 Sizing Id 41
+
+
+0214   DML043  FIPS sizing - 2000 byte-row
+         ref : FIPS 13.5
+         ref : FIPS 16.6 Sizing Id 27
+
+
+0215   DML044  FIPS sizing - 6 columns in a UNIQUE specification
+         ref : FIPS 16.6 Sizing Id 28
+
+
+0216   DML044  FIPS sizing - 120 bytes in a UNIQUE specification
+         ref : FIPS 16.6 Sizing Id 29
+
+
+0217   FOR001  FORTRAN - continuation of SQL character literal
+         ref : 19.1 SR.5  FORTRAN
+
+
+0218   DML045  FIPS sizing - 6 columns in GROUP BY
+         ref : FIPS 16.6 Sizing Id 30
+
+
+0219   DML045  FIPS sizing - 120 bytes in GROUP BY
+         ref : FIPS 16.6 Sizing Id 31
+
+
+0220   DML046  FIPS sizing - 6 columns in ORDER BY
+         ref : FIPS 16.6 Sizing Id 32
+
+
+0221   DML046  FIPS sizing - 120 bytes in ORDER BY
+         ref : FIPS 16.6 Sizing Id 33
+
+
+0222   DML047  FIPS sizing - CHARACTER(240)
+         ref : FIPS 16.6 Sizing Id 2
+
+
+0223   FOR001  FORTRAN - comments within embedded SQL statements
+         ref : 19.1 SR.5   FORTRAN
+
+
+0224   DML048  FIPS sizing - 10 cursors open at once
+         ref : FIPS Sizing Id 37
+
+
+0225   DML049  FIPS sizing - 10 tables in FROM clause
+         ref : FIPS Sizing Id 36   FROM clause
+
+
+0226   DML050  FIPS sizing - 10 tables in nested SQL statements
+         ref : FIPS Sizing Id 36   nested SQL statement
+
+
+0227   DML051  BETWEEN predicate with character string values
+         ref : 8.3 FT.1
+         ref : 8.3 SR.3
+         ref : 8.3 SR.6
+
+
+0228   DML051  NOT BETWEEN predicate with character string value
+         ref : 8.3 FT.1
+         ref : 8.3 SR.3
+         ref : 8.3 SR.5
+
+
+0229   DML052  LIKE predicate is case sensitive
+         ref : 8.5 FT.1
+         ref : 8.5 SR.1
+         ref : 8.5 GR.3.b    LIKE is case sensitive
+
+
+0230   MPA001  Transactions serializable: assign sequential key
+         ref : 4.28 Paragraph 9
+
+
+0231   MPA002  Transactions serializable: SELECT/UPDATE(replace)
+         ref : 4.28 Paragraph 9
+
+
+0232   MPA003  Transactions serializable: UPDATE with arithmetic
+         ref : 4.28 Paragraph 9
+
+
+0233   DML053  Tables are multi-sets: duplicate via INSERT VALUE
+         ref : 4.8
+         ref : 13.8 GR.4.b
+
+
+0234   DML037  SQL comments (double hyphen) in SQL statements
+         ref : 5.2 FT.19
+         ref : 5.2 SR.7
+
+
+0235   COB008  COBOL - exact numeric types S9(i)V9(k)
+         ref :  6.1 SR.17
+         ref : 19.5 SR.9  datatype exact numeric
+
+
+0236   COB008  COBOL: SQLCODE < 0: exception losing signif. digit
+         ref :  6.1 SR.17
+         ref : 19.5 SR.5  datatype exact numeric
+         ref : 13.5 GR.8
+         ref :  9.1 GR.3
+         ref :  3.3.2     Conventions
+         ref :  4.18.1
+
+
+0237   SDL026  Identifier length 18
+         ref : 5.2 SR.1
+         ref : 5.2 SR.11     Length 18
+
+
+0238   PAS002  Pascal - comments within embedded SQL statements
+         ref : 19.1 SR.5 Pascal
+
+
+0239   PAS001  Pascal - embedded host identifiers
+         ref : 19.8 SR.3
+
+
+0240   DML054  Updatable CURSOR with ALL, IN, BETWEEN
+         ref : 7.9 SR.12   predicates ALL, IN, BETWEEN
+
+
+0241   DML054  Updatable CURSOR with LIKE, NULL, >, =, <
+         ref : 7.9 SR.12   predicates LIKE< NULL, >, =, <
+
+
+0242   DML054  Updatable CURSOR with view, correlation name, NOT
+         ref : 7.9 SR.12   predicate  NOT
+         ref : 5.4 GR.2
+         ref : 5.4 GR.7
+
+
+0243   DML055  FIPS sizing - precision of SMALLINT >= 4
+         ref : FIPS 16.6 Sizing Id 12
+
+
+0244   DML055  FIPS sizing - precision of INTEGER >= 9
+         ref : FIPS 16.6 Sizing Id 10
+
+
+0245   DML055  FIPS sizing - precision of DECIMAL >= 15
+         ref : FIPS 16.6 Sizing Id 9
+
+
+0246   DML056  FIPS sizing - 100 values in INSERT
+         ref : FIPS 16.6 Sizing Id 25
+
+
+0247   DML056  FIPS sizing - 20 values in update SET clause
+         ref : FIPS 16.6 Sizing Id 26
+
+
+0248   DML057  FIPS sizing - binary precision of FLOAT >= 20
+         ref : FIPS 16.6 Sizing Id 14
+
+
+0249   DML057  FIPS sizing - binary precision of REAL >= 20
+         ref : FIPS 16.6 Sizing Id 16
+
+
+0250   DML057  FIPS sizing - binary precision of DOUBLE >= 30
+         ref : 16.6 Sizing Id 18
+
+
+0251   DML058  COMMIT keeps changes of current transaction
+         ref : 14.3 FT.1
+         ref : 14.3 GR.5.c
+
+
+0252   DML058  ROLLBACK cancels changes of current transaction
+         ref : 14.3 FT.1
+         ref : 14.3 GR.3
+
+
+0253   DML058  TEST0124 workaround (key = key+1)
+         ref : 13.10 FT.1
+         ref : 13.10 SR.4
+         ref : 13.10 GR.2.a  does not require deferred integrity constraint checking
+
+
+0254   DML058  Column name in SET clause
+         ref : 13.10 SR.5
+         ref : 13.10 GR.7
+         ref :  6.11 FT.2
+         ref :  6.11 SR.3
+         ref :  6.11 GR.1
+
+
+0255   DML058  Key word USER for INSERT, UPDATE
+         ref : 6.2   FT.3
+         ref : 6.2   GR.9
+         ref : 13.10 GR.6
+         ref : 13.8  GR.3
+
+
+0256   DML058  Key word USER in WHERE clause
+         ref : 6.2 FT.3
+         ref : 6.2 GR.9
+         ref : 7.6 GR.2
+
+
+0257   DML059  SELECT MAX, MIN (COL1 + or - COL2)
+         ref : 6.5 FT.3
+         ref : 6.5 SR.8
+         ref : 6.5 GR.2.b.iii   Arithmetic operations with two columns as operands
+
+
+0258   DML059  SELECT SUM (:var * COL1 * COL2)
+         ref : 6.5 FT.3
+         ref : 6.5 SR.9.b
+         ref : 6.5 GR.2.b.iv    Arithmetic operations with columns, variables as operands
+         ref : 6.11 GR.1
+
+
+0259   DML059  SOME, ANY in GROUP BY, HAVING clause
+         ref : 7.7 GR.1
+         ref : 7.8 GR.4
+         ref : 8.7 FT.1
+         ref : 8.7 FT.4
+         ref : 8.7 SR.2
+         ref : 8,7 GR.2
+
+
+0260   DML059  EXISTS in GROUP BY, HAVING
+         ref : 7.7 GR.2
+         ref : 7.8 GR.4
+         ref : 8.8 GR.2
+
+
+0261   DML060  WHERE (:var * (COL1 - COL2)) BETWEEN
+         ref : 6.11 GR.1
+         ref : 7.6  GR.2
+         ref : 8.3  SR.6
+
+
+0262   DML060  WHERE clause with computation, ANY/ALL subqueries
+         ref : 7.6  GR.2
+         ref : 8.7  GR.2
+         ref : 6.11 GR.1   Computation with WHERE clause
+
+
+0263   DML060  Computed column in ORDER BY
+         ref : 13.1 GR.3
+         ref : 6.11 GR.1
+
+
+0264   DML059  WHERE, HAVING without GROUP BY
+         ref : 6.11 GR.1
+         ref : 7.6  GR.1
+         ref : 7.8  GR.1
+
+
+0265   DML060  UPDATE : positioned - view with check option
+         ref : 13.9  GR.9
+         ref : 11.19 GR.11
+
+
+0266   DML060  UPDATE : positioned - UNIQUE violation under view
+         ref : 13.9  GR.9
+         ref : 11.19 GR.11    UNIQUE violation
+
+
+0267   DML060  UPDATE compound key, interim uniqueness conflicts
+         ref : 13.10 GR.7
+         ref : 11.7  GR.1
+
+
+0268   MPA004  Transactions serializable: deadlock management
+         ref : 4.28 Paragraph 15
+
+
+0269   DML061  BETWEEN value expressions in wrong order
+         ref : 8.3 SR.6  wrong order does not work
+
+
+0270   DML061  BETWEEN approximate and exact numeric values
+         ref : 8.3 SR.3
+
+
+0271   DML061  COUNT(*) with Cartesian product subset
+         ref : 6.5 GR.1.a
+         ref : 7.4 GR.1.b
+         ref : 7.6 GR.1
+
+
+0272   DML061  Statement rollback for integrity violation
+         ref : 12.3 GR.11.b
+
+
+0273   DML061  SUM, MAX, MIN = NULL (not 0) for empty arguments
+         ref : 6.5 GR.2.b.i
+
+
+0274   DML062  COMMIT and ROLLBACK across schemas
+         ref : 14.3 GR.5.c   COMMIT and ROLLBACK work across schemas
+
+
+0275   DML062  COMMIT and ROLLBACK of multiple cursors
+         ref : 14.3 GR.2
+         ref : 14.3 GR.5     multiple cursors
+
+
+0276   DML062  View across schemas
+         ref : 11.19 GR      across several schemas
+
+
+0277   DML061  Computation with NULL value specification
+         ref : 6.2 FT.11
+         ref : 6.2 SR.1
+         ref : 6.2 GR.7
+
+
+0278   DML061  IN value list with USER, literal,variable spec.
+         ref : 6.2 GR.1
+         ref : 6.1 GR.4
+         ref : 6.2 GR.6
+         ref : 6.2 GR.9
+         ref : 8.4 SR.4
+
+
+0279   DML062  IN is a 3-valued predicate, EXISTS is 2-valued
+         ref : 8.4 SR   IN is a 3-valued predicate
+         ref : 8.8 GR   EXISTS is a 2-valued predicate
+
+
+0280   DML063  SQL key words used as embedded host identifiers
+         ref : 19.3 SR.3
+         ref : 19.4 SR.3
+         ref : 19.5 SR.3
+         ref : 19.8 SR.3
+
+
+0281   DML064  Updatable VIEW with ALL, IN, BETWEEN
+         ref : 11.19 SR.6   predicates ALL, IN, BETWEEN
+         ref :  7.9  SR.12
+
+
+0282   DML064  Updatable VIEW with LIKE, NULL, >, =, <
+         ref : 11.19 SR.6    predicates LIKE, NULL, comparison
+         ref :  7.9  SR.12
+
+
+0283   DML064  Updatable VIEW with view, correlation name, NOT
+         ref : 11.19 SR.6
+         ref :  7.9  SR.12
+
+
+0284   DML065  INSERT,SELECT character strings with blanks
+         ref :  8.2 GR.3
+         ref : 13.8 GR.4.b.iii
+         ref :  9.2 GR.3.c
+
+
+0285   DML065  INSERT,SELECT integers with various formats
+         ref : 13.8 GR.4.b.iii
+         ref :  9.2 GR.3.k
+
+
+0286   DML066  Compatibility of structures and host variables
+         ref : 19.1 GR.1    structures and host variables
+
+
+0287   DML066  Compatibility of arrays and host structures
+         ref : 19.1 GR.1    arrays and host variables
+
+
+0288   DML067  Embedded - multiple identifiers in 1 declaration
+         ref : 19.1 SR.1
+         ref : 19.4 FT.1     multiple identifiers in 1 declaration
+
+
+0289   DML067  Embedded - multiple declare sections
+         ref : 19.1 SR.1     multiple declare sections
+
+0290   CCC007  C language common placement of SQL statements
+         ref : 19.1 SR.1
+         ref : 19.4 SR.2   Placement in a C program
+
+
+0291   CCC008  C language SQL statements in functions
+         ref : 19.4 SR.2   SQL statements in functions in a C program
+
+
+0292   COB009  COBOL - VALUE IS initialization
+         ref : 19.5 SR.6
+
+
+0293   COB009  COBOL - placement of SQL statements
+         ref : 19.5 SR.2
+
+
+0294   PAS003  Pascal - placement of SQL statements
+         ref : 19.8 SR.2
+
+
+0295   FOR002  FORTRAN - placement of SQL statements
+         ref : 19.6 SR.2
+
+
+0296   FLG005  FIPS Flagger - vendor provided character function
+Opportunity for vendor to demonstrate FIPS flagger character function
+
+
+
+0297   FLG005  FIPS Flagger - vendor provided integer function
+Opportunity for vendor to demonstrate FIPS flagger integer function
+
+
+
+0298   PAS004  Pascal - SQL statements in functions
+         ref : 19.8 SR.2  Pascal SQL-statements in functions including recursive
+                 functions
+
+
+0299   FLG006  FIPS Flagger - identifier length > 18
+         ref : FIPS PUB 127 sec. 10 specifications
+
+
+0300   CDR001  DEFAULT value literal & number in a table
+         ref : 11.4 FT.1
+         ref : 11.5 FT.2
+         ref : 11.5 SR.1
+         ref : 11.5 GR.1
+         ref : 11.5 GR.1.b.i
+         ref : 11.5 GR.1.b.iii
+
+
+0301   CDR001  DEFAULT value USER in a table
+         ref : 11.5 FT.2
+         ref : 11.5 SR.3.b
+         ref : 11.5 GR.1.c.ii
+
+
+0302   CDR002  CHECK <comp. predicate> in <tab. cons.>, insert
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.6 GR.2.c   Comp. predicate, insert
+
+
+0303   CDR002  CHECK <comp. predicate> in <col. cons.>, insert
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.4 SR.10.d   Comp. predicate, insert
+
+
+0304   CDR002  CHECK <between predicate> in <tab. cons.>, insert
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.6 GR.2.c    bet. predicate, insert
+
+
+0305   CDR002  CHECK <null predicate> in <tab. cons.>, insert
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.6 GR.2.c    null predicate, insert
+
+
+0306   CDR003  CHECK X IS NOT NULL, NOT X IS NULL are equivalent
+         ref : 11.9 GR.1
+         ref :  8.6 GR.3
+
+
+0307   CDR003  CHECK <like predicate> in <tab. cons>, insert
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.6 GR.2.c    like predicate, insert
+
+
+0308   CDR003  CHECK <in predicate> in <tab. cons.>, insert
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.6 GR.2.c     in predicate insert
+
+
+0309   CDR004  CHECK combination predicates in <tab. cons.>
+         ref : 11.9 GR.1
+         ref : 10.6 GR.3
+         ref : 11.6 GR.2.c      specification on two columns with AND
+
+
+0310   CDR004  CHECK X NOT IN, NOT X IN equivalent, insert
+         ref : 11.9 GR.1
+         ref :  8.4 SR.3
+
+
+0311   CDR004  CHECK NOT NULL in col.cons., insert, null explicit
+         ref : 11.7 SR.3.a
+         ref : 11.7 SR.5  explicit
+
+
+0312   CDR004  CHECK NOT NULL in col.cons., insert, null implicit
+         ref : 11.7 SR.3.a
+         ref : 11.7 SR.5  implicit
+
+
+0313   CDR005  CHECK <comp. predicate> in <tab. cons.>, update
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3   <comp. predicate>
+
+
+0314   CDR005  CHECK <comp. predicate> in <col. cons.>, update
+         ref : 11.9  GR.1
+         ref : 11.21 GR.5  <comp. predicate>
+
+
+0315   CDR005  CHECK <between predicate> in <tab. cons.>, update
+         ref : 11. 9 GR.1
+         ref : 11.21 GR.5  <between predicate>
+
+
+0316   CDR006  CHECK <null predicate> in <tab. cons.>, update
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3   <null predicate>
+
+
+0317   CDR006  CHECK X IS NOT NULL, NOT X IS NULL same, by update
+         ref : 11.7 SR.3.a
+         ref : 11.7 SR.5   <null predicate>, by update
+         ref : 11.8 GR.6.b.ii
+
+
+0318   CDR006  CHECK <like predicate> in <tab. cons.>, update
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3   <like predicate>, by update
+
+
+0319   CDR007  CHECK <in predicate> in <tab. cons.>, update
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3   <in predicate>, by update
+
+
+0320   CDR007  CHECK combination pred. in <tab. cons.>, update
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3   <combination predicate>, by update
+
+
+0321   CDR007  CHECK if X NOT LIKE/IN, NOT X LIKE/IN same, update
+         ref : 11.7 SR.3.a
+         ref : 11.7 SR.5   <like predicate>, by update
+
+
+0322   CDR007  CHECK <null predicate> in <col. cons>, update
+         ref : 11.9 GR.1
+         ref : 11.21 GR.5   <null predicate>, by update
+
+
+0323   CDR008  (2 pr.,1 son),both P.K e, F.K e,insert another F.K
+         ref : 11.6 GR.2.a
+         ref : 11.7 FT.1
+         ref : 11.7 SR.5                 2 parents, 1 son
+         ref : 4.10.2 Paragraph 7.1      insert another foreign key
+
+
+0324   CDR008  (2 pr.,1 son),1 P.K exist,another not. insert F.K
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5                 2 parents, 1 son
+         ref : 4.10.2 Paragraph 7.1      insert foreign key
+
+
+0325   CDR008  (2 pr.,1 son),both P.K e, F.K e, delete 1 P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1      delete primary key
+
+
+0326   CDR008  (2 pr.,1 son),P.K e, no F.K, modify P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     modify primary key
+
+
+0327   CDR009  (2 pr.,1 son),check PRIMARY KEY unique via insert
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     check primary key unique (insert)
+
+
+0328   CDR009  (2 pr.,1 son),F.K exist,modify P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1    modify primary key (foreign key exists)
+
+
+0329   CDR009  (2 pr.,1 son),check PRIMARY KEY unique via modify
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1    check primary key unique (modify)
+
+
+0330   CDR009  (2 pr.,1 son),modify F.K to no P.K corr.
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     modify foreign key to no corr. primary key
+
+
+0331   CDR009  (2 pr.,1 son),modify F.K to P.K corr. value
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     modify foreign key to corr. primary key value
+
+
+0332   CDR010  (self ref.), P.K exist, insert a F.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     insert foreign key, primary key exists
+
+
+0333   CDR010  (self ref.), delete P.K but F.K exist.
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     delete primary key but foreign key exists
+
+
+0334   CDR010  (self ref.), update P.K, no corr. F.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+         ref : 4.10.2 Paragraph 7.1     update primary key, no corr. foreign key
+
+
+0335   CDR011  (self ref.), insert a F.K but no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8      insert foreign key but no corr. primary key
+
+
+0336   CDR011  (self ref.), update P.K, but corr. F.K e.
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0337   CDR011  (self ref.), update P.K, check P.K unique via var.
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0338   CDR011  (self ref.), update F.K and no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0339   CDR011  (self ref.), update F.K and corr. P.K exist
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0340   CDR012  (ref. each other), insert F.K and corr. P.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0341   CDR012  (ref. each other), delete P.K but corr. F.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0342   CDR012  (ref. each other), update P.K and no corr. F.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0343   CDR013  (ref. each other), update P.K and corr. F.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0344   CDR013  (ref. each other), update F.K to no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0345   CDR013  (ref. each other), update F.K to corr. P.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0346   CDR013  (ref. each other), insert F.K and no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0347   CDR014  FIPS sz. (comb.keys=6), P.K unique,insert
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : 11.7 SR.6
+         ref : FIPS Sizing Id 28
+
+
+0348   CDR014  FIPS sz. (comb.keys=6), insert F.K & no corr. P.K
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 34
+
+
+0349   CDR015  FIPS sz. (comb.keys=6), delete P.K & corr. F.K e
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 34
+
+
+0350   CDR015  FIPS sz. (comb.keys=6), update P.K & no corr. F.K
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 34
+
+
+
+0351   CDR015  FIPS sz. (comb.keys=6), update P.K & corr. P.K e
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 28
+
+
+0352   CDR016  FIPS sz. (comb.keys=6), P.K unique, update
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 28
+
+
+0353   CDR016  FIPS sz. (comb.keys=6), update F.K to no corr. P.K
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 34
+
+
+0354   CDR016  FIPS sz. (comb.keys=6), update F.K to corr. P.K e
+         ref : 11.6.2.a
+         ref : 11.7 SR.5
+         ref : FIPS Sizing Id 34
+
+
+0355   CDR017  FIPS sz. (1 pr.,6 son), insert F.K & no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1   1 parent, 6 sons
+
+
+0356   CDR017  FIPS sz. (1 pr.,6 son), delete P.K & corr. F.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1
+
+
+0357   CDR017  FIPS sz. (1 pr.,6 son), update P.K but corr. F.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1
+
+
+0358   CDR017  FIPS sz. (1 pr.,6 son), check key unique, update
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1
+
+
+0359   CDR017  FIPS sz. (1 pr.,6 son), update F.K to no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1
+
+
+0360   CDR018  FIPS sz. (6 pr.,1 son), insert F.K, without P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1    6 parents, 1 son
+
+
+0361   CDR018  FIPS sz. (6 pr.,1 son), delete P.K, but corr.F.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1   6 parents, 1 son
+
+
+0362   CDR018  FIPS sz. (6 pr.,1 son), update P.K, but corr.F.K e
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1   6 parents, 1 son
+
+
+0363   CDR018  FIPS sz. (6 pr.,1 son), check key unique, update
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1   6 parents, 1 son
+
+
+0364   CDR018  FIPS sz. (6 pr.,1 son), update F.K to no corr. P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 4.10.2 Paragraph 7.1  6 parents, 1 son
+
+
+0365   CDR019  (3-level schema), check insert F.K
+         ref : 11.8     insert foreign key
+
+
+0366   CDR019  (3-level schema), check delete P.K
+         ref : 11.8     delete primary key
+
+
+0367   CDR019  (3-level schema), update mid. tab. check P.K & F.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0368   CDR019  (3-level schema), check update P.K
+         ref : 11.6
+         ref : 11.7
+         ref : 11.8
+
+
+0369   CDR020  update P. K, set F1=F1+1, interim violation
+         ref : 11.4 SR.10.b
+         ref : 11.5
+
+
+0370   CDR020  update F. K, set F1=F1+1, interim violation
+         ref : 11.4 SR.10.c
+         ref : 11.5
+
+
+0371   CDR020  update self-ref table, interim violation
+         ref : 11.4 SR.10.b
+         ref : 11.4 SR.10.c   update self-ref table
+         ref : 11.5
+
+
+0372   CDR020  delete self-ref table, interim violation
+         ref : 11.4 SR.11.b
+         ref : 11.4 SR.11.c   delete self-ref table
+         ref : 11.5
+
+
+0373   CDR003  insert with embeded var.& indic. var. CHECK clause
+         ref : 11.6 GR.2.c
+         ref : 11.7 SR.3
+
+
+0374   CDR003  computation in update, CHECK clause
+         ref : 11.8 GR.6
+
+
+0375   CDR017  ref. integrity with computation
+         ref : 11.8    embedded var.
+
+
+0376   CDR017  ref. integrity with join
+         ref : 11.8    join
+
+
+0377   CDR001  DEFAULT value with explicit NULL
+         ref : 11.5 GR.1.a   explicit
+
+
+0378   CDR021  (ref. acr. sch.) delete P.K and corr. F.K e.
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : 11.7 SR.6
+         ref : 11.8
+
+
+0379   CDR021  (ref. acr. sch.) update P.K and corr. F.K e.
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : 11.7 SR.6
+         ref : 11.8
+
+
+0380   CDR022  (ref. acr. sch.) insert F.K and no corr. P.K
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : 11.7 SR.6
+         ref : 11.8
+
+
+0381   CDR022  (ref. acr. sch.) update F.K to no P.K corr.
+         ref : 11.6 GR.2.a
+         ref : 11.7 SR.5
+         ref : 11.7 SR.6
+         ref : 11.8
+
+
+0382   CDR023  (ref. acr. sch.) with GRANT OPTION, insert
+         ref : 11.6
+         ref : 11.7
+         ref : 11.10 GR.3
+         ref : 11.10 GR.4
+
+
+0383   CDR023  Priv.violation: GRANT without GRANT OPTION
+         ref : 11.6
+         ref : 11.7
+         ref : 11.10 GR.3   without GRANT OPTION
+
+
+0384   CDR023  Priv.violation: SELECT, but not REFERENCES
+         ref : 11.6
+         ref : 11.7
+         ref : 11.10 GR.3   SELECT but no REFERENCES
+
+
+0385   CDR024  character default column values
+         ref : 11.4
+         ref : 11.5 SR.3.a.i
+         ref : 11.5 GR.1.b.ii
+
+
+0386   CDR024  exact numeric default column values
+         ref : 11.4
+         ref : 11.5 SR.3.a.iii
+         ref : 11.5 GR.1.b.i
+
+
+0387   CDR024  approximate numeric default column values
+         ref : 11.4
+         ref : 11.5 SR.3.a.iii
+         ref : 11.5 GR.1.b.i
+
+
+0388   CDR024  FIPS sz. default column values
+         ref : 11.4
+         ref : 11.5  Tests if          ref : FIPS Sizing default values can be set
+
+
+0389   DML068  95-char ASCII collating sequence (PL vs. SQL)
+         ref : 13.1 SR.11
+         ref : 13.1 GR.3
+
+
+0390   DML072  Short char column value blank-padded in larger var
+         ref : 9.1 GR.3.c
+
+
+0391   SDL027  Correlation names used in self-join of view
+         ref : 11.19 GR    correlation names used in self-join
+         ref :  5.4  FT.17
+
+
+0392   FOR003  FORTRAN - placement of additional SQL statements
+         ref : 19.6 SR.2   placement of additional SQL statements
+
+
+0393   DML073  SUM, MAX on Cartesian product
+         ref : 7.4 GR.1.b
+         ref : 6.5 GR.2.b
+
+
+0394   DML073  AVG, MIN on joined table with WHERE
+         ref : 6.5 GR.2.b
+         ref : 7.6 GR.1
+         ref : 7.6 GR.2
+
+
+0395   DML073  SUM, MIN on joined table with GROUP BY
+         ref : 6.5 GR.2.b
+         ref : 7.7 SR.2
+         ref : 7.7 GR.2
+
+
+0396   DML073  SUM, MIN on joined table with WHERE,GROUP,HAVING
+         ref : 6.5 GR.2.b
+         ref : 7.6 GR.2
+         ref : 7.7 GR.2
+         ref : 7.8 GR.3
+
+0397   SDL028  Grouped view
+         ref : 11.19 GR.1     Grouped view
+
+
+0398   CCC011  FIPS Flagger - Embedded C initial value
+         ref : 19.4
+
+
+0399   CCC009  C language storage class and class modifier comb.
+         ref : 19.4    Storage Classes in C
+
+
+0401   SDL027  View with computed columns (degrees F to C)
+         ref : 11.19 GR.2      Computed columns
+
+
+0402   CDR025  Computed GROUP BY view over referencing tables
+         ref : 11.19 SR.7
+         ref : 11.19 GR.2      Computed GROUP by view
+
+
+0403   CDR025  View on computed GROUP BY view with joins
+         ref : 11.19 SR.7
+         ref : 11.19 GR.1      Computed GROUP by view with joins
+
+
+0404   DML069  2 FETCHes (different target types) on same cursor
+         ref : 13.3 GR.9    FETCH into two different target types
+
+
+0405   DML069  2 cursors open from different schemas (coded join)
+         ref : 13.1 GR.1     2 cursors open from different schemas
+
+
+0406   DML069  Subquery from different schema
+         ref : 7.11 SR.3     subquery from a different schema
+         ref : 5.4  FT.7
+
+
+0407   DML069  SELECT INTO :XX ... WHERE :XX =
+         ref : 12.3 SR.6.b.iii
+
+
+0408   DML069  UPDATE references column value BEFORE update
+         ref : 13.10 GR.2
+
+
+0409   DML070  Effective outer join--join with two cursors
+         ref : 13.1 GR.1     workaround application code
+
+
+0410   DML076  NULL value in OPEN CURSOR
+         ref : 4.1
+         ref : 9.1 GR.1   with a CURSOR
+
+
+0411   DML070  Effective set difference
+         ref : 13.1 GR.1   workaround application code
+
+
+0412   DML070  Effective set intersection
+         ref : 13.1 GR.1   workaround application code
+
+
+0413   CDR025  Computed SELECT on computed VIEW
+         ref : 11.19 GR.4   Computed SELECT on computed VIEW
+
+
+0414   DML071  WHENEVER NOT FOUND, multiple settings
+         ref : 12.3 GR.9
+         ref : 12.3 GR.11.a.ii
+         ref : 19.2 GR.1.a
+
+
+0415   DML071  WHENEVER SQLERROR, multiple settings
+         ref : 19.2 GR.1.b
+
+
+0416   DML071  WHENEVER NOTFOUND overlaps WHENEVER SQLERROR
+         ref : 19.2 GR.1.c
+
+
+0417   DML073  Cartesian product GROUP BY 2 columns with NULLs
+         ref : 7.7 GR.1
+         ref : 7.7 GR.2
+         ref : 8.2 GR.1.a   for GROUP, NULLs are equal
+
+
+0418   DML073  AVG,SUM,COUNT on Cartesian product with NULLs
+         ref : 6.5 GR.2
+         ref : 8.2 GR.1.a
+
+
+0419   DML073  SUM, MAX, MIN on joined table view
+         ref : 6.5 GR.1.b
+         ref : 11.19 GR.1
+
+
+0420   SDL028  View with multiple SELECT of same column
+         ref : 11.19 GR.1   multiple SELECT of same column
+
+
+0421   DML074  Module language constants and expressions
+         ref : tests consistency of host language interface
+
+
+0422   DML074  Module language order of SQLCODE (not first)
+         ref : tests consitency of host language interface
+
+
+0423   DML074  Module language multiple SQLCODE parameters
+         ref : tests consistency of host language interface
+
+
+0424   ADA001  Ada embedded host identifiers
+         ref : 19.3 SR.3
+
+
+0425   ADA002  Ada comments
+         ref : 19.1 SR.5 Ada
+
+
+0426   ADA002  Ada initial value
+         ref : 19.3 SR.7
+
+
+0427   ADA003  Ada common placement of SQL statements
+         ref : 19.3 SR.2
+
+
+0428   ADA004  Ada placement of SQL statements
+         ref : 19.3 SR.2    placement of SQL statements in Ada subroutines
+
+
+0429   ADA005  Ada reminder to check SQL_STANDARD package format
+****   This test has been DELETED ****
+         ref : 19.3 SR.6
+         ref : 19.3 SR.6
+         ref : 12.4 SR.1.c
+
+
+0430   ADA005  Ada unqualified type spec - without SQL_STANDARD
+         ref : 19.3 SR.6
+         ref : 19.3 FT.8     <Ada unqualified Ada type specification>
+
+
+0431   DML075  Redundant rows in IN subquery
+         ref : 8.4 GR.3
+         ref : 8.4 GR.4
+
+
+0432   DML075  Unknowns in subquery of ALL, SOME, ANY
+         ref : 8.7 GR.2.e
+
+
+0433   DML075  Empty subquery of ALL, SOME, ANY
+         ref : 8.7 GR.2.a
+         ref : 8.7 GR.2.d
+
+
+0434   DML075  GROUP BY with HAVING EXISTS-correlated set fnc
+         ref : 6.5 SR.5.b
+         ref : 7.8 SR.2
+
+
+0435   DML076  Host variables in UPDATE WHERE CURRENT
+         ref : 13.9 GR.6    <value expression> host variables
+
+
+0436   DML076  NULL values for various SQL data types
+         ref : 4.1
+         ref : 13.5 GR.8
+         ref : 9.1 GR.1
+
+
+0437   DML076  NULL values for various host variable types
+         ref :  4.1
+         ref : 13.8 GR.4
+         ref :  6.2 GR.6
+         ref :  6.2 GR.7
+
+
+0438   CDR026  (partial-NULL F.K) F.K INSERT supported
+         ref : 11.8 GR.2
+         ref : 11.8 GR.3    F.K insert supported
+
+
+0439   CDR026  (partial-NULL F.K) F.K UPDATE supported
+         ref : 11.8 GR.2
+         ref : 11.8 GR.3
+         ref : 11.8 GR.6    F.K update supported
+
+
+0440   CDR026  (partial-NULL F.K) no restrict P.K update/delete
+         ref : 11.8 GR.2
+         ref : 11.8 GR.3
+         ref : 11.8 GR.5
+         ref : 11.8 GR.6    no restrict P.K update/delete
+
+
+0441   DML076  NULL value for various predicates
+         ref : 6.2 GR.6
+         ref : 6.2 GR.7    various predicates
+
+
+0442   DML075  DISTINCT with GROUP BY, HAVING
+         ref : 7.9 GR.1.b.ii
+
+
+0443   DML077  VIEW with check option rejects unknown (NULL)
+         ref : 11.19 GR.11
+         ref : 4.10.1.PP 3
+
+
+0444   DML077  Updatable cursor, modify value selected on
+         ref : 13.19 SR.2
+         ref : 13.19 GR.8
+         ref : 13.19 GR.9
+
+
+0445   DML077  Values not assigned to targets for SQLCODE=100
+         ref : 12.3 GR.11.b   SQLCODE = 100 (no data)
+
+
+0446   CDR027  Table CHECK constraint allows unknown (NULL)
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3
+
+
+0447   CDR027  NULLs with check constraint and check option
+         ref : 11.9  GR.1
+         ref : 11.6  GR.3
+         ref : 11.19 GR.11.b
+
+
+0448   CDR027  PRIMARY KEY implies UNIQUE
+         ref : 11.8 SR.2.b
+
+
+0449   CDR027  Constraint definition is case sensitive
+         ref :  5.1
+         ref :  8.2 GR.3
+         ref : 11.9 GR.1
+         ref : 11.6 GR.3
+
+
+0450   CDR027  Referential integrity is case sensitive
+         ref : 11.8 GR.2
+         ref :  5.1
+         ref :  8.2 GR.3
+
+
+0451   DML079  UNIQUEness is case sensitive
+         ref : 4.2
+         ref : 5.1 FT.3    <simple Latin letter>
+
+
+0452   DML079  Order of precedence, left-to-right in UNION [ALL]
+         ref : 7.10 GR.1.b
+
+
+0453   DML079  NULL with empty subquery of ALL, SOME, ANY
+         ref : 8.7 GR.2.a
+         ref : 8.7 GR.2.d   empty subquery <letter>
+
+
+0454   FLG008  SELECT nonGROUP column in GROUP BY
+         ref : 7.9 SR.7
+
+
+0455   FLG009  Relaxed union compatability rules for columns
+         ref : 7.10 SR.8
+         ref : 7.10 SR.9.b
+         ref : 7.10 SR.10
+
+
+0456   ADA006  Module language Ada subtype enforcement,name assoc
+         ref : tests consistency of host language interface
+
+
+0457   MPA005  Transactions serializable: phantom read
+         ref : 4.28 Paragraph 10 item 3
+
+
+0458   SDL029  Priv.violation: GRANT only SELECT to individual
+         ref : 10.3  GR.2
+         ref : 11.36 GR.3   GRANT only SELECT to individual
+
+
+0459   SDL029  Priv.violation: GRANT only INSERT to individual
+         ref : 10.3  GR.4
+         ref : 11.36 GR.6.c   GRANT only INSERT to individual
+
+
+0460   SDL029  Priv.violation: GRANT only UPDATE to individual
+         ref : 10.3  GR.3
+         ref : 11.36 GR.6.c   GRANT only UPDATE to individual
+
+
+0461   SDL029  Priv.violation: GRANT only DELETE to individual
+         ref : 10.3  GR.2
+         ref : 11.36 GR.6.c  GRANT only DELETE to individual
+
+
+0462   DML080  SQLCODE 100: DELETE with no data
+         ref : 12.3 GR 11.a.ii
+         ref : 22.2    nodata (DELETE)
+
+
+0463   DML080  SQLCODE 100: UPDATE with no data
+         ref : 12.3 GR.11.a.ii
+         ref : 22.2      no data (UPDATE)
+
+
+0464   SDL030  Priv.violation: GRANT only SELECT to PUBLIC
+         ref : 10.3  FT.5
+         ref : 10.3  GR.1
+         ref : 10.3  GR.2
+         ref : 11.36 GR.6.c    GRANT only SELECT to PUBLIC
+
+
+0465   SDL030  Priv.violation: GRANT only INSERT to PUBLIC
+         ref : 10.3  FT.5
+         ref : 10.3  GR.1
+         ref : 11.36 GR.6.c    GRANT only INSERT to PUBLIC
+
+
+0466   SDL030  Priv.violation: GRANT only UPDATE to PUBLIC
+         ref : 10.3  FT.5
+         ref : 10.3  GR.1      GRANT only UPDATE to PUBLIC
+         ref : 11.36 GR.6.c
+
+
+0467   SDL030  Priv.violation: GRANT only DELETE to PUBLIC
+         ref : 10.3  FT.5
+         ref : 10.3  GR.1
+         ref : 11.36 GR.6.c    GRANT only DELETE to PUBLIC
+
+
+0468   SDL031  Priv.violation: individual without any privileges
+         ref : 11.36   no privileges to individual
+
+
+0469   SDL031  GRANT ALL PRIVILEGES to individual
+         ref : 11.36   all privileges to individual
+
+
+0470   SDL031  GRANT ALL PRIVILEGES to public
+         ref : 10.3 FT.5
+         ref : 11.36       all privileges to PUBLIC
+         ref : 10.3 GR.1
+
+
+0471   SDL031  Priv.violation: GRANT privilege not grantable
+         ref : 11.36
+         ref : 10.3    GRANT privilege not grantable
+
+
+0472   SDL032  Priv.violation: individual SELECT, column UPDATE
+         ref : 11.36 GR.3
+         ref : 11.36 GR.6.c.ii
+
+
+0473   SDL033  Priv.violation: GRANT all on view but not table
+         ref : 11.36    all on view but not table
+
+
+0474   SDL034  Priv.violation: need SELECT for searched UPDATE
+         ref :  6.4  GR.1
+         ref : 11.36
+
+
+0475   SDL034  Priv.violation: GRANT ALL w/o GRANT OPTION
+         ref : 11.36      GRANT ALL w/o GRANT OPTION
+
+
+0476   SDL034  Priv.violation: GRANT OPTION view but not table
+         ref : 11.36      GRANT OPTION view but not table
+
+
+0477   SDL035  Priv.violation: GRANT only SELECT on view
+         ref : 11.36 GR.6   only SELECT
+
+
+0478   SDL035  Priv.violation: GRANT only INSERT on view
+         ref : 11.36 GR.6   only INSERT
+
+
+0479   SDL035  Priv.violation: GRANT only UPDATE on view
+         ref : 11.36 GR.6   only UPDATE
+
+
+0480   SDL035  Priv.violation: GRANT only DELETE on view
+         ref : 11.36 GR.6   only DELETE
+
+
+0481   SDL036  Priv.violation: no privileges on view
+         ref : 11.36          no privileges on view
+
+
+0482   SDL036  GRANT ALL PRIVILEGES on view
+         ref : 11.36 GR.7    all privileges on view
+
+
+0483   SDL036  Priv.violation: GRANT UPDATE not grantable on view
+         ref : 11.36         GRANT UPDATE not grantable on view
+
+
+0484   SDL032  Priv.violation: SELECT and column UPDATE on view
+         ref : 11.36 GR.6
+         ref : 11.36 GR.3
+
+
+0485   SDL032  Priv.violation: SELECT and column UPDATE cursor
+         ref : 11.36       SELECT and column UPDATE cursor
+
+
+0486   CDR028  Priv.violation: illegal REFERENCES
+         ref : 11.36       <grant statement>
+
+
+0487   DML081  SQLSTATE 00000: successful completion
+         ref : 22.1        successful completion
+
+
+0488   DML081  SQLSTATE 21000: cardinality violation
+         ref : 22.1       cardinality violation
+
+
+0489   DML081  SQLSTATE 02000: no data
+         ref : 22.1       no data
+
+
+0490   DML081  SQLSTATE 22012: data exception/division by zero
+         ref : 22.1       data exception/division by zero
+
+
+0491   DML082  SQLSTATE 22022: data exception/indicator overflow
+         ref : 9.1 GR.2
+
+
+0492   DML082  SQLSTATE 22019: data exception/invalid escape char
+         ref : 8.5 GR.3
+
+
+0493   DML082  SQLSTATE 22025: data exception/invalid escape seq.
+         ref : 8.5 GR.3
+
+
+0494   DML082  SQLSTATE 22003: data exception/numeric val.range 1
+         ref : 9.1 GR.3.k
+         ref : 9.2 GR.3.k
+
+
+0495   SDL037  Priv.violation: illegal GRANT to self
+         ref : 11.36      illegal GRANT to self
+
+
+0496   DML083  SQLSTATE 22002: data exception/null but no indic
+         ref : 9.1 GR.1
+
+
+0497   DML091  SQLSTATE 22003: data exception/numeric val.range 2
+         ref : 9.1 GR.3.k para 2
+
+
+0498   DML083  SQLSTATE 22001: data exception/string right trunc.
+         ref : 9.2 GR.3.b
+         ref : 3.3.4.1  exceptions
+
+
+0499   CCC010  SQLSTATE 22024: data exception/unterminat.C string
+         ref : 22.1    Data exception - unterminated C string
+
+
+0500   DML083  SQLSTATE 01003: warning/null elim. in set function
+         ref : 6.5 GR.1.b
+
+
+0501   DML083  SQLSTATE 01004: warning/string right truncation
+         ref : 9.1 GR.3.b
+         ref : 3.3.4.1   exceptions
+
+
+0502   DML081  SQLSTATE 24000: invalid cursor state
+         ref : 22.1   invalid cursor state
+
+
+0503   DML084  SQLSTATE 42000: syntax error or access rule vio.1
+         ref : 6.3 AR.1
+         ref : 3.3.4.3   Terms denoting rule requirements
+         ref : 3.3.4.4   Rule evaluation order
+
+
+0504   DML084  SQLSTATE 42000: syntax error or access rule vio.2
+         ref : 6.3 AR.1
+         ref : 3.3.4.3   Terms denoting rule requirements
+         ref : 3.3.4.4   Rule evaluation order
+
+
+0505   DML082  SQLSTATE 44000: with check option violation
+         ref : 11.19 GR.11.a
+
+
+0506   MPA006  SQLSTATE 40001: trans.rollback/serialization fail.
+         ref :  4.28  Paragraph 14
+         ref :  4.18.1
+         ref : 22.1
+
+
+0507   MPA007  Transactions serializable:  dueling cursors
+         ref : 4.28 Paragraph 9
+
+
+0508   DML085  Delimited identifiers
+         ref : 5.2 FT.7
+         ref : 5.2 SR.3
+         ref : 5.2 SR.4
+         ref : 5.2 SR.10
+         ref : 5.2 SR.11
+         ref : 5.2 SR.12
+         ref : 5.2 SR.13
+         ref : 5.2 SR.14
+         ref : 5.2 LR.2.a
+         ref : 5.2 LR.2.b
+         ref : 5.1
+
+
+0509   DML085  Renaming columns with AS for ORDER BY
+         ref :  7.9 SR.9.a
+         ref : 13.1 GR.3.i
+
+
+0510   DML085  <parameter name> = <column name> (OK with SQL-92)
+         ref : 12.3    parameter names equal to column names
+
+
+0511   DML086  CHECK clauses in nested views(clarified in SQL-92)
+         ref : 11.19 GR.11
+         ref : Annex E.3
+
+
+0512   DML090  <value expression> for IN predicate
+         ref : 8.4 FT.3
+
+
+0513   DML090  NUMERIC(4) implies CHECK BETWEEN -9999 AND 9999
+         ref : 6.1 SR.17
+         ref : 6.1 SR.18
+
+
+0516   CDR030  SQLSTATE 23000: integrity constraint violation
+         ref : 10.6 GR.4
+
+
+0517   MPA008  Transactions serializable:  Twins Problem
+         ref : 4.28 Paragraph 9
+
+
+0518   DML087  CREATE VIEW with DISTINCT
+         ref : 11.19 GR.1     with DISTINCT
+
+
+0519   DML087  CREATE VIEW with subqueries
+         ref : 11.19 GR.1     with subqueries
+
+
+0520   DML087  Underscores are legal and significant
+         ref : 5.2 FT.4
+
+
+0521   DML088  New format in MODULE-<parameter declaration list>
+         ref : X3-135-1992 12.3 FT.2
+
+
+0522   CDR029  No implied natural join on FROM T1, T2
+         ref : 7.4 GR.1
+
+
+0523   DML090  <value expression> for BETWEEN predicate
+         ref : 8.3 FT.1
+         ref : 8.3 SR.5
+         ref : 8.3 SR.6
+
+
+0532   ADA007  package SQLSTATE_CODES
+         ref : 12.4 SR.1.c
+
+
+0533   ADA008  Misc. in package SQL_STANDARD
+         ref : 12.4 SR.1.c
+
+
+0534   ADA009  ADA Tasks
+         ref : 12.4 SR.1.c
+
+
+0535   COB010  COBOL - BINARY PICTURE for INTEGER, SMALLINT type
+         ref : 12.4 SR.3.f
+         ref : 12.4 SR.3.g
+         ref : 19.5 SR.11
+
+
+0536   COB010  FIPS Sizing - COBOL BINARY decimal precision >= 9
+         ref : 12.4 SR.3.e
+         ref : 19.5 SR.9
+
+
+0537   CDR029  Table check constraint:  column vs. column
+         ref : 11.6           Column vs. Column
+
+
+0538   CDR029  With check option:  column vs. column
+         ref : 11.19 GR.11    Column vs. Column
+
+
+0554   DML085  More column renaming - single row select with join
+         ref : 7.9  GR.1.a.i
+         ref : 13.1 GR.1
+
+
+0563   DML089  SQLSTATE 22023: data exception/invalid parm. value
+****   This test has been DELETED ****
+         ref : 12.3 GR.4
+
+
+0564   DML090  Outer ref. directly contained in HAVING clause
+         ref : 7.8 SR.1

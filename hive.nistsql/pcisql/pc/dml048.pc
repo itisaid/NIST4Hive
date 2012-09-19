@@ -1,0 +1,196 @@
+/*  EMBEDDED C (file "DML048.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/06 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML048.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT THE NUMBER OF CURSORS         */
+/*  SIMULTANEOUSLY OPEN. THIS LIMIT IS NOT LESS THAN TEN(10).    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char PNO1[4];
+          char EMPNO1[4];
+          char SCITY[16];
+          char PCITY[16];
+          long HOURS1;
+          long FSUM;
+          long GSUM;
+          long HSUM;
+          long ISUM;
+          long JCOUNT;
+          long KCOUNT;
+          long LMAX;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  long  i;
+  long  ii;
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml048.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0224 ********************/
+
+     printf("\n     FIPS sizing TEST0224             \n");
+     printf("     OPEN ten cursors simultaneously\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+     EXEC SQL DECLARE B CURSOR
+          FOR SELECT EMPNUM,PNUM
+              FROM   WORKS
+              ORDER  BY EMPNUM ASC,PNUM ASC;
+
+     EXEC SQL DECLARE D CURSOR
+          FOR SELECT CITY
+              FROM   STAFF
+              WHERE  EMPNUM = :EMPNO1;
+
+     EXEC SQL DECLARE E CURSOR
+          FOR SELECT CITY
+              FROM   PROJ
+              WHERE  PNUM = :PNO1;
+
+     EXEC SQL DECLARE F CURSOR
+          FOR SELECT SUM(HOURS)
+              FROM WORKS
+              WHERE EMPNUM = :EMPNO1;
+
+     EXEC SQL DECLARE G CURSOR
+          FOR SELECT SUM(HOURS)
+              FROM WORKS
+              WHERE PNUM = :PNO1;
+
+     EXEC SQL DECLARE H CURSOR
+          FOR SELECT SUM(GRADE)
+              FROM STAFF
+              WHERE CITY = :SCITY;
+
+     EXEC SQL DECLARE I CURSOR
+          FOR SELECT SUM(BUDGET)
+              FROM PROJ
+              WHERE CITY = :PCITY;
+
+     EXEC SQL DECLARE J CURSOR 
+          FOR SELECT COUNT(*)
+              FROM STAFF
+              WHERE CITY = :SCITY;
+
+     EXEC SQL DECLARE K CURSOR
+          FOR SELECT COUNT(*)
+              FROM PROJ
+              WHERE CITY = :PCITY;
+
+     EXEC SQL DECLARE L CURSOR
+          FOR SELECT MAX(BUDGET)
+              FROM PROJ
+              WHERE CITY = :PCITY;
+
+     EXEC SQL OPEN B;
+     
+     EXEC SQL FETCH B INTO :EMPNO1,:PNO1;
+     
+     printf(" CURSOR B: EMPNO1=%s and PNO1=%s \n",EMPNO1,PNO1);
+
+     EXEC SQL OPEN D;
+     EXEC SQL OPEN E;
+
+     EXEC SQL FETCH D INTO :SCITY;
+
+     EXEC SQL FETCH E INTO :PCITY;
+
+     printf(" CURSOR D: SCITY = %s \n",SCITY);
+     printf(" CURSOR E: PCITY = %s \n",PCITY);
+
+     EXEC SQL OPEN F;
+     EXEC SQL OPEN G;
+     EXEC SQL OPEN H;
+     EXEC SQL OPEN I;
+     EXEC SQL OPEN J;
+     EXEC SQL OPEN K;
+     EXEC SQL OPEN L;
+
+     EXEC SQL FETCH F INTO :FSUM;
+     EXEC SQL FETCH G INTO :GSUM;
+     EXEC SQL FETCH H INTO :HSUM;
+     EXEC SQL FETCH I INTO :ISUM;
+     EXEC SQL FETCH J INTO :JCOUNT;
+     EXEC SQL FETCH K INTO :KCOUNT;
+     EXEC SQL FETCH L INTO :LMAX;
+
+     printf(" CURSOR F: FSUM = %ld \n", FSUM);
+     printf(" CURSOR G: GSUM = %ld \n", GSUM);
+     printf(" CURSOR H: HSUM = %ld \n", HSUM);
+     printf(" CURSOR I: ISUM = %ld \n", ISUM);
+     printf(" CURSOR J: JCOUNT = %ld \n", JCOUNT);
+     printf(" CURSOR K: KCOUNT = %ld \n", KCOUNT);
+     printf(" CURSOR L: LMAX = %ld \n", LMAX);
+
+    if (LMAX==50000 && ISUM==80000 && HSUM==24 && GSUM==80 && FSUM==184)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0224','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0224','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml048.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0224 ********************/
+
+  exit(errcnt);
+}
+

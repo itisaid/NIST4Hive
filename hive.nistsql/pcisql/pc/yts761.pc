@@ -1,0 +1,323 @@
+/*  EMBEDDED C (file "YTS761.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS761.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  This routine tests CASE expression with searched WHEN        */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    6.9     <case expression>                                  */
+/*    6.9     SR.6                                               */
+/*    6.9     GR.1                                               */
+/*    6.9     GR.2                                               */
+/*    9.3     Set operation result data types                    */
+/*    13.8    <insert statement>                                 */
+/*    F#26    CASE expression                                    */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-06                                    */
+/*    Added rollback after authid                                */
+/*    Cleanup                                                    */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+long co;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts761.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7535 ********************/
+flag = 1;
+
+     printf("                  TEST7535 \n");
+     printf("   CASE expression with searched WHEN\n");
+     printf("References:\n");
+     printf("    6.9   <case expression>\n");
+     printf("    6.9   SR6\n");
+     printf("    6.9   GR1\n");
+     printf("    6.9   GR2\n");
+     printf("    9.3   Set operation result data types\n");
+     printf("    13.8  <insert statement>\n");
+     printf("    F#26  CASE expression\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* execute insert statement with two search case expressions */
+
+printf("INSERT INTO STAFFd (EMPNUM, GRADE, MGR)\n");
+printf("SELECT EMPNUM,\n");
+printf("       CASE WHEN GRADE = 13 THEN 23\n");
+printf("            WHEN GRADE = 14 THEN 24\n");
+printf("            WHEN GRADE = 12 THEN 22\n");
+printf("       END,\n");
+printf("       CASE WHEN MGR = 'E2' THEN 'E6'\n");
+printf("            WHEN MGR = 'E1' THEN 'E7'\n");
+printf("            ELSE 'E4'\n");
+printf("       END\n");
+printf("FROM STAFFc;\n");
+
+EXEC SQL INSERT INTO STAFFd (EMPNUM, GRADE, MGR) 
+SELECT EMPNUM, 
+       CASE WHEN GRADE = 13 THEN 23
+            WHEN GRADE = 14 THEN 24
+            WHEN GRADE = 12 THEN 22
+       END,
+       CASE WHEN MGR = 'E2' THEN 'E6'
+            WHEN MGR = 'E1' THEN 'E7'
+            ELSE 'E4'
+       END
+FROM STAFFc;
+
+CHCKOK ();
+printf("\n");
+
+/* check vals in GRADE of STAFFd are based on results of CASE */
+
+printf("Check all values inserted into STAFFd.GRADE are\n");
+printf("based on the results of the CASE statement\n\n");
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE GRADE = 22;\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE GRADE = 22;
+CHCKOK ();
+printf ("co should be 3; its value is %ld\n\n", co);
+if (co != 3)
+  flag = 0;
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE GRADE = 23;\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE GRADE = 23;
+CHCKOK ();
+printf ("co should be 1; its value is %ld\n\n", co);
+if (co != 1)
+  flag = 0;
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE GRADE = 24;\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE GRADE = 24;
+CHCKOK ();
+printf ("co should be 1; its value is %ld\n\n", co);
+if (co != 1)
+  flag = 0;
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE GRADE IS NULL;\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE GRADE IS NULL;
+CHCKOK ();
+printf ("co should be 2; its value is %ld\n\n", co);
+if (co != 2)
+  flag = 0;
+
+/* check vals in MGR of STAFFd are based on the results of CASE */
+
+printf("Check all values inserted into STAFFd.MGR are\n");
+printf("based on the results of the CASE statement\n\n");
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE MGR = 'E7';\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE MGR = 'E7';
+CHCKOK ();
+printf ("co should be 2; its value is %ld\n\n", co);
+if (co != 2)
+  flag = 0;
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE MGR = 'E6';\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE MGR = 'E6';
+CHCKOK ();
+printf ("co should be 2; its value is %ld\n\n", co);
+if (co != 2)
+  flag = 0;
+
+co = 0;
+printf("SELECT COUNT (*) INTO :co FROM STAFFd\n");
+printf("WHERE MGR = 'E4';\n");
+EXEC SQL SELECT COUNT (*) INTO :co FROM STAFFd
+WHERE MGR = 'E4';
+CHCKOK ();
+printf ("co should be 3; its value is %ld\n\n", co);
+if (co != 3)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts761.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7535','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts761.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7535','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7535 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}
+

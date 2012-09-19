@@ -1,0 +1,181 @@
+/*  EMBEDDED C (file "DML067.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML067.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS MULTIPLE IDENTIFIERS IN 1 DECLARATION & */
+/*  MULTIPLE DECLARE SECTIONS.                                   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.168-1989                          */
+/*                                                               */
+/*                 SECTION 4.2  <embedded syntax>                */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char EMPNA1[21],EMPNA2[21];
+        long grade3,grade1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+EXEC SQL BEGIN DECLARE SECTION;
+        long grade2;
+EXEC SQL END DECLARE SECTION;
+
+    int rlt;
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char ENO[4];
+EXEC SQL END DECLARE SECTION;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml067.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+
+/******************** BEGIN TEST0288 ********************/
+
+    printf("   Multiple identifiers in 1 declaration\n");
+    printf("Reference X3.168-1989 section 4.2 GR \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0288     \n");
+    printf("    Reference 4.2 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("         SELECT GRADE, EMPNAME \n");
+printf("         INTO :grade1,:EMPNA1 FROM STAFF\n");
+printf("         WHERE EMPNUM = 'E1';\n");
+printf("\n");
+printf("         SELECT EMPNAME \n");
+printf("         INTO :EMPNA2 FROM STAFF\n");
+printf("         WHERE EMPNUM = 'E2';\n");
+printf("\n");
+EXEC SQL SELECT GRADE, EMPNAME 
+         INTO :grade1,:EMPNA1 FROM STAFF
+         WHERE EMPNUM = 'E1';
+EXEC SQL SELECT EMPNAME 
+         INTO :EMPNA2 FROM STAFF
+         WHERE EMPNUM = 'E2';
+printf(" The correct answer is :\n");
+printf("          grade1 = 12,  EMPNA1 = Alice\n");
+printf("                        EMPNA2 = Betty\n");
+printf(" Your answer is :\n");
+
+printf("        grade1 = %ld, EMPNA1 = %s\n",grade1,EMPNA1);
+printf("                      EMPNA2 = %s\n",EMPNA2);
+rlt = 0;
+if (strncmp(EMPNA1,"Alice",5) == 0)
+      rlt = 1;
+if (grade1 == 12 && strncmp(EMPNA2,"Betty",5) == 0 && rlt == 1)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0288','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml067.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0288','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0288 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0289 ********************/
+
+    printf("   Multiple declare sections\n");
+    printf("Reference X3.168-1989 section 4.2 GR \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0289     \n");
+    printf("    Reference 4.2 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("         SELECT EMPNUM, GRADE \n");
+printf("         INTO :ENO,:grade2 FROM STAFF\n");
+printf("         WHERE EMPNUM = 'E1';\n");
+printf("\n");
+EXEC SQL SELECT EMPNUM,GRADE
+         INTO :ENO,:grade2 FROM STAFF
+         WHERE EMPNUM = 'E1';
+printf(" The correct answer is :\n");
+printf("          ENO = E1,  grade2 = 12\n");
+printf(" Your answer is :\n");
+
+printf("         ENO = %s,grade2 = %ld\n",ENO,grade2);
+if (grade2 == 12 && strncmp(ENO,"E1",2) == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0289','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml067.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0289','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0289 ********************/
+
+
+
+
+
+
+exit(errcnt);
+}

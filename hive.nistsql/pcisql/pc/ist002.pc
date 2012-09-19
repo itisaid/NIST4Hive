@@ -1,0 +1,572 @@
+/*  EMBEDDED C (file "IST002.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/06/16 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  IST002.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE INFORMATION SCHEMA FOR              */
+/*    TRANSITIONAL SQL.                                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      21 Information Schema and Definition Schema              */
+/*    FIPS SQL Change Notice No. 1 -- 1993 Oct 4                 */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     long ctr1;
+     long ctr2;
+     char copt[9];
+     char iupt[4];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, ist002.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0604 ********************/
+flag = 1;
+
+/* Transitional SQL.  Examine the contents of the VIEWS        */
+/* view in INFO_SCHEM with regards to pre-existing             */
+/* objects in our own schema (FLATER).  This test is primarily */
+/* concerned with making sure that all the columns are there   */
+/* and have something resembling the correct data types.       */
+/* It also checks the functionality of the VIEWS view w.r.t.   */
+/* pre-existing objects in our own schema.  Objects in other   */
+/* schemas, privileges, and dynamically created objects are    */
+/* tested later.                                               */
+
+/* See FIPS Change Notice No. 1 regarding the shortened names. */
+
+     printf("                  TEST0604 \n");
+     printf("        INFO_SCHEM.VIEWS definition\n");
+     printf(" References\n");
+     printf("     ANSI SQL-1992  21.2.8  VIEWS view,\n");
+     printf("     FIPS Change Notice No. 1 -- 1993 Oct 4\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Verify CONSTRAINT CHECK_OPTION_NOT_NULL */
+
+ctr1 = -1;
+printf ("SELECT COUNT(*) INTO :ctr1\n");
+printf ("FROM INFO_SCHEM.VIEWS\n");
+printf ("WHERE CHECK_OPTION IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS
+WHERE CHECK_OPTION IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+
+/* Verify CONSTRAINT IS_UPDATABLE_NOT_NULL */
+
+ctr1 = -1;
+printf ("SELECT COUNT(*) INTO :ctr1\n");
+printf ("FROM INFO_SCHEM.VIEWS\n");
+printf ("WHERE IS_UPDATABLE IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS
+WHERE IS_UPDATABLE IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT IS_UPDATABLE_CHECK */
+
+ctr1 = -1;
+printf ("SELECT COUNT(*) INTO :ctr1\n");
+printf ("FROM INFO_SCHEM.VIEWS\n");
+printf ("WHERE IS_UPDATABLE <> 'YES'\n");
+printf ("AND IS_UPDATABLE <> 'NO';\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS
+WHERE IS_UPDATABLE <> 'YES'
+AND IS_UPDATABLE <> 'NO';
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT VIEWS_PRIMARY_KEY */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM IS NULL\n");
+printf("OR TABLE_NAME IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM IS NULL
+OR TABLE_NAME IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.VIEWS;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS;
+
+CHCKOK ();
+printf ("\n");
+
+ctr2 = -1;
+printf("SELECT COUNT(*) INTO :ctr2\n");
+printf("FROM INFO_SCHEM.VIEWS A,\n");
+printf(" INFO_SCHEM.VIEWS B\n");
+printf("WHERE A.TABLE_SCHEM = B.TABLE_SCHEM\n");
+printf("AND A.TABLE_NAME = B.TABLE_NAME;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr2
+FROM INFO_SCHEM.VIEWS A,
+ INFO_SCHEM.VIEWS B
+WHERE A.TABLE_SCHEM = B.TABLE_SCHEM
+AND A.TABLE_NAME = B.TABLE_NAME;
+
+CHCKOK ();
+printf ("ctr1 should be equal to ctr2.\n");
+printf ("ctr1 is %ld; ctr2 is %ld.\n\n", ctr1, ctr2);
+if (ctr1 != ctr2)
+  flag = 0;
+
+/* Verify CONSTRAINT VIEWS_IN_TABLES_CHECK */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.VIEWS A WHERE NOT EXISTS\n");
+printf("(SELECT * FROM INFO_SCHEM.TABLES B\n");
+printf("WHERE A.TABLE_SCHEM = B.TABLE_SCHEM\n");
+printf("AND A.TABLE_NAME = B.TABLE_NAME\n");
+printf("AND B.TABLE_TYPE = 'VIEW');\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS A WHERE NOT EXISTS
+(SELECT * FROM INFO_SCHEM.TABLES B
+WHERE A.TABLE_SCHEM = B.TABLE_SCHEM
+AND A.TABLE_NAME = B.TABLE_NAME
+AND B.TABLE_TYPE = 'VIEW');
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT VIEWS_IS_UPDATABLE_CHECK_OPTION_CHECK */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.VIEWS WHERE\n");
+printf("IS_UPDATABLE = 'NO' AND CHECK_OPTION <> 'NONE';\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.VIEWS WHERE
+IS_UPDATABLE = 'NO' AND CHECK_OPTION <> 'NONE';
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Make sure VIEW_DEFINITION is there. */
+
+printf("SELECT VIEW_DEFINITION INTO :copt:ctr1\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'DV1';\n");
+
+ctr1 = -2;
+strcpy (copt, "xxxxxxxx");
+EXEC SQL SELECT VIEW_DEFINITION INTO :copt:ctr1
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'DV1';
+copt[8] = '\0';
+SQLSTATE[5] = '\0';
+
+printf("copt is %s, ctr1 is %ld\n", copt, ctr1);
+printf("SQLCODE is %ld, SQLSTATE is %s\n", SQLCODE, SQLSTATE);
+printf("Acceptable cases:\n");
+printf("  1.  ctr1 is 0 or -1, status codes are normal\n");
+printf("  2.  ctr1 is positive, SQLSTATE says 01004\n\n");
+
+if (ctr1 < -1)
+{
+  flag = 0;
+  goto P100;
+}
+if (ctr1 > 0)
+{
+  if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+    flag = 0;
+  goto P100;
+}
+if (SQLCODE != 0 || strncmp (SQLSTATE, "00", 2) != 0)
+  flag = 0;
+
+P100:
+/* Verify the metadata on a few boring views; no fancy features. */
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'DV1';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'DV1';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'YES'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "YES", 3) != 0)
+  flag = 0;
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'WCOV';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'WCOV';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'CASCADED'; its value is '%s'\n", copt);
+if (strncmp (copt, "CASCADED", 8) != 0)
+  flag = 0;
+printf ("iupt should be 'YES'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "YES", 3) != 0)
+  flag = 0;
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'VS1';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'VS1';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'YES'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "YES", 3) != 0)
+  flag = 0;
+
+/* For explanation of why VS2 through VS6 are not updatable, see  */
+/* 7.9 <query specification> SR 12d.  BASE_VS1 is a leaf          */
+/* generally underlying table of the <query specification> and a  */
+/* generally underlying table of the <query expression> contained */
+/* in the <where clause> of each view.  At least, I think so....  */
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'VS2';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'VS2';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'NO'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "NO", 2) != 0)
+  flag = 0;
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'VS3';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'VS3';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'NO'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "NO", 2) != 0)
+  flag = 0;
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'VS4';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'VS4';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'NO'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "NO", 2) != 0)
+  flag = 0;
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'VS5';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'VS5';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'NO'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "NO", 2) != 0)
+  flag = 0;
+
+printf("SELECT CHECK_OPTION, IS_UPDATABLE\n");
+printf("INTO :copt, :iupt\n");
+printf("FROM INFO_SCHEM.VIEWS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'VS6';\n");
+
+strcpy (copt, "xxxxxxxx");
+strcpy (iupt, "xxx");
+EXEC SQL SELECT CHECK_OPTION, IS_UPDATABLE
+INTO :copt, :iupt
+FROM INFO_SCHEM.VIEWS
+WHERE TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'VS6';
+copt[8] = '\0';
+iupt[3] = '\0';
+
+CHCKOK ();
+printf ("copt should be 'NONE'; its value is '%s'\n", copt);
+if (strncmp (copt, "NONE", 4) != 0)
+  flag = 0;
+printf ("iupt should be 'NO'; its value is '%s'\n\n", iupt);
+if (strncmp (iupt, "NO", 2) != 0)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0604','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       ist002.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0604','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0604 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

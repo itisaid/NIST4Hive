@@ -1,0 +1,562 @@
+/*  EMBEDDED C (file "YTS778.PC")  */
+
+/* Copyright 1996 National Computing Centre Limited, */
+/* and Computer Logic R&D S.A */
+/* on behalf of the CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS778.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  ALTER TABLE SET COLUMN DEFAULT                               */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.12   <alter column definition>                          */
+/*    11.13   <set column default clause>                        */
+/*    11.5    GR2 <default clause>                               */
+/*    F#38    Schema manipulation                                */
+/*    F#3     Basic schema manipulation                          */
+/*    F#25    Domain definition                                  */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */ 
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-15                                    */
+/*    Added rollback after authid                                */
+/*    Fixed SDL transactions                                     */
+/*    Cleanup                                                    */
+/*    More output                                                */
+/*    Corrected expected results                                 */
+/*    Initialized vars                                           */
+/*    Fixed cursor usage                                         */
+/*    Drop table, domains at end of test                         */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+long col1;
+long col2;
+long col3;
+long col4;
+short indic1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts778.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7520 ********************/
+flag = 1;
+
+     printf("                  TEST7520 \n");
+     printf("   ALTER TABLE SET COLUMN DEFAULT\n");
+     printf("References:\n");
+     printf("    11.12   <alter column definition>\n");
+     printf("    11.13   <set column default clause\n");
+     printf("    11.5    GR2 <default clause>\n");
+     printf("    F#38    Schema manipulation\n");
+     printf("    F#3     Basic schema manipulation\n");
+     printf("    F#25    Domain definition\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Create domain with default clause */
+printf("CREATE DOMAIN int_dom2 AS INTEGER;\n");
+printf("  DEFAULT 99;\n");
+EXEC SQL CREATE DOMAIN int_dom2 AS INTEGER
+DEFAULT 99;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Create table alt_test */
+
+printf("CREATE TABLE alt_test\n");
+printf("( K integer,\n");
+printf("  L integer DEFAULT 50,\n");
+printf("  M integer,\n");
+printf("  N int_dom2);\n");
+EXEC SQL CREATE TABLE alt_test
+( K integer,
+  L integer DEFAULT 50,
+  M integer,
+  N int_dom2);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO alt_test VALUES (1,1,1,1);\n");
+EXEC SQL INSERT INTO alt_test VALUES (1,1,1,1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO alt_test (K,L,N) VALUES (2,2,2);\n");
+EXEC SQL INSERT INTO alt_test (K,L,N) VALUES (2,2,2);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO alt_test (K,M) VALUES (3,3);\n");
+EXEC SQL INSERT INTO alt_test (K,M) VALUES (3,3);
+CHCKOK ();
+printf("\n");
+
+/* declare cursor to retrieve values from alt_test */
+
+printf("DECLARE data78 SCROLL CURSOR FOR\n");
+printf("SELECT * FROM alt_test\n");
+printf("ORDER BY K;\n\n");
+EXEC SQL DECLARE data78 SCROLL CURSOR FOR
+SELECT * FROM alt_test
+ORDER BY K;
+
+printf("OPEN data78;\n");
+EXEC SQL OPEN data78;
+CHCKOK ();
+printf("\n");
+
+col1 = 99;
+col2 = 99;
+col3 = 99;
+col4 = 99;
+printf("Retrieve all three rows from the table\n\n");
+printf("FETCH FIRST data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH FIRST data78 INTO :col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 1; its value is %ld\n", col1);
+printf ("col2 should be 1; its value is %ld\n", col2);
+printf ("col3 should be 1; its value is %ld\n", col3);
+printf ("col4 should be 1; its value is %ld\n\n", col4);
+if (col1 != 1 || col2 != 1 || col3 != 1 || col4 != 1)
+   flag = 0;
+
+col1 = 99;
+col2 = 99;
+col4 = 99;
+indic1 = 99;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3:indic1, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO :col1, 
+:col2, :col3:indic1, :col4;
+CHCKOK ();
+printf ("col1 should be 2; its value is %ld\n", col1);
+printf ("col2 should be 2; its value is %ld\n", col2);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("col4 should be 2; its value is %ld\n\n", col4);
+if (col1 != 2 || col2 != 2 || indic1 != -1 || col4 != 2)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+col4 = 0;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO 
+:col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 3; its value is %ld\n", col1);
+printf ("col2 should be 50; its value is %ld\n", col2);
+printf ("col3 should be 3; its value is %ld\n", col3);
+printf ("col4 should be 99; its value is %ld\n\n", col4);
+if (col1 != 3 || col2 != 50 || col3 != 3 || col4 != 99)
+   flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("Alter column default for each column\n\n");
+
+printf("ALTER TABLE alt_test ALTER COLUMN L SET DEFAULT 100;\n");
+EXEC SQL ALTER TABLE alt_test ALTER COLUMN L SET DEFAULT 100;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("ALTER TABLE alt_test ALTER COLUMN M SET DEFAULT 90;\n");
+EXEC SQL ALTER TABLE alt_test ALTER COLUMN M SET DEFAULT 90;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* Column default takes precedence over domain default */
+
+printf("ALTER TABLE alt_test ALTER COLUMN N SET DEFAULT 80;\n");
+EXEC SQL ALTER TABLE alt_test ALTER COLUMN N SET DEFAULT 80;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN data78;\n");
+EXEC SQL OPEN data78;
+CHCKOK ();
+printf("\n");
+
+col1 = 99;
+col2 = 99;
+col3 = 99;
+col4 = 99;
+printf("Retrieve all three rows from the table\n\n");
+printf("FETCH FIRST data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH FIRST data78 INTO :col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 1; its value is %ld\n", col1);
+printf ("col2 should be 1; its value is %ld\n", col2);
+printf ("col3 should be 1; its value is %ld\n", col3);
+printf ("col4 should be 1; its value is %ld\n\n", col4);
+if (col1 != 1 || col2 != 1 || col3 != 1 || col4 != 1)
+   flag = 0;
+
+col1 = 99;
+col2 = 99;
+col4 = 99;
+indic1 = 99;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3:indic1, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO :col1, 
+:col2, :col3:indic1, :col4;
+CHCKOK ();
+printf ("col1 should be 2; its value is %ld\n", col1);
+printf ("col2 should be 2; its value is %ld\n", col2);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("col4 should be 2; its value is %ld\n\n", col4);
+if (col1 != 2 || col2 != 2 || indic1 != -1 || col4 != 2)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+col4 = 0;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO 
+:col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 3; its value is %ld\n", col1);
+printf ("col2 should be 50; its value is %ld\n", col2);
+printf ("col3 should be 3; its value is %ld\n", col3);
+printf ("col4 should be 99; its value is %ld\n\n", col4);
+if (col1 != 3 || col2 != 50 || col3 != 3 || col4 != 99)
+   flag = 0;
+
+printf("Insert three more rows into the table\n\n");
+printf("INSERT INTO alt_test VALUES (4,4,4,4);\n");
+EXEC SQL INSERT INTO alt_test VALUES (4,4,4,4);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO alt_test(K,L) VALUES (5,5);\n");
+EXEC SQL INSERT INTO alt_test(K,L) VALUES (5,5);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO alt_test(K,M) VALUES (6,6);\n");
+EXEC SQL INSERT INTO alt_test(K,M) VALUES (6,6);
+CHCKOK ();
+printf("\n");
+
+printf("Retrieve all six rows from the table\n\n");
+
+/* Changes won't necessarily be visible until cursor is re-opened */
+
+printf("CLOSE data78;\n");
+EXEC SQL CLOSE data78;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN data78;\n");
+EXEC SQL OPEN data78;
+CHCKOK ();
+printf("\n");
+
+col1 = 99;
+col2 = 99;
+col3 = 99;
+col4 = 99;
+printf("FETCH FIRST data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH FIRST data78 INTO :col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 1; its value is %ld\n", col1);
+printf ("col2 should be 1; its value is %ld\n", col2);
+printf ("col3 should be 1; its value is %ld\n", col3);
+printf ("col4 should be 1; its value is %ld\n\n", col4);
+if (col1 != 1 || col2 != 1 || col3 != 1 || col4 != 1)
+   flag = 0;
+
+col1 = 99;
+col2 = 99;
+col4 = 99;
+indic1 = 99;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3:indic1, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO :col1, 
+:col2, :col3:indic1, :col4;
+CHCKOK ();
+printf ("col1 should be 2; its value is %ld\n", col1);
+printf ("col2 should be 2; its value is %ld\n", col2);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("col4 should be 2; its value is %ld\n\n", col4);
+if (col1 != 2 || col2 != 2 || indic1 != -1 || col4 != 2)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+col4 = 0;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO 
+:col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 3; its value is %ld\n", col1);
+printf ("col2 should be 50; its value is %ld\n", col2);
+printf ("col3 should be 3; its value is %ld\n", col3);
+printf ("col4 should be 99; its value is %ld\n\n", col4);
+if (col1 != 3 || col2 != 50 || col3 != 3 || col4 != 99)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+col4 = 0;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO 
+:col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 4; its value is %ld\n", col1);
+printf ("col2 should be 4; its value is %ld\n", col2);
+printf ("col3 should be 4; its value is %ld\n", col3);
+printf ("col4 should be 4; its value is %ld\n\n", col4);
+if (col1 != 4 || col2 != 4 || col3 != 4 || col4 != 4)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+col4 = 0;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO 
+:col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 5; its value is %ld\n", col1);
+printf ("col2 should be 5; its value is %ld\n", col2);
+printf ("col3 should be 90; its value is %ld\n", col3);
+printf ("col4 should be 80; its value is %ld\n\n", col4);
+if (col1 != 5 || col2 != 5 || col3 != 90 || col4 != 80)
+   flag = 0;
+
+col1 = 0;
+col2 = 0;
+col3 = 0;
+col4 = 0;
+printf("FETCH NEXT data78 INTO :col1, :col2, :col3, :col4;\n");
+EXEC SQL FETCH NEXT data78 INTO 
+:col1, :col2, :col3, :col4;
+CHCKOK ();
+printf ("col1 should be 6; its value is %ld\n", col1);
+printf ("col2 should be 100; its value is %ld\n", col2);
+printf ("col3 should be 6; its value is %ld\n", col3);
+printf ("col4 should be 80; its value is %ld\n\n", col4);
+if (col1 != 6 || col2 != 100 || col3 != 6 || col4 != 80)
+   flag = 0;
+
+printf("CLOSE data78;\n");
+EXEC SQL CLOSE data78;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE ALT_TEST CASCADE;\n");
+EXEC SQL DROP TABLE ALT_TEST CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP DOMAIN INT_DOM2 CASCADE;\n");
+EXEC SQL DROP DOMAIN INT_DOM2 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts778.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7520','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts778.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7520','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7520 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

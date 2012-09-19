@@ -1,0 +1,81 @@
+/*  EMBEDDED C (file "AUTHID.PC")  */
+
+/*****************************************************************/
+
+/*TESTNO AUTHID                                                  */
+/*doc This subroutine logs onto the database for userid given.   */
+/*doc Password is hardcoded into this subroutine.                */
+
+/*******************************************************************/
+/*******************************************************************/
+/*                                                                 */
+/*  *** DISCLAIMER ***  *** DISCLAIMER ***  *** DISCLAIMER ***     */
+/*                                                                 */
+/*  This subroutine is OPTIONAL and is provided only as an         */
+/*  example of how a vendor may accomplish login.  This subroutine */   
+/*  contains extensions to SQL.  This subroutine may be discarded  */
+/*  or modified in any way.                                        */
+/*******************************************************************/
+
+AUTHID(uid3)
+
+char  uid3[];
+
+{
+
+   EXEC SQL BEGIN DECLARE SECTION;
+      varchar   uid1[19];
+      varchar   pwd[19];
+      char      uid[19];
+   EXEC SQL END DECLARE SECTION;
+      long SQLCODE;
+   EXEC SQL INCLUDE sqlca;
+      char   testno[7];
+
+   /* initialize variables */
+      strcpy(testno,"AUTHID");
+      strcpy(uid1.arr,uid3);
+      uid1.len=strlen(uid1.arr);
+
+   /*   This subroutine supplies all passwords needed          */
+   /*   If you choose to password equal to user id, them       */
+   /*   you may replace the following with the simple command: */
+   /*        strcpy(pwd.arr,uid1.arr);                         */
+   /*   Or, you may code individual passwords as follows:      */
+
+      if (strcmp(uid1.arr,"SULLIVAN")==0)
+         strcpy(pwd.arr,"SULLIVAN");
+      if (strcmp(uid1.arr,"HU")==0)
+         strcpy(pwd.arr,"HU");
+      if (strcmp(uid1.arr,"CUGINI")==0)
+         strcpy(pwd.arr,"CUGINI");
+      if (strcmp(uid1.arr,"MCGINN")==0)
+         strcpy(pwd.arr,"MCGINN");
+      if (strcmp(uid1.arr,"SCHANZLE")==0)
+         strcpy(pwd.arr,"SCHANZLE");
+      if (strcmp(uid1.arr,"SULLIVAN1")==0)
+         strcpy(pwd.arr,"SULLIVAN1");
+      if (strcmp(uid1.arr,"SUN")==0)
+         strcpy(pwd.arr,"SUN");
+      if (strcmp(uid1.arr,"FLATER")==0)
+         strcpy(pwd.arr,"FLATER");
+      if (strcmp(uid1.arr,"CANWEPARSELENGTH18")==0)
+         strcpy(pwd.arr,"CANWEPARSELENGTH18");
+      if (strcmp(uid1.arr,"XOPEN1")==0)
+         strcpy(pwd.arr,"XOPEN1");
+      if (strcmp(uid1.arr,"XOPEN2")==0)
+         strcpy(pwd.arr,"XOPEN2");
+      if (strcmp(uid1.arr,"XOPEN3")==0)
+         strcpy(pwd.arr,"XOPEN3");
+      pwd.len=strlen(pwd.arr);
+
+   /*   Log into database  */
+      EXEC SQL connect :uid1 identified by :pwd;
+
+      printf("\n\n");
+            if (sqlca.sqlcode == 0)
+      printf("%s :INFO:logon called for user: %s\n",testno,uid1.arr);
+            else
+              printf("    :FATAL:logon failed for user !!!\n");
+   return(0);
+}

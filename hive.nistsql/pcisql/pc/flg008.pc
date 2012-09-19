@@ -1,0 +1,146 @@
+/*  EMBEDDED C (file "FLG008.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/08 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLG008.PC                                                    */
+/*  WRITTEN BY: JOAN SULLIVAN                                    */
+/*                                                               */
+/*    THIS ROUTINE TESTS AN EXTENSION TO SQL.                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        FEDERAL INFORMATION PROCESSING STANDARDS - SQL         */
+/*                    FIPS PUB 127                               */
+/*                                                               */
+/*              10. Specifications.                              */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   char PTYPE1[7];
+   char CITY1[6];
+   long SUM1;
+   long COUNT1;
+   long cnt1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+long vienna;
+int errcnt;
+long i;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, FLG008.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0454 ********************/
+
+     printf("\n                     TEST0454             \n");
+     printf("SELECT nonGROUP column in GROUP BY\n");
+     printf("reference FIPS PUB 127 section 10. Specifications\n");
+     printf("X3.135-1989 5.25 <query specification> SR 7 \n");
+     printf("Column spec. of grouped table references grouping column\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+   EXEC SQL DECLARE GROUPX CURSOR FOR
+      SELECT PTYPE, CITY, SUM (BUDGET), COUNT(*)
+      FROM PROJ
+      GROUP BY CITY
+      ORDER BY CITY;
+
+   EXEC SQL OPEN GROUPX;
+   cnt1 = 0;
+   vienna = 0;
+
+   for (i = 0; i < 10; i++)
+   {
+      SUM1 = 0;
+      COUNT1 = 0;
+      strcpy(CITY1,"x");
+      strcpy(PTYPE1,"x");
+
+      EXEC SQL FETCH GROUPX
+           INTO :PTYPE1, :CITY1, :SUM1, :COUNT1;
+      if (SQLCODE == 0)
+           cnt1 = cnt1 + 1;
+
+    if (cnt1 == 2 && strcmp(CITY1,"Deale") == 0 && COUNT1 == 3 && SUM1 == 80000)
+         printf("Redundant sum and count for detail PTYPE in GROUP BY\n");
+    if (SQLCODE == 0 && strncmp(PTYPE1,"Code",4) == 0 && SUM1 == 30000)
+         printf("Subtotal by detail PTYPE in GROUP BY\n");
+    if (strcmp(CITY1,"Vienn") == 0 && strncmp(PTYPE1,"Code",4) == 0)
+         vienna = vienna + 1;
+    if (strcmp(CITY1,"Vienn") == 0 && strncmp(PTYPE1,"Test",4) == 0)
+         vienna = vienna + 1;
+   }
+
+   printf("Total rows fetched: %ld\n",cnt1);
+   if (cnt1 == 3)
+      printf("3 rows: The number of cities\n");
+   if (cnt1 == 6)
+      printf("6 rows: The number of (detail) rows in the table\n");
+   if (cnt1 == 4)
+      printf("4 rows: The number of city and ptype combinations\n");
+   if (vienna == 1)
+      printf("Sample PTYPE selected from 2 values\n");
+
+   if (cnt1 > 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT VALUES('0454','pass','PC');
+       printf("SQL extension for nonGROUP columns executed successfully.\n");
+       printf("Vendor must demonstrate FIPS flagger WARNING.\n");
+       }
+   else
+       {
+       EXEC SQL INSERT INTO TESTREPORT VALUES ('0454','nogo','PC');
+          errcnt = errcnt + 1;
+       printf("Vendor does not support selecting nonGROUP\n");
+       printf("   columns in GROUP BY.\n");
+       printf("Support of nonGROUP columns in GROUP BY\n");
+       printf("  is not required.\n");
+       }
+
+     EXEC SQL COMMIT WORK;
+
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+/******************** END TEST0454 ********************/
+
+     exit(errcnt);
+
+}

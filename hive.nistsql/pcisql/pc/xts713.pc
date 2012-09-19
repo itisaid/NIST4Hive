@@ -1,0 +1,516 @@
+/*  EMBEDDED C (file " XTS713.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS713.PC                                                   */
+/*  WRITTEN  BY: Manolis Megaloikonomou                          */
+/*  REVIEWED BY: Nickos  Backalidis                              */
+/*                                                               */
+/*  Schema definition in an SQL statement - single table         */
+/*                                                               */
+/*  programs runs under identifier T7013PC                       */
+/*  this identifier must have permission to create schemas for   */
+/*  authid T7013PC and T7013bPC                                  */
+/*  these schemas must not exist before the program is executed  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.1    -- <schema definition>                             */
+/*    11.1 SR.1                                                  */
+/*    11.1 SR.2                                                  */
+/*    11.1 AR.1                                                  */
+/*    11.1 GR.3                                                  */
+/*    12.5    -- <SQL procedure statement>                       */
+/*    F#31 -- Schema definition statement.                       */
+/*                                                               */
+/*  DATE LAST ALTERED  12/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 01/12/95                    */
+/*                                                               */
+/*  QA Status: QA check                                          */
+/*                                                               */
+/* Revised by DWF 1/22/96                                        */
+/*   Fixed C language errors                                     */
+/*   Removed bogus status checks                                 */
+/*   Added information on possible problems                      */
+/*   Put SDL in separate transactions                            */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ char bb[4];
+ long aa;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+int    flag;
+
+main()
+{
+strcpy(uid,"T7013PC           ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,7) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts713.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7013 ********************/
+
+flag = 1;
+printf("                  TEST7013\n");
+printf("    Schema definition in an SQL statement-single table\n");
+printf(" References:\n");
+printf("    11.1    -- <schema definition>\n");
+printf("    11.1 SR.1\n");
+printf("    11.1 SR.2\n");
+printf("    11.1 AR.1\n");
+printf("    11.1 GR.3\n");
+printf("    12.5 -- <SQL procedure statement>\n");
+printf("    F#31 -- Schema definition statement.\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("This test attempts to create schemas with different\n");
+printf("authorizations.  Because authorizations are implementation-\n");
+printf("defined, this test may need modification.  The following\n");
+printf("actions may help to pass the test:\n");
+printf("  -- Change the initial authid to an authid with DBA privileges\n");
+printf("  -- Insert code to work around implementation-defined\n");
+printf("     authentication mechanisms (e.g. to reconnect with a\n");
+printf("     different authid).\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* Create schema and COMMIT */
+printf("CREATE SCHEMA AUTHORIZATION T7013PC\n");
+printf("CREATE TABLE TA\n");
+printf("   (TAINT INTEGER,\n");
+printf("    TACHAR CHARACTER(3));\n");
+EXEC SQL CREATE SCHEMA AUTHORIZATION T7013PC
+         CREATE TABLE TA
+         (TAINT INTEGER,
+          TACHAR CHARACTER(3));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Insert 5 rows and COMMIT */
+printf("INSERT INTO T7013PC.TA VALUES(1,'AA');\n");
+EXEC SQL INSERT INTO T7013PC.TA VALUES(1,'AA');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013PC.TA VALUES(5,'EE');\n");
+EXEC SQL INSERT INTO T7013PC.TA VALUES(5,'EE');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013PC.TA VALUES(3,'CC');\n");
+EXEC SQL INSERT INTO T7013PC.TA VALUES(3,'CC');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013PC.TA VALUES(4,'DD');\n");
+EXEC SQL INSERT INTO T7013PC.TA VALUES(4,'DD');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013PC.TA VALUES(2,'BB');\n");
+EXEC SQL INSERT INTO T7013PC.TA VALUES(2,'BB');
+CHCKOK();
+printf("\n");
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Declare ordered cursor and then              */
+/* FETCH all rows defined by the Cursor.        */
+/* Check they are returned in the correct order */
+
+printf("DECLARE ALPHA CURSOR\n");
+printf("FOR SELECT * FROM T7013PC.TA ORDER BY TAINT;\n\n");
+EXEC SQL DECLARE ALPHA CURSOR
+         FOR SELECT * FROM T7013PC.TA ORDER BY TAINT;
+
+printf("OPEN ALPHA;\n");
+EXEC SQL OPEN ALPHA;
+CHCKOK();
+printf("\n");
+
+/* init host variables and check 1st value*/
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH ALPHA INTO :aa , :bb ;\n");
+EXEC SQL FETCH ALPHA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 1;  its value is %ld \n",aa);
+printf("bb should be AA; its value is %s\n",bb);
+if (aa != 1 || strcmp(bb,"AA ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 2nd value */
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH ALPHA INTO :aa , :bb ;\n");
+EXEC SQL FETCH ALPHA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 2;  its value is %ld \n",aa);
+printf("bb should be BB; its value is %s\n",bb);
+if ( aa != 2 || strcmp(bb,"BB ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 3rd value */
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH ALPHA INTO :aa , :bb ;\n");
+EXEC SQL FETCH ALPHA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 3;  its value is %ld \n",aa);
+printf("bb should be CC; its value is %s\n",bb);
+if ( aa != 3 || strcmp(bb,"CC ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 4th value */
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH ALPHA INTO :aa , :bb ;\n");
+EXEC SQL FETCH ALPHA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 4;  its value is %ld \n",aa);
+printf("bb should be DD; its value is %s\n",bb);
+if ( aa != 4 || strcmp(bb,"DD ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 5th value */
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH ALPHA INTO :aa , :bb ;\n");
+EXEC SQL FETCH ALPHA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 5;  its value is %ld \n",aa);
+printf("bb should be EE; its value is %s\n",bb);
+if ( aa != 5 || strcmp(bb,"EE ") != 0)
+   flag = 0;
+printf("\n");
+
+/* close ALPHA CURSOR  */
+
+printf("CLOSE ALPHA;\n");
+EXEC SQL CLOSE ALPHA;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Create a second schema for T7013bPC user */
+
+printf("CREATE SCHEMA AUTHORIZATION T7013bPC\n");
+printf("CREATE TABLE TB\n");
+printf("   (TAINT INT,\n");
+printf("    TACHAR  CHAR(3))\n");
+printf("GRANT SELECT, INSERT ON TB TO T7013PC;\n");
+EXEC SQL CREATE SCHEMA AUTHORIZATION T7013bPC
+         CREATE TABLE TB
+         (TBINT INT,
+          TBCHAR CHAR(3))
+         GRANT SELECT, INSERT ON TB TO T7013PC;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Ensure user is given the privileges to insert rows */
+/* into the table */
+printf("INSERT INTO T7013bPC.TB VALUES(1,'AA');\n");
+EXEC SQL INSERT INTO T7013bPC.TB VALUES(1,'AA');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013bPC.TB VALUES(5,'EE');\n");
+EXEC SQL INSERT INTO T7013bPC.TB VALUES(5,'EE');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013bPC.TB VALUES(3,'CC');\n");
+EXEC SQL INSERT INTO T7013bPC.TB VALUES(3,'CC');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013bPC.TB VALUES(4,'DD');\n");
+EXEC SQL INSERT INTO T7013bPC.TB VALUES(4,'DD');
+CHCKOK();
+printf("\n");
+printf("INSERT INTO T7013bPC.TB VALUES(2,'BB');\n");
+EXEC SQL INSERT INTO T7013bPC.TB VALUES(2,'BB');
+CHCKOK();
+printf("\n");
+
+/* Declare ordered cursor and then              */
+/* FETCH all rows defined by the Cursor.        */
+/* Check they are returned in the correct order */
+/* Ensure the current auth-id has the privilege */
+/* to select from the table                     */
+
+printf("DECLARE BETA CURSOR\n");
+printf("FOR SELECT * FROM T7013bPC.TB ORDER BY TBINT;\n\n");
+EXEC SQL DECLARE BETA CURSOR
+         FOR SELECT * FROM T7013bPC.TB ORDER BY TBINT;
+
+printf("OPEN BETA;\n");
+EXEC SQL OPEN BETA;
+CHCKOK();
+printf("\n");
+
+/* init host variables and check 1st value*/
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH BETA INTO :aa , :bb ;\n");
+EXEC SQL FETCH BETA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 1;  its value is %ld \n",aa);
+printf("bb should be AA; its value is %s\n",bb);
+if ( aa != 1 || strcmp(bb,"AA ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 2nd value*/
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH BETA INTO :aa , :bb ;\n");
+EXEC SQL FETCH BETA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 2;  its value is %ld \n",aa);
+printf("bb should be BB; its value is %s\n",bb);
+if ( aa != 2 || strcmp(bb,"BB ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 3rd value*/
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH BETA INTO :aa, :bb ;\n");
+EXEC SQL FETCH BETA INTO :aa, :bb ;
+CHCKOK();
+printf("aa should be 3;  its value is %ld \n",aa);
+printf("bb should be CC; its value is %s\n",bb);
+if (aa != 3 || strcmp(bb,"CC ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 4th value*/
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH BETA INTO :aa , :bb ;\n");
+EXEC SQL FETCH BETA INTO :aa , :bb ;
+CHCKOK();
+printf("aa should be 4;  its value is %ld \n",aa);
+printf("bb should be DD; its value is %s\n",bb);
+if (aa != 4 || strcmp(bb,"DD ") != 0)
+   flag = 0;
+printf("\n");
+
+/* init host variables and check 5th value*/
+aa = 0;
+strcpy(bb,"xxx");
+printf("FETCH BETA INTO :aa , :bb ;\n");
+EXEC SQL FETCH BETA INTO :aa ,:bb ;
+CHCKOK();
+printf("aa should be 5;  its value is %ld \n",aa);
+printf("bb should be EE; its value is %s\n",bb);
+if (aa != 5 || strcmp(bb,"EE ") != 0)
+   flag = 0;
+printf("\n");
+
+/* CLOSE BETA cursor */
+printf("CLOSE BETA;\n");
+EXEC SQL CLOSE BETA;
+CHCKOK();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+ /* now clean up database */
+printf("DROP SCHEMA T7013PC CASCADE;\n");
+EXEC SQL DROP SCHEMA T7013PC CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* printf("SET SESSION AUTHORIZATION 'T7013bPC';\n"); */
+/* EXEC SQL SET SESSION AUTHORIZATION 'T7013bPC'; */
+/* CHCKOK(); */
+/* printf("\n"); */
+
+printf("DROP SCHEMA T7013bPC CASCADE;\n");
+EXEC SQL DROP SCHEMA T7013bPC CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts713.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7013','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts713.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+           VALUES('7013','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+ /******************** END TEST7013 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

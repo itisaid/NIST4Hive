@@ -1,0 +1,130 @@
+/*  EMBEDDED C (file "DML047.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/11/29 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML047.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT ON A CHARACTER STRING. THIS   */
+/*  LIMIT IS NOT LESS THAN TWO HUNDRED AND FORTY (240).          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char part1[61];
+  char part2[61];
+  char part3[61];
+  char part4[61];
+  char str240[241];
+  char str241[241];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  long  i;
+  long  ii;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml047.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0222 ********************/
+
+  printf("\n          FIPS sizing TEST0222      \n");
+  printf("     This routine tests the length (240) of\n");
+  printf("                 a character string\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  strcpy(part1,"NOTE:  Additional SQL language is planned for later addenda ");
+  strcpy(part2,"to this standard.  Major topics under consideration for such");
+  strcpy(part3," addenda include referential integrity, enhanced transaction");
+  strcpy(part4," management, specification of certain implementor defined ru");
+  strcpy(str240,part1);
+  strcat(str240,part2);
+  strcat(str240,part3);
+  strcat(str240,part4);
+
+  printf("str240=%s \n\n",str240);
+
+  EXEC SQL INSERT INTO T240 VALUES(:str240);
+
+  i = SQLCODE;
+
+  EXEC SQL SELECT * 
+           INTO :str241
+           FROM T240;
+
+  ii = SQLCODE;
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf(" i = %ld, ii = %ld\n",i,ii);
+  printf(" str241=%s \n\n",str241);
+  
+  if (i==0 && ii==0 && strncmp(str240,str241,240)==0 )
+    {
+      printf("                *** pass *** \n\n");      
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0222','pass','PC');
+    }
+  else
+    {
+      printf("      dml047.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0222','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0222 ********************/
+
+  exit(errcnt);
+}
+

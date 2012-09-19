@@ -1,0 +1,924 @@
+/*  EMBEDDED C (file "DML125.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/6/28 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML125.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*  Bug fixes & stronger pass criteria by Joan Sullivan 2/27/95  */
+/*                                                               */
+/*  This routine tests SQL descriptors, which is a feature of    */
+/*  Dynamic SQL.                                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+short smint1;
+short smint2;
+short smint3;
+long int1;
+long int2;
+long int3;
+long int4;
+char ch1[2];
+char ch7[8];
+char ch13[14];
+char ch17[18];
+char ch32[33];
+     char dstmt[51];
+     char longst[241];
+char word1[12];
+/******************** BEGIN TEST0657 variables ********************/
+varchar ch11[12];
+varchar word2[31];
+varchar word3[4];
+/******************** END TEST0657 variables *********************/
+char csc[51];
+char css[51];
+char csn[51];
+char clc[51];
+char cls[51];
+char cln[51];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml125.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0657 ********************/
+flag = 1;
+
+     printf("                  TEST0657 \n");
+     printf("           Descriptors:  VARCHAR\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("     6.1 -- <data type> CHARACTER VARYING\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.9 -- <using clause>\n");
+     printf("    17.10 -- <execute statement>\n");
+     printf("    17.14 -- <dynamic open statement>\n");
+     printf("    17.2 GR.3 -- limit on descriptor areas is\n");
+     printf("                 implementation-defined\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* I am going to try to write this test in such a way that it will */
+/* work in every language, using only fixed-length host variables. */
+
+printf("CREATE TABLE ADJECTIVES (WURD VARCHAR (30));\n");
+EXEC SQL CREATE TABLE ADJECTIVES (WURD VARCHAR (30));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("ALLOCATE DESCRIPTOR 'D12511' WITH MAX 1;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12511' WITH MAX 1;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009 WITH MAX 1!\n");
+  printf ("This is definitely a FAIL.\n");
+}
+printf("\n");
+
+printf("dstmt=\"SELECT WURD FROM ADJECTIVES\"\n");
+     strcpy (dstmt,
+     "SELECT WURD FROM ADJECTIVES                       ");
+
+printf("PREPARE S12511 FROM :dstmt;\n");
+EXEC SQL PREPARE S12511 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12511 USING SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL DESCRIBE S12511 USING SQL DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+smint1 = -1;
+printf("GET DESCRIPTOR 'D12511' :smint1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12511' :smint1 = COUNT;
+CHCKOK ();
+printf ("smint1 should be 1; its value is %d\n\n", smint1);
+if (smint1 != 1)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+printf("GET DESCRIPTOR 'D12511' VALUE 1\n");
+printf("  :int1 = TYPE, :int2 = LENGTH, :int3 = OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12511' VALUE 1
+  :int1 = TYPE, :int2 = LENGTH, :int3 = OCTET_LENGTH;
+CHCKOK ();
+printf("int1 should be 12; its value is %ld\n", int1);
+printf("int2 should be 30; its value is %ld\n", int2);
+printf("int3 should be > 22; its value is %ld\n\n", int3);
+if (int1 != 12 || int2 != 30 || int3 <= 22)
+  flag = 0;
+
+smint1 = 1;
+smint2 = 0;
+smint3 = 11;
+printf("smint1 = 1\n");
+printf("smint2 = 0\n");
+printf("smint3 = 11\n");
+strcpy(ch11,"Circumspect");
+printf("SET DESCRIPTOR 'D12511' VALUE :smint1\n");
+printf("  INDICATOR = :smint2, LENGTH = :smint3,\n");
+printf("  DATA = :ch11;\n");
+EXEC SQL SET DESCRIPTOR 'D12511' VALUE :smint1
+  INDICATOR = :smint2, LENGTH = :smint3,
+  DATA = :ch11;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"INSERT INTO ADJECTIVES VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO ADJECTIVES VALUES (?)                 ");
+
+printf("PREPARE S12512 FROM :dstmt;\n");
+EXEC SQL PREPARE S12512 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12512 USING SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL EXECUTE S12512 USING SQL DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM ADJECTIVES WHERE WURD = 'Circumspect';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM ADJECTIVES WHERE WURD = 'Circumspect';
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("DESCRIBE OUTPUT S12511 USING SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL DESCRIBE OUTPUT S12511 USING SQL DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12511 CURSOR FOR S12511;\n");
+EXEC SQL DECLARE C12511 CURSOR FOR S12511;
+printf("\n");
+
+printf("OPEN C12511;\n");
+EXEC SQL OPEN C12511;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12511 INTO SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL FETCH C12511 INTO SQL DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE C12511;\n");
+EXEC SQL CLOSE C12511;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+strcpy (word2, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12511' VALUE 1\n");
+printf("  :int1 = LENGTH, :int2 = RETURNED_LENGTH,\n");
+printf("  :int3 = INDICATOR, :word2 = DATA,\n");
+printf("  :int4 = RETURNED_OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12511' VALUE 1
+  :int1 = LENGTH, :int2 = RETURNED_LENGTH,
+  :int3 = INDICATOR, :word2 = DATA,
+  :int4 = RETURNED_OCTET_LENGTH;
+CHCKOK ();
+word1[11] = '\0';
+printf ("int1 should be 30; its value is %ld\n", int1);
+printf ("int2 should be 11; its value is %ld\n", int2);
+printf ("int3 should be 0; its value is %ld\n", int3);
+printf ("word2 should be 'Circumspect'; its value is '%s'\n", word2);
+printf ("int4 should be > 0; its value is %ld\n\n", int4);
+if (int1 != 30 || int2 != 11 || int3 != 0)
+  flag = 0;
+if (strcmp (word2, "Circumspect") != 0 || int4 <= 0)
+  flag = 0;
+
+strcpy(ch13,"Circumspect");  
+printf("SET DESCRIPTOR 'D12511' VALUE 1\n");
+printf("  TYPE = 1, LENGTH = 13, DATA = :ch13;\n");
+EXEC SQL SET DESCRIPTOR 'D12511' VALUE 1
+  TYPE = 1, LENGTH = 13, DATA = :ch13;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM ADJECTIVES WHERE WURD = ?\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM ADJECTIVES WHERE WURD = ?    ");
+
+printf("PREPARE S12513 FROM :dstmt;\n");
+EXEC SQL PREPARE S12513 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12513 CURSOR FOR S12513;\n");
+EXEC SQL DECLARE C12513 CURSOR FOR S12513;
+printf("\n");
+
+printf("OPEN C12513 USING SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL OPEN C12513 USING SQL DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C12513 INTO :int1;\n");
+EXEC SQL FETCH C12513 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C12513;\n");
+EXEC SQL CLOSE C12513;
+CHCKOK ();
+printf("\n");
+
+/* SQLSTATEs for truncation (quick test) */
+
+strcpy(ch32,"semi-psychorepresentationalistic");
+printf("SET DESCRIPTOR 'D12511' VALUE 1\n");
+printf("  INDICATOR = 0, LENGTH = 32,\n");
+printf("  DATA = :ch32;\n");
+EXEC SQL SET DESCRIPTOR 'D12511' VALUE 1
+  INDICATOR = 0, LENGTH = 32,
+  DATA = :ch32;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12512 USING SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL EXECUTE S12512 USING SQL DESCRIPTOR 'D12511';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+printf("DESCRIBE OUTPUT S12511 USING SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL DESCRIBE OUTPUT S12511 USING SQL DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12511' VALUE 1\n");
+printf("  LENGTH = 3;\n");
+EXEC SQL SET DESCRIPTOR 'D12511' VALUE 1
+  LENGTH = 3;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C12511;\n");
+EXEC SQL OPEN C12511;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12511 INTO SQL DESCRIPTOR 'D12511';\n");
+EXEC SQL FETCH C12511 INTO SQL DESCRIPTOR 'D12511';
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 01004; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+int3 = -1;
+int4 = -1;
+strcpy (word3, "xxx");
+printf("GET DESCRIPTOR 'D12511' VALUE 1\n");
+printf("  :int1 = LENGTH, :int2 = RETURNED_LENGTH,\n");
+printf("  :int3 = INDICATOR, :word3 = DATA,\n");
+printf("  :int4 = RETURNED_OCTET_LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12511' VALUE 1
+  :int1 = LENGTH, :int2 = RETURNED_LENGTH,
+  :int3 = INDICATOR, :word3 = DATA,
+  :int4 = RETURNED_OCTET_LENGTH;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n", int1);
+printf ("int2 should be 3; its value is %ld\n", int2);
+printf ("int3 should be 0; its value is %ld\n", int3);
+printf ("word3 should be 'Cir'; its value is '%s'\n", word3);
+printf ("int4 should be > 2; its value is %ld\n\n", int4);
+if (int1 != 3 || int2 != 3 || int3 != 0)
+  flag = 0;
+if (strcmp (word3, "Cir") != 0 || int4 <= 2)
+  flag = 0;
+
+printf("CLOSE C12511;\n");
+EXEC SQL CLOSE C12511;
+CHCKOK ();
+printf("\n");
+
+printf("DEALLOCATE DESCRIPTOR 'D12511';\n");
+EXEC SQL DEALLOCATE DESCRIPTOR 'D12511';
+CHCKOK ();
+printf("\n");
+
+P199:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE ADJECTIVES CASCADE;\n");
+EXEC SQL DROP TABLE ADJECTIVES CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0657','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml125.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0657','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0657 *********************/
+/******************** BEGIN TEST0658 ********************/
+flag = 1;
+
+     printf("                  TEST0658 \n");
+     printf("        Descriptors:  SQLSTATE codes\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    22.1 -- SQLSTATE\n");
+     printf("    17.2 GR.3\n");
+     printf("    17.4 GR.3 GR.5\n");
+     printf("    17.5 GR.2 GR.5\n");
+     printf("    17.9 GR.2 GR.3.d GR.5.b GR.5.e GR.6.b\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("ALLOCATE DESCRIPTOR 'D12521' WITH MAX 0;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12521' WITH MAX 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07009; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07009", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+printf("ALLOCATE DESCRIPTOR 'D12521' WITH MAX 1;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12521' WITH MAX 1;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009 WITH MAX 1!\n");
+  printf ("This is definitely a FAIL.\n");
+}
+printf("\n");
+
+printf("dstmt=\"SELECT ZZ FROM CONCATBUF\"\n");
+     strcpy (dstmt,
+     "SELECT ZZ FROM CONCATBUF                          ");
+
+printf("PREPARE S12521 FROM :dstmt;\n");
+EXEC SQL PREPARE S12521 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12521 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL DESCRIBE S12521 USING SQL DESCRIPTOR 'D12521';
+CHCKOK ();
+printf("\n");
+
+/* 07009 on get descriptor value 0  17.4 GR.3 */
+
+printf("GET DESCRIPTOR 'D12521' VALUE 0\n");
+printf("  :int1 = INDICATOR;\n");
+EXEC SQL GET DESCRIPTOR 'D12521' VALUE 0
+  :int1 = INDICATOR;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07009; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07009", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 07009 on set descriptor value 0  17.5 GR.2 */
+
+int1 = 0;
+printf("int1 = 0\n");
+printf("SET DESCRIPTOR 'D12521' VALUE :int1\n");
+printf("  INDICATOR = 0;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' VALUE :int1
+  INDICATOR = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07009; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07009", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 33000 on using nonexistent descriptor 17.9 GR.2 */
+
+printf("dstmt=\"INSERT INTO CONCATBUF VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO CONCATBUF VALUES (?)                  ");
+
+printf("PREPARE S12522 FROM :dstmt;\n");
+EXEC SQL PREPARE S12522 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12522 USING SQL DESCRIPTOR 'BOB';\n");
+EXEC SQL EXECUTE S12522 USING SQL DESCRIPTOR 'BOB';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 33000; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "33000", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 01005 on describe table with too many columns 17.9 GR.3.d */
+
+printf("dstmt=\"SELECT * FROM HU.WORKS\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM HU.WORKS                            ");
+
+printf("PREPARE S12523 FROM :dstmt;\n");
+EXEC SQL PREPARE S12523 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12523 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL DESCRIBE S12523 USING SQL DESCRIPTOR 'D12521';
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 01005; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01005", 5) != 0 || SQLCODE < 0)
+  flag = 0;
+
+/* COUNT should have been set. */
+
+int1 = -1;
+printf("GET DESCRIPTOR 'D12521' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'D12521' :int1 = COUNT;
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+/* 07008 on using descriptor with COUNT too big 17.9 GR.5.b.ii */
+
+printf("EXECUTE S12522 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL EXECUTE S12522 USING SQL DESCRIPTOR 'D12521';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07008; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07008", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 07001 on using descriptor with invalid values 17.9 GR.5.b.iii */
+
+printf("DESCRIBE S12521 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL DESCRIBE S12521 USING SQL DESCRIPTOR 'D12521';
+CHCKOK ();
+printf("\n");
+
+/* 17.5 GR.7:  We're up against implementor-defined restrictions here */
+/* 6.1 SR.3:  Length of 0 is invalid for any data type */
+
+printf("SET DESCRIPTOR 'D12521' VALUE 1\n");
+printf("  LENGTH = 0;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' VALUE 1
+  LENGTH = 0;
+if (SQLCODE < 0)
+{
+  printf ("Violated an implementor-defined restriction -- this\n");
+  printf ("subtest will be skipped\n\n");
+  goto P100;
+}
+printf ("SQLCODE should be 0; its value is %ld\n\n", SQLCODE);
+if (SQLCODE == 100)
+  flag = 0;
+
+printf("EXECUTE S12522 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL EXECUTE S12522 USING SQL DESCRIPTOR 'D12521';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07001; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07001", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+P100:
+/* Generate an exception via 17.9 GR.5.f */
+
+printf("dstmt=\"INSERT INTO BASE_WCOV VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO BASE_WCOV VALUES (?)                  ");
+
+printf("PREPARE S12524 FROM :dstmt;\n");
+EXEC SQL PREPARE S12524 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("SET DESCRIPTOR 'D12521' COUNT = 1;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' COUNT = 1;
+CHCKOK ();
+printf("\n");
+
+/* Length defaults to 1:  17.5 GR.5.a */
+
+strcpy(ch1,"Z");
+printf("SET DESCRIPTOR 'D12521' VALUE 1\n");
+printf("  TYPE = 1, DATA = :ch1;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' VALUE 1
+  TYPE = 1, DATA = :ch1;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12524 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL EXECUTE S12524 USING SQL DESCRIPTOR 'D12521';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22018; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22018", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 07006 on trying to do an invalid implicit cast 17.9 GR.5.e */
+
+strcpy(ch17,"DATE '1995-03-02'");
+printf("SET DESCRIPTOR 'D12521' VALUE 1\n");
+printf("  TYPE = 1, LENGTH = 17,\n");
+printf("  DATA = :ch17;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' VALUE 1
+  TYPE = 1, LENGTH = 17,
+  DATA = :ch17;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE S12524 USING SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL EXECUTE S12524 USING SQL DESCRIPTOR 'D12521';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07006; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07006", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 07002 on fetching into descriptor wrong count / invalid 17.9 GR.6.b */
+
+printf("DECLARE C12523 CURSOR FOR S12523;\n");
+EXEC SQL DECLARE C12523 CURSOR FOR S12523;
+printf("\n");
+
+printf("OPEN C12523;\n");
+EXEC SQL OPEN C12523;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12523 INTO SQL DESCRIPTOR 'D12521';\n");
+EXEC SQL FETCH C12523 INTO SQL DESCRIPTOR 'D12521';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07002; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07002", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 22002 on get data but not indicator when indicator is negative 17.4 GR.5 */
+
+printf("SET DESCRIPTOR 'D12521' VALUE 1\n");
+printf("  TYPE = 4, INDICATOR = -1;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' VALUE 1
+  TYPE = 4, INDICATOR = -1;
+CHCKOK ();
+printf("\n");
+
+printf("GET DESCRIPTOR 'D12521' VALUE 1\n");
+printf("  :int1 = DATA;\n");
+EXEC SQL GET DESCRIPTOR 'D12521' VALUE 1
+  :int1 = DATA;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22002; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22002", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 22005 on conflicting TYPE and DATA 17.5 GR.5 */
+
+strcpy(ch7,"WAA HOO");
+printf("SET DESCRIPTOR 'D12521' VALUE 1\n");
+printf("  TYPE = 5, DATA = :ch7;\n");
+EXEC SQL SET DESCRIPTOR 'D12521' VALUE 1
+  TYPE = 5, DATA = :ch7;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22005; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22005", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+P198:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0658','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml125.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0658','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0658 *********************/
+/******************** BEGIN TEST0659 ********************/
+flag = 1;
+
+     printf("                  TEST0659 \n");
+     printf("     Descriptors:  TSQL orphaned features\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    17.1 -- Description of SQL item descriptor areas\n");
+     printf("    17.5 GR.5.a\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("ALLOCATE DESCRIPTOR 'D12531' WITH MAX 1;\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'D12531' WITH MAX 1;
+CHCKOK ();
+if (strncmp (SQLSTATE, "07009", 5) == 0) {
+  printf ("Received SQLSTATE 07009 WITH MAX 1!\n");
+  printf ("This is definitely a FAIL.\n");
+}
+printf("\n");
+
+/* 17.5 GR.5.a  TYPE=1 in SET DESCRIPTOR sets CHARACTER_* and LENGTH fields */
+
+printf("SET DESCRIPTOR 'D12531' VALUE 1\n");
+printf("  TYPE = 1;\n");
+EXEC SQL SET DESCRIPTOR 'D12531' VALUE 1
+  TYPE = 1;
+CHCKOK ();
+printf("\n");
+
+int1 = 0;
+strcpy (csc, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (css, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (csn, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12531' VALUE 1\n");
+printf("  :csc = CHARACTER_SET_CATALOG,\n");
+printf("  :css = CHARACTER_SET_SCHEMA,\n");
+printf("  :csn = CHARACTER_SET_NAME,\n");
+printf("  :int1 = LENGTH;\n");
+EXEC SQL GET DESCRIPTOR 'D12531' VALUE 1
+  :csc = CHARACTER_SET_CATALOG,
+  :css = CHARACTER_SET_SCHEMA,
+  :csn = CHARACTER_SET_NAME,
+  :int1 = LENGTH;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 00xxx or 01004; its value is %s\n", SQLSTATE);
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+NOSUBCLASS();
+if (SQLCODE < 0)
+  flag = 0;
+if (strncmp (SQLSTATE, "01004", 5) != 0 && strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+printf("csc is %s\n", csc);
+printf("css is %s\n", css);
+printf("csn is %s\n\n", csn);
+
+/* 17.5 GR.4.e.iv.1  TYPE = 1 in DESCRIBE sets COLLATION_* fields */
+
+printf("dstmt=\"SELECT * FROM HU.ECCO\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM HU.ECCO                             ");
+
+printf("PREPARE S12531 FROM :dstmt;\n");
+EXEC SQL PREPARE S12531 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE S12531 USING SQL DESCRIPTOR 'D12531';\n");
+EXEC SQL DESCRIBE S12531 USING SQL DESCRIPTOR 'D12531';
+CHCKOK ();
+printf("\n");
+
+strcpy (csc, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (css, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (csn, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (clc, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (cls, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (cln, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DESCRIPTOR 'D12531' VALUE 1\n");
+printf("  :csc = CHARACTER_SET_CATALOG,\n");
+printf("  :css = CHARACTER_SET_SCHEMA,\n");
+printf("  :csn = CHARACTER_SET_NAME,\n");
+printf("  :clc = COLLATION_CATALOG,\n");
+printf("  :cls = COLLATION_SCHEMA,\n");
+printf("  :cln = COLLATION_NAME;\n");
+EXEC SQL GET DESCRIPTOR 'D12531' VALUE 1
+  :csc = CHARACTER_SET_CATALOG,
+  :css = CHARACTER_SET_SCHEMA,
+  :csn = CHARACTER_SET_NAME,
+  :clc = COLLATION_CATALOG,
+  :cls = COLLATION_SCHEMA,
+  :cln = COLLATION_NAME;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 00xxx or 01004; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE < 0)
+  flag = 0;
+if (strncmp (SQLSTATE, "01004", 5) != 0 && strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+printf("csc is %s\n", csc);
+printf("css is %s\n", css);
+printf("csn is %s\n", csn);
+printf("clc is %s\n", clc);
+printf("cls is %s\n", cls);
+printf("cln is %s\n\n", cln);
+
+P197:
+printf("ROLLBACK WORK;\n\n");
+EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0659','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml125.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0659','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0659 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

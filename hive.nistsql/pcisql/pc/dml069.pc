@@ -1,0 +1,427 @@
+/*  EMBEDDED C (file "DML069.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1990/11/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML069.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS SOME CURSOR FEATURES AND UPDATE.        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long  HOURS1;
+float HOURS2;
+char  PNUM1[3];
+char  PNUM2[10];
+char  EMPNO1[3];
+long TEMP1;
+long TEMP2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+long count1;
+long cnt;
+long cnt2;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml069.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+
+/******************** BEGIN TEST0404 ********************/
+
+  printf("\n                      TEST0404      \n");
+  printf(" 2 FETCHes (different target types) on same cursor\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("           DECLARE SMURF CURSOR FOR\n");
+printf("           SELECT PNUM, HOURS FROM WORKS\n");
+printf("           WHERE  EMPNUM = 'E1'\n");
+printf("           ORDER BY HOURS DESC;\n");
+printf("\n");
+printf("\n");
+printf("           FETCH SMURF INTO :PNUM1, :HOURS1;\n");
+printf("\n");
+printf("           FETCH SMURF INTO :PNUM2, :HOURS2;\n");
+printf("\n");
+  HOURS1 = 0;
+  HOURS2 = 0;
+  strcpy(PNUM1, "NV");
+  strcpy(PNUM2, "NV");
+
+  EXEC SQL DECLARE SMURF CURSOR FOR
+           SELECT PNUM, HOURS FROM WORKS
+           WHERE  EMPNUM = 'E1'
+           ORDER BY HOURS DESC;
+
+  EXEC SQL OPEN SMURF;
+
+  EXEC SQL FETCH SMURF INTO :PNUM1, :HOURS1;
+
+  EXEC SQL FETCH SMURF INTO :PNUM2, :HOURS2;
+
+  EXEC SQL CLOSE SMURF;
+
+
+printf("The correct result is approximately:\n");
+printf("           PNUM1 = P3, HOURS1 = 80\n");
+printf("           PNUM2 = P1       , HOURS2 = 40\n");
+printf("Your answer is :\n");
+printf("           PNUM1 = %s HOURS1 = %ld\n",PNUM1,HOURS1);
+printf("           PNUM2 = %s HOURS2 = %f\n",PNUM2,HOURS2);
+  
+if(HOURS1 == 80 && HOURS2>39.9 && HOURS2<40.1 && strncmp(PNUM1,"P3",2) == 0)
+   flag = 1;
+else
+   flag = 0;
+if (strncmp(PNUM2, "P1",2) == 0 && flag == 1)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0404','pass','PC');
+    }
+  else
+    {
+      printf("      dml069.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0404','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0404 ********************/
+
+
+
+/******************** BEGIN TEST0405 ********************/
+
+  printf("\n                      TEST0405      \n");
+  printf("  2 cursors open from different schemas (coded join)\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("           DECLARE BEE CURSOR FOR\n");
+printf("           SELECT PNUM, HOURS FROM WORKS\n");
+printf("           WHERE EMPNUM = 'E1';\n");
+printf("\n");
+printf("           DECLARE FLOWER CURSOR FOR\n");
+printf("           SELECT COL1, COL2 FROM CUGINI.VTABLE;\n");
+printf("\n");
+  EXEC SQL DELETE FROM CUGINI.VTABLE;
+
+  EXEC SQL INSERT INTO CUGINI.VTABLE
+           VALUES (80, 100, 100, 100, 100.0);
+
+  EXEC SQL INSERT INTO CUGINI.VTABLE
+           VALUES (40, 200, 100, 100, 100.0);
+
+  EXEC SQL DECLARE BEE CURSOR FOR
+           SELECT PNUM, HOURS FROM WORKS
+           WHERE EMPNUM = 'E1'
+           ORDER BY HOURS DESC;
+
+
+  EXEC SQL DECLARE FLOWER CURSOR FOR
+           SELECT COL1, COL2 FROM CUGINI.VTABLE
+           ORDER BY COL1 DESC;
+
+  EXEC SQL OPEN FLOWER;
+
+printf("The correct result is :\n");
+printf("           PNUM1 = P3, HOURS1 = 80, TEMP2 = 100\n");
+printf("           PNUM1 = P1, HOURS1 = 40, TEMP2 = 200\n");
+printf("Your answer is :\n");
+flag = 1;
+count1 = 0;
+for (cnt2 = 1; cnt2 < 3; cnt2++)
+   {
+     EXEC SQL FETCH FLOWER INTO :TEMP1, :TEMP2;
+     EXEC SQL OPEN BEE;
+     for (cnt = 1; cnt < 7; cnt++)
+       {
+          EXEC SQL FETCH BEE INTO :PNUM1, :HOURS1;
+          if (SQLCODE >=0)
+             {
+                 if (HOURS1 == TEMP1)
+                     {
+printf("     PNUM1 = %s, HOURS1 = %ld, TEMP2 = %ld\n", PNUM1, HOURS1, TEMP2);
+if ((strncmp(PNUM1, "P3", 2)!=0 || HOURS1!=80 || TEMP2!=100) && count1 == 0)
+                           flag = 0;
+if ((strncmp(PNUM1, "P1", 2)!=0 || HOURS1!=40 || TEMP2!=200) && count1 == 1)
+                           flag = 0;
+                        count1 = count1 + 1;
+                     }
+             }
+       }
+    EXEC SQL CLOSE BEE;
+    }
+
+  EXEC SQL CLOSE FLOWER;
+
+  EXEC SQL ROLLBACK WORK;
+  
+  if (count1 == 2 && flag == 1)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0405','pass','PC');
+    }
+  else
+    {
+      printf("      dml069.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0405','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0405 ********************/
+
+
+
+
+/******************** BEGIN TEST0406 ********************/
+
+  printf("\n                      TEST0406      \n");
+  printf("      Subquery from different schema\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("           SELECT PNUM INTO :PNUM1 FROM WORKS\n");
+printf("           WHERE EMPNUM = 'E1' AND HOURS IN \n");
+printf("                 (SELECT COL1 FROM CUGINI.VTABLE\n");
+printf("                  WHERE COL1 > 50);\n");
+printf("\n");
+  strcpy(PNUM1, "NV");
+  EXEC SQL DELETE FROM CUGINI.VTABLE;
+
+  EXEC SQL INSERT INTO CUGINI.VTABLE
+           VALUES (80, 100, 100, 100, 100.0);
+
+  EXEC SQL INSERT INTO CUGINI.VTABLE
+           VALUES (40, 200, 100, 100, 100.0);
+
+  EXEC SQL SELECT PNUM INTO :PNUM1 FROM WORKS
+           WHERE EMPNUM = 'E1' AND HOURS IN 
+                 (SELECT COL1 FROM CUGINI.VTABLE
+                  WHERE  COL1 > 50);
+
+  EXEC SQL ROLLBACK WORK;
+
+printf("The correct result is :\n");
+printf("           PNUM1 = P3\n");
+printf("Your answer is :\n");
+printf("           PNUM1 = %s\n",PNUM1);
+  
+  
+  if (strncmp(PNUM1, "P3", 2) == 0)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0406','pass','PC');
+    }
+  else
+    {
+      printf("      dml069.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0406','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0406 ********************/
+
+
+
+/******************** BEGIN TEST0407 ********************/
+
+  printf("\n                  TEST0407      \n");
+  printf("      SELECT INTO :XX ... WHERE :XX =\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("           SELECT  PNUM, HOURS INTO :PNUM1, :HOURS1\n");
+printf("           FROM WORKS\n");
+printf("           WHERE  :HOURS1 < HOURS AND PNUM > :PNUM1;\n");
+printf("\n");
+  HOURS1 = 70;
+  strcpy(PNUM1, "P4");
+
+  EXEC SQL SELECT  PNUM, HOURS INTO :PNUM1, :HOURS1
+           FROM WORKS
+           WHERE  :HOURS1 < HOURS AND PNUM > :PNUM1;
+
+printf("The correct result is :\n");
+printf("           PNUM1 = P5, HOURS1 = 80\n");
+printf("Your answer is :\n");
+printf("           PNUM1 = %s HOURS1 = %ld\n",PNUM1,HOURS1);
+  
+if (HOURS1 == 80 && strncmp(PNUM1,"P5",2) == 0)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0407','pass','PC');
+    }
+  else
+    {
+      printf("      dml069.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0407','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0407 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0408 ********************/
+
+  printf("\n                      TEST0408      \n");
+  printf("   UPDATE references column value BEFORE update\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("   UPDATE WORKS1\n");
+printf("   SET PNUM = EMPNUM, EMPNUM = PNUM, HOURS = (HOURS + 3) * HOURS;\n");
+
+  EXEC SQL DELETE FROM WORKS1;
+
+  EXEC SQL INSERT INTO WORKS1
+           SELECT * FROM WORKS;
+
+  EXEC SQL UPDATE WORKS1
+           SET PNUM = EMPNUM, EMPNUM = PNUM, HOURS = (HOURS + 3) * HOURS;
+  
+  EXEC SQL DECLARE TURTLE CURSOR FOR
+           SELECT * FROM WORKS1
+           WHERE EMPNUM = 'P2'
+           ORDER BY EMPNUM, PNUM ASC;
+
+  flag = 1;
+  HOURS1 = 0;
+  strcpy(PNUM1, "NV");
+
+  printf("The correct result is :\n");
+  printf("EMPNO1 = P2,  PNUM1 = E1, HOURS1 = 460\n");
+  printf("EMPNO1 = P2,  PNUM1 = E2, HOURS1 = 6640\n");
+  printf("EMPNO1 = P2,  PNUM1 = E3, HOURS1 = 460\n");
+  printf("EMPNO1 = P2,  PNUM1 = E4, HOURS1 = 460\n");
+
+printf("Your answer is :\n");
+  EXEC SQL OPEN TURTLE;
+
+  EXEC SQL FETCH TURTLE INTO :EMPNO1, :PNUM1, :HOURS1;
+  printf("EMPNO1 = %s, PNUM1 = %s, HOURS1 = %ld\n", EMPNO1, PNUM1, HOURS1);
+if (strncmp(EMPNO1,"P2",2) != 0 || strncmp(PNUM1,"E1",2) != 0 || HOURS1 != 460)
+     flag = 0;
+
+  EXEC SQL FETCH TURTLE INTO :EMPNO1, :PNUM1, :HOURS1;
+  printf("EMPNO1 = %s, PNUM1 = %s, HOURS1 = %ld\n", EMPNO1, PNUM1, HOURS1);
+if (strncmp(EMPNO1,"P2",2) != 0||strncmp(PNUM1,"E2",2) != 0 || HOURS1 != 6640)
+     flag = 0;
+
+  EXEC SQL FETCH TURTLE INTO :EMPNO1, :PNUM1, :HOURS1;
+  printf("EMPNO1 = %s, PNUM1 = %s, HOURS1 = %ld\n", EMPNO1, PNUM1, HOURS1);
+if (strncmp(EMPNO1,"P2",2) != 0 || strncmp(PNUM1,"E3",2) != 0 || HOURS1 != 460)
+     flag = 0;
+
+  EXEC SQL FETCH TURTLE INTO :EMPNO1, :PNUM1, :HOURS1;
+  printf("EMPNO1 = %s, PNUM1 = %s, HOURS1 = %ld\n", EMPNO1, PNUM1, HOURS1);
+if (strncmp(EMPNO1,"P2",2) != 0 || strncmp(PNUM1,"E4",2) != 0 || HOURS1 != 460)
+     flag = 0;
+
+  EXEC SQL CLOSE TURTLE;
+
+  EXEC SQL ROLLBACK WORK;
+
+  
+  if (flag == 1)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0408','pass','PC');
+    }
+  else
+    {
+      printf("      dml069.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0408','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0408 ********************/
+
+
+  exit(errcnt);
+
+}
+

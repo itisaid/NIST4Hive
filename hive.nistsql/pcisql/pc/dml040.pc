@@ -1,0 +1,130 @@
+/*  EMBEDDED C (file "DML040.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/09/29 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML040.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS SELECTION FROM TWO DIFFERENT            */
+/*  SCHEMAS (JOIN TWO DIFFERENT SCHEMAS).                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                Section 5.20 <from clause>                     */
+/*            and Section 5.4  Names                             */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char EMPNO1[4];
+    long GRADE1;
+    long COL2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long i;
+    long ii;
+    long iii;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml040.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0209 ********************/
+
+  printf("\n                    TEST0209      \n");
+  printf("This routine joins two tables from different schemas\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO CUGINI.VTABLE
+           SELECT *
+           FROM   VTABLE;
+
+  EXEC SQL DECLARE X CURSOR FOR
+           SELECT  COL1, EMPNUM, GRADE
+           FROM    CUGINI.VTABLE, STAFF
+           WHERE   COL1 < 200 AND GRADE > 12;
+
+  EXEC SQL OPEN X;
+
+  iii = 0;
+  for (i=1;i<10;i++)
+    {
+      EXEC SQL FETCH X INTO :COL2, :EMPNO1, :GRADE1;
+      if (SQLCODE == 0)
+       {
+        ii = i;
+        iii = iii + COL2;
+        printf("   COL2 = %ld,   GRADE1 = %ld \n", COL2, GRADE1);
+       }
+    }
+
+  printf(" ii = %ld, iii = %ld \n\n", ii, iii);
+
+  printf(" The correct answer should be ii = 6 and iii = 220. \n");
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (ii == 6 && iii == 220)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0209','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml040.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0209','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0209 ********************/
+
+  exit(errcnt);
+}
+

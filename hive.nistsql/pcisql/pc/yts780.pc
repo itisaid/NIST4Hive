@@ -1,0 +1,518 @@
+/*  EMBEDDED C (file "YTS780.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS780.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  This routine tests <time zone interval> in literal           */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    5.3    F.30                                                */
+/*    5.3    SR.16                                               */
+/*    5.3    GR.8                                                */
+/*    6.1    SR.27                                               */
+/*    6.1    GR.5                                                */
+/*    6.4    SR.6  <column reference>                            */
+/*    6.4    SR.7                                                */
+/*    6.4    GR.2                                                */
+/*    6.6    GR.3  <extract expression>                          */
+/*    6.14   GR.4  <datetime value expression>                   */
+/*    8.3          <between predicate>                           */
+/*    F#41   Time zone specification                             */
+/*    F#5    DATETIME data types                                 */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*  24/10/95 Structure of table inserts corrected                */
+/*  Inserts to TTIME and TTIME2 separated to ensure no problem   */
+/*  with primary key PK                                          */
+/*  2/1/96 CAST statement added                                  */
+/*  Compilicated IF loop removed                                 */
+/*  derived table replaced                                       */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-18                                    */
+/*    Added rollback after authid                                */
+/*    Removed EXEC SQL from printf                               */
+/*    Removed huge chunks of code that required TIME and TIME    */
+/*      WITH TIME ZONE to be the "same" data type -- this is a   */
+/*      debatable issue                                          */
+/*    Fixed expected results                                     */
+/*    Sort-of added a subtest                                    */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+short id;
+short uthr;
+short utmin;
+short lochr;
+short locmin;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+ {
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts780.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7560 ********************/
+flag = 1;
+
+     printf("                  TEST7560 \n");
+     printf("   <time zone interval> in literal\n");
+     printf("References:\n");
+     printf("    5.3   F.30\n");
+     printf("    5.3   SR.16\n");
+     printf("    5.3   GR.8\n");
+     printf("    6.1   SR.27\n");
+     printf("    6.1   GR.5\n");
+     printf("    6.4   SR.6  <column reference>\n");
+     printf("    6.4   SR.7\n");
+     printf("    6.4   GR.2\n");
+     printf("    6.6   GR.3  <extract expression>\n");
+     printf("    6.14  GR.4  <datetime value expression>\n");
+     printf("    8.3         <between predicate>\n");
+     printf("    F#41  Time zone specification.\n");
+     printf("    F#5   DATETIME data types.\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* prepare the database for the test */
+printf("DELETE FROM TTIME_BASE;\n");
+EXEC SQL DELETE FROM TTIME_BASE;
+CHCKOK ();
+printf("\n");
+ 
+/* Populate TTIME2 with values */
+printf("INSERT INTO TTIME2 \n");
+printf("VALUES (4, TIME '12:00:00-07:35',\n");
+printf("TIMESTAMP '1995-12-25 12:00:00-07:35'); \n");
+EXEC SQL INSERT INTO TTIME2 
+VALUES (4, TIME '12:00:00-07:35',TIMESTAMP '1995-12-25 12:00:00-07:35'); 
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TTIME2\n");
+printf("VALUES (5, TIME '10:00:00-09:40',\n");
+printf("TIMESTAMP '2000-01-01 00:00:00-12:32'); \n");
+EXEC SQL INSERT INTO TTIME2
+VALUES (5, TIME '10:00:00-09:40',TIMESTAMP '2000-01-01 00:00:00-12:32'); 
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TTIME2\n");
+printf("VALUES (2, TIME '00:10:00+08:38',\n");
+printf("TIMESTAMP '1984-12-07 19:56:32+08:29');\n");
+EXEC SQL INSERT INTO TTIME2
+VALUES (2, TIME '00:10:00+08:38',TIMESTAMP '1984-12-07 19:56:32+08:29');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TTIME2\n");
+printf("VALUES (3, TIME '05:55:15-10:30',\n");
+printf("TIMESTAMP '1970-07-13 09:45:10+01:00');\n");
+EXEC SQL INSERT INTO TTIME2
+VALUES (3, TIME '05:55:15-10:30',TIMESTAMP '1970-07-13 09:45:10+01:00');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TTIME2\n");
+printf("VALUES (1, TIME '17:49:32+05:55',\n");
+printf("TIMESTAMP '1972-05-07 02:58:30-11:34');\n");
+EXEC SQL INSERT INTO TTIME2
+VALUES (1, TIME '17:49:32+05:55',TIMESTAMP '1972-05-07 02:58:30-11:34');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TTSTORE2\n");
+printf("SELECT PK,\n");
+printf("       EXTRACT (HOUR FROM \n");
+printf("               TT2 AT TIME ZONE INTERVAL '00:00' HOUR TO MINUTE),\n");
+printf("       EXTRACT (MINUTE FROM\n");
+printf("               TT2 AT TIME ZONE INTERVAL '00:00' HOUR TO MINUTE),\n");
+printf("       TT2\n");
+printf("       FROM TTIME2;\n");
+EXEC SQL INSERT INTO TTSTORE2
+SELECT PK,
+       EXTRACT (HOUR FROM 
+               TT2 AT TIME ZONE INTERVAL '00:00' HOUR TO MINUTE),
+       EXTRACT (MINUTE FROM
+               TT2 AT TIME ZONE INTERVAL '00:00' HOUR TO MINUTE),
+       TT2
+       FROM TTIME2;
+
+CHCKOK ();
+printf("\n");
+
+/* declare cursor to return values in TT */
+
+printf("DECLARE data780 CURSOR FOR\n");
+printf("SELECT num, colthu, coltmu,\n");
+printf("        EXTRACT (HOUR FROM TT2),\n");
+printf("        EXTRACT (MINUTE FROM TT2)\n");
+printf("FROM TTSTORE2\n");
+printf("ORDER BY colthu, coltmu;\n\n");
+
+EXEC SQL DECLARE data780 CURSOR FOR
+         SELECT num, colthu, coltmu,
+               EXTRACT (HOUR FROM TT2),
+               EXTRACT (MINUTE FROM TT2)
+         FROM TTSTORE2
+         ORDER BY colthu, coltmu;
+
+printf("OPEN data780\n");
+EXEC SQL OPEN data780;
+CHCKOK ();
+printf("\n");
+
+/* initialise all host variables */
+    id = 99;
+    uthr = 99;
+    utmin = 99;
+    lochr = 99;
+    locmin = 99;
+
+printf("FETCH data780 INTO :id, :uthr, :utmin, :lochr, :locmin;\n");
+EXEC SQL FETCH data780 INTO 
+:id, :uthr, :utmin, :lochr, :locmin;
+CHCKOK ();
+printf ("id should be 1; its value is %d\n", id);
+if (id != 1)
+  flag = 0;
+printf("UTC time should be 11:54, it is %d:%d\n", uthr, utmin);
+if (uthr != 11 || utmin != 54)
+   flag = 0;
+printf("Stored time should be 17:49, it is %d:%d\n\n", lochr, locmin);
+if (lochr != 17 || locmin != 49)
+   flag = 0;
+
+/* initialise all host variables */
+    id = 99;
+    uthr = 99;
+    utmin = 99;
+    lochr = 99;
+    locmin = 99;
+
+printf("FETCH data780 INTO :id, :uthr, :utmin, :lochr, :locmin;\n");
+EXEC SQL FETCH data780 INTO 
+:id, :uthr, :utmin, :lochr, :locmin;
+CHCKOK ();
+printf ("id should be 2; its value is %d\n", id);
+if (id != 2)
+  flag = 0;
+printf("UTC time should be 15:32, it is %d:%d\n", uthr, utmin);
+if (uthr != 15 || utmin != 32)
+   flag = 0;
+printf("Stored time should be 0:10, it is %d:%d\n\n", lochr, locmin);
+if (lochr != 0 || locmin != 10)
+   flag = 0;
+
+/* initialise all host variables */
+    id = 99;
+    uthr = 99;
+    utmin = 99;
+    lochr = 99;
+    locmin = 99;
+
+printf("FETCH data780 INTO :id, :uthr, :utmin, :lochr, :locmin;\n");
+EXEC SQL FETCH data780 INTO 
+:id, :uthr, :utmin, :lochr, :locmin;
+CHCKOK ();
+printf ("id should be 3; its value is %d\n", id);
+if (id != 3)
+  flag = 0;
+printf("UTC time should be 16:25, it is %d:%d\n", uthr, utmin);
+if (uthr != 16 || utmin != 25)
+   flag = 0;
+printf("Stored time should be 5:55, it is %d:%d\n\n", lochr, locmin);
+if (lochr != 5 || locmin != 55)
+   flag = 0;
+
+/* initialise all host variables */
+    id = 99;
+    uthr = 99;
+    utmin = 99;
+    lochr = 99;
+    locmin = 99;
+
+printf("FETCH data780 INTO :id, :uthr, :utmin, :lochr, :locmin;\n");
+EXEC SQL FETCH data780 INTO 
+:id, :uthr, :utmin, :lochr, :locmin;
+CHCKOK ();
+printf ("id should be 4; its value is %d\n", id);
+if (id != 4)
+  flag = 0;
+printf("UTC time should be 19:35, it is %d:%d\n", uthr, utmin);
+if (uthr != 19 || utmin != 35)
+   flag = 0;
+printf("Stored time should be 12:0, it is %d:%d\n\n", lochr, locmin);
+if (lochr != 12 || locmin != 0)
+   flag = 0;
+
+/* initialise all host variables */
+    id = 99;
+    uthr = 99;
+    utmin = 99;
+    lochr = 99;
+    locmin = 99;
+
+printf("FETCH data780 INTO :id, :uthr, :utmin, :lochr, :locmin;\n");
+EXEC SQL FETCH data780 INTO 
+:id, :uthr, :utmin, :lochr, :locmin;
+CHCKOK ();
+printf ("id should be 5; its value is %d\n", id);
+if (id != 5)
+  flag = 0;
+printf("UTC time should be 19:40, it is %d:%d\n", uthr, utmin);
+if (uthr != 19 || utmin != 40)
+   flag = 0;
+printf("Stored time should be 10:0, it is %d:%d\n\n", lochr, locmin);
+if (lochr != 10 || locmin != 0)
+   flag = 0;
+
+printf("CLOSE data780\n");
+EXEC SQL CLOSE data780;
+CHCKOK ();
+printf("\n");
+
+/* Check TIMESTAMP WITH TIMEZONE values */
+/* initialise all host variables */
+    id = 99;
+    lochr = 99;
+    locmin = 99;
+
+printf("SELECT PK, EXTRACT (HOUR FROM TS2),\n");
+printf("           EXTRACT (MINUTE FROM TS2)\n");
+printf("INTO :id, :lochr, :locmin\n");
+printf("FROM TTIME2\n");
+printf("WHERE PK = 1;\n");
+
+EXEC SQL SELECT PK,
+         EXTRACT (HOUR FROM TS2),
+         EXTRACT (MINUTE FROM TS2)
+INTO :id, :lochr, :locmin
+FROM TTIME2
+WHERE PK = 1;
+CHCKOK ();
+printf ("id should be 1; its value is %d\n", id);
+printf ("lochr should be 2; its value is %d\n", lochr);
+printf ("locmin should be 58; its value is %d\n\n", locmin);
+if (id != 1 || lochr != 2 || locmin != 58)
+  flag = 0;
+
+/* between 16:25 and 19:40 UTC */
+/* between 12:25 and 15:40 AST */
+/* between 17:25 and 20:40 MET */
+
+printf("DECLARE data780b CURSOR FOR\n");
+printf("     SELECT num FROM TTSTORE2\n");
+printf("     WHERE TT2 BETWEEN TIME '12:25:00-04:00'\n");
+printf("       AND TIME '20:40:00+01:00'\n");
+printf("     ORDER BY num DESC;\n\n");
+EXEC SQL DECLARE data780b CURSOR FOR
+     SELECT num FROM TTSTORE2
+     WHERE TT2 BETWEEN TIME '12:25:00-04:00'
+       AND TIME '20:40:00+01:00'
+     ORDER BY num DESC;
+
+/* Descending order: */
+/* 5  10:00:00-9:40 */
+/* 4  12:00:00-7:35 */
+/* 2  00:10:00+8:38 */
+
+printf("OPEN data780b;\n");
+EXEC SQL OPEN data780b;
+CHCKOK ();
+printf("\n");
+
+id = 0;
+printf("FETCH DATA780B INTO :id;\n");
+EXEC SQL FETCH DATA780B INTO :id;
+CHCKOK ();
+printf ("id should be 5; its value is %d\n\n", id);
+if (id != 5)
+  flag = 0;
+
+id = 0;
+printf("FETCH DATA780B INTO :id;\n");
+EXEC SQL FETCH DATA780B INTO :id;
+CHCKOK ();
+printf ("id should be 4; its value is %d\n\n", id);
+if (id != 4)
+  flag = 0;
+
+id = 0;
+printf("FETCH DATA780B INTO :id;\n");
+EXEC SQL FETCH DATA780B INTO :id;
+CHCKOK ();
+printf ("id should be 2; its value is %d\n\n", id);
+if (id != 2)
+  flag = 0;
+
+printf("CLOSE data780b;\n");
+EXEC SQL CLOSE data780b;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts780.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7560','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts780.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7560','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7560 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

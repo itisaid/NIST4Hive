@@ -1,0 +1,570 @@
+/*  EMBEDDED C (file "DML111.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/11/17 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML111.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests DATETIME features in Transitional         */
+/*  SQL with cursors.  This is the dynamic version of            */
+/*  DML110.                                                      */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+long int3;
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml111.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0620 ********************/
+flag = 1;
+
+     printf("                  TEST0620 \n");
+     printf("     DATETIME cursor operations (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 5, 20\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE TEMPS ('      ||
+       '  ENTERED  TIMESTAMP,'     ||
+       '  START    DATE,'          ||
+       '  APPT     INTERVAL DAY,'  ||
+       '  HOUR_IN  TIME,'          ||
+       '  HOUR_OUT TIME,'          ||
+       '  LUNCH    INTERVAL HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMPS VALUES ('                      ||
+       '  TIMESTAMP ''1993-11-10 12:25:14'','            ||
+       '  DATE ''1993-11-12'','                          ||
+       '  INTERVAL ''4'' DAY,'                           ||
+       '  TIME ''08:30:00'','                            ||
+       '  TIME ''16:30:00'','                            ||
+       '  INTERVAL ''1:00'' HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMPS VALUES ('                      ||
+       '  TIMESTAMP ''1993-11-10 13:15:14'','            ||
+       '  DATE ''1993-11-15'','                          ||
+       '  INTERVAL ''5'' DAY,'                           ||
+       '  TIME ''08:30:00'','                            ||
+       '  TIME ''17:30:00'','                            ||
+       '  INTERVAL ''0:30'' HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMPS VALUES ('                      ||
+       '  TIMESTAMP ''1993-11-17 09:56:48'','            ||
+       '  DATE ''1994-11-18'','                          ||
+       '  INTERVAL ''3'' DAY,'                           ||
+       '  TIME ''09:00:00'','                            ||
+       '  TIME ''17:00:00'','                            ||
+       '  INTERVAL ''1:00'' HOUR TO MINUTE)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT EXTRACT (MINUTE FROM LUNCH) FROM TEMPS\"\n");
+     strcpy (dstmt,
+     "SELECT EXTRACT (MINUTE FROM LUNCH) FROM TEMPS     ");
+
+printf("PREPARE S11111 FROM :dstmt;\n");
+EXEC SQL PREPARE S11111 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11111 CURSOR FOR S11111;\n");
+EXEC SQL DECLARE C11111 CURSOR FOR S11111;
+
+printf("\n");
+
+printf("OPEN C11111;\n");
+EXEC SQL OPEN C11111;
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+int2 = 0;
+int3 = 0;
+printf("FETCH C11111 INTO :int1;\n");
+EXEC SQL FETCH C11111 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n", int1);
+if (int1 == 0)
+  int2 = int2 + 1;
+if (int1 == 30)
+  int3 = int3 + 1;
+int1 = -1;
+printf("FETCH C11111 INTO :int1;\n");
+EXEC SQL FETCH C11111 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n", int1);
+if (int1 == 0)
+  int2 = int2 + 1;
+if (int1 == 30)
+  int3 = int3 + 1;
+int1 = -1;
+printf("FETCH C11111 INTO :int1;\n");
+EXEC SQL FETCH C11111 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n", int1);
+if (int1 == 0)
+  int2 = int2 + 1;
+if (int1 == 30)
+  int3 = int3 + 1;
+printf("FETCH C11111 INTO :int1;\n");
+EXEC SQL FETCH C11111 INTO :int1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should have shown 0 twice and 30 once.\n");
+printf ("There were %ld 0(s) and %ld 30(s).\n\n", int2, int3);
+if (int2 != 2 || int3 != 1)
+  flag = 0;
+
+printf("CLOSE C11111;\n");
+EXEC SQL CLOSE C11111;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C11111;\n");
+EXEC SQL OPEN C11111;
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11111 INTO :int1;\n");
+EXEC SQL FETCH C11111 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n\n", int1);
+
+/* <preparable dynamic update statement: positioned> is Full SQL */
+
+/* Jim Melton says that the "dynamic" positioned updates and       */
+/* deletes have to pass the compiler despite the unquoted presence */
+/* of a table name that isn't known at compile time.               */
+
+printf("UPDATE TEMPS\n");
+printf("  SET LUNCH = INTERVAL '0:45' HOUR TO MINUTE\n");
+printf("  WHERE CURRENT OF C11111;\n");
+EXEC SQL UPDATE TEMPS
+  SET LUNCH = INTERVAL '0:45' HOUR TO MINUTE
+  WHERE CURRENT OF C11111;
+
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE C11111;\n");
+EXEC SQL CLOSE C11111;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE'   ||
+       '  EXTRACT (MINUTE FROM LUNCH) <> 0' ||
+       '  AND EXTRACT (MINUTE FROM LUNCH) <> 30'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11113 FROM :longst;\n");
+EXEC SQL PREPARE S11113 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11113 CURSOR FOR S11113;\n");
+EXEC SQL DECLARE C11113 CURSOR FOR S11113;
+printf("\n");
+
+printf("OPEN C11113;\n");
+EXEC SQL OPEN C11113;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11113 INTO :int1;\n");
+EXEC SQL FETCH C11113 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C11113;\n");
+EXEC SQL CLOSE C11113;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM TEMPS WHERE' ||
+       '  EXTRACT (MINUTE FROM LUNCH) = 45'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11114 FROM :longst;\n");
+EXEC SQL PREPARE S11114 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11114 CURSOR FOR S11114;\n");
+EXEC SQL DECLARE C11114 CURSOR FOR S11114;
+printf("\n");
+
+printf("OPEN C11114;\n");
+EXEC SQL OPEN C11114;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11114 INTO :int1;\n");
+EXEC SQL FETCH C11114 INTO :int1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE C11114;\n");
+EXEC SQL CLOSE C11114;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT EXTRACT (YEAR FROM ENTERED) FROM TEMPS WHERE' ||
+       '   LUNCH = INTERVAL ''0:45'' HOUR TO MINUTE'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S11115 FROM :longst;\n");
+EXEC SQL PREPARE S11115 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11115 CURSOR FOR S11115;\n");
+EXEC SQL DECLARE C11115 CURSOR FOR S11115;
+
+printf("\n");
+
+printf("OPEN C11115;\n");
+EXEC SQL OPEN C11115;
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11115 INTO :int1;\n");
+EXEC SQL FETCH C11115 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n\n", int1);
+
+/* Jim Melton says that the "dynamic" positioned updates and       */
+/* deletes have to pass the compiler despite the unquoted presence */
+/* of a table name that isn't known at compile time.               */
+
+printf("DELETE FROM TEMPS\n");
+printf("  WHERE CURRENT OF C11115;\n");
+EXEC SQL DELETE FROM TEMPS
+  WHERE CURRENT OF C11115;
+
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE C11115;\n");
+EXEC SQL CLOSE C11115;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C11114;\n");
+EXEC SQL OPEN C11114;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11114 INTO :int1;\n");
+EXEC SQL FETCH C11114 INTO :int1;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("CLOSE C11114;\n");
+EXEC SQL CLOSE C11114;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM TEMPS\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM TEMPS                        ");
+
+printf("PREPARE S11116 FROM :dstmt;\n");
+EXEC SQL PREPARE S11116 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C11116 CURSOR FOR S11116;\n");
+EXEC SQL DECLARE C11116 CURSOR FOR S11116;
+
+printf("\n");
+
+printf("OPEN C11116;\n");
+EXEC SQL OPEN C11116;
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11116 INTO :int1;\n");
+EXEC SQL FETCH C11116 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE TEMPS CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE TEMPS CASCADE                          ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0620','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml111.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0620','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0620 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

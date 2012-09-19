@@ -1,0 +1,439 @@
+/*  EMBEDDED C (file "DML182.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-20 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML182.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+long int3;
+long int4;
+long int5;
+long int6;
+long int7;
+long int8;
+long int9;
+long int10;
+long int11;
+long int12;
+long int13;
+long int14;
+long int15;
+float flt1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml182.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0895 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0895\n");
+     printf("        FIPS sizing, columns in list >= 15\n");
+     printf("References:\n");
+     printf("FIPS 16.6 -- Sizing #28, Columns in a UNIQUE constraint\n");
+     printf("FIPS 16.6 -- Sizing #30, Columns in GROUP BY column list\n");
+     printf("FIPS 16.6 -- Sizing #32, Sort items in ORDER BY clause\n");
+     printf("FIPS 16.6 -- Sizing #34, Referencing columns in FOREIGN KEY\n");
+     printf("FIPS 16.6 -- Sizing #39, Columns in a named columns JOIN\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE ID_CODES (\n");
+printf("  CODE1 INT,\n");
+printf("  CODE2 INT,\n");
+printf("  CODE3 INT,\n");
+printf("  CODE4 INT,\n");
+printf("  CODE5 INT,\n");
+printf("  CODE6 INT,\n");
+printf("  CODE7 INT,\n");
+printf("  CODE8 INT,\n");
+printf("  CODE9 INT,\n");
+printf("  CODE10 INT,\n");
+printf("  CODE11 INT,\n");
+printf("  CODE12 INT,\n");
+printf("  CODE13 INT,\n");
+printf("  CODE14 INT,\n");
+printf("  CODE15 INT,\n");
+printf("  PRIMARY KEY (CODE1, CODE2, CODE3, CODE4, CODE5,\n");
+printf("    CODE6, CODE7, CODE8, CODE9, CODE10,\n");
+printf("    CODE11, CODE12, CODE13, CODE14, CODE15));\n");
+EXEC SQL CREATE TABLE ID_CODES (
+  CODE1 INT,
+  CODE2 INT,
+  CODE3 INT,
+  CODE4 INT,
+  CODE5 INT,
+  CODE6 INT,
+  CODE7 INT,
+  CODE8 INT,
+  CODE9 INT,
+  CODE10 INT,
+  CODE11 INT,
+  CODE12 INT,
+  CODE13 INT,
+  CODE14 INT,
+  CODE15 INT,
+  PRIMARY KEY (CODE1, CODE2, CODE3, CODE4, CODE5,
+    CODE6, CODE7, CODE8, CODE9, CODE10,
+    CODE11, CODE12, CODE13, CODE14, CODE15));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE ORDERS (\n");
+printf("  CODE1 INT,\n");
+printf("  CODE2 INT,\n");
+printf("  CODE3 INT,\n");
+printf("  CODE4 INT,\n");
+printf("  CODE5 INT,\n");
+printf("  CODE6 INT,\n");
+printf("  CODE7 INT,\n");
+printf("  CODE8 INT,\n");
+printf("  CODE9 INT,\n");
+printf("  CODE10 INT,\n");
+printf("  CODE11 INT,\n");
+printf("  CODE12 INT,\n");
+printf("  CODE13 INT,\n");
+printf("  CODE14 INT,\n");
+printf("  CODE15 INT,\n");
+printf("  TITLE VARCHAR (80),\n");
+printf("  COST NUMERIC(5,2),\n");
+printf("  FOREIGN KEY (CODE1, CODE2, CODE3, CODE4, CODE5,\n");
+printf("    CODE6, CODE7, CODE8, CODE9, CODE10,\n");
+printf("    CODE11, CODE12, CODE13, CODE14, CODE15)\n");
+printf("  REFERENCES ID_CODES);\n");
+EXEC SQL CREATE TABLE ORDERS (
+  CODE1 INT,
+  CODE2 INT,
+  CODE3 INT,
+  CODE4 INT,
+  CODE5 INT,
+  CODE6 INT,
+  CODE7 INT,
+  CODE8 INT,
+  CODE9 INT,
+  CODE10 INT,
+  CODE11 INT,
+  CODE12 INT,
+  CODE13 INT,
+  CODE14 INT,
+  CODE15 INT,
+  TITLE VARCHAR (80),
+  COST NUMERIC(5,2),
+  FOREIGN KEY (CODE1, CODE2, CODE3, CODE4, CODE5,
+    CODE6, CODE7, CODE8, CODE9, CODE10,
+    CODE11, CODE12, CODE13, CODE14, CODE15)
+  REFERENCES ID_CODES);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW ID_ORDERS AS\n");
+printf("  SELECT * FROM ID_CODES JOIN ORDERS\n");
+printf("  USING (CODE1, CODE2, CODE3, CODE4, CODE5,\n");
+printf("    CODE6, CODE7, CODE8, CODE9, CODE10,\n");
+printf("    CODE11, CODE12, CODE13, CODE14, CODE15);\n");
+EXEC SQL CREATE VIEW ID_ORDERS AS
+  SELECT * FROM ID_CODES JOIN ORDERS
+  USING (CODE1, CODE2, CODE3, CODE4, CODE5,
+    CODE6, CODE7, CODE8, CODE9, CODE10,
+    CODE11, CODE12, CODE13, CODE14, CODE15);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ID_CODES VALUES (\n");
+printf(" 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);\n");
+EXEC SQL INSERT INTO ID_CODES VALUES (
+ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ID_CODES VALUES (\n");
+printf(" 1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 12, 13, 14, 15);\n");
+EXEC SQL INSERT INTO ID_CODES VALUES (
+ 1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 12, 13, 14, 15);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORDERS VALUES (\n");
+printf(" 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,\n");
+printf("'Gidget Goes Skiing',\n");
+printf("29.95);\n");
+EXEC SQL INSERT INTO ORDERS VALUES (
+ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+'Gidget Goes Skiing',
+29.95);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORDERS VALUES (\n");
+printf(" 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,\n");
+printf("'Barney Goes Hawaiian',\n");
+printf("19.95);\n");
+EXEC SQL INSERT INTO ORDERS VALUES (
+ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+'Barney Goes Hawaiian',
+19.95);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORDERS VALUES (\n");
+printf(" 1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 12, 13, 14, 15,\n");
+printf("'Invasion of the Smurfs',\n");
+printf("9.95);\n");
+EXEC SQL INSERT INTO ORDERS VALUES (
+ 1, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 12, 13, 14, 15,
+'Invasion of the Smurfs',
+9.95);
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C0895 CURSOR FOR\n");
+printf("  SELECT CODE1, CODE2, CODE3, CODE4, CODE5,\n");
+printf("    CODE6, CODE7, CODE8, CODE9, CODE10,\n");
+printf("    CODE11, CODE12, CODE13, CODE14, CODE15,\n");
+printf("  AVG(COST)\n");
+printf("  FROM ID_ORDERS\n");
+printf("  GROUP BY CODE1, CODE2, CODE3, CODE4, CODE5,\n");
+printf("    CODE6, CODE7, CODE8, CODE9, CODE10,\n");
+printf("    CODE11, CODE12, CODE13, CODE14, CODE15\n");
+printf("  ORDER BY CODE1, CODE2, CODE3, CODE4, CODE5,\n");
+printf("    CODE6, CODE7, CODE8, CODE9, CODE10,\n");
+printf("    CODE11, CODE12, CODE13, CODE14, CODE15;\n");
+EXEC SQL DECLARE C0895 CURSOR FOR
+  SELECT CODE1, CODE2, CODE3, CODE4, CODE5,
+    CODE6, CODE7, CODE8, CODE9, CODE10,
+    CODE11, CODE12, CODE13, CODE14, CODE15,
+  AVG(COST)
+  FROM ID_ORDERS
+  GROUP BY CODE1, CODE2, CODE3, CODE4, CODE5,
+    CODE6, CODE7, CODE8, CODE9, CODE10,
+    CODE11, CODE12, CODE13, CODE14, CODE15
+  ORDER BY CODE1, CODE2, CODE3, CODE4, CODE5,
+    CODE6, CODE7, CODE8, CODE9, CODE10,
+    CODE11, CODE12, CODE13, CODE14, CODE15;
+
+printf("OPEN C0895;\n");
+EXEC SQL OPEN C0895;
+CHCKOK ();
+printf ("\n");
+
+flt1 = 0.0;
+printf("FETCH C0895 INTO :int1, :int2, :int3,\n");
+printf(":int4, :int5, :int6, :int7, :int8, :int9, :int10,\n");
+printf(":int11, :int12, :int13, :int14, :int15, :flt1;\n");
+EXEC SQL FETCH C0895 INTO :int1, :int2, :int3,
+:int4, :int5, :int6, :int7, :int8, :int9, :int10,
+:int11, :int12, :int13, :int14, :int15, :flt1;
+CHCKOK ();
+printf ("flt1 should be 24.95 +-0.01; its value is %f\n\n", flt1);
+if (flt1 < 24.94 || flt1 > 24.96)
+  flag = 0;
+
+flt1 = 0.0;
+printf("FETCH C0895 INTO :int1, :int2, :int3,\n");
+printf(":int4, :int5, :int6, :int7, :int8, :int9, :int10,\n");
+printf(":int11, :int12, :int13, :int14, :int15, :flt1;\n");
+EXEC SQL FETCH C0895 INTO :int1, :int2, :int3,
+:int4, :int5, :int6, :int7, :int8, :int9, :int10,
+:int11, :int12, :int13, :int14, :int15, :flt1;
+CHCKOK ();
+printf ("flt1 should be 9.95 +-0.01; its value is %f\n\n", flt1);
+if (flt1 < 9.94 || flt1 > 9.96)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE ORDERS CASCADE;\n");
+EXEC SQL DROP TABLE ORDERS CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE ID_CODES CASCADE;\n");
+EXEC SQL DROP TABLE ID_CODES CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0895','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml182.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0895','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0895 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

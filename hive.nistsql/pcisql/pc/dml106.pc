@@ -1,0 +1,1205 @@
+/*  EMBEDDED C (file "DML106.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/08/20 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML106.PC                                                    */
+/*  WRITTEN BY:  Joan Sullivan and David Flater                  */
+/*                                                               */
+/*  This routine tests several FIPS features in Transitional     */
+/*  SQL.  This is the non-dynamic version of DML107.             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char ch15[16];
+char ch3[4];
+long int1;
+long int2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml106.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0599 ********************/
+flag = 1;
+
+     printf("                  TEST0599 \n");
+     printf("      UNION in views (feature 8) (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 8\n");
+     printf("    ANSI SQL-1992 11.19 <view definition>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE VIEW UUSIG (U1) AS\n");
+printf("  SELECT C1 FROM USIG UNION SELECT C_1 FROM USIG;\n");
+EXEC SQL CREATE VIEW UUSIG (U1) AS
+  SELECT C1 FROM USIG UNION SELECT C_1 FROM USIG;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM UUSIG;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM UUSIG;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+
+if (int1 != 4)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(DISTINCT U1) INTO :int1 FROM UUSIG;\n");
+EXEC SQL SELECT COUNT(DISTINCT U1) INTO :int1 FROM UUSIG;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+
+if (int1 != 4)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM UUSIG WHERE U1 < 0\n");
+printf("  OR U1 > 3 OR U1 IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM UUSIG WHERE U1 < 0
+  OR U1 > 3 OR U1 IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+
+if (int1 != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW ABOVE_AVERAGE (COLUMN_1, COLUMN_2, COLUMN_3) AS\n");
+printf("      SELECT PNUM, BUDGET, CITY\n");
+printf("        FROM HU.PROJ OUTER_REF\n");
+printf("        WHERE BUDGET >= (SELECT AVG(BUDGET) FROM HU.PROJ INNER_REF\n");
+printf("                          WHERE OUTER_REF.CITY = INNER_REF.CITY)\n");
+printf("     UNION\n");
+printf("      SELECT 'MAX', MAX(BUDGET), MIN(CITY)\n");
+printf("        FROM HU.PROJ \n");
+printf("        WHERE CITY > 'Deale';\n");
+EXEC SQL CREATE VIEW ABOVE_AVERAGE (COLUMN_1, COLUMN_2, COLUMN_3) AS
+      SELECT PNUM, BUDGET, CITY
+        FROM HU.PROJ OUTER_REF
+        WHERE BUDGET >= (SELECT AVG(BUDGET) FROM HU.PROJ INNER_REF
+                          WHERE OUTER_REF.CITY = INNER_REF.CITY)
+     UNION
+      SELECT 'MAX', MAX(BUDGET), MIN(CITY)
+        FROM HU.PROJ 
+        WHERE CITY > 'Deale';
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE UNION1 CURSOR FOR\n");
+printf("  SELECT * FROM ABOVE_AVERAGE ORDER BY COLUMN_1;\n\n");
+EXEC SQL DECLARE UNION1 CURSOR FOR
+  SELECT * FROM ABOVE_AVERAGE ORDER BY COLUMN_1;
+
+printf("OPEN UNION1;\n");
+EXEC SQL OPEN UNION1;
+
+CHCKOK ();
+printf("\n");
+
+strcpy(ch3,"xxx");
+int1 = -1;
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION1 INTO :ch3, :int1, :ch15; \n");
+EXEC SQL FETCH UNION1 INTO :ch3, :int1, :ch15;
+CHCKOK ();
+printf("ch3 should be 'MAX'; its value is %s\n", ch3);
+printf("int1 should be 30000; its value is %ld\n", int1);
+printf("ch15 should be 'Tampa'; its value is %s\n\n", ch15);
+if (strcmp(ch3,"MAX") !=0 || int1 !=30000 || strcmp(ch15,"Tampa          ") !=0)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+int1 = -1;
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION1 INTO :ch3, :int1, :ch15; \n");
+EXEC SQL FETCH UNION1 INTO :ch3, :int1, :ch15;
+CHCKOK ();
+printf("ch3 should be 'P2 '; its value is %s\n", ch3);
+printf("int1 should be 30000; its value is %ld\n", int1);
+printf("ch15 should be 'Vienna'; its value is %s\n\n", ch15);
+if (strcmp(ch3,"P2 ") !=0 || int1 !=30000 || strcmp(ch15,"Vienna         ") !=0)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+int1 = -1;
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION1 INTO :ch3, :int1, :ch15; \n");
+EXEC SQL FETCH UNION1 INTO :ch3, :int1, :ch15;
+CHCKOK ();
+printf("ch3 should be 'P3 '; its value is %s\n", ch3);
+printf("int1 should be 30000; its value is %ld\n", int1);
+printf("ch15 should be 'Tampa'; its value is %s\n\n", ch15);
+if (strcmp(ch3,"P3 ") !=0 || int1 !=30000 || strcmp(ch15,"Tampa          ") !=0)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+int1 = -1;
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION1 INTO :ch3, :int1, :ch15; \n");
+EXEC SQL FETCH UNION1 INTO :ch3, :int1, :ch15;
+CHCKOK ();
+printf("ch3 should be 'P6 '; its value is %s\n", ch3);
+printf("int1 should be 50000; its value is %ld\n", int1);
+printf("ch15 should be 'Deale'; its value is %s\n\n", ch15);
+if (strcmp(ch3,"P6 ") !=0 || int1 !=50000 || strcmp(ch15,"Deale          ") !=0)
+   flag = 0;
+
+printf("FETCH UNION1 INTO :ch3, :int1, :ch15; \n");
+EXEC SQL FETCH UNION1 INTO :ch3, :int1, :ch15;
+printf("SQLCODE should be 100; its value is %ld\n\n", SQLCODE);
+if (SQLCODE != 100)
+   flag = 0;
+
+printf("COMMIT WORK;\n\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+
+printf("   CREATE VIEW STAFF_DUP AS\n");
+printf("      SELECT EMPNUM, EMPNAME, GRADE, CITY\n");
+printf("        FROM HU.STAFF\n");
+printf("     UNION ALL\n");
+printf("      SELECT * FROM HU.STAFF3;\n");
+EXEC SQL CREATE VIEW STAFF_DUP AS
+      SELECT EMPNUM, EMPNAME, GRADE, CITY
+        FROM HU.STAFF
+     UNION ALL
+      SELECT * FROM HU.STAFF3;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+
+printf("DECLARE UNION2 CURSOR FOR\n");
+printf("   SELECT EMPNUM, CITY FROM STAFF_DUP ORDER BY CITY;\n\n");
+EXEC SQL DECLARE UNION2 CURSOR FOR
+   SELECT EMPNUM, CITY FROM STAFF_DUP ORDER BY CITY;
+
+printf("OPEN UNION2;\n");
+EXEC SQL OPEN UNION2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION2 INTO :ch3, :ch15;\n");
+EXEC SQL FETCH UNION2 INTO :ch3, :ch15;
+CHCKOK ();
+printf("ch3 should be 'E5 '; its value is %s\n",ch3);
+printf("ch15 should be 'Akron'; its value is %s\n\n",ch15);
+if (strcmp(ch3,"E5 ") != 0 || strcmp(ch15,"Akron          ") != 0)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION2 INTO :ch3, :ch15;\n");
+EXEC SQL FETCH UNION2 INTO :ch3, :ch15;
+CHCKOK ();
+printf("ch3 should be 'E5 '; its value is %s\n",ch3);
+printf("ch15 should be 'Akron'; its value is %s\n\n",ch15);
+if (strcmp(ch3,"E5 ") != 0 || strcmp(ch15,"Akron          ") != 0)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM STAFF_DUP;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM STAFF_DUP;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+
+if (int1 != 10)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+
+printf("CREATE VIEW FOUR_CITIES (C1, C2, C3) AS\n");
+printf("      SELECT 'P', CITY, 666\n");
+printf("        FROM HU.PROJ\n");
+printf("        WHERE BUDGET <> 30000\n");
+printf("     UNION\n");
+printf("      SELECT 'S', CITY, 777\n");
+printf("        FROM HU.STAFF\n");
+printf("        WHERE EMPNAME <> 'Ed'\n");
+printf("     UNION\n");
+printf("      SELECT 'T', CITY, -999\n");
+printf("        FROM HU.STAFF3\n");
+printf("        WHERE CITY NOT LIKE 'V%'\n");
+printf("     UNION\n");
+printf("      SELECT 'X', CITY, -1\n");
+printf("        FROM HU.STAFF3\n");
+printf("        WHERE CITY = 'Vienna';\n");
+EXEC SQL CREATE VIEW FOUR_CITIES (C1, C2, C3) AS
+      SELECT 'P', CITY, 666
+        FROM HU.PROJ
+        WHERE BUDGET <> 30000
+     UNION
+      SELECT 'S', CITY, 777
+        FROM HU.STAFF
+        WHERE EMPNAME <> 'Ed'
+     UNION
+      SELECT 'T', CITY, -999
+        FROM HU.STAFF3
+        WHERE CITY NOT LIKE 'V%'
+     UNION
+      SELECT 'X', CITY, -1
+        FROM HU.STAFF3
+        WHERE CITY = 'Vienna';
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE UNION3 CURSOR FOR\n");
+printf("  SELECT C2, C1, C3 FROM FOUR_CITIES ORDER BY C3, C2;\n\n");
+EXEC SQL DECLARE UNION3 CURSOR FOR
+  SELECT C2, C1, C3 FROM FOUR_CITIES ORDER BY C3, C2;
+
+printf("OPEN UNION3;\n");
+EXEC SQL OPEN UNION3;
+
+CHCKOK ();
+printf("\n");
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Akron';  its value is %s\n",ch15);
+printf("ch3  should be 'T';      its value is %s\n",ch3);
+printf("int1 should be -999;     its value is %ld\n\n",int1);
+if (strcmp(ch15,"Akron          ") !=0 || strcmp(ch3,"T  ") !=0 || int1 != -999)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Deale';  its value is %s\n",ch15);
+printf("ch3  should be 'T';      its value is %s\n",ch3);
+printf("int1 should be -999;     its value is %ld\n\n",int1);
+if (strcmp(ch15,"Deale          ") !=0 || strcmp(ch3,"T  ") !=0 || int1 != -999)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Vienna'; its value is %s\n",ch15);
+printf("ch3  should be 'X';      its value is %s\n",ch3);
+printf("int1 should be -1;       its value is %ld\n\n",int1);
+if (strcmp(ch15,"Vienna         ") !=0 || strcmp(ch3,"X  ") !=0 || int1 != -1)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Deale';  its value is %s\n",ch15);
+printf("ch3  should be 'P';      its value is %s\n",ch3);
+printf("int1 should be 666;      its value is %ld\n\n",int1);
+if (strcmp(ch15,"Deale          ") !=0 || strcmp(ch3,"P  ") !=0 || int1 != 666)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Vienna'; its value is %s\n",ch15);
+printf("ch3  should be 'P';      its value is %s\n",ch3);
+printf("int1 should be 666;      its value is %ld\n\n",int1);
+if (strcmp(ch15,"Vienna         ") !=0 || strcmp(ch3,"P  ") !=0 || int1 != 666)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Deale';  its value is %s\n",ch15);
+printf("ch3  should be 'S';      its value is %s\n",ch3);
+printf("int1 should be 777;      its value is %ld\n\n",int1);
+if (strcmp(ch15,"Deale          ") !=0 || strcmp(ch3,"S  ") !=0 || int1 != 777)
+   flag = 0;
+
+strcpy(ch3,"xxx");
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+CHCKOK ();
+printf("ch15 should be 'Vienna'; its value is %s\n",ch15);
+printf("ch3  should be 'S';      its value is %s\n",ch3);
+printf("int1 should be 777;      its value is %ld\n\n",int1);
+if (strcmp(ch15,"Vienna         ") !=0 || strcmp(ch3,"S  ") !=0 || int1 != 777)
+   flag = 0;
+
+printf("FETCH UNION3 INTO :ch15, :ch3, :int1;\n");
+EXEC SQL FETCH UNION3 INTO :ch15, :ch3, :int1;
+printf("SQLCODE should be 100; its value is %ld\n\n",SQLCODE);
+if (SQLCODE != 100)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT (*) INTO :int1 FROM FOUR_CITIES;\n");
+EXEC SQL SELECT COUNT (*) INTO :int1 FROM FOUR_CITIES;
+CHCKOK ();
+printf ("int1 should be 7; its value is %ld\n\n", int1);
+
+if (int1 != 7)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FOUR_CITIES WHERE C3 > 0;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FOUR_CITIES WHERE C3 > 0;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+
+if (int1 != 4)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FOUR_CITIES WHERE C2 = 'Vienna';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FOUR_CITIES WHERE C2 = 'Vienna';
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+
+if (int1 != 3)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW ABOVE_AVERAGE CASCADE;\n");
+EXEC SQL DROP VIEW ABOVE_AVERAGE CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW STAFF_DUP CASCADE;\n");
+EXEC SQL DROP VIEW STAFF_DUP CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW FOUR_CITIES CASCADE;\n");
+EXEC SQL DROP VIEW FOUR_CITIES CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW UUSIG CASCADE;\n");
+EXEC SQL DROP VIEW UUSIG CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0599','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml106.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0599','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0599 *********************/
+/******************** BEGIN TEST0601 ********************/
+flag = 1;
+
+     printf("                  TEST0601 \n");
+     printf("    DATETIME data types (feature 5) (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 5\n");
+     printf("    ANSI SQL-1992 6.1 <data type>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TEMPUS (TDATE DATE, TTIME TIME,\n");
+printf("  TTIMESTAMP TIMESTAMP, TINT1 INTERVAL YEAR TO MONTH,\n");
+printf("  TINT2 INTERVAL DAY TO SECOND);\n");
+EXEC SQL CREATE TABLE TEMPUS (TDATE DATE, TTIME TIME,
+  TTIMESTAMP TIMESTAMP, TINT1 INTERVAL YEAR TO MONTH,
+  TINT2 INTERVAL DAY TO SECOND);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMPUS VALUES (\n");
+printf("  DATE '1993-08-24',\n");
+printf("  TIME '16:03:00',\n");
+printf("  TIMESTAMP '1993-08-24 16:03:00',\n");
+printf("  INTERVAL -'1-6' YEAR TO MONTH,\n");
+printf("  INTERVAL '13 0:10' DAY TO SECOND);\n");
+EXEC SQL INSERT INTO TEMPUS VALUES (
+  DATE '1993-08-24',
+  TIME '16:03:00',
+  TIMESTAMP '1993-08-24 16:03:00',
+  INTERVAL -'1-6' YEAR TO MONTH,
+  INTERVAL '13 0:10' DAY TO SECOND);
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT EXTRACT (DAY FROM TDATE)\n");
+printf("  INTO :int1 FROM TEMPUS;\n");
+EXEC SQL SELECT EXTRACT (DAY FROM TDATE)
+  INTO :int1 FROM TEMPUS;
+
+CHCKOK ();
+printf("int1 should be 24; its value is %ld\n\n", int1);
+if (int1 != 24)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM TEMPUS\n");
+printf("  WHERE (TTIMESTAMP - TIMESTAMP '1995-02-24 16:03:00')\n");
+printf("  YEAR TO MONTH = TINT1;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM TEMPUS
+  WHERE (TTIMESTAMP - TIMESTAMP '1995-02-24 16:03:00')
+  YEAR TO MONTH = TINT1;
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM TEMPUS\n");
+printf("  WHERE (TTIMESTAMP, TINT1) OVERLAPS\n");
+printf("  (TIMESTAMP '1995-02-24 16:03:00', INTERVAL '1-6' YEAR TO MONTH);\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM TEMPUS
+  WHERE (TTIMESTAMP, TINT1) OVERLAPS
+  (TIMESTAMP '1995-02-24 16:03:00', INTERVAL '1-6' YEAR TO MONTH);
+
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TEMPUS CASCADE;\n");
+EXEC SQL DROP TABLE TEMPUS CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0601','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml106.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0601','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0601 *********************/
+/******************** BEGIN TEST0611 ********************/
+flag = 1;
+
+     printf("                  TEST0611 \n");
+     printf("    FIPS sizing, DATETIME data types (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 5\n");
+     printf("    ANSI SQL-1992 6.1 <data type> SR.25-26\n");
+     printf("                                  LR.1.a\n");
+     printf("                 10.1 <interval qualifier> SR 3&4\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* 6.1 LR.1.a denies us the right to use <time precision> or  */
+/* <timestamp precision> in the declaration.  SR.25 says that */
+/* <time precision> defaults to 0 and <timestamp precision>   */
+/* defaults to 6.                                             */
+
+printf("CREATE TABLE TSFIPS (\n");
+printf("  FIPS1 TIME,\n");
+printf("  FIPS2 TIMESTAMP,\n");
+printf("  FIPS3 INTERVAL YEAR (2) TO MONTH,\n");
+printf("  FIPS4 INTERVAL DAY (2) TO SECOND (6));\n");
+EXEC SQL CREATE TABLE TSFIPS (
+  FIPS1 TIME,
+  FIPS2 TIMESTAMP,
+  FIPS3 INTERVAL YEAR (2) TO MONTH,
+  FIPS4 INTERVAL DAY (2) TO SECOND (6));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TSFIPS VALUES (\n");
+printf("  TIME '16:03:00',\n");
+printf("  TIMESTAMP '1996-08-24 16:03:00.999999',\n");
+printf("  INTERVAL -'99-6' YEAR (2) TO MONTH,\n");
+printf("  INTERVAL '99 0:10:00.999999' DAY (2) TO SECOND (6));\n");
+EXEC SQL INSERT INTO TSFIPS VALUES (
+  TIME '16:03:00',
+  TIMESTAMP '1996-08-24 16:03:00.999999',
+  INTERVAL -'99-6' YEAR (2) TO MONTH,
+  INTERVAL '99 0:10:00.999999' DAY (2) TO SECOND (6));
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT EXTRACT (SECOND FROM FIPS2)\n");
+printf("  * 1000000 - 999990 INTO :int1 FROM TSFIPS;\n");
+EXEC SQL SELECT EXTRACT (SECOND FROM FIPS2)
+  * 1000000 - 999990 INTO :int1 FROM TSFIPS;
+
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n\n", int1);
+if (int1 != 9)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("SELECT EXTRACT (YEAR FROM FIPS3),\n");
+printf("  EXTRACT (MONTH FROM FIPS3) INTO :int1, :int2\n");
+printf("  FROM TSFIPS;\n");
+EXEC SQL SELECT EXTRACT (YEAR FROM FIPS3),
+  EXTRACT (MONTH FROM FIPS3) INTO :int1, :int2
+  FROM TSFIPS;
+
+CHCKOK ();
+printf("int1 should be -99; its value is %ld\n", int1);
+printf("int2 should be -6; its value is %ld\n", int2);
+printf("Note:  The sign is specified by Subclause 6.6 GR.3.a.i\n");
+printf("  in ANSI SQL-1992.\n\n");
+if (int1 != -99 || int2 != -6)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("SELECT EXTRACT (DAY FROM FIPS4),\n");
+printf("  EXTRACT (SECOND FROM FIPS4) * 1000000 - 999990\n");
+printf("  INTO :int1, :int2 FROM TSFIPS;\n");
+EXEC SQL SELECT EXTRACT (DAY FROM FIPS4),
+  EXTRACT (SECOND FROM FIPS4) * 1000000 - 999990
+  INTO :int1, :int2 FROM TSFIPS;
+
+CHCKOK ();
+printf("int1 should be 99; its value is %ld\n", int1);
+printf("int2 should be 9; its value is %ld\n\n", int2);
+if (int1 != 99 || int2 != 9)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TSFIPS CASCADE;\n");
+EXEC SQL DROP TABLE TSFIPS CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0611','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml106.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0611','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0611 *********************/
+/******************** BEGIN TEST0613 ********************/
+flag = 1;
+
+     printf("                  TEST0613 \n");
+     printf("     <datetime value function> (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 5, 20\n");
+     printf("    ANSI SQL-1992 6.8 <datetime value function>\n");
+     printf("                  6.8 GR.3\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Support for timezones is not included in Transitional SQL */
+
+printf("CREATE TABLE TSSMALL (\n");
+printf("  SMALLD DATE,\n");
+printf("  SMALLT TIME,\n");
+printf("  SMALLTS TIMESTAMP);\n");
+
+EXEC SQL CREATE TABLE TSSMALL (
+  SMALLD DATE,
+  SMALLT TIME,
+  SMALLTS TIMESTAMP);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TSSMALL VALUES (\n");
+printf("  CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP);\n");
+
+EXEC SQL INSERT INTO TSSMALL VALUES (
+  CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP);
+
+CHCKOK ();
+printf("\n");
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("FROM TSSMALL WHERE\n");
+printf("EXTRACT (YEAR FROM SMALLD) = EXTRACT (YEAR FROM SMALLTS);\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+FROM TSSMALL WHERE
+EXTRACT (YEAR FROM SMALLD) = EXTRACT (YEAR FROM SMALLTS);
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("FROM TSSMALL WHERE\n");
+printf("EXTRACT (MONTH FROM SMALLD) = EXTRACT (MONTH FROM SMALLTS);\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+FROM TSSMALL WHERE
+EXTRACT (MONTH FROM SMALLD) = EXTRACT (MONTH FROM SMALLTS);
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("FROM TSSMALL WHERE\n");
+printf("EXTRACT (DAY FROM SMALLD) = EXTRACT (DAY FROM SMALLTS);\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+FROM TSSMALL WHERE
+EXTRACT (DAY FROM SMALLD) = EXTRACT (DAY FROM SMALLTS);
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("FROM TSSMALL WHERE\n");
+printf("EXTRACT (HOUR FROM SMALLT) = EXTRACT (HOUR FROM SMALLTS);\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+FROM TSSMALL WHERE
+EXTRACT (HOUR FROM SMALLT) = EXTRACT (HOUR FROM SMALLTS);
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("FROM TSSMALL WHERE\n");
+printf("EXTRACT (MINUTE FROM SMALLT) = EXTRACT (MINUTE FROM SMALLTS);\n");
+
+int1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :int1
+FROM TSSMALL WHERE
+EXTRACT (MINUTE FROM SMALLT) = EXTRACT (MINUTE FROM SMALLTS);
+
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/* Time and timestamp have different fractional seconds precision */
+/* and we can't assume truncation or rounding.                    */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("FROM TSSMALL WHERE\n");
+printf("EXTRACT (SECOND FROM SMALLT) -\n");
+printf("EXTRACT (SECOND FROM SMALLTS) > -1\n");
+printf("AND EXTRACT (SECOND FROM SMALLT) -\n");
+printf("EXTRACT (SECOND FROM SMALLTS) < 1;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+FROM TSSMALL WHERE
+EXTRACT (SECOND FROM SMALLT) -
+EXTRACT (SECOND FROM SMALLTS) > -1
+AND EXTRACT (SECOND FROM SMALLT) -
+EXTRACT (SECOND FROM SMALLTS) < 1;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TSSMALL CASCADE;\n");
+EXEC SQL DROP TABLE TSSMALL CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0613','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml106.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0613','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0613 *********************/
+/******************** BEGIN TEST0615 ********************/
+flag = 1;
+
+     printf("                  TEST0615 \n");
+     printf("     DATETIME-related SQLSTATE codes (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 5, 20\n");
+     printf("    ANSI SQL-1992 22.1 SQLSTATE\n");
+     printf("                  6.14 GR.3.c\n");
+     printf("                  9.2 GR.3.m\n");
+     printf("    COR1 for 6.10 GR.9.a.ii GR.10.a.ii GR.11.a.ii\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* If this test is rejected at compile time for some reason which */
+/* resembles the desired SQLSTATEs, you win.                      */
+
+/* Datetime field overflow = 22008:  add a one-year interval to   */
+/*     YEAR 9999 datetime (6.14 GR.3.c)                           */
+/* Interval field overflow = 22015:  insert interval with too     */
+/*     many digits in leading field (9.2 GR.3.m)                  */
+/* Invalid datetime format = 22007:  cast February 30 to datetime */
+/*     (COR1 for 6.10 GR 9.a.ii, 10.a.ii, 11.a.ii)                */
+
+printf("CREATE TABLE TSERR (\n");
+printf("  BADINT INTERVAL YEAR (2) TO MONTH,\n");
+printf("  BADDATE DATE);\n");
+
+EXEC SQL CREATE TABLE TSERR (
+  BADINT INTERVAL YEAR (2) TO MONTH,
+  BADDATE DATE);
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/*                    NOTICE                             */
+/* The Standard is very clear on the fact that the YEAR  */
+/* field can't accept values below 1 or above 9999 in    */
+/* datetime items (see Table 10 and 6.14 GR.3.c).        */
+/* However, since it seems to us that a reasonable       */
+/* human being might want to implement YEAR with a       */
+/* small integer and permit the larger range to be used, */
+/* you may replace the 9999 in the date literal below    */
+/* with as large an integer as you require to generate   */
+/* the specified error condition.  This offer is null    */
+/* and void if the range limitation on YEAR is upheld by */
+/* an official interpretation.                           */
+
+/* DML106 TEd Hook #1 */
+
+printf("INSERT INTO TSERR VALUES (\n");
+printf("  INTERVAL '0-11' YEAR TO MONTH,\n");
+printf("  DATE '9999-01-01' + INTERVAL '1-00' YEAR TO MONTH);\n");
+
+EXEC SQL INSERT INTO TSERR VALUES (
+  INTERVAL '0-11' YEAR TO MONTH,
+  DATE '9999-01-01' + INTERVAL '1-00' YEAR TO MONTH);
+
+/* DML106 TEd Hook #2 */
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22008; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22008", 5) != 0)
+  flag = 0;
+
+printf("INSERT INTO TSERR VALUES (\n");
+printf("  INTERVAL '9999-11' YEAR TO MONTH,\n");
+printf("  DATE '1984-01-01');\n");
+
+EXEC SQL INSERT INTO TSERR VALUES (
+  INTERVAL '9999-11' YEAR TO MONTH,
+  DATE '1984-01-01');
+
+/* DML106 TEd Hook #3 */
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22015; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22015", 5) != 0)
+  flag = 0;
+
+printf("INSERT INTO TSERR VALUES (\n");
+printf("  INTERVAL '1-11' YEAR TO MONTH,\n");
+printf("  CAST ('DATE ''1993-02-30''' AS DATE));\n");
+
+EXEC SQL INSERT INTO TSERR VALUES (
+  INTERVAL '1-11' YEAR TO MONTH,
+  CAST ('DATE ''1993-02-30''' AS DATE));
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22007; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22007", 5) != 0)
+  flag = 0;
+
+/* The above could be passed for the wrong reason if the uglified */
+/* syntax is not supported.  Repeat with shorter syntax.          */
+
+printf("INSERT INTO TSERR VALUES (\n");
+printf("  INTERVAL '1-11' YEAR TO MONTH,\n");
+printf("  CAST ('1993-02-30' AS DATE));\n");
+
+EXEC SQL INSERT INTO TSERR VALUES (
+  INTERVAL '1-11' YEAR TO MONTH,
+  CAST ('1993-02-30' AS DATE));
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22007; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22007", 5) != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TSERR CASCADE;\n");
+EXEC SQL DROP TABLE TSERR CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0615','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml106.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0615','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0615 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

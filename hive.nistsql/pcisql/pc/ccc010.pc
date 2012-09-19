@@ -1,0 +1,205 @@
+/*  EMBEDDED C (file "CCC010.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC010.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*  This routine tests SQLSTATE status codes which are unique    */
+/*  to embedded C/SQL.                                           */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     char place2[12];
+     char place[12];
+     char eskape[2];
+     long hhh;
+EXEC SQL END DECLARE SECTION;
+long ii;
+long SQLCD1;
+char SQLST1[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+flag = 1;
+
+printf("SQL Test Suite, V6.0, Embedded C, ccc010.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0499 ********************/
+flag = 1;
+
+     printf("                  TEST0499 \n");
+     printf("SQLSTATE = 22024: data exception (unterm. C string)\n");
+     printf("Reference ANSI SQL-1992 section 12.4\n");
+     printf("   Calls to a <procedure>, General Rule #2bi3\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+     /* This string is unterminated on purpose. */
+     strcpy (place, "Claggetsvil");
+     place[11] = 'e';
+
+     printf ("\n");
+     for (ii = 0; ii < 12; ii++)
+     printf ("  place[%ld] = %c -- numeric value = %d\n",
+                ii,place[ii],place[ii]); 
+
+     /* If this printf of an unterminated string causes problems, */
+     /*  just delete the printf, using TEd. */
+     printf ("The value of variable place is %s\n",place);
+
+
+     strcpy (SQLSTATE, "x");
+     printf ("\n");
+     printf (":place is an unterminated C string\n");
+     printf ("It is defined as char place[12].\n");
+
+
+     printf ("\n");
+     printf ("\n");
+     printf ("INSERT INTO HU.STAFF VALUES\n");
+     printf ("('E6','Earl Brown',11,:place);\n");
+     EXEC SQL INSERT INTO HU.STAFF VALUES
+       ('E6','Earl Brown',11,:place);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22024'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22024", 5) != 0)
+       flag = 0;
+
+
+     printf ("\n");
+     printf ("\n");
+     strcpy (SQLSTATE, "x");
+     printf ("UPDATE HU.STAFF SET CITY = :place WHERE GRADE = 10;\n");
+     EXEC SQL UPDATE HU.STAFF SET CITY = :place WHERE GRADE = 10;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22024'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22024", 5) != 0)
+       flag = 0;
+
+     printf ("\n");
+     printf ("\n");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("DELETE FROM HU.STAFF WHERE CITY = :place;\n");
+     EXEC SQL DELETE FROM HU.STAFF WHERE CITY = :place;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22024'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22024", 5) != 0)
+       flag = 0;
+
+     printf ("\n");
+     printf ("\n");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (place2, "Akronn%");
+     strcpy (eskape, "n");
+     eskape[1] = 'n';
+     printf ("SELECT GRADE INTO :hhh FROM HU.STAFF\n");
+     printf ("  WHERE CITY LIKE :place2 ESCAPE :eskape;\n");
+     printf ("Variable place2 is null-terminated, but eskape is NOT!\n");
+     EXEC SQL SELECT GRADE INTO :hhh FROM HU.STAFF
+                WHERE CITY LIKE :place2 ESCAPE :eskape;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22019' or '22024'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || 
+(strncmp(SQLSTATE,"22019",5)!=0 && strncmp(SQLSTATE,"22024",5)!=0))
+       flag = 0;
+
+     printf ("\n");
+     printf ("\n");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("DECLARE XXX CURSOR FOR SELECT GRADE FROM HU.STAFF\n");
+     printf ("WHERE CITY = :place;\n");
+     EXEC SQL DECLARE XXX CURSOR FOR SELECT GRADE FROM HU.STAFF
+              WHERE CITY = :place;
+     EXEC SQL OPEN XXX;
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST1, SQLSTATE);
+     SQLCD1 = SQLCODE;
+     EXEC SQL FETCH XXX INTO :hhh;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE of OPEN or FETCH should be < 0\n");
+     printf ("SQLCODE of OPEN = %ld; SQLCODE of FETCH = %ld\n",SQLCD1,SQLCODE);
+     printf ("SQLSTATE of OPEN or FETCH should be '22024'\n");
+     printf("SQLSTATE of OPEN = %s; SQLSTATE of FETCH = %s\n",SQLST1,SQLSTATE);
+     if (SQLCD1 >= 0 && SQLCODE >=0)
+       flag = 0;
+     if (strncmp(SQLST1,"22024",5) != 0 && strncmp(SQLSTATE,"22024",5) != 0)
+       flag = 0;
+
+
+
+
+     EXEC SQL ROLLBACK WORK; 
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0499','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       ccc010.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0499','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0499 *********************/
+
+     exit(errcnt);
+}

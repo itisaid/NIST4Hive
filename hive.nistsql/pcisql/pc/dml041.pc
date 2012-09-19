@@ -1,0 +1,212 @@
+/*  EMBEDDED C (file "DML041.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/10/25 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML041.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE ENFORCEMENT OF                      */
+/*      CHECK CONSTRAINTS IN NESTED VIEWS                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*       8.7 <insert statement>, 8.11 & 8.12 <update statements> */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char EMPNO1[4];
+    long GRADE1;
+    long I;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long ifpass;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml041.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0212 ********************/
+
+  printf("\n                   TEST0212      \n");
+  printf("   This routine tests nested view definitions   \n"); 
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/*    CREATE VIEW V_WORKS1                */
+/*           AS SELECT * FROM WORKS       */
+/*              WHERE HOURS > 15          */
+/*           WITH CHECK OPTION;           */
+
+/*    CREATE VIEW V_WORKS2                */
+/*           AS SELECT * FROM V_WORKS1    */
+/*              WHERE EMPNUM = 'E1'       */
+/*                 OR EMPNUM = 'E6';      */
+
+/*    CREATE VIEW V_WORKS3                */
+/*           AS SELECT * FROM V_WORKS2    */
+/*              WHERE PNUM = 'P2'         */
+/*                 OR PNUM = 'P7'         */
+/*           WITH CHECK OPTION;           */
+
+ifpass = 1;
+
+EXEC SQL INSERT INTO V_WORKS2
+         VALUES('E9','P7',13);
+
+if (SQLCODE == 0)
+   {
+   printf("Fail:  Violates constraint of \n");
+   printf("       underlying view (with check option)\n");
+   ifpass = 0;
+   }
+
+EXEC SQL INSERT INTO V_WORKS2
+         VALUES('E7','P4',95);
+
+if (SQLCODE != 0)
+   {
+   printf("Fail: Will not insert outside of view 2 def. (no check),\n");
+   printf("Satisfies constraint of underlying view (with check opt)\n");
+   ifpass = 0;
+   }
+
+EXEC SQL INSERT INTO V_WORKS3
+         VALUES('E8','P2',85);
+
+/* NOTE: The standard is not completely clear which of these  */
+/*       options is intended, so this code does not result in */
+/*       pass or fail.                                        */
+/* Either of the two following results is acceptable:         */
+/* This is just an informational sub-test                     */
+if (SQLCODE == 0)
+   {
+   printf("Inserts row which is:\n");
+   printf("  Inside view 1 def. (with check)\n");
+   printf("  Outside view 2 def. (no check)\n");
+   printf("  Inside view 3 def. (with check)\n");
+   printf("Outer check option does not imply inner check options\n\n");
+   }
+else
+   {
+   printf("Will not insert row which is:\n");
+   printf("  Inside view 1 def. (with check)\n");
+   printf("  Outside view 2 def. (no check)\n");
+   printf("  Inside view 3 def. (with check)\n");
+   printf("Outer check option implies inner check options\n\n");
+   }
+
+EXEC SQL INSERT INTO V_WORKS3
+         VALUES('E1','P7',90);
+
+if (SQLCODE != 0)
+   {
+   printf("Fail: Will not insert row satisfying \n");
+   printf("       all nested view definitions\n");
+   ifpass = 0;
+   }
+
+EXEC SQL INSERT INTO V_WORKS3
+         VALUES('E9','P2',10);
+
+if (SQLCODE == 0)
+   {
+   printf("Fail: Violates constraint of \n");
+   printf("      underlying view (with check option)\n");
+   ifpass = 0;
+   }
+
+I = 0;
+
+EXEC SQL SELECT COUNT(*)
+         INTO  :I
+         FROM  WORKS
+         WHERE EMPNUM = 'E9';
+
+
+if (I > 0 )
+  {
+   ifpass = 0;
+   printf("Fail: Nested views fail to enforce \n");
+   printf("      underlying check constraint.\n");
+  }
+
+
+I = 0;
+
+EXEC SQL SELECT COUNT(*)
+         INTO  :I
+         FROM  WORKS
+         WHERE HOURS > 85;
+
+if (I < 2)
+   {
+   printf("Fail: Will not insert rows satisfying underlying views\n");
+   ifpass = 0;
+   }
+
+
+EXEC SQL ROLLBACK WORK;
+
+if (ifpass == 1)
+   {
+   printf("\n\n              *** pass *** \n");
+   EXEC SQL INSERT INTO TESTREPORT VALUES('0212','pass','PC');
+   }
+else
+   {
+   printf("\n\n    dml041.pc  *** fail *** \n");
+   EXEC SQL INSERT INTO TESTREPORT VALUES('0212','fail','PC');
+          errcnt = errcnt + 1;
+   }
+
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0212 ********************/
+
+  exit(errcnt);
+}
+

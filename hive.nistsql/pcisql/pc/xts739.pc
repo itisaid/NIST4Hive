@@ -1,0 +1,901 @@
+/*  EMBEDDED C (file " XTS739.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS739.PC                   TEST7039                        */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  Scrolled cursor with ORDER BY int, name ASC,                 */  
+/*                        FETCH FIRST, FETCH LAST                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    13.1    -- <Declare cursor>                                */
+/*    13.1    SR.10b                                             */
+/*    13.1    GR.3                                               */
+/*    13.3    -- <fetch statement>                               */
+/*    13.3    GR.2b                                              */
+/*    13.3    GR.2c                                              */
+/*    F#43    --  Scrolled cursors                               */
+/*    F#24    --  Keyword relaxations                            */
+/*                                                               */
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 07/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA STATUS : FC                                               */
+/*                                                               */
+/*  Revised by DWF 1996-02-09                                    */
+/*    Removed status checks after cursor declarations            */
+/*    Fixed checks for wrong SQLCODE                             */
+/*    Fixed char string lengths                                  */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ long varnm1;
+ char varch1[11];
+ long varnm2;
+ char varch2[11];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts739.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf(" \n Time Run :  %s \n ", ctime(&cal));
+
+/******************** BEGIN TEST7039 ********************/
+flag = 1;
+printf("                 TEST7039\n");
+printf("    Scrolled cursor with ORDER BY int, name ASC,");
+printf("FETCH FIRST,FETCH LAST\n");
+printf("References  \n");
+printf("    13.1    -- <Declare cursor>      \n");
+printf("    13.1    SR.10b\n");
+printf("    13.1    GR.3 \n");
+printf("    13.3    -- <fetch statement> \n");                              
+printf("    13.3    GR.2b   \n");
+printf("    13.3    GR.2c   \n");
+printf("    F#43    --  Scrolled cursors\n");
+printf("    F#24    --  Keyword relaxations \n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* initialise error reporting variables */ 
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+ 
+/* USE table CTS1.CL_STANDARD from the standard schema  */
+/* declare a scrolled cursor with ORDER BY int,name     */
+/* ASC and FETCH FIRST, FETCH LAST                      */    
+printf("DECLARE a SCROLL CURSOR \n");
+printf("FOR SELECT COL_NUM1, COL_CH1, COL_NUM2, COL_CH2\n\n");
+printf("FROM CL_STANDARD ORDER BY 4, COL_CH1 ASC;\n");
+EXEC SQL DECLARE a SCROLL CURSOR
+         FOR SELECT COL_NUM1,COL_CH1,COL_NUM2,COL_CH2
+         FROM CL_STANDARD ORDER BY 4, COL_CH1 ASC;
+
+printf("OPEN a;\n");
+EXEC SQL OPEN a;  
+CHCKOK(); 
+printf("\n");
+
+/* start fetching rows in the cursor 5 in total */
+/* in reverse order */
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch last row from CL_STANDARD */
+printf("FETCH LAST FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH LAST FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1001; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MARIA; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4001; its value is %ld\n",varnm2);
+printf("COL_CH2  should be RHODES; its value is %s\n",varch2);
+if (varnm1 != 1001 || varnm2!= 4001) 
+   flag = 0;
+if (strncmp(varch2,"RHODES",6) != 0 || strncmp(varch1,"MARIA",5) !=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */       
+printf("FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1004; its value is %ld\n",varnm1);
+printf("COL_CH1  should be MORRIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4004; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  PARGA; its value is %s\n",varch2);
+if (varnm1 != 1004 || varnm2!= 4004)
+   flag = 0;
+if (strncmp(varch2,"PARGA",5) !=0 || strncmp(varch1,"MORRIS",6)!=0)
+   flag = 0;
+printf("\n");
+ 
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous  row */
+printf("FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1002; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MAKIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4002; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  HANIA; its value is %s\n",varch2);
+if (varnm1 != 1002 || varnm2!= 4002)
+   flag = 0;
+if (strncmp(varch2,"HANIA",5) !=0 || strncmp(varch1,"MAKIS",5)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */
+printf("FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1000; its value is %ld\n",varnm1);
+printf("COL_CH1  should be NICKOS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4000; its value is %ld\n",varnm2);
+printf("COL_CH2  should be ATHENS; its value is %s\n",varch2);
+if (varnm1 != 1000 || varnm2!= 4000)
+   flag = 0;
+if (strncmp(varch2,"ATHENS",6) !=0 || strncmp(varch1,"NICKOS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */
+printf("FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1003; its value is %ld\n",varnm1);
+printf("COL_CH1  should be GEORGE; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4003; its value is %ld\n",varnm2);
+printf("COL_CH2  should be   ARTA; its value is %s\n",varch2);
+if (varnm1 != 1003 || varnm2!= 4003)
+   flag = 0;
+if (strncmp(varch2,"ARTA",4) !=0 || strncmp(varch1,"GEORGE",6)!=0)
+   flag = 0;
+printf("\n");
+
+/*** attempt to read the row before the first row */
+/*** and check that a completion condition of no data */
+/*** will be raised indicated by SQLSTATE = "02000" */
+printf("FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+if (SQLCODE != 100)
+  flag = 0;
+printf("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp(NORMSQ, "02000", 5) == 0 && strncmp(NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/*** FETCH LAST ROW again ***/  
+printf("FETCH LAST FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH LAST FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1001; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MARIA; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4001; its value is %ld\n",varnm2);
+printf("COL_CH2  should be RHODES; its value is %s\n",varch2);
+if (varnm1 != 1001 || varnm2!= 4001) 
+   flag = 0;
+if (strncmp(varch2,"RHODES",6) != 0 || strncmp(varch1,"MARIA",5) !=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* Now retrieve the first row of the table */
+printf("FETCH FIRST FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n");
+EXEC SQL FETCH FIRST FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1003; its value is %ld\n",varnm1);
+printf("COL_CH1  should be GEORGE; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4003; its value is %ld\n",varnm2);
+printf("COL_CH2  should be   ARTA; its value is %s\n",varch2);
+if (varnm1 != 1003 || varnm2!= 4003)
+   flag = 0;
+if (strncmp(varch2,"ARTA",4) !=0 || strncmp(varch1,"GEORGE",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* now retrieve the rest of the rows but from first to last */
+/* fetch orientation. Fetch the second row */
+printf("FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1000; its value is %ld\n",varnm1);
+printf("COL_CH1  should be NICKOS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4000; its value is %ld\n",varnm2);
+printf("COL_CH2  should be ATHENS; its value is %s\n",varch2);
+if (varnm1 != 1000 || varnm2!= 4000)
+   flag = 0;
+if (strncmp(varch2,"ATHENS",6) !=0 || strncmp(varch1,"NICKOS",6)!=0)
+   flag = 0;
+printf("\n");
+ 
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch next row */
+printf("FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1002; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MAKIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4002; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  HANIA; its value is %s\n",varch2);
+if (varnm1 != 1002 || varnm2!= 4002)
+   flag = 0;
+if (strncmp(varch2,"HANIA",5) !=0 || strncmp(varch1,"MAKIS",5)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch next row */
+printf("FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1004; its value is %ld\n",varnm1);
+printf("COL_CH1  should be MORRIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4004; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  PARGA; its value is %s\n",varch2);
+if (varnm1 != 1004 || varnm2!= 4004)
+   flag = 0;
+if (strncmp(varch2,"PARGA",5) !=0 || strncmp(varch1,"MORRIS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch final row */
+printf("FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1001; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MARIA; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4001; its value is %ld\n",varnm2);
+printf("COL_CH2  should be RHODES; its value is %s\n",varch2);
+if (varnm1 != 1001 || varnm2!= 4001) 
+   flag = 0;
+if (strncmp(varch2,"RHODES",6) != 0 || strncmp(varch1,"MARIA",5) !=0)
+   flag = 0;
+printf("\n");
+
+/*** attempt to read the next row after the last row */
+/*** and check that a completion condition of no data */
+/*** will be raised indicated by SQLSTATE = "02000" */
+printf("FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM a INTO :varnm1,:varch1,:varnm2,:varch2;
+printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+if (SQLCODE != 100)
+  flag = 0;
+printf("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp(NORMSQ, "02000", 5) == 0 && strncmp(NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("CLOSE a;\n");
+EXEC SQL CLOSE a;
+CHCKOK();
+printf("\n");
+
+/*********** Start tests with numeric cursor ***********/
+
+/* USE table CTS1.CL_STANDARD from the standard schema */
+/* declare a scrolled cursor with ORDER BY int,name    */
+/* ASC and FETCH FIRST, FETCH LAST                     */    
+/* with numeric sort key this time                     */
+ 
+printf("DECLARE b SCROLL CURSOR \n");
+printf("FOR SELECT COL_NUM1, COL_CH1, COL_NUM2, COL_CH2\n");
+printf("FROM CL_STANDARD\n");
+printf("ORDER BY 3, COL_NUM1 ASC;\n\n");
+EXEC SQL DECLARE b SCROLL CURSOR
+         FOR SELECT COL_NUM1,COL_CH1,COL_NUM2,COL_CH2
+         FROM CL_STANDARD
+         ORDER BY 3, COL_NUM1 ASC;
+
+printf("OPEN b;\n");
+EXEC SQL OPEN b;  
+CHCKOK(); 
+printf("\n");
+
+/* start fetching rows in the cursor 5 in total */
+/* in reverse order */
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch last row from CL_STANDARD */
+printf("FETCH LAST FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH LAST FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1004; its value is %ld\n",varnm1);
+printf("COL_CH1  should be MORRIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4004; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  PARGA; its value is %s\n",varch2);
+if (varnm1 != 1004 || varnm2!= 4004)
+   flag = 0;
+if (strncmp(varch2,"PARGA",5) !=0 || strncmp(varch1,"MORRIS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */       
+printf("FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1003; its value is %ld\n",varnm1);
+printf("COL_CH1  should be GEORGE; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4003; its value is %ld\n",varnm2);
+printf("COL_CH2  should be   ARTA; its value is %s\n",varch2);
+if (varnm1 != 1003 || varnm2!= 4003)
+   flag = 0;
+if (strncmp(varch2,"ARTA",4) !=0 || strncmp(varch1,"GEORGE",6)!=0)
+   flag = 0;
+printf("\n");
+ 
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */
+printf("FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1002; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MAKIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4002; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  HANIA; its value is %s\n",varch2);
+if (varnm1 != 1002 || varnm2!= 4002)
+   flag = 0;
+if (strncmp(varch2,"HANIA",5) !=0 || strncmp(varch1,"MAKIS",5)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */
+printf("FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1001; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MARIA; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4001; its value is %ld\n",varnm2);
+printf("COL_CH2  should be RHODES; its value is %s\n",varch2);
+if (varnm1 != 1001 || varnm2!= 4001) 
+   flag = 0;
+if (strncmp(varch2,"RHODES",6) != 0 || strncmp(varch1,"MARIA",5) !=0)
+   flag = 0;
+printf("\n");
+ 
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch previous row */
+printf("FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1000; its value is %ld\n",varnm1);
+printf("COL_CH1  should be NICKOS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4000; its value is %ld\n",varnm2);
+printf("COL_CH2  should be ATHENS; its value is %s\n",varch2);
+if (varnm1 != 1000 || varnm2!= 4000)
+   flag = 0;
+if (strncmp(varch2,"ATHENS",6) !=0 || strncmp(varch1,"NICKOS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/*** attempt to read the row before the first row */
+/*** and check that a completion condition of no data */
+/*** will be raised indicated by SQLSTATE = "02000" */
+printf("FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH PRIOR FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+if (SQLCODE != 100)
+  flag = 0;
+printf("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp(NORMSQ, "02000", 5) == 0 && strncmp(NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/*** FETCH LAST ROW again ***/  
+printf("FETCH LAST FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH LAST FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1004; its value is %ld\n",varnm1);
+printf("COL_CH1  should be MORRIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4004; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  PARGA; its value is %s\n",varch2);
+if (varnm1 != 1004 || varnm2!= 4004)
+   flag = 0;
+if (strncmp(varch2,"PARGA",5) !=0 || strncmp(varch1,"MORRIS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* Now retrieve the first row of the table */
+printf("FETCH FIRST FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n");
+EXEC SQL FETCH FIRST FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1000; its value is %ld\n",varnm1);
+printf("COL_CH1  should be NICKOS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4000; its value is %ld\n",varnm2);
+printf("COL_CH2  should be ATHENS; its value is %s\n",varch2);
+if (varnm1 != 1000 || varnm2!= 4000)
+   flag = 0;
+if (strncmp(varch2,"ATHENS",6) !=0 || strncmp(varch1,"NICKOS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* now retrieve the rest of the rows but from first to last */
+/* fetch orientation. Fetch the second row */
+ 
+printf("FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1001; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MARIA; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4001; its value is %ld\n",varnm2);
+printf("COL_CH2  should be RHODES; its value is %s\n",varch2);
+if (varnm1 != 1001 || varnm2!= 4001) 
+   flag = 0;
+if (strncmp(varch2,"RHODES",6) != 0 || strncmp(varch1,"MARIA",5) !=0)
+   flag = 0;
+printf("\n");
+ 
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch next row */
+printf("FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1002; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MAKIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4002; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  HANIA; its value is %s\n",varch2);
+if (varnm1 != 1002 || varnm2!= 4002)
+   flag = 0;
+if (strncmp(varch2,"HANIA",5) !=0 || strncmp(varch1,"MAKIS",5)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch next row */
+printf("FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1003; its value is %ld\n",varnm1);
+printf("COL_CH1  should be GEORGE; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4003; its value is %ld\n",varnm2);
+printf("COL_CH2  should be   ARTA; its value is %s\n",varch2);
+if (varnm1 != 1003 || varnm2!= 4003)
+   flag = 0;
+if (strncmp(varch2,"ARTA",4) !=0 || strncmp(varch1,"GEORGE",6)!=0)
+   flag = 0;
+printf("\n");
+ 
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch final row */
+printf("FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1004; its value is %ld\n",varnm1);
+printf("COL_CH1  should be MORRIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4004; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  PARGA; its value is %s\n",varch2);
+if (varnm1 != 1004 || varnm2!= 4004)
+   flag = 0;
+if (strncmp(varch2,"PARGA",5) !=0 || strncmp(varch1,"MORRIS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/*** attempt to read the next row after the last row */
+/*** and check that a completion condition of no data */
+/*** will be raised indicated by SQLSTATE = "02000" */
+printf("FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH NEXT FROM b INTO :varnm1,:varch1,:varnm2,:varch2;
+printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+if (SQLCODE != 100)
+  flag = 0;
+printf("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp(NORMSQ, "02000", 5) == 0 && strncmp(NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("CLOSE b;\n");
+EXEC SQL CLOSE b;
+CHCKOK();
+printf("\n");
+
+/* declare a third cursor and check that all the rows  */
+/* of table CTS1.CL_STANDARD have remained unaffected  */
+printf("DECLARE Z CURSOR FOR SELECT COL_NUM1,COL_CH1,COL_NUM2,COL_CH2 \n");
+printf("FROM CL_STANDARD ORDER BY COL_NUM1;\n\n");
+EXEC SQL DECLARE Z CURSOR
+         FOR SELECT COL_NUM1,COL_CH1,COL_NUM2,COL_CH2
+         FROM CL_STANDARD ORDER BY COL_NUM1;
+ 
+printf("OPEN Z;\n");
+EXEC SQL OPEN Z;
+CHCKOK(); 
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* start fetching rows in the cursor 5 in total */
+/* fetch first row from CL_STANDARD */
+printf("FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1000; its value is %ld\n",varnm1);
+printf("COL_CH1  should be NICKOS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4000; its value is %ld\n",varnm2);
+printf("COL_CH2  should be ATHENS; its value is %s\n",varch2);
+if (varnm1 != 1000 || varnm2!= 4000)
+   flag = 0;
+if (strncmp(varch2,"ATHENS",6) !=0 || strncmp(varch1,"NICKOS",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch second row */
+printf("FETCH Z INTO :varnm1,varch1,varnm2,varch2;\n"); 
+EXEC SQL FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1001; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MARIA; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4001; its value is %ld\n",varnm2);
+printf("COL_CH2  should be RHODES; its value is %s\n",varch2);
+if (varnm1 != 1001 || varnm2!= 4001) 
+   flag = 0;
+if (strncmp(varch2,"RHODES",6) != 0 || strncmp(varch1,"MARIA",5) !=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch third row */
+printf("FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1002; its value is %ld\n",varnm1);
+printf("COL_CH1  should be  MAKIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4002; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  HANIA; its value is %s\n",varch2);
+if (varnm1 != 1002 || varnm2!= 4002)
+   flag = 0;
+if (strncmp(varch2,"HANIA",5) !=0 || strncmp(varch1,"MAKIS",5)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch fourth row */
+printf("FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1003; its value is %ld\n",varnm1);
+printf("COL_CH1  should be GEORGE; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4003; its value is %ld\n",varnm2);
+printf("COL_CH2  should be   ARTA; its value is %s\n",varch2);
+if (varnm1 != 1003 || varnm2!= 4003)
+   flag = 0;
+if (strncmp(varch2,"ARTA",4) !=0 || strncmp(varch1,"GEORGE",6)!=0)
+   flag = 0;
+printf("\n");
+
+/* initialise host variables */
+varnm1 = 0;
+varnm2 = 0;
+strcpy(varch1,"xxxxxxxxxx");
+strcpy(varch2,"xxxxxxxxxx");
+
+/* fetch fifth row */
+printf("FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;\n"); 
+EXEC SQL FETCH Z INTO :varnm1,:varch1,:varnm2,:varch2;
+CHCKOK();
+printf("COL_NUM1 should be   1004; its value is %ld\n",varnm1);
+printf("COL_CH1  should be MORRIS; its value is %s\n",varch1);
+printf("COL_NUM2 should be   4004; its value is %ld\n",varnm2);
+printf("COL_CH2  should be  PARGA; its value is %s\n",varch2);
+if (varnm1 != 1004 || varnm2!= 4004)
+   flag = 0;
+if (strncmp(varch2,"PARGA",5) !=0 || strncmp(varch1,"MORRIS",6)!=0)
+   flag = 0;
+printf("\n");
+
+printf("CLOSE Z;\n");
+EXEC SQL CLOSE Z;
+CHCKOK();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+  if ( flag == 1 )
+       {
+          printf("\n\n       xts739.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7039','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts739.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7039','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7039 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

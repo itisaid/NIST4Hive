@@ -1,0 +1,549 @@
+/*  EMBEDDED C (file "DML001.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML001.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE DECLARE CURSOR STATEMENT IN THE     */
+/*  LANGUGE OF SQL. THE FORMAT:                                  */
+/*            DECLARE <cursor name> CURSOR                       */
+/*            FOR     <cursor specification>                     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*          AMERICAN NATIONAL STANDARD database language - SQL   */
+/*                      X3.135-1989                              */
+/*                                                               */
+/*               SECTION 8.3 <declare cursor>                    */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+            char PNO1[4];
+            char EMPNM1[21];
+            char EMPNO[4];
+            long HOUR1;
+            long iii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  i;
+            long  ii;
+
+
+main()
+{
+
+      strcpy(uid,"HU");
+      AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml001.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+                              
+
+/******************** BEGIN TEST0001 ********************/
+
+      i=0;
+
+      printf("\n                    TEST0001                  \n");
+      printf("declare with ORDER BY < column specification > DESC \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 3) b)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   *** FOR SELECT EMPNUM,HOURS \n");
+      printf("   ***     FROM   WORKS \n");
+      printf("   ***     WHERE  PNUM='P2' \n");
+      printf("   ***     ORDER  BY EMPNUM DESC \n");
+      printf("\n\n");
+
+      EXEC SQL DECLARE X CURSOR
+            FOR SELECT EMPNUM,HOURS
+                FROM   WORKS
+                WHERE  PNUM='P2'
+                ORDER  BY EMPNUM DESC;
+      EXEC SQL OPEN X;
+      
+      for (ii=1;ii<15;ii++)
+      {
+      EXEC SQL FETCH X INTO :EMPNO,:HOUR1;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("           EMPNO=%s and HOUR1=%ld \n",EMPNO,HOUR1);
+        }
+      }
+      printf("\n          EMPNO=%s, i=%ld \n",EMPNO,i);
+      printf("The answer should be EMPNO=E1, i=4 & ");
+      printf("\n             order by EMPNO DESC. \n");
+
+      if (strncmp(EMPNO,"E1",2) == 0 && i == 4)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0001','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0001','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0001 ********************/
+/******************** BEGIN TEST0002 ********************/
+
+      i=0;
+
+      printf("\n                    TEST0002                  \n");
+      printf("declare with ORDER BY < unsigned integer > ASC \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 3) b)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   *** FOR SELECT EMPNUM,HOURS \n");
+      printf("   ***     FROM   WORKS \n");
+      printf("   ***     WHERE  PNUM='P2' \n");
+      printf("   ***     ORDER  BY 2 ASC \n");
+      printf("\n\n");
+
+      EXEC SQL DECLARE Y CURSOR
+            FOR SELECT EMPNUM,HOURS
+                FROM   WORKS
+                WHERE  PNUM='P2'
+                ORDER  BY 2 ASC;
+      EXEC SQL OPEN Y;
+      
+      for (ii=1;ii<15;ii++)
+      {
+      EXEC SQL FETCH Y INTO :EMPNO,:HOUR1;
+      if (SQLCODE == 0)
+        {
+        i=ii;
+        printf("         EMPNO=%s and HOUR1=%ld \n",EMPNO,HOUR1);
+        }
+      }
+
+      printf("      i=%ld \n\n",i);
+      printf("The answer should be i = 4 & \n");
+      printf("            order by HOUR1 ASC. \n");
+      if (i == 4 && HOUR1 == 80)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0002','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0002','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0002 ********************/
+/******************** BEGIN TEST0003 ********************/
+
+      i=0;
+
+
+      printf("\n                    TEST0003                  \n");
+      printf("declare with ORDER BY < sort specification > ... \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 3) b)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      
+      printf("   *** FOR SELECT EMPNUM,HOURS \n");
+      printf("   ***     FROM   WORKS \n");
+      printf("   ***     WHERE  PNUM='P2' \n");
+      printf("   ***     ORDER  BY 2 DESC,EMPNUM DESC \n");
+      printf("\n\n");
+
+      EXEC SQL DECLARE Z CURSOR
+            FOR SELECT EMPNUM,HOURS
+                FROM   WORKS
+                WHERE  PNUM='P2'
+                ORDER  BY 2 DESC,EMPNUM DESC;
+      EXEC SQL OPEN Z;
+
+      for (ii=1;ii<15;ii++)
+      {
+      EXEC SQL FETCH Z INTO :EMPNO,:HOUR1;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("           EMPNO=%s and HOUR1=%ld \n",EMPNO,HOUR1);
+        }
+      }
+
+      printf("The answer should be i = 4; i = %ld & ",i);
+      printf("\n             order by HOUR1 DESC, EMPNO DESC.\n");
+      if (i == 4 && strncmp(EMPNO,"E1",2) == 0)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0003','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0003','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0003 ********************/
+/******************** BEGIN TEST0004 ********************/
+
+      i = 0;
+      printf("\n                    TEST0004                  \n");
+      printf("               declare with UNION  \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 2)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   *** FOR SELECT WORKS.EMPNUM \n");
+      printf("   ***     FROM   WORKS \n");
+      printf("   ***     WHERE  WORKS.PNUM='P2' \n");
+      printf("   *** UNION  \n");
+      printf("   ***     SELECT STAFF.EMPNUM \n");
+      printf("   ***     FROM   STAFF \n");
+      printf("   ***     WHERE  STAFF.GRADE=13 \n");
+      printf("   *** ORDER  BY 1 DESC \n");
+      printf("\n\n");
+
+      EXEC SQL DECLARE A CURSOR
+            FOR SELECT WORKS.EMPNUM 
+                FROM   WORKS
+                WHERE  WORKS.PNUM='P2'
+            UNION
+                SELECT STAFF.EMPNUM  
+                FROM   STAFF
+                WHERE  STAFF.GRADE=13 
+            ORDER BY 1 DESC;
+      EXEC SQL OPEN A;
+      
+      for (ii=1;ii<15;ii++)
+      {
+      EXEC SQL FETCH A INTO :EMPNO;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("                    EMPNO=%s \n",EMPNO);
+        }
+      }
+
+      printf("   i = %ld\n\n",i);
+      printf("The answer should be i = 5 & ORDER BY EMPNO DESC.");
+      if (i == 5 && strncmp(EMPNO,"E1",2) == 0)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0004','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0004','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0004 ********************/
+/******************** BEGIN TEST0005 ********************/
+
+      i=0;
+
+      printf("\n                    TEST0005                  \n");
+      printf("               declare with UNION ALL  \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 2)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   *** FOR SELECT WORKS.EMPNUM \n");
+      printf("   ***     FROM   WORKS \n");
+      printf("   ***     WHERE  WORKS.PNUM='P2' \n");
+      printf("   *** UNION ALL \n");
+      printf("   ***     SELECT STAFF.EMPNUM \n");
+      printf("   ***     FROM   STAFF \n");
+      printf("   ***     WHERE  STAFF.GRADE=13 \n");
+      printf("\n\n");
+
+      EXEC SQL DECLARE B CURSOR
+            FOR SELECT WORKS.EMPNUM 
+                FROM   WORKS
+                WHERE  WORKS.PNUM='P2'
+            UNION ALL    
+                SELECT STAFF.EMPNUM  
+                FROM   STAFF
+                WHERE  STAFF.GRADE=13;
+      EXEC SQL OPEN B;
+      
+      for (ii=1;ii<15;ii++)
+      {
+      EXEC SQL FETCH B INTO :EMPNO;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("EMPNO=%s UNION ALL from WORKS and STAFF \n",EMPNO);
+        }
+      }
+
+      printf("      The correct answer should be i=6,i=%ld &\n",i);
+      printf("The correct answer should have some duplicate rows.\n");
+      if (i == 6)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0005','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0005','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0005 ********************/
+/******************** BEGIN TEST0158 ********************/
+
+      i=0;
+
+      printf("\n                    TEST0158                  \n");
+      printf("               declare with UNION   \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 2)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   ***   SELECT EMPNAME,PNUM,HOURS \n");
+      printf("   ***   FROM   STAFF,WORKS \n");
+      printf("   ***   WHERE  STAFF.EMPNUM = WORKS.EMPNUM \n");
+      printf("   *** UNION \n");
+      printf("   ***   SELECT EMPNAME,PNUM,HOURS \n");
+      printf("   ***   FROM STAFF,WORKS \n");
+      printf("   ***   WHERE NOT EXISTS \n");
+      printf("   ***         (SELECT HOURS \n");
+      printf("   ***          FROM   WORKS \n");
+      printf("   ***          WHERE  STAFF.EMPNUM = WORKS.EMPNUM)\n");
+      printf("\n\n");
+
+      EXEC SQL DECLARE CC CURSOR
+            FOR SELECT EMPNAME,PNUM,HOURS
+                FROM   STAFF,WORKS
+                WHERE  STAFF.EMPNUM = WORKS.EMPNUM
+            UNION
+                SELECT EMPNAME,PNUM,HOURS
+                FROM   STAFF,WORKS
+                WHERE  NOT EXISTS
+                      (SELECT HOURS 
+                       FROM   WORKS
+                       WHERE  STAFF.EMPNUM = WORKS.EMPNUM);
+      EXEC SQL OPEN CC;
+      
+      for (ii=1;ii<30;ii++)
+      {
+      EXEC SQL FETCH CC INTO :EMPNM1,:PNO1,:HOUR1;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("empname=%s;pnum=%s,hours=%ld\n",EMPNM1,PNO1,HOUR1);
+        }
+      }
+
+      printf("      The correct answer should be i=21; i=%ld\n",i);
+      if (i == 21)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0158','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0158','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0158 ********************/
+/******************** BEGIN TEST0159 ********************/
+
+      i=0;
+
+      printf("\n                    TEST0159                  \n");
+      printf("               declare with UNION   \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 2)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   *** FOR SELECT PNUM,EMPNUM,HOURS \n");
+      printf("   ***       FROM WORKS \n");
+      printf("   ***       WHERE HOURS=80 \n");
+      printf("   *** UNION \n");
+      printf("   ***     SELECT PNUM,EMPNUM,HOURS \n");
+      printf("   ***       FROM WORKS \n");
+      printf("   ***       WHERE HOURS=40 \n");
+      printf("   *** UNION \n");
+      printf("   ***     SELECT PNUM, EMPNUM, HOURS \n");
+      printf("   ***       FROM WORKS \n");
+      printf("   ***       WHERE HOURS=20 \n");
+      printf("   *** ORDER BY 3,1 \n");
+
+      EXEC SQL DECLARE D CURSOR
+         FOR SELECT PNUM,EMPNUM,HOURS
+               FROM WORKS
+               WHERE HOURS=80
+         UNION
+             SELECT PNUM,EMPNUM,HOURS
+               FROM WORKS
+               WHERE HOURS=40
+         UNION
+             SELECT PNUM,EMPNUM,HOURS
+               FROM WORKS
+               WHERE HOURS=20
+         ORDER BY 3,1;
+      EXEC SQL OPEN D;
+      
+      for (ii=1;ii<40;ii++)
+      {
+      EXEC SQL FETCH D INTO :PNO1,:EMPNO,:HOUR1;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("pnum=%s; empnum=%s; hours=%ld\n",PNO1,EMPNO,HOUR1);
+        }
+      }
+
+      printf("      The correct answer should be i=10,i=%ld \n",i);
+      if (i == 10)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0159','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0159','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0159 ********************/
+/******************** BEGIN TEST0160 ********************/
+
+      i=0;
+
+      printf("\n                    TEST0160                  \n");
+      printf("               declare with UNION   \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 2)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+      printf("   *** FOR (SELECT PNUM,EMPNUM,HOURS \n");
+      printf("   ***       FROM WORKS \n");
+      printf("   ***     UNION \n");
+      printf("   ***     SELECT PNUM,EMPNUM,HOURS \n");
+      printf("   ***       FROM WORKS \n");
+      printf("   ***       WHERE HOURS=80) \n");
+      printf("   ***     UNION ALL \n");
+      printf("   ***     SELECT PNUM,EMPNUM,HOURS \n");
+      printf("   ***       FROM WORKS \n");
+      printf("   ***       WHERE HOURS=12 \n");
+      printf("   *** ORDER BY 2,1 \n");
+
+      EXEC SQL DECLARE E CURSOR
+        FOR (SELECT PNUM,EMPNUM,HOURS
+               FROM WORKS
+             UNION
+             SELECT PNUM,EMPNUM,HOURS
+               FROM WORKS
+               WHERE HOURS=80)
+             UNION ALL 
+             SELECT PNUM,EMPNUM,HOURS
+               FROM WORKS
+               WHERE HOURS=12
+         ORDER BY 2,1;
+
+      EXEC SQL OPEN E;
+      
+      for (ii=1;ii<40;ii++)
+      {
+      EXEC SQL FETCH E INTO :PNO1,:EMPNO,:HOUR1;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf(" pnum=%s; empnum=%s; hours=%ld\n",PNO1,EMPNO,HOUR1);
+        }
+      }
+
+      printf("      The correct answer should be i=14; i=%ld \n",i);
+      if (i == 14)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0160','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml001.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0160','fail','PC');
+          errcnt = errcnt + 1;
+        }
+
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0160 ********************/
+
+      exit(errcnt);
+}

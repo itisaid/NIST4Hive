@@ -1,0 +1,562 @@
+/*  EMBEDDED C (file "DML075.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1991/26/06 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML075.PC                                                    */
+/*  WRITTEN BY: YOLANDA HERD                                     */
+/*                                                               */
+/*  THIS ROUTINE TESTS MISCELLANEOUS FEATURES.                   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  long count1;
+  long count2;
+  long count3;
+  long count4;
+  long count5;
+  long count6;
+  long HRS;
+  long TOTAL1;
+  char PTPE[7];
+  char CTY[16];
+  char NUM[4];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+  long flag1;
+  long flag2;
+  long flag3;
+  long flag4;
+  long flag5;
+  long flag6;
+  long flag7;
+  long flag8;
+  long flag9;
+  int i;
+
+
+main()
+{
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml075.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0431 ********************/
+
+printf("\n                      TEST0431            \n");
+printf("            Redundant rows in IN subquery\n");
+printf("           reference X3.135-1989 5.13, GR2  \n");
+printf("        -------------------------------------\n");
+
+
+count1 = 0;
+count2 = 0;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+  FROM STAFF
+  WHERE EMPNUM IN
+    (SELECT EMPNUM FROM WORKS);
+
+
+EXEC SQL INSERT INTO STAFF1
+  SELECT * FROM STAFF;
+
+EXEC SQL SELECT COUNT(*) INTO :count2
+  FROM STAFF1
+  WHERE EMPNUM IN
+    (SELECT EMPNUM FROM WORKS);
+
+EXEC SQL ROLLBACK WORK;
+
+printf(" The correct answers are:\n");
+printf("  count1 = 4, count2 = 4 \n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("  count1 = %ld, count2 = %ld\n", count1, count2);
+
+if ((count1 == 4) && (count2 == 4))
+  {
+    printf("\n\n                  *** pass *** ");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0431','pass','PC');
+  }
+else
+  {
+    printf("\n\n        dml075.pc  *** fail *** ");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0431','fail','PC');
+          errcnt = errcnt + 1;
+  }
+   
+
+printf("\n==================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0431 ********************/
+
+
+
+/******************** BEGIN TEST0432 ********************/
+
+printf("\n                   TEST0432           \n");
+printf(" Unknown condition in subquery of ALL, SOME, ANY\n");
+printf("      reference X3.135-1989 5.16, GR 2e\n");
+printf(" --------------------------------------------------\n");
+
+count1 = 0;
+count2 = 0;
+count3 = 0;
+count4 = 0;
+count5 = 0;
+count6 = 0;
+
+EXEC SQL UPDATE PROJ SET CITY = NULL 
+  WHERE PNUM = 'P3';
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+  FROM STAFF
+  WHERE CITY = ALL (SELECT CITY
+                   FROM PROJ
+                   WHERE PNAME = 'SDP');
+
+EXEC SQL SELECT COUNT(*) INTO :count2 
+  FROM STAFF
+  WHERE CITY <> ALL (SELECT CITY 
+                    FROM PROJ
+                    WHERE PNAME = 'SDP');
+
+EXEC SQL SELECT COUNT(*) INTO :count3
+  FROM STAFF
+  WHERE CITY = ANY (SELECT CITY    
+                   FROM PROJ
+                   WHERE PNAME = 'SDP');
+
+EXEC SQL SELECT COUNT(*) INTO :count4
+  FROM STAFF
+  WHERE CITY <> ANY (SELECT CITY
+                     FROM PROJ
+                     WHERE PNAME = 'SDP');
+
+EXEC SQL SELECT COUNT(*) INTO :count5
+  FROM STAFF
+  WHERE CITY = SOME (SELECT CITY
+                     FROM PROJ
+                     WHERE PNAME = 'SDP');
+
+EXEC SQL SELECT COUNT(*) INTO :count6
+  FROM STAFF
+  WHERE CITY <> SOME (SELECT CITY
+                      FROM PROJ
+                      WHERE PNAME = 'SDP');
+
+EXEC SQL ROLLBACK WORK;
+
+flag1 = 0;
+flag2 = 0;
+
+printf(" The correct answers are:\n");
+printf("  count1 = 0, count2 = 0, count3 = 2\n");
+printf("  count4 = 3, count5 = 2, count6 = 3\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("  count1 = %ld, count2 = %ld, count3 = %ld\n",count1,count2,count3);
+printf("  count4 = %ld, count5 = %ld, count6 = %ld\n",count4,count5,count6);
+
+if ((count1 != 0) || (count2 != 0) || (count3 != 2))
+  flag1 = 1;
+
+if ((count4 != 3) || (count5 != 2) || (count6 != 3))
+  flag2 = 1;
+
+
+if ((flag1 == 0) && (flag2 ==0))
+       {
+       printf("\n\n                   *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0432','pass','PC');
+       }
+     else
+       {
+       printf("\n\n         dml075.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0432','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+     printf("\n==================================================");
+
+     printf("\n\n\n\n");
+
+/******************** END TEST0432 ********************/
+
+
+/******************** BEGIN TEST0433 ********************/
+
+printf("\n                      TEST0433          \n");
+printf("               Empty subquery in ALL, SOME, ANY\n");
+printf(" reference X3.135-1989 5.16, GR 2a and 2d empty subquery\n");
+printf("--------------------------------------------------------------\n"); 
+
+count1 = 0;
+count2 = 0;
+count3 = 0;
+count4 = 0;
+count5 = 0;
+count6 = 0;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+  FROM PROJ
+  WHERE PNUM = ALL (SELECT PNUM
+                    FROM WORKS
+                    WHERE EMPNUM = 'E8');
+
+EXEC SQL SELECT COUNT(*) INTO :count2
+  FROM PROJ
+  WHERE PNUM <> ALL (SELECT PNUM
+                     FROM WORKS
+                     WHERE EMPNUM = 'E8');
+
+EXEC SQL SELECT COUNT(*) INTO :count3
+  FROM PROJ
+  WHERE PNUM = ANY (SELECT PNUM
+                    FROM WORKS
+                    WHERE EMPNUM = 'E8');
+
+EXEC SQL SELECT COUNT(*) INTO :count4
+  FROM PROJ
+  WHERE PNUM <> ANY (SELECT PNUM
+                     FROM WORKS
+                     WHERE EMPNUM = 'E8');
+
+EXEC SQL SELECT COUNT(*) INTO :count5
+  FROM PROJ
+  WHERE PNUM = SOME (SELECT PNUM
+                     FROM WORKS
+                     WHERE EMPNUM = 'E8');
+
+EXEC SQL SELECT COUNT(*) INTO :count6
+  FROM PROJ
+  WHERE PNUM <> SOME (SELECT PNUM
+                      FROM WORKS
+                      WHERE EMPNUM = 'E8');
+
+flag1 = 0;
+flag2 = 0;
+
+printf(" The correct answers are:\n");
+printf("  count1 = 6, count2 = 6, count3 = 0\n");
+printf("  count4 = 0, count5 = 0, count6 = 0\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("  count1 = %ld, count2 = %ld, count3 = %ld\n",count1,count2,count3);
+printf("  count4 = %ld, count5 = %ld, count6 = %ld\n",count4,count5,count6);
+
+if ((count1 != 6) || (count2 != 6) || (count3 != 0))
+  flag1 = 1;
+
+if ((count4 != 0) || (count5 != 0) || (count6 != 0))
+  flag2 = 1;
+
+if ((flag1 == 0) && (flag2 == 0))
+  {
+     printf("\n\n                   *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0433','pass','PC');
+  }
+else
+  {
+     printf("\n\n         dml075.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0433','fail','PC');
+          errcnt = errcnt + 1;
+  }
+    
+printf("\n==================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0433 ********************/
+
+
+/******************** BEGIN TEST0434 ********************/
+
+printf("\n                     TEST0434          \n");
+printf("   GROUP BY with HAVING EXISTS-correlated set function\n");
+printf("        reference 5.23 SR 2 and 5.8 SR 5  \n");
+printf("---------------------------------------------------------\n");
+
+EXEC SQL DECLARE FIDO CURSOR FOR 
+  SELECT PNUM, SUM(HOURS)
+  FROM WORKS
+  GROUP BY PNUM
+  HAVING EXISTS (SELECT PNAME FROM PROJ
+                 WHERE PROJ.PNUM = WORKS.PNUM AND
+                 SUM(WORKS.HOURS) > PROJ.BUDGET/200);
+
+EXEC SQL OPEN FIDO;
+
+count1 = 0;
+flag1 = 1;
+flag2 = 1;
+
+printf("The correct answers are (in any order):\n");
+printf(" NUM = P1, HRS = 80\n");
+printf(" NUM = P5, HRS = 92\n");
+printf(" 2 rows selected\n");  
+printf("\n");
+printf("Your answers are:\n");
+
+for (i=1;i<5;i++)
+  {
+    EXEC SQL FETCH FIDO INTO :NUM, :HRS;
+ 
+    if (SQLCODE == 0)
+      {     
+        count1 = count1 + 1;
+        printf("NUM = %s and HRS = %ld\n",NUM,HRS);
+        if ((strncmp(NUM,"P1 ",3) == 0) && HRS == 80)
+          flag1 = 0;
+        if ((strncmp(NUM,"P5 ",3) == 0) && HRS == 92)
+          flag2 = 0;
+      }
+   }
+  
+printf(" %ld rows selected\n",count1);
+printf("\n");
+
+if ((flag1 == 0) && (flag2 == 0) && (count1 == 2))
+  {
+     printf("\n\n                   *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0434','pass','PC');
+  }
+else
+  {
+     printf("\n\n         dml075.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0434','fail','PC');
+          errcnt = errcnt + 1;
+  }
+    
+printf("\n==================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0434 ********************/
+
+/******************** BEGIN TEST0442 ********************/
+
+printf("\n                     TEST0442           \n");
+printf("         DISTINCT with GROUP BY, HAVING       \n");
+printf("        5.25 <query specification> GR 4 \n");
+printf(" ----------------------------------------------------\n");
+
+
+EXEC SQL DECLARE YY CURSOR FOR 
+  SELECT PTYPE, CITY
+  FROM PROJ
+  GROUP BY PTYPE, CITY
+  HAVING AVG(BUDGET) > 21000;
+
+EXEC SQL OPEN YY;
+
+
+count1 = 0;
+flag1 = 1;
+flag2 = 1;
+flag3 = 1;
+strcpy(PTPE,"XXX");
+strcpy(CTY,"YYYYY");
+
+printf("The correct answers are: (in any order)\n");
+printf(" PTPE = Code,   CTY = Vienna\n");
+printf(" PTPE = Design, CTY = Deale\n");
+printf(" PTPE = Test,   CTY = Tampa\n");
+printf(" 3 rows selected\n");
+printf("\n");
+printf("Your answers are:\n");
+for (i=1;i<5;i++)
+  {
+    EXEC SQL FETCH YY INTO :PTPE, :CTY;
+
+    if (SQLCODE == 0)
+    {
+    count1 = count1 + 1;
+if ((strncmp(PTPE,"Code  ",6) == 0) && (strncmp(CTY,"Vienna         ",15) == 0))
+    flag1 = 0;
+if ((strncmp(PTPE,"Design",6) == 0) && (strncmp(CTY,"Deale          ",15) == 0))
+    flag2 = 0;
+if ((strncmp(PTPE,"Test  ",6) == 0) && (strncmp(CTY,"Tampa          ",15) == 0))
+    flag3 = 0;
+    printf(" PTPE = %s, CTY = %s\n",PTPE,CTY);
+    }
+  }
+printf(" %ld rows selected\n",count1);
+printf("\n\n");
+
+
+EXEC SQL CLOSE YY;
+
+flag4 = 1;
+flag5 = 1;
+flag6 = 1;
+count2 = 0;
+strcpy(PTPE,"XXX");
+strcpy(CTY,"YYYYY");
+
+EXEC SQL DECLARE ZZ CURSOR FOR 
+  SELECT DISTINCT PTYPE, CITY 
+  FROM PROJ
+  GROUP BY PTYPE, CITY
+  HAVING AVG(BUDGET) > 21000;
+
+EXEC SQL OPEN ZZ;
+
+printf("The correct answers are: (in any order)\n");
+printf(" PTPE = Code,   CTY = Vienna\n");
+printf(" PTPE = Design, CTY = Deale\n");
+printf(" PTPE = Test,   CTY = Tampa\n");
+printf(" 3 rows selected\n");
+printf("\n");
+
+printf("Your answers are:\n");
+for (i=1;i<5;i++)
+  {
+    EXEC SQL FETCH ZZ INTO :PTPE, :CTY;
+
+    if (SQLCODE == 0)
+    {
+    count2 = count2 + 1;
+if ((strncmp(PTPE,"Code  ",6) == 0) && (strncmp(CTY,"Vienna         ",15) == 0))
+    flag4 = 0;
+if ((strncmp(PTPE,"Design",6) == 0) && (strncmp(CTY,"Deale          ",15) == 0))
+    flag5 = 0;
+if ((strncmp(PTPE,"Test  ",6) == 0) && (strncmp(CTY,"Tampa          ",15) == 0))
+    flag6 = 0;
+    printf(" PTPE = %s, CTY = %s\n",PTPE,CTY);
+    }
+   }
+printf(" %ld rows selected\n",count2);
+printf("\n\n");
+
+EXEC SQL CLOSE ZZ;
+
+count3 = 0;
+flag7 = 1;
+flag8 = 1;
+TOTAL1 = 0;
+
+EXEC SQL DECLARE AA CURSOR FOR 
+  SELECT DISTINCT SUM(BUDGET) 
+  FROM PROJ
+  GROUP BY PTYPE, CITY
+  HAVING AVG(BUDGET) > 21000;
+
+EXEC SQL OPEN AA;
+
+printf("The correct answers are (in any order):\n");
+printf(" SUM(BUDGET) = 30000\n");
+printf(" SUM(BUDGET) = 80000\n");
+printf(" 2 rows selected\n");  
+printf("\n");
+printf("Your answers are:\n");
+for (i=1;i<5;i++)
+  {
+    EXEC SQL FETCH AA INTO :TOTAL1;
+ 
+    if (SQLCODE == 0)
+      {     
+        count3 = count3 + 1;
+        printf("SUM(BUDGET) = %ld\n",TOTAL1);
+        if (TOTAL1 == 30000)
+          flag7 = 0;
+        if (TOTAL1 == 80000)
+          flag8 = 0;
+      }
+   }
+  
+printf(" %ld rows selected\n",count3);
+printf("\n");
+    
+count5 = 1;
+count6 = 1;
+flag9 = 1;
+
+if ((flag1 == 0) && (flag2 == 0) && (flag3 == 0) && (flag4 == 0))
+  count5 = 0;
+
+if ((flag5 == 0) && (flag6 == 0) && (flag7 == 0) && (flag8 == 0))
+  count6 = 0;
+
+if ((count1 == 3) && (count2 == 3) && (count3 == 2))
+  flag9 = 0;
+
+if ((count5 == 0) && (count6 == 0) && (flag9 == 0))
+  {
+     printf("\n\n                   *** pass *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0442','pass','PC');
+  }
+else
+  {
+     printf("\n\n         dml075.pc  *** fail *** ");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0442','fail','PC');
+          errcnt = errcnt + 1;
+  }
+    
+printf("\n==================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0442 ********************/
+exit(errcnt);
+}

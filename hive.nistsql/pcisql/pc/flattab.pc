@@ -1,0 +1,104 @@
+/*  EMBEDDED C (file "FLATTAB.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/06/16 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLATTAB.PC                                                   */
+/*  WRITTEN BY: David W. Flater                                  */
+/*                                                               */
+/*  Yet another table initialization module.                     */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  long i;
+  long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+long local;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+strcpy(uid,"FLATER");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, flattab.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+EXEC SQL DELETE FROM BASE_VS1;
+EXEC SQL INSERT INTO BASE_VS1 VALUES (0,1);
+EXEC SQL INSERT INTO BASE_VS1 VALUES (1,0);
+EXEC SQL INSERT INTO BASE_VS1 VALUES (0,0);
+EXEC SQL INSERT INTO BASE_VS1 VALUES (1,1);
+
+EXEC SQL SELECT COUNT(*) INTO :i FROM BASE_VS1;
+
+if (i == 4)
+  {
+  printf("BASE_VS1 was created successfully!\n");
+  }
+else
+  {
+    printf("*****************************************\n");
+    printf("*           BASE_VS1        ERROR !!!   *\n");
+    printf("*****************************************\n");
+    errcnt = errcnt + 1;
+  }
+
+EXEC SQL DELETE FROM USIG;
+EXEC SQL INSERT INTO USIG VALUES (0,2);
+EXEC SQL INSERT INTO USIG VALUES (1,3);
+EXEC SQL DELETE FROM U_SIG;
+EXEC SQL INSERT INTO U_SIG VALUES (4,6);
+EXEC SQL INSERT INTO U_SIG VALUES (5,7);
+
+EXEC SQL SELECT COUNT(*) INTO :i FROM USIG;
+EXEC SQL SELECT COUNT(*) INTO :ii FROM U_SIG;
+
+if (i == 2 && ii == 2)
+  {
+  printf("USIG and U_SIG were created successfully!\n");
+  }
+else
+  {
+    printf("*****************************************\n");
+    printf("*              USIG, U_SIG  ERROR !!!   *\n");
+    printf("*****************************************\n");
+    errcnt = errcnt + 1;
+  }
+EXEC SQL COMMIT WORK;
+
+exit(errcnt);
+
+}

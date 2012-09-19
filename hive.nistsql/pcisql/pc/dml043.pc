@@ -1,0 +1,133 @@
+/*  EMBEDDED C (file "DML043.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/11/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML043.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT ON TOTAL LENGTH OF A ROW. THE */
+/*  LIMIT IS TWO THOUSAND (2000).                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char vtr110[111];
+  char vtr180[181];
+  char vtr216[217];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  long  i;
+  long  ii;
+  char str180[181];
+  char str216[217];
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml043.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0214 ********************/
+
+  printf("\n          FIPS sizing TEST0214      \n");
+  printf("This routine tests total length (2000) of a row\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO T2000(STR110,STR200,STR216)
+    VALUES
+          ('STR11111111111111111111111111111111111111111111111',
+           'STR22222222222222222222222222222222222222222222222',
+           'STR66666666666666666666666666666666666666666666666');
+
+  i = SQLCODE;
+
+  EXEC SQL UPDATE T2000  SET STR140 =
+           'STR44444444444444444444444444444444444444444444444';
+  EXEC SQL UPDATE T2000  SET STR180 =
+           'STR88888888888888888888888888888888888888888888888';
+
+
+
+  EXEC SQL SELECT STR110,STR180,STR216
+           INTO :vtr110,:vtr180,:vtr216
+           FROM T2000;
+  ii = SQLCODE;
+
+  printf("i = %ld, ii = %ld \n", i, ii);
+  printf("vtr110 = %s\n",vtr110);
+  printf("vtr180 = %s\n",vtr180);
+  printf("vtr216 = %s\n",vtr216);
+
+  EXEC SQL ROLLBACK WORK;
+
+  strcpy(str180,"STR88888888888888888888888888888888888888888888888");
+  strcpy(str216,"STR66666666666666666666666666666666666666666666666");
+
+  if (i==0 && strncmp(vtr180,str180,50)==0 && strncmp(vtr216,str216,50)==0)
+    {
+      printf("        *** pass *** \n\n");      
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0214','pass','PC');
+    }
+  else
+    {
+      printf("dml043.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0214','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0214 ********************/
+
+  exit(errcnt);
+}
+

@@ -1,0 +1,608 @@
+/*  EMBEDDED C (file "DML167.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-02 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML167.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml167.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0874 ********************/
+flag = 1;
+
+     printf("                  TEST0874\n");
+     printf("    INFORMATION_SCHEMA catalog columns\n");
+     printf("References:\n");
+     printf("    F#35 -- Intermediate information schema\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* This test checks all info schem columns containing the catalog name */
+/* which were not previously accessed. */
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT TABLE_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS;\n");
+EXEC SQL SELECT COUNT (DISTINCT TABLE_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS\n");
+printf("  WHERE TABLE_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+  WHERE TABLE_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE;\n");
+EXEC SQL SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE\n");
+printf("  WHERE CONSTRAINT_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR CONSTRAINT_CATALOG IS NULL\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+  WHERE CONSTRAINT_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR CONSTRAINT_CATALOG IS NULL
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT VIEW_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE;\n");
+EXEC SQL SELECT COUNT (DISTINCT VIEW_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE\n");
+printf("  WHERE VIEW_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR VIEW_CATALOG IS NULL\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE
+  WHERE VIEW_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR VIEW_CATALOG IS NULL
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT VIEW_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE;\n");
+EXEC SQL SELECT COUNT (DISTINCT VIEW_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE\n");
+printf("  WHERE VIEW_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR VIEW_CATALOG IS NULL\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE
+  WHERE VIEW_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR VIEW_CATALOG IS NULL
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE;\n");
+EXEC SQL SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE\n");
+printf("  WHERE CONSTRAINT_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR CONSTRAINT_CATALOG IS NULL\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.CONSTRAINT_TABLE_USAGE
+  WHERE CONSTRAINT_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR CONSTRAINT_CATALOG IS NULL
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE;\n");
+EXEC SQL SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE\n");
+printf("  WHERE CONSTRAINT_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR CONSTRAINT_CATALOG IS NULL\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE
+  WHERE CONSTRAINT_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR CONSTRAINT_CATALOG IS NULL
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT DOMAIN_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE;\n");
+EXEC SQL SELECT COUNT (DISTINCT DOMAIN_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE\n");
+printf("  WHERE DOMAIN_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR DOMAIN_CATALOG IS NULL\n");
+printf("  OR TABLE_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE
+  WHERE DOMAIN_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR DOMAIN_CATALOG IS NULL
+  OR TABLE_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)\n");
+printf("  INTO :int1 FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS;\n");
+EXEC SQL SELECT COUNT (DISTINCT CONSTRAINT_CATALOG)
+  INTO :int1 FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS\n");
+printf("  WHERE CONSTRAINT_CATALOG <> (\n");
+printf("    SELECT CATALOG_NAME FROM\n");
+printf("    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)\n");
+printf("  OR CONSTRAINT_CATALOG IS NULL\n");
+printf("  OR DOMAIN_CATALOG IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS
+  WHERE CONSTRAINT_CATALOG <> (
+    SELECT CATALOG_NAME FROM
+    INFORMATION_SCHEMA.INFORMATION_SCHEMA_CATALOG_NAME)
+  OR CONSTRAINT_CATALOG IS NULL
+  OR DOMAIN_CATALOG IS NULL;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0874','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml167.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0874','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0874 *********************/
+/******************** BEGIN TEST0875 ********************/
+flag = 1;
+
+     printf("                  TEST0875\n");
+     printf("    INFORMATION_SCHEMA column coverage\n");
+     printf("References:\n");
+     printf("    F#35 -- Intermediate information schema\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TAB1 (\n");
+printf("  C1 INT, C2 INT, C3 INT,\n");
+printf("  PRIMARY KEY (C1, C2));\n");
+EXEC SQL CREATE TABLE TAB1 (
+  C1 INT, C2 INT, C3 INT,
+  PRIMARY KEY (C1, C2));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE TAB2 (\n");
+printf("  D1 INT PRIMARY KEY, D2 INT, D3 INT,\n");
+printf("  FOREIGN KEY (D2, D3) REFERENCES TAB1);\n");
+EXEC SQL CREATE TABLE TAB2 (
+  D1 INT PRIMARY KEY, D2 INT, D3 INT,
+  FOREIGN KEY (D2, D3) REFERENCES TAB1);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+/* This test checks existence of columns that were missed in the CTS5 tests. */
+
+int1 = 0;
+printf("SELECT ORDINAL_POSITION INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE\n");
+printf("  WHERE COLUMN_NAME = 'CONST_ID'\n");
+printf("  AND TABLE_NAME = 'CONSTITUENTS'\n");
+printf("  AND TABLE_SCHEMA = 'TIDES';\n");
+EXEC SQL SELECT ORDINAL_POSITION INTO :int1
+  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+  WHERE COLUMN_NAME = 'CONST_ID'
+  AND TABLE_NAME = 'CONSTITUENTS'
+  AND TABLE_SCHEMA = 'TIDES';
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* 21.3.14 DS.3:  ORDINAL_POSITION is within the referenced unique */
+/* constraint */
+
+int1 = 0;
+printf("SELECT ORDINAL_POSITION INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE\n");
+printf("  WHERE COLUMN_NAME = 'D2'\n");
+printf("  AND TABLE_NAME = 'TAB2'\n");
+printf("  AND TABLE_SCHEMA = 'FLATER';\n");
+EXEC SQL SELECT ORDINAL_POSITION INTO :int1
+  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+  WHERE COLUMN_NAME = 'D2'
+  AND TABLE_NAME = 'TAB2'
+  AND TABLE_SCHEMA = 'FLATER';
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT ORDINAL_POSITION INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE\n");
+printf("  WHERE COLUMN_NAME = 'D1'\n");
+printf("  AND TABLE_NAME = 'TAB2'\n");
+printf("  AND TABLE_SCHEMA = 'FLATER';\n");
+EXEC SQL SELECT ORDINAL_POSITION INTO :int1
+  FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+  WHERE COLUMN_NAME = 'D1'
+  AND TABLE_NAME = 'TAB2'
+  AND TABLE_SCHEMA = 'FLATER';
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/* Constraints:  primary key in TAB1; referential constraint from TAB2 */
+/* Erratum X3H2-96-56 / DBL MCI-066:  want referenced columns, not */
+/* referencing */
+
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE\n");
+printf("  WHERE TABLE_NAME = 'TAB1'\n");
+printf("  AND COLUMN_NAME = 'C1'\n");
+printf("  AND TABLE_SCHEMA = 'FLATER'\n");
+printf("  AND CONSTRAINT_SCHEMA IS NOT NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE
+  WHERE TABLE_NAME = 'TAB1'
+  AND COLUMN_NAME = 'C1'
+  AND TABLE_SCHEMA = 'FLATER'
+  AND CONSTRAINT_SCHEMA IS NOT NULL;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS;
+CHCKOK ();
+printf ("\n");
+
+int2 = -2;
+printf("SELECT COUNT(*) INTO :int2\n");
+printf("  FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS\n");
+printf("  WHERE (IS_DEFERRABLE = 'NO' AND INITIALLY_DEFERRED = 'NO') OR\n");
+printf("  (IS_DEFERRABLE = 'YES' AND (INITIALLY_DEFERRED = 'NO' OR\n");
+printf("  INITIALLY_DEFERRED = 'YES'));\n");
+EXEC SQL SELECT COUNT(*) INTO :int2
+  FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS
+  WHERE (IS_DEFERRABLE = 'NO' AND INITIALLY_DEFERRED = 'NO') OR
+  (IS_DEFERRABLE = 'YES' AND (INITIALLY_DEFERRED = 'NO' OR
+  INITIALLY_DEFERRED = 'YES'));
+CHCKOK ();
+printf ("int1 and int2 should be equal.\n");
+printf ("int1 is %ld; int2 is %ld\n\n", int1, int2);
+if (int1 != int2)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE TAB1 CASCADE;\n");
+EXEC SQL DROP TABLE TAB1 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE TAB2 CASCADE;\n");
+EXEC SQL DROP TABLE TAB2 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0875','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml167.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0875','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0875 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

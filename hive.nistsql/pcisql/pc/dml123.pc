@@ -1,0 +1,646 @@
+/*  EMBEDDED C (file "DML123.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/6/16 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML123.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER / HU YANPING                     */
+/*                                                               */
+/*  This program checks for unhealthy interactions between static*/
+/*  and dynamic SQL statements in the same transaction.  It is   */
+/*  based on DML015.                                             */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+    char EMPNO1[4];
+    char CITY1[16];
+    long GRADE1;
+    long i1;
+char uid[19];
+char uidx[19];
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+long     flag;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"FLATER            ");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+printf("SQL Test Suite, V6.0, Embedded C, dml123.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0556 ********************/
+flag = 1;
+
+  printf("\n                  TEST0556                  \n");
+  printf("Static insert, dynamic fetch, static commit\n");
+  printf("References:\n");
+  printf("    4.28 -- SQL-transactions\n");
+  printf("    13.3 GR.1 -- <invalid cursor state> on FETCH\n");
+  printf("   - - - - - - - - - - - - - - - - - - -    \n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TEMP_S\n");
+printf("  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));\n");
+EXEC SQL CREATE TABLE TEMP_S
+  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMP_S\n");
+printf("  SELECT EMPNUM, GRADE, CITY FROM HU.STAFF;\n");
+EXEC SQL INSERT INTO TEMP_S
+  SELECT EMPNUM, GRADE, CITY FROM HU.STAFF;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM TEMP_S ORDER BY EMPNUM DESC\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM TEMP_S ORDER BY EMPNUM DESC         ");
+
+printf("PREPARE S1 FROM :dstmt;\n");
+EXEC SQL PREPARE S1 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE X CURSOR FOR S1;\n");
+EXEC SQL DECLARE X CURSOR FOR S1;
+printf("\n");
+
+printf("OPEN X;\n");
+EXEC SQL OPEN X;
+CHCKOK ();
+printf("\n");
+
+strcpy (EMPNO1, "xxx");
+strcpy (CITY1, "xxxxxxxxxxxxxxx");
+GRADE1 = -1;
+printf("FETCH X INTO :EMPNO1,:GRADE1,:CITY1;\n");
+EXEC SQL FETCH X INTO :EMPNO1,:GRADE1,:CITY1;
+CITY1[15] = '\0';
+EMPNO1[3] = '\0';
+SQLSTATE[5] = '\0';
+
+CHCKOK ();
+printf("EMPNO1 should be E5; its value is %s\n", EMPNO1);
+printf("GRADE1 should be 13; its value is %ld\n", GRADE1);
+printf("CITY1 should be Akron; its value is %s\n\n", CITY1);
+
+if (strncmp (EMPNO1, "E5", 2) != 0)
+  flag = 0;
+if (GRADE1 != 13)
+  flag = 0;
+if (strncmp (CITY1, "Akron", 5) != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH X INTO :EMPNO1,:GRADE1,:CITY1;\n");
+EXEC SQL FETCH X INTO :EMPNO1,:GRADE1,:CITY1;
+SQLSTATE[5] = '\0';
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 24000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "24000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "24000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+/* Can't find a reference to either require or prohibit returning */
+/* invalid transaction state here                                */
+
+/* CHCKOK (); */
+
+printf("\n");
+
+printf("DROP TABLE TEMP_S CASCADE;\n");
+EXEC SQL DROP TABLE TEMP_S CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+  if (flag == 1)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0556','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml123.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0556','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0556 ********************/
+/******************** BEGIN TEST0557 ********************/
+flag = 1;
+
+  printf("\n                  TEST0557                  \n");
+  printf("Static insert, dynamic commit, static rollback\n");
+  printf("    4.28 -- SQL-transactions\n");
+  printf("    - - - - - - - - - - - - - - - - - - -    \n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TEMP_S\n");
+printf("  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));\n");
+EXEC SQL CREATE TABLE TEMP_S
+  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMP_S\n");
+printf("  SELECT EMPNUM, GRADE, CITY FROM HU.STAFF;\n");
+EXEC SQL INSERT INTO TEMP_S
+  SELECT EMPNUM, GRADE, CITY FROM HU.STAFF;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"COMMIT WORK\"\n");
+  strcpy (dstmt,
+  "COMMIT WORK                                       ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+/* Can't find a reference to either require or prohibit returning */
+/* invalid transaction state here                                */
+
+/* CHCKOK (); */
+
+printf("\n");
+
+i1 = -1;
+printf("SELECT COUNT(*) INTO :i1 FROM TEMP_S;\n");
+EXEC SQL SELECT COUNT(*) INTO :i1 FROM TEMP_S;
+CHCKOK ();
+printf("      i1 should be 5, its value is %ld \n\n",i1);
+if (i1 != 5)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TEMP_S CASCADE;\n");
+EXEC SQL DROP TABLE TEMP_S CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+  if (flag == 1)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0557','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml123.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0557','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  EXEC SQL COMMIT WORK;
+  printf("\n\n\n\n");
+
+/******************** END TEST0557 ********************/
+/******************** BEGIN TEST0558 ********************/
+flag = 1;
+
+  printf("\n                  TEST0558                  \n");
+  printf("Dynamic insert, static delete, dynamic count\n");
+  printf("    4.28 -- SQL-transactions\n");
+  printf("    - - - - - - - - - - - - - - - - - - -    \n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TEMP_S\n");
+printf("  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));\n");
+EXEC SQL CREATE TABLE TEMP_S
+  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO TEMP_S SELECT EMPNUM,' ||
+       '  GRADE, CITY FROM HU.STAFF'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+/* Not sure why an extra open cursor would make a difference, */
+/* but here it is.                                            */
+
+printf("dstmt=\"SELECT * FROM TEMP_S ORDER BY EMPNUM DESC\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM TEMP_S ORDER BY EMPNUM DESC         ");
+
+printf("PREPARE S2 FROM :dstmt;\n");
+EXEC SQL PREPARE S2 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE Y CURSOR FOR S2;\n");
+EXEC SQL DECLARE Y CURSOR FOR S2;
+printf("\n");
+
+printf("OPEN Y;\n");
+EXEC SQL OPEN Y;
+CHCKOK ();
+printf("\n");
+
+strcpy (EMPNO1, "xxx");
+strcpy (CITY1, "xxxxxxxxxxxxxxx");
+GRADE1 = -1;
+printf("FETCH Y INTO :EMPNO1,:GRADE1,:CITY1;\n");
+EXEC SQL FETCH Y INTO :EMPNO1,:GRADE1,:CITY1;
+CITY1[15] = '\0';
+EMPNO1[3] = '\0';
+SQLSTATE[5] = '\0';
+
+CHCKOK ();
+printf("EMPNO1 should be E5; its value is %s\n", EMPNO1);
+printf("GRADE1 should be 13; its value is %ld\n", GRADE1);
+printf("CITY1 should be Akron; its value is %s\n\n", CITY1);
+
+if (strncmp (EMPNO1, "E5", 2) != 0)
+  flag = 0;
+if (GRADE1 != 13)
+  flag = 0;
+if (strncmp (CITY1, "Akron", 5) != 0)
+  flag = 0;
+
+printf("DELETE FROM TEMP_S WHERE EMPNUM ='E5';\n");
+EXEC SQL DELETE FROM TEMP_S WHERE EMPNUM ='E5';
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM TEMP_S\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM TEMP_S                       ");
+
+     printf("PREPARE S3 FROM :dstmt;\n");
+     EXEC SQL PREPARE S3 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+     printf("DECLARE C3 CURSOR FOR S3;\n");
+     EXEC SQL DECLARE C3 CURSOR FOR S3;
+printf("\n");
+
+     printf("OPEN C3;\n");
+     EXEC SQL OPEN C3;
+CHCKOK ();
+printf("\n");
+
+     i1 = -1;
+     printf("FETCH C3 INTO :i1;\n");
+     EXEC SQL FETCH C3 INTO :i1;
+CHCKOK ();
+     printf("i1 should be 4; its value is %ld\n\n", i1);
+     if (i1 != 4)
+       flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE TEMP_S CASCADE;\n");
+EXEC SQL DROP TABLE TEMP_S CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+  if (flag == 1)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0558','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml123.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0558','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0558 ********************/
+/******************** BEGIN TEST0559 ********************/
+flag = 1;
+
+  printf("\n                  TEST0559                  \n");
+  printf("Static insert, dynamic rollback, static fetch\n");
+  printf("    4.28 -- SQL-transactions\n");
+  printf("    13.3 GR.1 -- <invalid cursor state> on FETCH\n");
+  printf("    - - - - - - - - - - - - - - - - - - -    \n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+  
+printf("CREATE TABLE TEMP_S\n");
+printf("  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));\n");
+EXEC SQL CREATE TABLE TEMP_S
+  (EMPNUM  CHAR(3), GRADE DECIMAL(4), CITY CHAR(15));
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMP_S\n");
+printf("  SELECT EMPNUM, GRADE, CITY FROM HU.STAFF;\n");
+EXEC SQL INSERT INTO TEMP_S
+  SELECT EMPNUM, GRADE, CITY FROM HU.STAFF;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C4 CURSOR FOR\n");
+printf("  SELECT * FROM TEMP_S ORDER BY EMPNUM DESC;\n");
+EXEC SQL DECLARE C4 CURSOR FOR
+  SELECT * FROM TEMP_S ORDER BY EMPNUM DESC;
+printf("\n");
+
+printf("OPEN C4;\n");
+EXEC SQL OPEN C4;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"ROLLBACK WORK\"\n");
+     strcpy (dstmt,
+     "ROLLBACK WORK                                     ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C4 INTO :EMPNO1,:GRADE1,:CITY1;\n");
+EXEC SQL FETCH C4 INTO :EMPNO1,:GRADE1,:CITY1;
+SQLSTATE[5] = '\0';
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 24000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "24000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "24000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+/* Can't find a reference to either require or prohibit returning */
+/* invalid transaction state here                                */
+
+/* CHCKOK (); */
+
+printf("\n");
+
+printf("DROP TABLE TEMP_S CASCADE;\n");
+EXEC SQL DROP TABLE TEMP_S CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+  if (flag == 1)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0559','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml123.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0559','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("\n\n\n\n");
+
+  EXEC SQL DELETE FROM HU.TEMP_S;
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0559 ********************/
+
+  exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

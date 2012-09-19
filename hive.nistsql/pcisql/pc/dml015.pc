@@ -1,0 +1,239 @@
+/*  EMBEDDED C (file "DML015.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML015.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE COMMIT AND ROLLBACK STATEMENTS IN   */
+/*  THE SQL LANGUAGE.                                            */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*               SECTION 8.2 <commit statement>                  */
+/*               SECTION 8.9 <rollback statement>                */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char EMPNO1[4];
+    char CITY1[16];
+    long GRADE1;
+    long i;
+    long i1;
+    long i2;
+    long i3;
+    long i5;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml015.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0060 ********************/
+
+  EXEC SQL INSERT INTO TEMP_S
+     SELECT EMPNUM,GRADE,CITY
+     FROM   STAFF;
+
+  EXEC SQL DECLARE X CURSOR
+    FOR SELECT *
+        FROM   TEMP_S
+        ORDER  BY TEMP_S.EMPNUM DESC;
+
+  EXEC SQL OPEN X;
+  printf("\n                  TEST0060                  \n");
+  printf("Reference X3.135-89 section 8.2 General Rules 2)\n");
+  printf("    - - - - - - - - - - - - - - - - - - -    \n\n");
+  
+  EXEC SQL FETCH X INTO :EMPNO1,:GRADE1,:CITY1;
+  
+
+  printf("      EMPNO1=%s ; GRADE1=%ld ; CITY1=%s \n",EMPNO1,GRADE1,CITY1);
+
+  i1 = SQLCODE;
+  EXEC SQL COMMIT WORK;
+  EXEC SQL FETCH X INTO :EMPNO1,:GRADE1,:CITY1;
+  
+
+  printf("      EMPNO1=%s ; GRADE1=%ld ; CITY1=%s \n",EMPNO1,GRADE1,CITY1);
+  printf(" sqlcode should be less than zero, sqlcode=%ld \n",SQLCODE);
+
+  if (SQLCODE < 0 && i1 == 0)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0060','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml015.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0060','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0060 ********************/
+/******************** BEGIN TEST0061 ********************/
+
+  EXEC SQL ROLLBACK WORK;
+  EXEC SQL SELECT COUNT(*)
+     INTO   :i2
+     FROM   TEMP_S;
+
+  printf("\n                  TEST0061                  \n");
+  printf("Reference X3.135-89 section 8.2 General Rules 3)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -     \n\n");
+
+  printf("      i2 should be 5, i2=%ld \n",i2);
+  if (i2 == 5)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0061','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml015.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0061','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  EXEC SQL COMMIT WORK;
+  printf("\n\n\n\n");
+
+/******************** END TEST0061 ********************/
+/******************** BEGIN TEST0062 ********************/
+
+  printf("\n                  TEST0062                  \n");
+  printf("Reference X3.135-89 section 8.9 General Rules 1)\n");
+  printf("    - - - - - - - - - - - - - - - - - - -   \n\n");
+
+  EXEC SQL OPEN X;
+
+  EXEC SQL FETCH X INTO :EMPNO1,:GRADE1,:CITY1;
+
+  EXEC SQL DELETE FROM TEMP_S
+     WHERE EMPNUM='E5';
+
+  EXEC SQL SELECT COUNT(*)
+     INTO   :i3
+     FROM   TEMP_S;
+  printf("      i3 should be 4, i3=%ld \n",i3);
+
+  
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL SELECT COUNT(*)
+     INTO   :i5
+     FROM   TEMP_S;
+
+  printf("      i5 should be 5, i5=%ld \n",i5);
+
+  if (i3 == 4 && i5 == 5)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0062','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml015.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0062','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0062 ********************/
+/******************** BEGIN TEST0063 ********************/
+
+  printf("\n                  TEST0063                  \n");
+  printf("Reference X3.135-89 section 8.9 General Rules 2)\n");
+  printf("    - - - - - - - - - - - - - - - - - - -     \n\n");
+
+  EXEC SQL OPEN X;
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL FETCH X INTO :EMPNO1,:GRADE1,:CITY1;
+
+  printf(" EMPNO1=%s ; GRADE1=%ld ; CITY1=%s \n",EMPNO1,GRADE1,CITY1);
+  printf(" sqlcode should be less than zero, sqlcode=%ld \n",SQLCODE);
+
+  if (SQLCODE < 0)
+    {
+    printf("\n\n                  *** pass ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0063','pass','PC');
+    }
+  else
+    {
+    printf("\n\n        dml015.pc  *** fail ***");
+    printf("\n================================================");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0063','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("\n\n\n\n");
+
+  EXEC SQL DELETE FROM TEMP_S;
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0063 ********************/
+
+  exit(errcnt);
+}

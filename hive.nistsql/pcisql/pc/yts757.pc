@@ -1,0 +1,451 @@
+/*  EMBEDDED C (file "YTS757.PC")  */
+
+/* Copyright 1996 National Computing Centre Limited, */
+/* and Computer Logic R&D S.A */
+/* on behalf of the CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS757.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  INSERT Values in column defined on a domain                  */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.21    <domain definition>                               */
+/*    11.4     <column definition>                               */
+/*    11.3     <table definition>                                */
+/*    13.8     <insert statement>                                */
+/*    F#25     Domain definition                                 */
+/*    F#3      Basic schema manipulation                         */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-03-05                                    */
+/*    Added rollback after authid                                */
+/*    Cleanup                                                    */
+/*    Removed EXEC SQL from inside printfs                       */
+/*    Moved table used by both tests outside of tests            */
+/*    Fixed printouts                                            */
+/*    Fixed wrong values inserted                                */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char co[2]; 
+long co2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts757.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/* Create table used by both tests */
+
+printf("CREATE TABLE dom_chk\n");
+printf("(col1    atom,\n");
+printf(" col2    smint);\n");
+EXEC SQL CREATE TABLE dom_chk 
+(col1     atom,
+ col2     smint);
+printf ("SQLSTATE should be 00000; it is %s\n\n", SQLSTATE);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+printf ("SQLSTATE should be 00000; it is %s\n\n", SQLSTATE);
+
+
+/******************** BEGIN TEST7507 ********************/
+flag = 1;
+
+     printf("                  TEST7507 \n");
+     printf("   INSERT value in column defined on domain\n");
+     printf("References:\n");
+     printf("    11.21  <domain definition>\n");
+     printf("    11.4   <column definition>\n");
+     printf("    11.3   <table definition>\n");
+     printf("    13.8   <insert statement>\n");
+     printf("    F#25   Domain definition\n");
+     printf("    F#3    Basic schema manipulation\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+strcpy(co,"x");
+co2 = 99;
+
+/* create a table which uses domains atom and smint*/
+/* These are defined in cts5sch2.smi */
+/* integer domain 'smint' range 1 to 100 */
+/* reference character domain 'atom' range 'a' to 'm' */
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* insert a row  into dom_chk */
+
+printf("Insert a correct row into dom_chk\n");
+printf("INSERT INTO dom_chk VALUES ('c',38);\n");
+EXEC SQL INSERT INTO dom_chk VALUES ('c',38);
+CHCKOK ();
+printf("\n");
+
+/*Check row has inserted correctly */
+
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+printf("SELECT col1, col2 INTO :co, :co2 FROM dom_chk;\n");
+EXEC SQL SELECT col1, col2 INTO :co, :co2  FROM dom_chk;
+CHCKOK ();
+printf ("co should be c; its value is %s\n", co);
+printf ("co2 should be 38; its value is %ld\n\n", co2);
+if (strncmp(co,"c",1) != 0 || co2 != 38)
+  flag = 0;
+
+/* check scope of domains */
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("INSERT INTO dom_chk VALUES ('a',1);\n");
+EXEC SQL INSERT INTO dom_chk VALUES ('a',1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO dom_chk VALUES ('m', 100);\n");
+EXEC SQL INSERT INTO dom_chk VALUES ('m', 100);
+CHCKOK ();
+printf("\n");
+
+/* attempt to insert incorrect value into table */
+
+     SQLCODE = -1;
+     strcpy(SQLSTATE,"xxxxx");
+
+printf("INSERT INTO dom_chk VALUES ('z', 101);\n");
+EXEC SQL INSERT INTO dom_chk VALUES ('z', 101);
+
+/* That should generate an integrity constraint violation */
+/* which is SQLSTATE 23000 */
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("\n");
+
+/* check that the table does not contain that row */
+
+co2 = 1;
+printf("SELECT COUNT (*) INTO :co2 FROM dom_chk\n");
+printf("WHERE col1 = 'z';\n");
+EXEC SQL SELECT COUNT (*) INTO :co2 FROM dom_chk
+WHERE col1 = 'z';
+CHCKOK ();
+printf ("co2 should be 0; its value is %ld\n\n", co2);
+if (co2 != 0)
+   flag = 0;
+
+/* Attempt to update row with value that breaks dom constraint */
+
+printf("UPDATE dom_chk\n");
+printf("SET col1 = 'q'\n");
+printf("WHERE col2 = 38;\n");
+EXEC SQL UPDATE dom_chk
+SET col1 = 'q'
+WHERE col2 = 38;
+
+/* That should generate an integrity constraint violation */
+/* which is SQLSTATE 23000 */
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+  SQLSTATE[5] = '\0';
+  printf("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+  NOSUBCLASS();
+  if (strncmp (NORMSQ, "23000", 5) != 0)
+    flag = 0;
+  if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+    printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("\n");
+
+/* check that the table does not contain that row */
+
+co2 = 1;
+printf("SELECT COUNT (*) INTO :co2 FROM dom_chk\n");
+printf("WHERE col1 = 'q';\n");
+EXEC SQL SELECT COUNT (*) INTO :co2 FROM dom_chk
+WHERE col1 = 'q';
+CHCKOK ();
+printf ("co2 should be 0; its value is %ld\n\n", co2);
+if (co2 != 0)
+   flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts757.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7507','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts757.pc *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7507','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7507 *********************/
+/******************** BEGIN TEST7508 ********************/
+flag = 1;
+
+     printf("                  TEST7508 \n");
+     printf("   Put value in col defined on dom breaking constraint\n");
+     printf("References:\n");
+     printf("    11.21   <domain definition>\n");
+     printf("    11.3    <table definition>\n");
+     printf("    11.4    <column definition>\n");
+     printf("    11.25   <add domain constraint definition>\n");
+     printf("    F#25    Domain definition\n");
+     printf("    F#3     Basic schema manipulation\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+    SQLCODE = -1;
+    strcpy (SQLSTATE, "xxxxx");
+
+/* dom_chk contains two cols referencing two domains */
+/* first has range 'a' to 'm' */
+/* second has range 1 to 100 */
+/* Insert into dom_chk values that break first domain constraint */
+
+printf("INSERT INTO dom_chk VALUES ('<', 100);\n");
+EXEC SQL INSERT INTO dom_chk VALUES ('<', 100);
+
+/* That should generate an integrity constraint violation */
+/* which is SQLSTATE 23000 */
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 23000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+/* Insert into dom_chk values to break second domain constraint */
+
+    SQLCODE = -1;
+    strcpy(SQLSTATE,"xxxxx");
+
+printf("INSERT INTO dom_chk VALUES ('a', 101);\n");
+EXEC SQL INSERT INTO dom_chk VALUES ('a', 101);
+
+/* That should generate an integrity constraint violation */
+/* which is SQLSTATE 23000 */
+
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 23000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts757.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7508','pass','PC');
+       }
+   else
+       {
+          printf("\n\n       yts757.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7508','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+   printf("===============================================\n\n");
+
+   EXEC SQL COMMIT WORK;
+
+/******************** END TEST7508 *********************/
+
+/* Clean up */
+
+printf("DROP TABLE dom_chk CASCADE;\n");
+EXEC SQL DROP TABLE dom_chk CASCADE;
+printf ("SQLSTATE should be 00000; it is %s\n\n", SQLSTATE);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+printf ("SQLSTATE should be 00000; it is %s\n\n", SQLSTATE);
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}
+

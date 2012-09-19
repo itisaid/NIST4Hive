@@ -1,0 +1,413 @@
+/*  EMBEDDED C (file "XOP723.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/06/07 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP723.PC                                                    */
+/*  WRITTEN BY: E. Pratt                                         */
+/*                                                               */
+/*  DROP TABLE with outstanding grants and views                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open CAE SQL                                         */
+/*        SECTION 5.3.7                                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   02/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+/* This program must be run under authorisation id XOPEN1 */
+
+/* The program requires the existence of tables      */
+/*       XOPEN1.AAA                                  */
+/*       XOPEN1.BBB                                  */
+/*       XOPEN1.CCC, and of view                     */
+/*       XOPEN2.XOPEN2V                              */
+
+/* DROP statements are executed using Dynamic SQL,   */
+/* in order to make the program compatible with      */
+/* implementations that check SQL statements against */
+/* schemas at a pre-execution time.                  */
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char HCV[31];
+char uid[19];
+char uidx[19];
+
+long COUNTER;
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+
+char NORMSQ[6];
+char ALPNUM[37];
+long norm1;
+long norm2;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation defined    */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+
+norm1 = 2;
+/* subclass begins in position 3 of char array NORMSQ    */
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+NORMSQ[norm1] = '0';
+    }
+
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+   goto P213;
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-z */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01). These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+    NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+
+   printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+   SQLSTATE[5] = '\0';
+   printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+   NOSUBCLASS();
+   if (strncmp (NORMSQ, "00000", 5) == 0 &&
+       strncmp (NORMSQ, SQLSTATE, 5) != 0)
+      printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+
+
+main()
+{
+printf("\nThis Test Program must be run after xop719.pc,\n");
+printf("xop720.pc, xop721.pc and xop722.pc\n");
+printf("\n");
+
+/* Log in as user XOPEN1 */
+     strcpy(uid,"XOPEN1");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+     EXEC SQL COMMIT WORK;
+errcnt = 0;
+errflg = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop723.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* initialise NOSUBCLASS comparison variable */
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0723 ********************/
+
+     printf("\n                     TEST0723             \n");
+     printf("X/O,DROP TABLE with outstanding grants and views \n");
+     printf(" X/Open CAE SQL SEC. 5.3.7\n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("### PREPARE STAT707A FROM :HCV;\n");
+     printf("###         EXECUTE STAT707A;\n");
+     printf("### SELECT COUNT (*) INTO :COUNTER FROM\n");
+     printf("###   INFORMATION_SCHEMA.TABLES \n");
+     printf("###   WHERE TABLE_NAME = 'XOPEN2V'\n");
+     printf("###   AND TABLE_SCHEMA = 'XOPEN2';\n");
+     printf("### PREPARE XOP723A FROM :HCV;\n");
+     printf("###         EXECUTE XOP723A;\n");
+     printf("### SELECT COUNT (*) INTO :COUNTER FROM\n");
+     printf("###   INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME =\n");
+     printf("###   'AAA' AND TABLE_SCHEMA = XOPEN1;\n");
+     printf("### PREPARE XOP723A FROM :HCV;\n");
+     printf("###         EXECUTE XOP723A;\n");
+     printf("### SELECT COUNT (*) INTO :COUNTER FROM\n");
+     printf("###   INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME =\n");
+     printf("###   'CCC' AND TABLE_SCHEMA = XOPEN1;\n");
+     printf("### PREPARE XOP723A FROM :HCV;\n");
+     printf("###         EXECUTE XOP723A;\n");
+     printf("### SELECT COUNT (*) INTO :COUNTER FROM \n");
+     printf("###   INFORMATION_SCHEMA.TABLES\n");
+     printf("###   WHERE TABLE_NAME IN ('AAA', 'BBB', 'CCC', \n");
+     printf("###   'XOPEN2V');\n");
+
+     printf("\n\n=================================================\n");
+
+/*               TEST STEP 1a                              */
+/* Check that DROP TABLE RESTRICT is unsuccessful when the */
+/* referenced table still has outstanding grants and views */
+
+     strcpy(SQLSTATE,"x");
+     strcpy(HCV,"DROP TABLE XOPEN1.BBB RESTRICT");
+     EXEC SQL PREPARE STAT707A FROM :HCV;
+     EXEC SQL EXECUTE STAT707A;
+     printf("SQLSTATE should be 42000 , it is %s\n",SQLSTATE);
+
+     NOSUBCLASS();
+     if (strncmp(NORMSQ,"42000",5) != 0 )
+     {
+     printf ("*** Problem found in TEST STEP NUMBER 1a *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+
+/*    Test Step 1b                     */
+/* Check the view XOPEN2V still exists */
+     strcpy(SQLSTATE,"y");
+     COUNTER = 0;
+     EXEC SQL SELECT COUNT (*) INTO :COUNTER
+     FROM INFORMATION_SCHEMA.TABLES 
+       WHERE TABLE_NAME = 'XOPEN2V'
+       AND TABLE_SCHEMA = 'XOPEN2';
+     SQLSTATE[5] = '\0';
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0   && SQLCODE != 0)
+     { printf ("*** Problem found in TEST STEP NUMBER 1b *** \n");
+       errflg = errflg + 1;
+     }
+     if (COUNTER == 0)
+     {
+       printf ("*** View XOPEN2V incorrectly dropped");
+       errflg = errflg+1;
+     }
+     EXEC SQL ROLLBACK WORK;
+
+     printf("\n\n=================================================\n");
+
+
+/*                    TEST STEP 2a                          */
+/* Check that DROP TABLE with implied CASCADE is successful */
+     strcpy(SQLSTATE,"x");
+     strcpy(HCV,"DROP TABLE XOPEN1.AAA");
+     EXEC SQL COMMIT WORK;
+     EXEC SQL PREPARE XOP723A FROM :HCV;
+     EXEC SQL EXECUTE XOP723A;
+     SQLSTATE[5] = '\0';
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     {
+     printf ("*** Problem found in TEST STEP NUMBER 2a *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+
+/*        Test Step 2b                  */
+/* Check the table AAA no longer exists */
+     strcpy(SQLSTATE,"y");
+     COUNTER = -1;
+     EXEC SQL SELECT COUNT (*) INTO :COUNTER
+     FROM INFORMATION_SCHEMA.TABLES 
+       WHERE TABLE_NAME = 'AAA'
+       AND TABLE_SCHEMA = 'XOPEN1';
+     SQLSTATE[5] = '\0';
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     { printf ("*** Problem found in TEST STEP NUMBER 2b *** \n");
+       errflg = errflg + 1;
+     }
+     if (COUNTER != 0)
+     {
+       printf ("*** Table AAA not dropped from Information Schema");
+       errflg = errflg+1;
+     }
+     EXEC SQL ROLLBACK WORK;
+     printf("\n\n=================================================\n");
+
+
+/*                 TEST STEP 3a                                 */
+/* Check that DROP TABLE RESTRICT is successful when referenced */
+/* table has no outstanding grants or views */
+     strcpy(SQLSTATE,"x");
+     strcpy(HCV,"DROP TABLE XOPEN1.CCC RESTRICT");
+     EXEC SQL COMMIT WORK;
+     EXEC SQL PREPARE XOP723A FROM :HCV;
+     EXEC SQL EXECUTE XOP723A;
+     SQLSTATE[5] = '\0';
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     {
+     printf ("*** Problem found in TEST STEP NUMBER 3a *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+
+/*        Test Step 3b                  */
+/* Check the table CCC no longer exists */
+     strcpy(SQLSTATE,"y");
+     COUNTER = -1;
+     EXEC SQL SELECT COUNT (*) INTO :COUNTER
+     FROM INFORMATION_SCHEMA.TABLES 
+       WHERE TABLE_NAME = 'CCC'
+       AND TABLE_SCHEMA = 'XOPEN1';
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     { printf ("*** Problem found in TEST STEP NUMBER 3b *** \n");
+       errflg = errflg + 1;
+     }
+     if (COUNTER != 0)
+     {
+       printf ("*** Table CCC not dropped from Information Schema");
+       errflg = errflg+1;
+     }
+     EXEC SQL ROLLBACK WORK;
+     printf("\n\n=================================================\n");
+
+
+/*                    TEST STEP 4a                          */
+/* Check the DROP TABLE CASCADE is successful even when the */
+/* referenced table has outstanding references to it        */
+     strcpy(SQLSTATE,"x");
+     strcpy(HCV,"DROP TABLE XOPEN1.BBB CASCADE");
+     EXEC SQL COMMIT WORK;
+     EXEC SQL PREPARE XOP723A FROM :HCV;
+     EXEC SQL EXECUTE XOP723A;
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     {
+     printf ("*** Problem found in TEST STEP NUMBER 4a *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+
+/*           Test Step 4b                           */
+/* Check that the tables are dropped, and that the  */
+/* corresponding views no longer exist */
+     strcpy(SQLSTATE,"y");
+     COUNTER = -1;
+     EXEC SQL SELECT COUNT (*) INTO :COUNTER
+     FROM INFORMATION_SCHEMA.TABLES 
+     WHERE TABLE_NAME IN ('AAA', 'BBB', 'CCC', 'XOPEN2V');
+     /* The value returned should be zero, indicating no rows */
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0)
+     {
+     printf ("*** Problem found in TEST STEP NUMBER 4b *** \n");
+     errflg = errflg + 1;
+     }
+     if (COUNTER != 0)
+     {
+       printf("*** %ld tables or views not dropped", COUNTER);
+       errflg = errflg + 1;
+     }
+
+     printf("\n\n=================================================\n");
+
+     EXEC SQL ROLLBACK WORK;
+/* Table AAA, BBB, and CCC must be recreated before rerun         */
+/*         run xdrop2.sql (if needed)                             */
+/*         run xrecre1.nc (modify as needed)                      */
+/*         run xschema2.sql (if needed)                           */
+/* Before this program is run again the programs xop719 to xop722 */
+/* will have to be re-run, xop719 initialises the tables AAA,BBB,CCC */
+/* Display the number of errors */
+
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 12 ###\n");
+
+ if (errflg==0)
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0723','pass','PC');
+ printf("\n\n      xop723.pc      *** pass ***     ");
+ }
+ else
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0723','fail','PC');
+ errcnt = errcnt + 1;
+ printf("\n\n      xop723.pc      *** fail ***     ");
+ }
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0723 ********************/
+
+     exit(errcnt);
+
+}
+

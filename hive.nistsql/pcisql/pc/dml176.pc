@@ -1,0 +1,362 @@
+/*  EMBEDDED C (file "DML176.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-14 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML176.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml176.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0888 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0888\n");
+     printf("        FIPS sizing, NCHAR VARYING (500)\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 -- Sizing #7, NATIONAL CHAR VARYING max length\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE CONTACTS (\n");
+printf("  NAME CHAR (20),\n");
+printf("  DESCRIPTION NCHAR VARYING (500),\n");
+printf("  KEYWORDS NCHAR VARYING (500));\n");
+EXEC SQL CREATE TABLE CONTACTS (
+  NAME CHAR (20),
+  DESCRIPTION NCHAR VARYING (500),
+  KEYWORDS NCHAR VARYING (500));
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO CONTACTS VALUES ('Harry',\n");
+printf("N'Harry works in the Redundancy Automation Division of the '\n");
+printf("'Materials '\n");
+printf("'Blasting Laboratory in the National Cattle Acceleration '\n");
+printf("'Project of '\n");
+printf("'lower Michigan.  His job is to document the trajectory of '\n");
+printf("'cattle and '\n");
+printf("'correlate the loft and acceleration versus the quality of '\n");
+printf("'materials '\n");
+printf("'used in the trebuchet.  He served ten years as the '\n");
+printf("'vice-president in '\n");
+printf("'charge of marketing in the now defunct milk trust of the '\n");
+printf("'Pennsylvania '\n");
+printf("'Coalition of All Things Bovine.  Prior to that he '\n");
+printf("'established himself '\n");
+printf("'as a world-class gra',\n");
+printf("N'aardvark albatross nutmeg redundancy '\n");
+printf("'automation materials blasting '\n");
+printf("'cattle acceleration trebuchet catapult '\n");
+printf("'loft coffee java sendmail SMTP '\n");
+printf("'FTP HTTP censorship expletive senility '\n");
+printf("'extortion distortion conformity '\n");
+printf("'conformance nachos chicks goslings '\n");
+printf("'ducklings honk quack melatonin tie '\n");
+printf("'noose circulation column default '\n");
+printf("'ionic doric chlorine guanine Guam '\n");
+printf("'invasions rubicon helmet plastics '\n");
+printf("'recycle HDPE nylon ceramics plumbing '\n");
+printf("'parachute zeppelin carbon hydrogen '\n");
+printf("'vinegar sludge asphalt adhesives '\n");
+printf("'tensile magnetic');\n");
+EXEC SQL INSERT INTO CONTACTS VALUES ('Harry',
+N'Harry works in the Redundancy Automation Division of the '
+'Materials '
+'Blasting Laboratory in the National Cattle Acceleration '
+'Project of '
+'lower Michigan.  His job is to document the trajectory of '
+'cattle and '
+'correlate the loft and acceleration versus the quality of '
+'materials '
+'used in the trebuchet.  He served ten years as the '
+'vice-president in '
+'charge of marketing in the now defunct milk trust of the '
+'Pennsylvania '
+'Coalition of All Things Bovine.  Prior to that he '
+'established himself '
+'as a world-class gra',
+N'aardvark albatross nutmeg redundancy '
+'automation materials blasting '
+'cattle acceleration trebuchet catapult '
+'loft coffee java sendmail SMTP '
+'FTP HTTP censorship expletive senility '
+'extortion distortion conformity '
+'conformance nachos chicks goslings '
+'ducklings honk quack melatonin tie '
+'noose circulation column default '
+'ionic doric chlorine guanine Guam '
+'invasions rubicon helmet plastics '
+'recycle HDPE nylon ceramics plumbing '
+'parachute zeppelin carbon hydrogen '
+'vinegar sludge asphalt adhesives '
+'tensile magnetic');
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM CONTACTS\n");
+printf("  WHERE DESCRIPTION =\n");
+printf("N'Harry works in the Redundancy Automation Division of the ' ||\n");
+printf("'Materials ' ||\n");
+printf("'Blasting Laboratory in the National Cattle Acceleration ' ||\n");
+printf("'Project of ' ||\n");
+printf("'lower Michigan.  His job is to document the trajectory of ' ||\n");
+printf("'cattle and ' ||\n");
+printf("'correlate the loft and acceleration versus the quality of ' ||\n");
+printf("'materials ' ||\n");
+printf("'used in the trebuchet.  He served ten years as the ' ||\n");
+printf("'vice-president in ' ||\n");
+printf("'charge of marketing in the now defunct milk trust of the ' ||\n");
+printf("'Pennsylvania ' ||\n");
+printf("'Coalition of All Things Bovine.  Prior to that he ' ||\n");
+printf("'established himself ' ||\n");
+printf("'as a world-class gra'\n");
+printf("  AND KEYWORDS =\n");
+printf("N'aardvark albatross nutmeg redundancy ' ||\n");
+printf("'automation materials blasting ' ||\n");
+printf("'cattle acceleration trebuchet catapult ' ||\n");
+printf("'loft coffee java sendmail SMTP ' ||\n");
+printf("'FTP HTTP censorship expletive senility ' ||\n");
+printf("'extortion distortion conformity ' ||\n");
+printf("'conformance nachos chicks goslings ' ||\n");
+printf("'ducklings honk quack melatonin tie ' ||\n");
+printf("'noose circulation column default ' ||\n");
+printf("'ionic doric chlorine guanine Guam ' ||\n");
+printf("'invasions rubicon helmet plastics ' ||\n");
+printf("'recycle HDPE nylon ceramics plumbing ' ||\n");
+printf("'parachute zeppelin carbon hydrogen ' ||\n");
+printf("'vinegar sludge asphalt adhesives ' ||\n");
+printf("'tensile magnetic'\n");
+printf(";\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM CONTACTS
+  WHERE DESCRIPTION =
+N'Harry works in the Redundancy Automation Division of the ' ||
+'Materials ' ||
+'Blasting Laboratory in the National Cattle Acceleration ' ||
+'Project of ' ||
+'lower Michigan.  His job is to document the trajectory of ' ||
+'cattle and ' ||
+'correlate the loft and acceleration versus the quality of ' ||
+'materials ' ||
+'used in the trebuchet.  He served ten years as the ' ||
+'vice-president in ' ||
+'charge of marketing in the now defunct milk trust of the ' ||
+'Pennsylvania ' ||
+'Coalition of All Things Bovine.  Prior to that he ' ||
+'established himself ' ||
+'as a world-class gra'
+  AND KEYWORDS =
+N'aardvark albatross nutmeg redundancy ' ||
+'automation materials blasting ' ||
+'cattle acceleration trebuchet catapult ' ||
+'loft coffee java sendmail SMTP ' ||
+'FTP HTTP censorship expletive senility ' ||
+'extortion distortion conformity ' ||
+'conformance nachos chicks goslings ' ||
+'ducklings honk quack melatonin tie ' ||
+'noose circulation column default ' ||
+'ionic doric chlorine guanine Guam ' ||
+'invasions rubicon helmet plastics ' ||
+'recycle HDPE nylon ceramics plumbing ' ||
+'parachute zeppelin carbon hydrogen ' ||
+'vinegar sludge asphalt adhesives ' ||
+'tensile magnetic'
+;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM CONTACTS\n");
+printf("  WHERE DESCRIPTION LIKE N'%%gra'\n");
+printf("  AND KEYWORDS LIKE N'%%magnetic';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM CONTACTS
+  WHERE DESCRIPTION LIKE N'%gra'
+  AND KEYWORDS LIKE N'%magnetic';
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE CONTACTS CASCADE;\n");
+EXEC SQL DROP TABLE CONTACTS CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0888','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml176.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0888','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0888 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,123 @@
+/*  EMBEDDED C (file "CDR028.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/02 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR028.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS REFERENTIAL INTEGRITY.                  */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long  count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     flag;
+     long     ii;
+
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr028.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0486 ********************/
+flag = 1;
+     printf("                  TEST0486 \n");
+     printf("       Priv.violation: illegal REFERENCES\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  /* This table should be OK (albeit probably empty) */
+  printf ("SELECT COUNT(*) INTO :count1 FROM RASTER;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RASTER;
+  ii = SQLCODE;
+  printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+  if (ii != 0)
+    flag = 0;
+
+  /* Either this table should not be here, or it should be */
+  /* here without the illegal constraints, in which case */
+  /* there should have been appropriate errors and warnings */
+  /* when the schema was loaded. */
+
+  /* Is the table even here? */
+  printf ("\n");
+  printf ("SELECT COUNT(*) FROM REFRESH;\n");
+  printf ("   (ii=SQLCODE)\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM REFRESH;
+  ii = SQLCODE;
+
+  printf ("INSERT INTO REFRESH VALUES ('cabbage');\n");
+  EXEC SQL INSERT INTO REFRESH
+    VALUES ('cabbage');
+
+  printf ("ii and SQLCODE should either both be < 0 or both be 0\n");
+  printf ("ii = %ld; SQLCODE = %ld\n", ii, SQLCODE);
+
+  if (ii == 0 && SQLCODE != 0)
+    flag = 0;
+  if (ii != 0 && SQLCODE == 0)
+    flag = 0;
+  if (ii > 0 || SQLCODE > 0)
+    flag = 0;
+
+  EXEC SQL ROLLBACK WORK;
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0486','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr028.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0486','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n\n");
+
+/******************** END TEST0486 *********************/
+
+     exit(errcnt);
+}

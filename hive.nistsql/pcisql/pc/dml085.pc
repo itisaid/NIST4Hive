@@ -1,0 +1,775 @@
+/*  EMBEDDED C (file "DML085.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/20 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML085.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS NEW ENTRY SQL REQUIREMENTS THAT WERE    */
+/*    NOT REQUIREMENTS FOR SQL '89, INCLUDING DELIMITED          */
+/*    IDENTIFIERS AND RENAMING COLUMNS.                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2                                             */
+/*      Section 13  New FIPS SQL Requirements                    */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char uid[19];
+     char uidx[19];
+     char nam[21];
+     char tc1[20];
+     char tc2[20];
+     long ti;
+long grd;
+long tmpcnt;
+long GRADE;
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+long oldgrd;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+flag = 1;
+
+printf("SQL Test Suite, V6.0, Embedded C, dml085.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0508 ********************/
+flag = 1;
+
+     printf("                  TEST0508 \n");
+     printf("           Delimited identifiers\n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 5.2  <token> and <separator>\n");
+     printf("      Format of <delimited identifier> and   \n");
+     printf("      SR3,SR4,SR10,SR11,SR12,SR13,SR14 and   \n");
+     printf("      Leveling Rules 2a and 2b               \n");
+     printf("  section 5.1  <SQL terminal character>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     tmpcnt = -1;
+     printf("SELECT COUNT(DISTINCT \"sullivan.select\") INTO :tmpcnt FROM\n");
+     printf("  \"FLATER\".\"SULLIVAN.SELECT\";\n");
+     EXEC SQL SELECT COUNT(DISTINCT "sullivan.select") INTO :tmpcnt
+       FROM "FLATER"."SULLIVAN.SELECT";
+
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 2; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 2)
+       flag = 0;
+
+     grd = -1;
+     printf("\n");
+     printf("DECLARE \"A < a\" CURSOR FOR\n");
+     printf("  SELECT \"A<a\".\"sullivan.select\"\n");
+     printf("  FROM \"FLATER\".\"SULLIVAN.SELECT\" \"A<a\";\n");
+     EXEC SQL DECLARE "A < a" CURSOR FOR
+       SELECT "A<a"."sullivan.select"
+       FROM "FLATER"."SULLIVAN.SELECT" "A<a";
+
+     printf("OPEN \"A < a\";\n");
+     EXEC SQL OPEN "A < a";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+
+     printf("FETCH \"A < a\" INTO :grd;\n");
+     EXEC SQL FETCH "A < a" INTO :grd;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+
+     printf("CLOSE \"A < a\";\n");
+     EXEC SQL CLOSE "A < a";
+
+    printf("grd should be 0 or 1; its value is %ld\n", grd);
+
+    if (grd != 0 && grd != 1)
+      flag = 0;
+
+   /* Test a single digit */
+
+   printf("\n");
+   printf("DECLARE \"0\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "0" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"0\";\n");
+   EXEC SQL OPEN "0";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"0\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "0" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"0\";\n");
+   EXEC SQL CLOSE "0";
+
+   /* Test all special characters singly */
+
+   printf("\n");
+   printf("DECLARE \"\"\"\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE """" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"\"\"\";\n");
+   EXEC SQL OPEN """";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"\"\"\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH """" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"\"\"\";\n");
+   EXEC SQL CLOSE """";
+
+   printf("\n");
+   printf("DECLARE \"%\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "%" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"%\";\n");
+   EXEC SQL OPEN "%";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"%\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "%" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"%\";\n");
+   EXEC SQL CLOSE "%";
+
+   printf("\n");
+   printf("DECLARE \"&\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "&" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"&\";\n");
+   EXEC SQL OPEN "&";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"&\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "&" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"&\";\n");
+   EXEC SQL CLOSE "&";
+
+   printf("\n");
+   printf("DECLARE \"'\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "'" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"'\";\n");
+   EXEC SQL OPEN "'";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"'\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "'" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"'\";\n");
+   EXEC SQL CLOSE "'";
+
+   printf("\n");
+   printf("DECLARE \"(\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "(" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"(\";\n");
+   EXEC SQL OPEN "(";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"(\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "(" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"(\";\n");
+   EXEC SQL CLOSE "(";
+
+   printf("\n");
+   printf("DECLARE \")\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE ")" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \")\";\n");
+   EXEC SQL OPEN ")";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \")\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH ")" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \")\";\n");
+   EXEC SQL CLOSE ")";
+
+   printf("\n");
+   printf("DECLARE \"*\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "*" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"*\";\n");
+   EXEC SQL OPEN "*";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"*\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "*" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"*\";\n");
+   EXEC SQL CLOSE "*";
+
+   printf("\n");
+   printf("DECLARE \"+\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "+" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"+\";\n");
+   EXEC SQL OPEN "+";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"+\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "+" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"+\";\n");
+   EXEC SQL CLOSE "+";
+
+   printf("\n");
+   printf("DECLARE \",\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "," CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \",\";\n");
+   EXEC SQL OPEN ",";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \",\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "," INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \",\";\n");
+   EXEC SQL CLOSE ",";
+
+   printf("\n");
+   printf("DECLARE \"-\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "-" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"-\";\n");
+   EXEC SQL OPEN "-";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"-\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "-" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"-\";\n");
+   EXEC SQL CLOSE "-";
+
+   printf("\n");
+   printf("DECLARE \".\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "." CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \".\";\n");
+   EXEC SQL OPEN ".";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \".\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "." INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \".\";\n");
+   EXEC SQL CLOSE ".";
+
+   printf("\n");
+   printf("DECLARE \"/\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "/" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"/\";\n");
+   EXEC SQL OPEN "/";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"/\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "/" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"/\";\n");
+   EXEC SQL CLOSE "/";
+
+   printf("\n");
+   printf("DECLARE \":\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE ":" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \":\";\n");
+   EXEC SQL OPEN ":";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \":\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH ":" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \":\";\n");
+   EXEC SQL CLOSE ":";
+
+   printf("\n");
+   printf("DECLARE \";\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE ";" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \";\";\n");
+   EXEC SQL OPEN ";";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \";\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH ";" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \";\";\n");
+   EXEC SQL CLOSE ";";
+
+   printf("\n");
+   printf("DECLARE \"<\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "<" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"<\";\n");
+   EXEC SQL OPEN "<";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"<\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "<" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"<\";\n");
+   EXEC SQL CLOSE "<";
+
+   printf("\n");
+   printf("DECLARE \"=\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "=" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"=\";\n");
+   EXEC SQL OPEN "=";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"=\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "=" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"=\";\n");
+   EXEC SQL CLOSE "=";
+
+   printf("\n");
+   printf("DECLARE \">\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE ">" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \">\";\n");
+   EXEC SQL OPEN ">";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \">\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH ">" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \">\";\n");
+   EXEC SQL CLOSE ">";
+
+   printf("\n");
+   printf("DECLARE \"?\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "?" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"?\";\n");
+   EXEC SQL OPEN "?";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"?\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "?" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"?\";\n");
+   EXEC SQL CLOSE "?";
+
+   printf("\n");
+   printf("DECLARE \"_\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "_" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"_\";\n");
+   EXEC SQL OPEN "_";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"_\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "_" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"_\";\n");
+   EXEC SQL CLOSE "_";
+
+   printf("\n");
+   printf("DECLARE \"|\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "|" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"|\";\n");
+   EXEC SQL OPEN "|";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"|\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "|" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"|\";\n");
+   EXEC SQL CLOSE "|";
+
+   /* All together now....  Some are missing due to 18 char max */
+
+   printf("\n");
+   printf("DECLARE \"|_?=;:/. -,+*)'&\"\"%\" CURSOR FOR\n");
+   printf("  SELECT COUNT(*) FROM HU.STAFF;\n");
+   EXEC SQL DECLARE "|_?=;:/. -,+*)'&""%" CURSOR FOR
+     SELECT COUNT(*) FROM HU.STAFF;
+   printf("OPEN \"|_?=;:/. -,+*)'&\"\"%\";\n");
+   EXEC SQL OPEN "|_?=;:/. -,+*)'&""%";
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE != 0)
+       flag = 0;
+   tmpcnt = -1;
+   printf("FETCH \"|_?=;:/. -,+*)'&\"\"%\" INTO :tmpcnt;\n");
+   EXEC SQL FETCH "|_?=;:/. -,+*)'&""%" INTO :tmpcnt;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("tmpcnt should be 5; its value is %ld\n", tmpcnt);
+     if (SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+   printf("CLOSE \"|_?=;:/. -,+*)'&\"\"%\";\n");
+   EXEC SQL CLOSE "|_?=;:/. -,+*)'&""%";
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0508','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml085.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0508','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0508 *********************/
+/******************** BEGIN TEST0509 ********************/
+flag = 1;
+
+     printf("                  TEST0509 \n");
+     printf("               Renaming columns\n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 7.9   <query specification>, SR 9a \n");
+     printf("  section 13.1  <declare cursor>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("\n");
+     printf("DECLARE CHEDDAR CURSOR FOR\n");
+     printf("SELECT GRADE AS PROVOLONE, EMPNAME AS EDAM\n");
+     printf("FROM HU.STAFF ORDER BY PROVOLONE, EDAM DESC;\n");
+     EXEC SQL DECLARE CHEDDAR CURSOR FOR
+       SELECT GRADE AS PROVOLONE, EMPNAME AS EDAM
+       FROM HU.STAFF
+       ORDER BY PROVOLONE, EDAM DESC;
+
+     printf("OPEN CHEDDAR;\n");
+     EXEC SQL OPEN CHEDDAR;
+     if (SQLCODE < 0)
+       goto P100;
+
+     oldgrd = -100;
+
+     printf("FETCH CHEDDAR....\n");
+
+P101:
+     strcpy (nam, "x");
+     grd = -1;
+     EXEC SQL FETCH CHEDDAR INTO :grd, :nam;
+     nam[20] = '\0';
+     if (SQLCODE != 0)
+       goto P100;
+     printf("%s  %ld\n", nam, grd);
+     if (grd < oldgrd)
+       goto P102;
+     oldgrd = grd;
+     goto P101;
+
+P102:
+    printf("\n");
+    printf("ORDER BY violation\n");
+    printf("\n");
+    flag = 0;
+
+P100:
+     printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     if (SQLCODE < 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0509','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml085.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0509','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0509 *********************/
+
+/******************** BEGIN TEST0510 ********************/
+flag = 1;
+
+     printf("                TEST0510 \n");
+     printf("     <parameter name> = <column name>\n");
+     printf(" Reference Defect Report ISO/IEC JTC1/SC21/WG3 9075/6,\n");
+     printf("     #2, Clause 7.3 (in SQL 89)  <procedure>, \n");
+     printf(" Section 12.3 (in SQL 92) To allow Parameter Names \n");
+     printf("     equal to Column Names except for required  \n");   
+     printf("     colon prefix!                    \n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("SELECT GRADE INTO :GRADE FROM HU.STAFF\n");
+     printf("WHERE EMPNUM = 'E1';\n");
+     EXEC SQL SELECT GRADE INTO :GRADE FROM HU.STAFF
+       WHERE EMPNUM = 'E1';
+
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("GRADE should be 12; its value is %ld\n", GRADE);
+
+     if (SQLCODE != 0 || GRADE != 12)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0510','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml085.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0510','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0510 *********************/
+/******************** BEGIN TEST0554 ********************/
+flag = 1;
+
+     printf("                  TEST0554 \n");
+     printf("More column renaming - <select statement: single row>\n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 7.9   <query specification>\n");
+     printf("  section 13.1  <declare cursor>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     strcpy (tc1, "1234567890123456789");
+     strcpy (tc2, "1234567890123456789");
+     ti = -1;
+     /* AS should be optional. */
+     printf("  SELECT HU.PROJ.CITY AS PCITY, HU.STAFF.CITY SCITY,\n");
+     printf("  BUDGET + GRADE * HOURS * 100  REAL_BUDGET\n");
+     printf("  INTO :tc1, :tc2, :ti\n");
+     printf("  FROM HU.STAFF, HU.PROJ, HU.WORKS\n");
+     printf("  WHERE HU.WORKS.EMPNUM = HU.STAFF.EMPNUM\n");
+     printf("  AND HU.WORKS.PNUM = HU.PROJ.PNUM\n");
+     printf("  AND EMPNAME = 'Alice'\n");
+     printf("  AND HU.PROJ.PNUM = 'P3';\n");
+     EXEC SQL SELECT HU.PROJ.CITY AS PCITY, HU.STAFF.CITY SCITY,
+       BUDGET + GRADE * HOURS * 100  REAL_BUDGET
+       INTO :tc1, :tc2, :ti
+       FROM HU.STAFF, HU.PROJ, HU.WORKS
+       WHERE HU.WORKS.EMPNUM = HU.STAFF.EMPNUM
+       AND HU.WORKS.PNUM = HU.PROJ.PNUM
+       AND EMPNAME = 'Alice'
+       AND HU.PROJ.PNUM = 'P3';
+     tc1[19] = '\0';
+     tc2[19] = '\0';
+
+     printf("tc1 should be Tampa; its value is %s\n", tc1);
+     printf("tc2 should be Deale; its value is %s\n", tc2);
+     printf("ti should be 126000; its value is %ld\n", ti);
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     if (strncmp (tc1, "Tampa", 5) != 0)
+       flag = 0;
+     if (strncmp (tc2, "Deale", 5) != 0)
+       flag = 0;
+     if (ti != 126000 || SQLCODE != 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0554','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml085.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0554','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0554 *********************/
+
+     exit(errcnt);
+}

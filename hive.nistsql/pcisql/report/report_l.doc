@@ -1,0 +1,265 @@
+Long instructions for installing and running the test reporting mechanism
+-------------------------------------------------------------------------
+
+
+INSTALLATION
+------------
+
+All actions should be done in the HU account using the test database.
+
+
+I.  Create the tables in report.sql.
+
+The file report.sql is in directory report.  It contains CREATE TABLE
+statements to create the tables that will be used by the reporting
+mechanism.  Execute report.sql the same way you execute SCHEMA1,
+SCHEMA2, etc. for testing.
+
+Report.sql contains only table definitions, not a schema definition.
+The tables will be created in the default schema, which should be HU.
+
+
+II.  Load the static data for the reporting mechanism.
+
+The file dataload.sql in directory report can be run exactly the same as
+report.sql to insert the data into the reporting tables.  This is
+generally the quickest and easiest way to get the data loaded.
+
+In the event that you cannot run dataload.sql for any reason, do the
+following:
+
+1.  Compile one of the dataload programs from one of the embedded language
+    directories (pc/dataload.pc, pad/dataload.pad, pco/dataload.pco,
+    pfo/dataload.pfo, or ppa/dataload.ppa), in the same way that you
+    compile the test programs.  It does not matter which language you use.
+
+2.  Put the dataload executable in the directory called report, where you
+    should also have files called IMPLIC.DAT, REPTFT.DAT, TESTFT.DAT,
+    TSTCAS.DAT, and TSTPRG.DAT.
+
+3.  Run dataload.
+
+
+III.  Compile reporta, reportb, and reportzx.
+
+Translations of reporta and reportb into each of the supported
+embedded and module languages are provided.  Compile reporta and
+reportb using the language of your choice, in the same way that you
+compile the test programs.  It does not matter which language you use.
+
+Reportzx is only provided in ANSI C.  Reportzx.c is in directory
+report.  It contains no Embedded SQL.  It can be compiled with any ANSI
+C compiler; for example, GCC.  Reportzx.c is already prepared as an 
+executable program for MS-DOS environments only.  It is named 
+reportzx.exe.
+
+Put the executables for reporta, reportb, and reportzx together in a
+directory where it is OK for them to create temporary files.
+
+
+USAGE
+-----
+
+The following instructions explain how to use the test reporting mechanism.
+The diagram reportin.ps shows the data flow of the following procedure.
+
+
+I.  Choose your bindings.
+
+Insert one or more of the following values into BINDING_CLAIMED
+according to which bindings you wish to test:  'PCO', 'PFO', 'PC ',
+'PPA', 'PAD', 'MCO', 'MFO', 'MC ', 'MPA', 'MAD', 'SQL'.
+
+   PCO       Embedded Cobol
+   PFO       Embedded Fortran
+   PC        Embedded C
+   PPA       Embedded Pascal
+   PAD       Embedded Ada
+   MCO       Module Cobol
+   MFO       Module Fortran
+   MC        Module C
+   MPA       Module Pascal
+   MAD       Module Ada
+   SQL       Interactive SQL
+
+For example, to test Embedded C:  INSERT INTO BINDING_CLAIMED VALUES
+('PC ');.  You may test multiple bindings.  Remember to delete old
+bindings if they are no longer applicable.
+
+
+II.  Choose your profiles.
+
+Insert the profile identifiers for the profiles that you want to test
+into FEATURE_CLAIMED.  In general, this will be one or more of the
+following:
+
+   P145       FIPS 127-2 Intermediate SQL
+   P135       FIPS 127-2 Transitional SQL      
+   P125       FIPS 127-2 Entry SQL       
+   P140       ISO/IEC 9075: Intermediate SQL      
+   P120       ISO/IEC 9075:1992 Entry SQL      
+   P230       XPG4 SQL Profile with IEF        
+   P210       XPG4 SQL Profile without IEF      
+   P325       Sizing Tests - Entry
+   P335       Sizing Tests - Transitional
+   P345       Sizing Tests - Intermediate
+   P415       Optional/Informational Tests     
+
+For example, to test Transitional SQL:  INSERT INTO FEATURE_CLAIMED
+VALUES ('P135');.
+
+The typical validation for FIPS 127-2 selects profiles P125, P325, and 
+P415.
+
+NOTE:  Subprofiles are automatically selected when you select a parent
+profile.  For example, if you select P135, then P125, P120 and P110 are
+included as well, because FIPS Transitional SQL is a superset of FIPS
+Entry, which is a superset of SQL-92 Entry.  Refer to the diagram
+profiles.ps, or SELECT * FROM IMPLICATION if you cannot read
+postscript.
+
+In the rare event that you would want to test some feature in
+isolation from its parent profile, you may insert some of the other
+identifiers that can be found in REPORTFEATURE:
+
+   P110       FIPS 127-2 Entry Syntax Flags    
+   P405       Entry Catalog-Lookup Flagging    
+   P410       Miscellaneous Informational      
+   0CFL       OPTIONAL Catalog-Lookup Flag     
+   0EFL       FIPS 127-2 Entry Syntax Flag     
+   0ENT       SQL-92 New Entry SQL Feature     
+   0FIP       FIPS SQL only - not X/Open       
+   0FSZ       FIPS sizing - not X/Open         
+   0IEF       SQL-89 Integrity Enhancement     
+   0INF       Informational Test               
+   0SZE       Sizing Test - Entry              
+   0SZT       Sizing Test - Transitional       
+   0XC2       XPG4 SQL, App.C, C.2 > Entry     
+   0XC3       XPG4 SQL, App.C, C.3 extension   
+   0XSZ       XPG4 SQL ONLY Sizing Test        
+   0001       Dynamic SQL                      
+   0002       Basic information schema         
+   0003       Basic schema manipulation        
+   0004       Joined table                     
+   0005       DATETIME data types              
+   0006       VARCHAR data type                
+   0007       TRIM function                    
+   0008       UNION in views                   
+   0009       Implicit numeric casting         
+   0010       Implicit character casting       
+   0011       Transaction isolation            
+   0012       Get diagnostics                  
+   0013       Grouped operations               
+   0014       Qualified * in select list       
+   0015       Lowercase identifiers            
+   0016       PRIMARY KEY enhancement          
+   0017       Multiple schemas per user        
+   0018       Multiple module support          
+   0019       Referential delete actions       
+   0020       CAST functions                   
+   0021       INSERT expressions               
+   0022       Explicit defaults                
+   0023       Privilege tables                 
+   0024       Keyword relaxations         
+   0025       Domain definition
+   0026       CASE expression
+   0027       Compound character literals
+   0028       LIKE enhancements
+   0029       UNIQUE predicate
+   0030       Table operations
+   0031       Schema definition statement
+   0032       User authorization
+   0033       Constraint tables
+   0034       Usage tables
+   0035       Intermediate information schem
+   0036       Subprogram support
+   0037       Intermediate SQL Flagging
+   0038       Schema manipulation
+   0039       Long identifiers
+   0040       Full outer join
+   0041       Time zone specification
+   0042       National character
+   0043       Scrolled cursors
+   0044       Intermediate set function
+   0045       Character set definition
+   0046       Named character sets
+   0047       Scalar subquery values
+   0048       Expanded null predicate
+   0049       Constraint management
+   0050       Documentation schema
+   00L2       SQL-89 Level 2                   
+
+Only tests fully supported by the features you choose will be selected
+for reporting.  For example, should you select only feature 0004,
+only 2 tests will be selected.  This may seem surprising at first,
+because there are 17 tests for feature 0001.  However, 15 of the 17
+tests for feature 0001 test other features as well.
+
+When you depart from the established profiles, you will probably need
+to select feature 'P998' (by inserting it into table FEATURE_CLAIMED).  
+Feature P998 is a switch which instructs the reporting system to select
+all tests fully supported by the combined features selected.  Normally,
+tests are not selected unless they fit entirely within a selected profile.
+Feature P998 allows the selection of tests which span individual features
+selected.  Tests which span multiple features will be reported redundantly
+in each related profile.  For FIPS testing of individual features, we 
+recommend that you always select features 0FIP and 0IEF, in addition to P998.
+
+
+** PLEASE NOTE that certificates are ONLY given for the following
+complete profiles:  P145    (FIPS 127-2)
+                    P135    (FIPS 127-2)
+                    P125    (FIPS 127-2)
+                    P140    (ISO/IEC)
+                    P120    (ISO/IEC)
+                    P230    (X/Open)
+                    P210    (X/Open)
+
+
+III.  Run reporta.
+
+Reporta processes your profile and binding selections and generates a
+list of programs that you must run to test those profiles and
+bindings.  You can capture the output from reporta and make global
+replacements with TEd to create a script for running all those
+programs.  Or you can modify the pseudo-scripts, files RUN*.ALL.
+in the directory where the test programs are located.
+For example, for Embedded SQL C, modify file RUNPC.ALL,
+selecting the programs in the sections you want to test.
+If you are running X/Open profiles, but not FIPS profiles,
+refer to file RUNPC.XOP, instead.
+
+Reporta output may also provide some TEd changes to delete tests from
+programs that contain some tests that you want and some that you
+don't.  You should add these to the TEd file that you invoke before
+running each test program.
+
+
+IV.  Run the tests.
+
+Refer to the section titled "RUNNING THE SQL TEST SUITE" for instructions
+on running the tests.
+
+
+V.  Run reportb.
+
+Reportb reads the results of testing from TESTREPORT, processes these
+against the list of required tests that reporta generated, and
+produces three temporary data files:  passfail.dat, heading.dat, and
+testcase.dat.
+
+
+VI.  Run reportzx.
+
+Make sure that the temporary data files generated by reportb are in
+the current directory, then run reportzx.  Reportzx will generate
+files called testno.lst, problems.lst, totals.lst, and combined.lst.
+Testno.lst shows the results for each test that was run.  Problems.lst
+shows only those tests that produced results which need to be reviewed
+further, along with short descriptions of what those tests were
+testing.  A few results in problems.lst simply require visual
+inspection to be assigned a "pass", but most indicate a "fail".
+Totals.lst gives only the total number of tests that passed, failed,
+are missing, etc.  Finally, combined.lst contains all the information
+that is in the other three files.
+

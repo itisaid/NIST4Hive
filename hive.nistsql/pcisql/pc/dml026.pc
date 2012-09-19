@@ -1,0 +1,329 @@
+/*  EMBEDDED C (file "DML026.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/04/27 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML026.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE VALUE EXPRESSION IN COMMON ELEMENT  */
+/*  OF THE SQL LANGUAGE.                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 5.9 <value expression>               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char     PNO1[4];
+     char     EMPNO1[4];
+     long     MAX10;
+     long     i;
+     long     ii;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml026.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0118 ********************/
+
+printf("                   TEST0118\n");
+printf(" Reference ANSI X3.135-1989 5.9 <value expression> GR4\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+MAX10 = -1;
+
+EXEC SQL SELECT +MAX(DISTINCT HOURS)
+         INTO   :MAX10
+         FROM   WORKS;
+
+printf("    +MAX(DISTINCT HOURS) = %ld \n",MAX10);
+
+if (MAX10 == 80 && SQLCODE >= 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0118','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml026.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0118','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0118 ********************/
+/******************** BEGIN TEST0119 ********************/
+ 
+printf("                   TEST0119\n");
+printf(" Reference ANSI X3.135-1989 5.9 <value expression> GR4\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+MAX10 = -1;
+
+EXEC SQL SELECT -MAX( DISTINCT HOURS )
+         INTO   :MAX10
+         FROM   WORKS;
+
+printf("    -MAX(HOURS) = %ld \n",MAX10);
+
+if (MAX10 == -80 && SQLCODE >= 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0119','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml026.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0119','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0119 ********************/
+
+/******************** BEGIN TEST0120 ********************/
+ 
+printf("                   TEST0120\n");
+printf(" Reference ANSI X3.135-1989 5.9 <value expression> GR1\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+i = 0;
+ii = 0;
+
+EXEC SQL INSERT INTO WORKS1
+         SELECT * 
+         FROM   WORKS;
+
+EXEC SQL INSERT INTO WORKS1
+         VALUES('E9','P1',NULL);
+
+EXEC SQL SELECT EMPNUM
+         INTO   :EMPNO1
+         FROM   WORKS1
+         WHERE  HOURS IS NULL;
+
+EXEC SQL INSERT INTO WORKS
+         SELECT EMPNUM,'P9',20+HOURS
+         FROM   WORKS1
+         WHERE  EMPNUM='E9';
+
+EXEC SQL SELECT COUNT(*)
+         INTO   :ii
+         FROM   WORKS
+         WHERE  EMPNUM='E9';
+
+EXEC SQL SELECT COUNT(*)
+         INTO   :i
+         FROM   WORKS
+         WHERE  HOURS IS NULL;
+
+printf("  The correct answer should be i=1,ii=1, and EMPNO1=E9\n");
+printf("         i=%ld,    ii=%ld,   EMPNO1=%s \n",i,ii,EMPNO1);
+
+EXEC SQL ROLLBACK WORK;
+
+if (i == 1 && strncmp(EMPNO1,"E9",2) == 0 && ii == 1)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0120','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml026.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0120','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0120 ********************/
+/******************** BEGIN TEST0121 ********************/
+ 
+printf("                   TEST0121\n");
+printf(" Reference ANSI X3.135-1989 5.9 <value expression> GR5\n");
+printf("       Cross ref. section 8.7 <insert statement> \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+i = 0;
+ii = 0;
+
+/*       *** CREATE TABLE VTABLE            */
+/*           (COL1    INTEGER,              */
+/*            COL2    INTEGER,              */
+/*            COL3    INTEGER,              */
+/*            COL4    INTEGER,              */
+/*            COL5    DECIMAL(7,2))         */
+
+/*   See INSERTs in program BASETAB.PC                         */
+/*    INSERT INTO VTABLE VALUES(10,+20,30,40,10.50)            */
+/*    INSERT INTO VTABLE VALUES(0,1,2,3,4.25)                  */
+/*    INSERT INTO VTABLE VALUES(100,200,300,400,500.01)        */
+/*    INSERT INTO VTABLE VALUES(1000,-2000,3000,NULL,4000.00)  */
+
+
+EXEC SQL SELECT COUNT(*)
+         INTO   :ii
+         FROM   VTABLE;
+
+EXEC SQL SELECT +COL1+COL2 - COL3*COL4/COL1
+         INTO   :i
+         FROM   VTABLE
+         WHERE  COL1=10;
+
+printf(" i = %ld, ii = %ld \n",i,ii);
+
+if (i == -90 && ii == 4)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0121','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml026.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0121','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0121 ********************/
+/******************** BEGIN TEST0122 ********************/
+ 
+printf("                   TEST0122\n");
+printf("        A divisor shall not be 0. \n");
+printf(" Reference ANSI X3.135-1989 5.9 <value expression> GR5\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+i = -1;
+
+EXEC SQL SELECT COL2/COL1+COL3
+         INTO   :i
+         FROM   VTABLE
+         WHERE  COL4=3;
+
+printf("     sqlcode = %ld,  i = %ld \n",SQLCODE,i);
+
+if (SQLCODE < 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0122','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml026.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0122','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0122 ********************/
+/******************** BEGIN TEST0123 ********************/
+ 
+printf("                   TEST0123\n");
+printf(" Reference ANSI X3.135-1989 5.9 <value expression> GR7\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+i = -1;
+
+EXEC SQL SELECT (-COL2+COL1)*COL3 - COL3/COL1
+         INTO   :i
+         FROM VTABLE
+         WHERE COL4 IS NULL;
+
+printf("     sqlcode = %ld,  i = %ld \n",SQLCODE,i);
+
+if (i == 8999997)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0123','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml026.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0123','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0123 ********************/
+
+exit(errcnt);
+
+}

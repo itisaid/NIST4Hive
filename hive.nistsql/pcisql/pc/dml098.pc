@@ -1,0 +1,1011 @@
+/*  EMBEDDED C (file "DML098.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/07/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML098.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS sizing for all Dynamic SQL numerics. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*                   16.6 Sizing for database constructs         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long x1;
+long x2;
+long x3;
+long x4;
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml098.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0579 ********************/
+flag = 1;
+
+     printf("                  TEST0579 \n");
+     printf("  FIPS sizing, Dynamic SQL exact numerics\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 3\n");
+     printf("                   16.6 Sizing for database constructs\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     /* This is here to avoid language-dependent problems. */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE NUM4 ('      ||
+       '  NUM4C1 NUMERIC (15),'   ||
+       '  NUM4C2 DECIMAL (15),'   ||
+       '  NUM4C3 INTEGER,'        ||
+       '  NUM4C4 SMALLINT)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO NUM4 VALUES (999999999999999,' ||
+       '  999999999999999, 999999999, 9999)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO NUM4 VALUES (-999999999999999,' ||
+       '  -999999999999999, -999999999, -9999)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+/* Since these are exact numerics, there should be no problems */
+/* with the precision of + and -.                              */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT NUM4C1 - 999999999999990, NUM4C2 - 999999999999990,' ||
+       ' NUM4C3 - 999999990, NUM4C4 FROM NUM4 WHERE NUM4C1 > 0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE BLAT1 FROM :longst;\n");
+EXEC SQL PREPARE BLAT1 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE BLAT2 CURSOR FOR BLAT1;\n");
+EXEC SQL DECLARE BLAT2 CURSOR FOR BLAT1;
+
+printf("\n");
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+x3 = -1;
+x4 = -1;
+
+printf("FETCH BLAT2 INTO :x1, :x2, :x3, :x4;\n");
+EXEC SQL FETCH BLAT2 INTO :x1, :x2, :x3, :x4;
+
+CHCKOK ();
+printf("\n");
+
+printf("x1 should be 9; its value is %ld\n", x1);
+printf("x2 should be 9; its value is %ld\n", x2);
+printf("x3 should be 9; its value is %ld\n", x3);
+printf("x4 should be 9999; its value is %ld\n\n", x4);
+
+if (x1 != 9 || x2 != 9 || x3 != 9 || x4 != 9999)
+  flag = 0;
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT NUM4C1 + 999999999999990, NUM4C2 + 999999999999990,' ||
+       ' NUM4C3 + 999999990, NUM4C4 FROM NUM4 WHERE NUM4C1 < 0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE BLAT3 FROM :longst;\n");
+EXEC SQL PREPARE BLAT3 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE BLAT4 CURSOR FOR BLAT3;\n");
+EXEC SQL DECLARE BLAT4 CURSOR FOR BLAT3;
+
+printf("\n");
+
+printf("OPEN BLAT4;\n");
+EXEC SQL OPEN BLAT4;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+x2 = -1;
+x3 = -1;
+x4 = -1;
+
+printf("FETCH BLAT4 INTO :x1, :x2, :x3, :x4;\n");
+EXEC SQL FETCH BLAT4 INTO :x1, :x2, :x3, :x4;
+
+CHCKOK ();
+printf("\n");
+
+printf("x1 should be -9; its value is %ld\n", x1);
+printf("x2 should be -9; its value is %ld\n", x2);
+printf("x3 should be -9; its value is %ld\n", x3);
+printf("x4 should be -9999; its value is %ld\n\n", x4);
+
+if (x1 != -9 || x2 != -9 || x3 != -9 || x4 != -9999)
+  flag = 0;
+
+printf("CLOSE BLAT4;\n");
+EXEC SQL CLOSE BLAT4;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'UPDATE NUM4 SET NUM4C1 = NUM4C1 + 999999999999990,' ||
+       ' NUM4C2 = NUM4C2 + 999999999999990,'                ||
+       ' NUM4C3 = NUM4C3 + 999999990 WHERE NUM4C4 < 0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM NUM4 WHERE NUM4C4 < 0\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM NUM4 WHERE NUM4C4 < 0               ");
+
+printf("PREPARE S098AA FROM :dstmt;\n");
+EXEC SQL PREPARE S098AA FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C098AA CURSOR FOR S098AA;\n\n");
+EXEC SQL DECLARE C098AA CURSOR FOR S098AA;
+
+printf("OPEN C098AA;\n");
+EXEC SQL OPEN C098AA;
+
+x1 = -1;
+x2 = -1;
+x3 = -1;
+x4 = -1;
+printf("FETCH C098AA INTO :x1, :x2, :x3, :x4;\n");
+EXEC SQL FETCH C098AA INTO :x1, :x2, :x3, :x4;
+CHCKOK ();
+printf("x1 should be -9; its value is %ld\n", x1);
+printf("x2 should be -9; its value is %ld\n", x2);
+printf("x3 should be -9; its value is %ld\n", x3);
+printf("x4 should be -9999; its value is %ld\n\n", x4);
+
+if (x1 != -9 || x2 != -9 || x3 != -9 || x4 != -9999)
+  flag = 0;
+
+printf("CLOSE C098AA;\n");
+EXEC SQL CLOSE C098AA;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'DELETE FROM NUM4 WHERE NUM4C1 / ? > ?' ||
+       ' AND NUM4C2 > 999999999999998'         ||
+       ' AND NUM4C3 / 99999 > 9999'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S098AB FROM :longst;\n");
+EXEC SQL PREPARE S098AB FROM :longst;
+CHCKOK ();
+printf("\n");
+
+x1 = 9999999;
+x2 = 100000009;
+printf ("x1 = %ld\n", x1);
+printf ("x2 = %ld\n", x2);
+printf("EXECUTE S098AB USING :x1, :x2;\n");
+EXEC SQL EXECUTE S098AB USING :x1, :x2;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DELETE FROM NUM4\"\n");
+     strcpy (dstmt,
+     "DELETE FROM NUM4                                  ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+CHCKOK ();
+printf("\n");
+
+/* The remainder of this test may make sense if you read the  */
+/* comments in the next test, 0580.                           */
+
+/* Decimal precision 15:  -999999999999999 to 999999999999999. */
+/* To implement, need 50 bits, which can handle                */
+/* -1125899906842623 to 1125899906842623.                      */
+
+/* Decimal precision 9: -999999999 to 999999999.  To implement, */
+/* need 30 bits, which can handle -1073741823 to 1073741823.    */
+
+/* Decimal precision 4: -9999 to 9999.  To implement, need      */
+/* 14 bits, which can handle -16383 to 16383.                   */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO NUM4 VALUES (562949953421313, 562949953421313,' ||
+       '  536870913, 8193)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM4 WHERE ' ||
+       '  NUM4C1 = 562949953421312 OR '   ||
+       '  NUM4C2 = 562949953421312 OR '   ||
+       '  NUM4C3 = 536870912 OR '         ||
+       '  NUM4C4 = 8192'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE NEW1 FROM :longst;\n");
+EXEC SQL PREPARE NEW1 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE MEW1 CURSOR FOR NEW1;\n");
+EXEC SQL DECLARE MEW1 CURSOR FOR NEW1;
+
+printf("\n");
+
+printf("OPEN MEW1;\n");
+EXEC SQL OPEN MEW1;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("FETCH MEW1 INTO :x1;\n");
+EXEC SQL FETCH MEW1 INTO :x1;
+
+CHCKOK ();
+printf("x1 should be 0; its value is %ld\n\n", x1);
+if (x1 != 0)
+  flag = 0;
+
+printf("CLOSE MEW1;\n");
+EXEC SQL CLOSE MEW1;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM4 WHERE ' ||
+       '  NUM4C1 = 562949953421313 AND'   ||
+       '  NUM4C2 = 562949953421313 AND'   ||
+       '  NUM4C3 = 536870913 AND'         ||
+       '  NUM4C4 = 8193'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE NEW2 FROM :longst;\n");
+EXEC SQL PREPARE NEW2 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE MEW2 CURSOR FOR NEW2;\n");
+EXEC SQL DECLARE MEW2 CURSOR FOR NEW2;
+
+printf("\n");
+
+printf("OPEN MEW2;\n");
+EXEC SQL OPEN MEW2;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("FETCH MEW2 INTO :x1;\n");
+EXEC SQL FETCH MEW2 INTO :x1;
+
+CHCKOK ();
+printf("x1 should be 1; its value is %ld\n\n", x1);
+if (x1 != 1)
+  flag = 0;
+
+printf("CLOSE MEW2;\n");
+EXEC SQL CLOSE MEW2;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM4 WHERE ' ||
+       '  NUM4C1 = 562949953421314 OR '   ||
+       '  NUM4C2 = 562949953421314 OR '   ||
+       '  NUM4C3 = 536870914 OR '         ||
+       '  NUM4C4 = 8194'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE NEW3 FROM :longst;\n");
+EXEC SQL PREPARE NEW3 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE MEW3 CURSOR FOR NEW3;\n");
+EXEC SQL DECLARE MEW3 CURSOR FOR NEW3;
+
+printf("\n");
+
+printf("OPEN MEW3;\n");
+EXEC SQL OPEN MEW3;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("FETCH MEW3 INTO :x1;\n");
+EXEC SQL FETCH MEW3 INTO :x1;
+
+CHCKOK ();
+printf("x1 should be 0; its value is %ld\n\n", x1);
+if (x1 != 0)
+  flag = 0;
+
+printf("CLOSE MEW3;\n");
+EXEC SQL CLOSE MEW3;
+
+CHCKOK ();
+printf("\n");
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE NUM4 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE NUM4 CASCADE                           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0579','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml098.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0579','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0579 *********************/
+/******************** BEGIN TEST0580 ********************/
+flag = 1;
+
+/* Loss of significant digits is detected using the database's     */
+/* own equality operator.  This should avoid some lossage problems */
+/* that affected earlier sizing tests.                             */
+
+     printf("                  TEST0580 \n");
+     printf("FIPS sizing, Dynamic SQL approximate numerics\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 3\n");
+     printf("                   16.6 Sizing for database constructs\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     /* This is here to avoid language-dependent problems. */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE NUM5 ('        ||
+       '  NUM5C1 FLOAT (20),'       ||
+       '  NUM5C2 REAL,'             ||
+       '  NUM5C3 DOUBLE PRECISION)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* 1000000000000000001 (correct answer) = 2^18 + 1 = 262145 */
+/* 1000000000000000000 (truncated)      = 262144            */
+/* 1000000000000000010 (rounded)        = 262146            */
+
+/* The precise values to which it gets rounded or truncated do  */
+/* not matter; the test will work as planned provided that the  */
+/* numbers above and below the target value get the same kind   */
+/* of treatment.  For example, if it gets rounded up to 525000, */
+/* the number one greater should also get rounded up to 525000, */
+/* and they should pass equality, causing the test to fail.  A  */
+/* similar argument applies to truncation.                      */
+
+/* 2^28 = 268435456 */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO NUM5 VALUES (262145E+0,' ||
+       ' 262145E+0, 268435457E+0)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM5 WHERE ' ||
+       '  NUM5C1 = 262144E+0 OR '         ||
+       '  NUM5C2 = 262144E+0 OR '         ||
+       '  NUM5C3 = 268435456E+0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE BLAT5 FROM :longst;\n");
+EXEC SQL PREPARE BLAT5 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE BLAT6 CURSOR FOR BLAT5;\n");
+EXEC SQL DECLARE BLAT6 CURSOR FOR BLAT5;
+
+printf("\n");
+
+printf("OPEN BLAT6;\n");
+EXEC SQL OPEN BLAT6;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("FETCH BLAT6 INTO :x1;\n");
+EXEC SQL FETCH BLAT6 INTO :x1;
+
+CHCKOK ();
+printf("x1 should be 0; its value is %ld\n\n", x1);
+if (x1 != 0)
+  flag = 0;
+
+printf("CLOSE BLAT6;\n");
+EXEC SQL CLOSE BLAT6;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM5 WHERE ' ||
+       '  NUM5C1 = 262145E+0 AND'         ||
+       '  NUM5C2 = 262145E+0 AND'         ||
+       '  NUM5C3 = 268435457E+0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE BLAT7 FROM :longst;\n");
+EXEC SQL PREPARE BLAT7 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE BLAT8 CURSOR FOR BLAT7;\n");
+EXEC SQL DECLARE BLAT8 CURSOR FOR BLAT7;
+
+printf("\n");
+
+printf("OPEN BLAT8;\n");
+EXEC SQL OPEN BLAT8;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("FETCH BLAT8 INTO :x1;\n");
+EXEC SQL FETCH BLAT8 INTO :x1;
+
+CHCKOK ();
+printf("x1 should be 1; its value is %ld\n\n", x1);
+if (x1 != 1)
+  flag = 0;
+
+printf("CLOSE BLAT8;\n");
+EXEC SQL CLOSE BLAT8;
+
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM5 WHERE ' ||
+       '  NUM5C1 = 262146E+0 OR '         ||
+       '  NUM5C2 = 262146E+0 OR '         ||
+       '  NUM5C3 = 268435458E+0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE BLAT9 FROM :longst;\n");
+EXEC SQL PREPARE BLAT9 FROM :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE BLAT10 CURSOR FOR BLAT9;\n");
+EXEC SQL DECLARE BLAT10 CURSOR FOR BLAT9;
+
+printf("\n");
+
+printf("OPEN BLAT10;\n");
+EXEC SQL OPEN BLAT10;
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("FETCH BLAT10 INTO :x1;\n");
+EXEC SQL FETCH BLAT10 INTO :x1;
+
+CHCKOK ();
+printf("x1 should be 0; its value is %ld\n\n", x1);
+if (x1 != 0)
+  flag = 0;
+
+printf("CLOSE BLAT10;\n");
+EXEC SQL CLOSE BLAT10;
+
+CHCKOK ();
+printf("\n");
+
+/* Check for high-order truncation */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM NUM5 WHERE ' ||
+       '  NUM5C1 / 512.0 >= 512.0 AND'    ||
+       '  NUM5C2 / 512.0 >= 512.0 AND'    ||
+       '  NUM5C3 / 16384.0 >= 16384.0'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S098BA FROM :longst;\n");
+EXEC SQL PREPARE S098BA FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C098BA CURSOR FOR S098BA;\n\n");
+EXEC SQL DECLARE C098BA CURSOR FOR S098BA;
+
+printf("OPEN C098BA;\n");
+EXEC SQL OPEN C098BA;
+CHCKOK ();
+printf("\n");
+
+x1 = 0;
+printf("FETCH C098BA INTO :x1;\n");
+EXEC SQL FETCH C098BA INTO :x1;
+CHCKOK ();
+printf ("x1 should be 1; its value is %ld\n\n", x1);
+if (x1 != 1)
+  flag = 0;
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE NUM5 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE NUM5 CASCADE                           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0580','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml098.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0580','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0580 *********************/
+/******************** BEGIN TEST0586 ********************/
+flag = 1;
+
+     printf("                  TEST0586 \n");
+     printf("    Sizing of FLOAT in a descriptor (dynamic)\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("    FIPS 16.6 -- Sizing for database constructs\n");
+     printf("    17.8 -- <describe statement>\n");
+     printf("    17.4 -- <get descriptor statement>\n");
+     printf("    6.1 SR.21 -- FLOAT has binary precision\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE BREAKFAST (CE FLOAT)\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE BREAKFAST (CE FLOAT)                 ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("ALLOCATE DESCRIPTOR 'ICHK';\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'ICHK';
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT CE FROM BREAKFAST\"\n");
+     strcpy (dstmt,
+     "SELECT CE FROM BREAKFAST                          ");
+
+printf("PREPARE ZEKE FROM :dstmt;\n");
+EXEC SQL PREPARE ZEKE FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DESCRIBE ZEKE USING SQL DESCRIPTOR 'ICHK';\n");
+EXEC SQL DESCRIBE ZEKE USING SQL DESCRIPTOR 'ICHK';
+
+CHCKOK ();
+printf("\n");
+
+x1 = -1;
+printf("GET DESCRIPTOR 'ICHK' VALUE 1 :x1 = PRECISION;\n");
+EXEC SQL GET DESCRIPTOR 'ICHK' VALUE 1 :x1 = PRECISION;
+
+CHCKOK ();
+printf("x1 should be >= 20; its value is %ld\n\n", x1);
+if (x1 < 20)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE BREAKFAST CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE BREAKFAST CASCADE                      ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0586','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml098.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0586','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0586 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

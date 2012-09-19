@@ -1,0 +1,123 @@
+/*  EMBEDDED C (file "SDL001.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/03/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL001.PC                                                    */
+/*  WRITTEN BY: J SULLIVAN                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 6. Schema Definition Language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+char ch50[51];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+char ch50x[51];
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     i2;
+     long     i3;
+
+
+main()
+{
+
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl001.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("===============================================\n\n");
+
+     printf("                  TEST0137       \n");
+     printf("               (CREATE SCHEMA)     \n");
+     printf("    Reference X3.135-89 section 6.1 <schema> \n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("  *** CREATE SCHEMA AUTHORIZATION HU \n");
+     printf("  ***  CREATE TABLE WHICH_SCHEMA1 (C1 CHAR (50))\n");
+     printf("  This is an accounting routine to document which schema \n");
+     printf("  was executed among: schema1.std, schema1.smi, schema1.nc\n");
+     printf("  Execution of schema1.std is required for a 'pass'.\n");
+     printf("\n");
+     printf("  For schema1.smi and schema1.nc, C1 is CHAR(1).\n");
+     printf("\n");
+
+     strcpy(ch50x,"Use of SCHEMA1.STD is required to pass this test. ");
+
+     printf("INSERT INTO WHICH_SCHEMA1 VALUES \n");
+     printf(" ('Use of SCHEMA1.STD is required to pass this test. ');\n\n");
+     EXEC SQL INSERT INTO WHICH_SCHEMA1 VALUES 
+          ('Use of SCHEMA1.STD is required to pass this test. ');
+
+     printf("SELECT C1\n");
+     printf("  INTO   :ch50\n");
+     printf("  FROM   WHICH_SCHEMA1;\n\n");
+     EXEC SQL SELECT C1
+              INTO   :ch50
+              FROM   WHICH_SCHEMA1;
+     
+     printf("ch50 should be %s\n",ch50x);
+     printf("ch50 is        %s\n",ch50);
+     printf("SQLCODE is %ld\n",SQLCODE);
+
+     EXEC SQL ROLLBACK WORK;
+
+    if ( strncmp(ch50, ch50x, 50) == 0 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0137','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl001.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0137','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+}

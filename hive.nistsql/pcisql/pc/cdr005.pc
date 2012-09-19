@@ -1,0 +1,251 @@
+/*  EMBEDDED C (file "CDR005.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR005.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE <CHECK> CONSTRAINT.                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.8                                       */
+/*                <check constraint definition>::=               */
+/*                      CHECK (<search condition>)               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+long count2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+long code1;
+long code2;
+
+main()
+
+{
+        strcpy(uid,"SUN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr005.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0313 ********************/
+/* This test case checks the integrity constraint:      */
+/*          GRADE > 0 AND GRADE < 20     on STAFF5      */
+/*    declared in <table constraint definition>         */
+/*     <Comparison Predicate>                           */
+/* Using UPDATE check violation.                        */
+
+printf("\n                     TEST0313             \n");
+printf("                  CHECK CONSTRAINTS    \n");
+printf("  SQL with Integrity Enhancement section 6.8\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        INSERT INTO STAFF5\n");
+printf("        VALUES('E2','Tom',14,'Newyork');\n");
+printf("\n");
+printf("        UPDATE STAFF5\n");
+printf("        SET GRADE = 20;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM STAFF5\n");
+printf("        WHERE GRADE = 14;\n");
+printf("\n");
+EXEC SQL DELETE FROM STAFF5;
+EXEC SQL INSERT INTO STAFF5
+        VALUES('E2','Tom',14,'Newyork');
+EXEC SQL UPDATE STAFF5
+        SET GRADE = 20;
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM STAFF5
+        WHERE GRADE = 14;
+ printf(" The correct answer is:\n");
+ printf("         code1 < 0,count1 = 1.\n");
+ printf(" Your answer is:\n");
+ printf("         code1 = %ld",code1);
+ printf(",count1= %ld\n",count1);
+        if (code1 < 0 && count1 == 1 )
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0313','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0313','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr005.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0313 ******************************/
+
+
+
+
+
+
+/******************** BEGIN TEST0314 ********************/
+/* This test case checks the integrity constraint:      */
+/*          GRADE > 0 AND GRADE < 20     on STAFF6      */
+/*       declared in <column definition>                */
+/*        <Comparison Predicate>                        */
+/*   Using UPDATE to check violation                    */
+
+printf("\n                     TEST0314             \n");
+printf("                  CHECK CONSTRAINTS    \n");
+printf("  SQL with Integrity Enhancement section 6.8\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        INSERT INTO STAFF6\n");
+printf("        VALUES('E2','Tom',14,'Newyork');\n");
+printf("\n");
+printf("        UPDATE STAFF6\n");
+printf("        SET GRADE = 20;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM STAFF6\n");
+printf("        WHERE GRADE = 14;\n");
+printf("\n");
+EXEC SQL DELETE FROM STAFF6;
+EXEC SQL INSERT INTO STAFF6
+        VALUES('E2','Tom',14,'Newyork');
+EXEC SQL UPDATE STAFF6
+        SET GRADE = 20;
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM STAFF6
+        WHERE GRADE = 14;
+ printf(" The correct answer is:\n");
+ printf("         code1 < 0,count1 = 1.\n");
+ printf(" Your answer is:\n");
+ printf("         code1 = %ld",code1);
+ printf(",count1= %ld\n",count1);
+        if (code1 < 0 && count1 == 1 )
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0314','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0314','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr005.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0314 ******************************/
+
+
+
+
+
+/******************** BEGIN TEST0315 ********************/
+/* This test case checks the integrity constraint:      */
+/*          GRADE BETWEEN 1 AND 20                      */
+/*       declared in <table constraint definition>      */
+/*        <between Predicate>                           */
+/*    Using UPDATE to check violation                   */
+
+printf("\n                     TEST0315             \n");
+printf("                  CHECK CONSTRAINTS    \n");
+printf("  SQL with Integrity Enhancement section 6.8\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        INSERT INTO STAFF7\n");
+printf("        VALUES('E2','Tom',14,'Newyork');\n");
+printf("\n");
+printf("        UPDATE STAFF7\n");
+printf("        SET GRADE = 21;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM STAFF7\n");
+printf("        WHERE GRADE = 14;\n");
+printf("\n");
+EXEC SQL DELETE FROM STAFF7;
+EXEC SQL INSERT INTO STAFF7
+        VALUES('E2','Tom',14,'Newyork');
+EXEC SQL UPDATE STAFF7
+        SET GRADE = 21;
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM STAFF7
+        WHERE GRADE = 14;
+ printf(" The correct answer is:\n");
+ printf("         code1 < 0,count1 = 1.\n");
+ printf(" Your answer is:\n");
+ printf("         code1 = %ld",code1);
+ printf(",count1= %ld\n",count1);
+        if (code1 < 0 && count1 == 1 )
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0315','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0315','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr005.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0315 ******************************/
+
+
+     exit(errcnt);
+
+
+}
+
+

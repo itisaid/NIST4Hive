@@ -1,0 +1,10 @@
+! ***********************************************************
+! *  SQL Test Suite                                         *
+! *  Version 6.0                                            *
+! *  Released December 31, 1996                             *
+! *                                                         *
+! *  Developed by:                                          *
+! *  National Institute of Standards and Technology, U.S.A. *
+! *  National Computing Centre, U.K.                        *
+! *  Computer Logic R&D, Greece                             *
+! ***********************************************************

@@ -1,0 +1,650 @@
+/*  EMBEDDED C (file "DML163.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-04-16 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML163.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Dynamic SQL.                              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char   dstmt[51];
+char longst[241];
+char dtyp[31];
+long junk;
+long cnt1;
+char ecit[16];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml163.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0864 ********************/
+flag = 1;
+
+     printf("                  TEST0864\n");
+     printf("    Intermediate Dynamic SQL syntax errors\n");
+     printf("References:\n");
+     printf("    17.6 GR.4 -- Syntax errors on <prepare statement>\n");
+     printf("    COR2 17.6 GR.4 -- Many rules were changed\n");
+     printf("    F#1 -- Dynamic SQL\n");
+     printf("    F#26 -- CASE expression\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf ("It is possible that some of these statements will be accepted\n");
+printf ("as vendor extensions.\n\n");
+
+/* 4.h  CASE statement -- Intermediate test */
+
+/* <simple case> where <case operand> and each <when operand> */
+/* are ? */
+
+/* This contains a compound character literal */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT'
+       '  CASE ?'
+       '    WHEN ? THEN 5'
+       '    ELSE 4'
+       '  END'
+       '  FROM HU.ECCO'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1631 FROM :longst;\n");
+EXEC SQL PREPARE S1631 FROM :longst;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* <case abbreviation> where each operand is ? */
+
+printf("dstmt=\"SELECT COALESCE (?, ?) FROM HU.ECCO\"\n");
+strcpy(dstmt,
+     "SELECT COALESCE (?, ?) FROM HU.ECCO               ");
+
+printf("PREPARE S1632 FROM :dstmt;\n");
+EXEC SQL PREPARE S1632 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("dstmt=\"SELECT NULLIF   (?, ?) FROM HU.ECCO\"\n");
+strcpy(dstmt,
+     "SELECT NULLIF   (?, ?) FROM HU.ECCO               ");
+
+printf("PREPARE S1633 FROM :dstmt;\n");
+EXEC SQL PREPARE S1633 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.r  <case specification> where one <result> is ? and each other */
+/* <result> is either NULL or ? */
+
+/* This contains a compound character literal */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT'
+       '  CASE EMPNUM'
+       '    WHEN ''E1'' THEN ?'
+       '    ELSE NULL'
+       '  END'
+       '  FROM HU.STAFF'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1634 FROM :longst;\n");
+EXEC SQL PREPARE S1634 FROM :longst;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n\n");
+EXEC SQL COMMIT WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0864','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml163.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0864','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0864 *********************/
+/******************** BEGIN TEST0865 ********************/
+flag = 1;
+
+     printf("                  TEST0865\n");
+     printf("    Result data types for case expressions\n");
+     printf("References:\n");
+     printf("    F#26 -- CASE expression\n");
+     printf("    6.9 SR.7 -- data type is set operation result data type\n");
+     printf("    9.3 -- set operation result data types\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* If any character string is varchar, then result is varchar. */
+/* If any number is approximate, then result is approximate. */
+/* Otherwise, result is fixed-length char and exact numeric respectively. */
+
+printf("CREATE TABLE T0865 (\n");
+printf("  C1 INT,\n");
+printf("  C2 CHAR (10),\n");
+printf("  C3 VARCHAR (5),\n");
+printf("  C4 REAL,\n");
+printf("  C5 CHAR (5),\n");
+printf("  C6 DECIMAL (2));\n");
+EXEC SQL CREATE TABLE T0865 (
+  C1 INT,
+  C2 CHAR (10),
+  C3 VARCHAR (5),
+  C4 REAL,
+  C5 CHAR (5),
+  C6 DECIMAL (2));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW V0865 (EXN, APXN, FXC, VC) AS\n");
+printf("  SELECT COALESCE (C1, C6),\n");
+printf("         COALESCE (C1, C4),\n");
+printf("         COALESCE (C2, C5),\n");
+printf("         COALESCE (C2, C3)\n");
+printf("  FROM T0865;\n");
+EXEC SQL CREATE VIEW V0865 (EXN, APXN, FXC, VC) AS
+  SELECT COALESCE (C1, C6),
+         COALESCE (C1, C4),
+         COALESCE (C2, C5),
+         COALESCE (C2, C3)
+  FROM T0865;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C0865 CURSOR FOR\n");
+printf("  SELECT DATA_TYPE, ORDINAL_POSITION\n");
+printf("  FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("  WHERE TABLE_SCHEMA = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'V0865'\n");
+printf("  ORDER BY ORDINAL_POSITION;\n\n");
+EXEC SQL DECLARE C0865 CURSOR FOR
+  SELECT DATA_TYPE, ORDINAL_POSITION
+  FROM INFORMATION_SCHEMA.COLUMNS
+  WHERE TABLE_SCHEMA = 'FLATER'
+  AND TABLE_NAME = 'V0865'
+  ORDER BY ORDINAL_POSITION;
+
+printf("OPEN C0865;\n");
+EXEC SQL OPEN C0865;
+CHCKOK ();
+printf ("\n");
+
+strcpy (dtyp, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH C0865 INTO :dtyp, :junk;\n");
+EXEC SQL FETCH C0865 INTO :dtyp, :junk;
+CHCKOK ();
+printf ("dtyp should be INTEGER, SMALLINT, NUMERIC, or DECIMAL;\n");
+printf ("its value is %s\n\n", dtyp);
+if (strncmp (dtyp, "INTEGER", 7) == 0)
+  goto P100;
+if (strncmp (dtyp, "SMALLINT", 8) == 0)
+  goto P100;
+if (strncmp (dtyp, "NUMERIC", 7) == 0)
+  goto P100;
+if (strncmp (dtyp, "DECIMAL", 7) == 0)
+  goto P100;
+flag = 0;
+
+P100:
+strcpy (dtyp, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH C0865 INTO :dtyp, :junk;\n");
+EXEC SQL FETCH C0865 INTO :dtyp, :junk;
+CHCKOK ();
+printf ("dtyp should be REAL, DOUBLE PRECISION, or FLOAT;\n");
+printf ("its value is %s\n\n", dtyp);
+if (strncmp (dtyp, "REAL", 4) == 0)
+  goto P101;
+if (strncmp (dtyp, "DOUBLE PRECISION", 16) == 0)
+  goto P101;
+if (strncmp (dtyp, "FLOAT", 5) == 0)
+  goto P101;
+flag = 0;
+
+P101:
+strcpy (dtyp, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH C0865 INTO :dtyp, :junk;\n");
+EXEC SQL FETCH C0865 INTO :dtyp, :junk;
+CHCKOK ();
+printf ("dtyp should be CHARACTER; its value is %s\n\n", dtyp);
+if (strncmp (dtyp, "CHARACTER", 9) != 0)
+  flag = 0;
+if (strncmp (dtyp, "CHARACTER V", 11) == 0)
+  flag = 0;
+
+strcpy (dtyp, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("FETCH C0865 INTO :dtyp, :junk;\n");
+EXEC SQL FETCH C0865 INTO :dtyp, :junk;
+CHCKOK ();
+printf ("dtyp should be CHARACTER VARYING; its value is %s\n\n", dtyp);
+if (strncmp (dtyp, "CHARACTER VARYING", 17) != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0865 CASCADE;\n");
+EXEC SQL DROP TABLE T0865 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0865','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml163.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0865','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0865 *********************/
+/******************** BEGIN TEST0866 ********************/
+flag = 1;
+
+     printf("                  TEST0866\n");
+     printf("    Case expressions in other than SELECT\n");
+     printf("References:\n");
+     printf("    F#26 -- CASE expression\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE VIEW V0866 (EMPNUM, HOURS) AS\n");
+printf("  SELECT EMPNUM,\n");
+printf("    CASE\n");
+printf("      WHEN PNUM = 'P2' THEN HOURS + 30\n");
+printf("      ELSE HOURS\n");
+printf("    END\n");
+printf("  FROM HU.WORKS;\n");
+EXEC SQL CREATE VIEW V0866 (EMPNUM, HOURS) AS
+  SELECT EMPNUM,
+    CASE
+      WHEN PNUM = 'P2' THEN HOURS + 30
+      ELSE HOURS
+    END
+  FROM HU.WORKS;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("UPDATE HU.STAFF\n");
+printf("  SET CITY = NULLIF (CITY, 'Deale');\n");
+EXEC SQL UPDATE HU.STAFF
+  SET CITY = NULLIF (CITY, 'Deale');
+CHCKOK ();
+printf ("\n");
+
+cnt1 = 0;
+printf("SELECT COUNT(*) INTO :cnt1\n");
+printf("  FROM HU.STAFF\n");
+printf("  WHERE CITY IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :cnt1
+  FROM HU.STAFF
+  WHERE CITY IS NULL;
+CHCKOK ();
+printf ("cnt1 should be 2; its value is %ld\n\n", cnt1);
+if (cnt1 != 2)
+  flag = 0;
+
+printf("INSERT INTO HU.STAFF VALUES (\n");
+printf("  'E8', 'Wally',\n");
+printf("  CASE WHEN USER = 'FLATER' THEN 15 ELSE 10 END,\n");
+printf("  'Monash');\n");
+EXEC SQL INSERT INTO HU.STAFF VALUES (
+  'E8', 'Wally',
+  CASE WHEN USER = 'FLATER' THEN 15 ELSE 10 END,
+  'Monash');
+CHCKOK ();
+printf ("\n");
+
+cnt1 = 0;
+printf("SELECT COUNT(*) INTO :cnt1\n");
+printf("  FROM HU.STAFF\n");
+printf("  WHERE GRADE = 15;\n");
+EXEC SQL SELECT COUNT(*) INTO :cnt1
+  FROM HU.STAFF
+  WHERE GRADE = 15;
+CHCKOK ();
+printf ("cnt1 should be 1; its value is %ld\n\n", cnt1);
+if (cnt1 != 1)
+  flag = 0;
+
+/* ELSE NULL is implicit. */
+
+cnt1 = 0;
+printf("SELECT COUNT(*) INTO :cnt1\n");
+printf("  FROM HU.STAFF\n");
+printf("  WHERE CASE GRADE\n");
+printf("    WHEN 10 THEN 12\n");
+printf("    WHEN 13 THEN 12\n");
+printf("  END = 12;\n");
+EXEC SQL SELECT COUNT(*) INTO :cnt1
+  FROM HU.STAFF
+  WHERE CASE GRADE
+    WHEN 10 THEN 12
+    WHEN 13 THEN 12
+  END = 12;
+CHCKOK ();
+printf ("cnt1 should be 3; its value is %ld\n\n", cnt1);
+if (cnt1 != 3)
+  flag = 0;
+
+cnt1 = 0;
+printf("SELECT SUM(HOURS) INTO :cnt1\n");
+printf("  FROM V0866;\n");
+EXEC SQL SELECT SUM(HOURS) INTO :cnt1
+  FROM V0866;
+CHCKOK ();
+printf ("cnt1 should be 584; its value is %ld\n\n", cnt1);
+if (cnt1 != 584)
+  flag = 0;
+
+printf("DECLARE C0866 CURSOR FOR\n");
+printf("  SELECT COALESCE (CITY, EMPNUM) FROM HU.STAFF\n");
+printf("  ORDER BY 1;\n\n");
+EXEC SQL DECLARE C0866 CURSOR FOR
+  SELECT COALESCE (CITY, EMPNUM) FROM HU.STAFF
+  ORDER BY 1;
+
+printf("OPEN C0866;\n");
+EXEC SQL OPEN C0866;
+CHCKOK ();
+printf ("\n");
+
+strcpy (ecit, "xxxxxxxxxxxxxxx");
+printf("FETCH C0866 INTO :ecit;\n");
+EXEC SQL FETCH C0866 INTO :ecit;
+CHCKOK ();
+printf ("ecit should be 'Akron          '; its value is '%s'\n\n", ecit);
+if (strcmp (ecit, "Akron          ") != 0)
+  flag = 0;
+
+strcpy (ecit, "xxxxxxxxxxxxxxx");
+printf("FETCH C0866 INTO :ecit;\n");
+EXEC SQL FETCH C0866 INTO :ecit;
+CHCKOK ();
+printf ("ecit should be 'E1             '; its value is '%s'\n\n", ecit);
+if (strcmp (ecit, "E1             ") != 0)
+  flag = 0;
+
+strcpy (ecit, "xxxxxxxxxxxxxxx");
+printf("FETCH C0866 INTO :ecit;\n");
+EXEC SQL FETCH C0866 INTO :ecit;
+CHCKOK ();
+printf ("ecit should be 'E4             '; its value is '%s'\n\n", ecit);
+if (strcmp (ecit, "E4             ") != 0)
+  flag = 0;
+
+strcpy (ecit, "xxxxxxxxxxxxxxx");
+printf("FETCH C0866 INTO :ecit;\n");
+EXEC SQL FETCH C0866 INTO :ecit;
+CHCKOK ();
+printf ("ecit should be 'Monash         '; its value is '%s'\n\n", ecit);
+if (strcmp (ecit, "Monash         ") != 0)
+  flag = 0;
+
+strcpy (ecit, "xxxxxxxxxxxxxxx");
+printf("FETCH C0866 INTO :ecit;\n");
+EXEC SQL FETCH C0866 INTO :ecit;
+CHCKOK ();
+printf ("ecit should be 'Vienna         '; its value is '%s'\n\n", ecit);
+if (strcmp (ecit, "Vienna         ") != 0)
+  flag = 0;
+
+strcpy (ecit, "xxxxxxxxxxxxxxx");
+printf("FETCH C0866 INTO :ecit;\n");
+EXEC SQL FETCH C0866 INTO :ecit;
+CHCKOK ();
+printf ("ecit should be 'Vienna         '; its value is '%s'\n\n", ecit);
+if (strcmp (ecit, "Vienna         ") != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP VIEW V0866 CASCADE;\n");
+EXEC SQL DROP VIEW V0866 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0866','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml163.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0866','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0866 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

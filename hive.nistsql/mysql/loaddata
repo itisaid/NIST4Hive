@@ -1,0 +1,9 @@
+source C:\software\pcisql\sql\basetab.sql
+source C:\software\pcisql\sql\cugtab.sql
+source C:\software\pcisql\sql\flattab.sql
+source C:\software\pcisql\sql\suntab0.sql
+source C:\software\pcisql\sql\suntab1.sql
+source C:\software\pcisql\sql\suntab2.sql
+source C:\software\pcisql\sql\suntab3.sql
+source C:\software\pcisql\sql\sultab1.sql
+

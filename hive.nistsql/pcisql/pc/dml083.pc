@@ -1,0 +1,609 @@
+/*  EMBEDDED C (file "DML083.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML083.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SQLSTATE STATUS CODE.               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     short c1;
+     char ch1[2];
+     char ch22[23];
+     float f2;
+     long LONG1;
+EXEC SQL END DECLARE SECTION;
+long ii;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+long     wflag;
+
+main()
+{
+     strcpy(uid,"SCHANZLE          ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+flag = 1;
+
+printf("SQL Test Suite, V6.0, Embedded C, dml083.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0496 ********************/
+flag = 1;
+
+     printf("                  TEST0496 \n");
+     printf("SQLSTATE = 22002: data exception \n");
+     printf("(null value, no indicator parameter)\n");
+     printf("Reference ANSI SQL-1992 section 9.1\n");
+     printf("Retrieval assignment, General Rule #1\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("DELETE FROM FOUR_TYPES;\n");
+     EXEC SQL DELETE FROM FOUR_TYPES;
+
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO FOUR_TYPES VALUES (NULL,NULL,4.1,NULL);\n");
+     EXEC SQL INSERT INTO FOUR_TYPES VALUES (NULL,NULL,4.1,NULL);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+    /* exact numeric test case - single row select */
+     printf("\n");
+     SQLCODE = 66;
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT T_INT INTO :c1 FROM FOUR_TYPES\n");
+     printf ("  WHERE T_DECIMAL = 4.1;\n");
+     EXEC SQL SELECT T_INT INTO :c1 FROM FOUR_TYPES
+                WHERE T_DECIMAL = 4.1;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22002'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22002", 5) != 0)
+       flag = 0;
+
+    /* approximate numeric test case  - single row select */
+     printf("\n");
+     SQLCODE = 66;
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT T_REAL INTO :f2 FROM FOUR_TYPES\n");
+     printf ("  WHERE T_DECIMAL = 4.1;\n");
+     EXEC SQL SELECT T_REAL INTO :f2 FROM FOUR_TYPES
+                WHERE T_DECIMAL = 4.1;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22002'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22002", 5) != 0)
+       flag = 0;
+
+    /* character data test case - cursor */
+     printf("\n");
+     SQLCODE = 66;
+     strcpy (SQLSTATE, "x");
+     printf ("DECLARE CHARCHAR CURSOR FOR\n");
+     printf ("  SELECT T_CHAR FROM FOUR_TYPES\n");
+     printf ("  WHERE T_DECIMAL = 4.1;\n\n");
+     printf ("OPEN CHARCHAR;\n");
+     printf ("FETCH CHARCHAR INTO :ch22;\n");
+     EXEC SQL DECLARE CHARCHAR CURSOR FOR
+                SELECT T_CHAR FROM FOUR_TYPES
+                WHERE T_DECIMAL = 4.1;
+     EXEC SQL OPEN CHARCHAR;
+     EXEC SQL FETCH CHARCHAR INTO :ch22;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22002'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22002", 5) != 0)
+       flag = 0;
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0496','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml083.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0496','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0496 *********************/
+ 
+/******************** BEGIN TEST0498 ********************/
+flag = 1;
+
+     printf("                  TEST0498 \n");
+     printf("SQLSTATE = 22001: data exception \n");
+     printf("(string data, right truncation)\n");
+     printf("  section 9.2 <Store assignment> GR #3b\n");
+     printf("  section 3.3.4.1  Exceptions\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.STAFF VALUES\n");
+     printf ("('E6','Earl Brown',11,'Claggetsville Maryland');\n");
+     EXEC SQL INSERT INTO HU.STAFF VALUES
+       ('E6','Earl Brown',11,'Claggetsville Maryland');
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22001'; its value is %s\n", SQLSTATE);
+
+     /* Truncation on a store assignment is an exception, so it */
+     /* should be accompanied by a negative SQLCODE.            */
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22001", 5) != 0)
+       flag = 0;
+
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     strcpy (ch22, "Claggetsville Maryland");
+     printf ("INSERT INTO HU.STAFF VALUES\n");
+     printf ("('E7','Ella Brown',12,:ch22);\n");
+     printf ("-- where ch22 = '%s'\n",ch22);
+     EXEC SQL INSERT INTO HU.STAFF VALUES
+       ('E7','Ella Brown',12,:ch22);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22001'; its value is %s\n", SQLSTATE);
+
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22001", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     c1 = -1;
+     printf ("SELECT COUNT(*) INTO :c1 FROM HU.STAFF;\n");
+     EXEC SQL SELECT COUNT(*) INTO :c1 FROM HU.STAFF;
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("c1 should be 5; its value is %d\n", c1);
+     if (SQLCODE != 0 || c1 != 5)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0498','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml083.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0498','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0498 *********************/
+
+/******************** BEGIN TEST0500 ********************/
+flag = 1;
+
+     printf("                  TEST0500 \n");
+     printf("SQLSTATE = 01003: warning \n");
+     printf("(null value eliminated in set fnunction)\n");
+     printf("Reference ANSI SQL-1992 section 6.5\n");
+     printf (" <set function specification> \n");
+     printf("   General Rule #1b\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("\n");
+     printf ("DELETE FROM HU.HH;\n");
+     EXEC SQL DELETE FROM HU.HH;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.HH VALUES (3);\n");
+     EXEC SQL INSERT INTO HU.HH VALUES (3);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.HH VALUES (NULL);\n");
+     EXEC SQL INSERT INTO HU.HH VALUES (NULL);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     c1 = -1;
+     printf ("SELECT AVG(SMALLTEST) INTO :c1 FROM HU.HH;\n");
+     EXEC SQL SELECT AVG(SMALLTEST) INTO :c1 FROM HU.HH;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01003'; its value is %s\n", SQLSTATE);
+     printf ("c1 should be 3; its value is %d\n", c1);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01003", 5) != 0 || c1 != 3)
+       flag = 0;
+
+     printf("\n");
+     printf ("UPDATE HU.STAFF SET GRADE = NULL\n");
+     printf ("  WHERE GRADE = 13;\n");
+     EXEC SQL UPDATE HU.STAFF SET GRADE = NULL
+                WHERE GRADE = 13;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     f2 = -1;
+     printf ("SELECT AVG(GRADE) INTO :f2 FROM HU.STAFF\n");
+     printf ("  WHERE CITY = 'Vienna';\n");
+     EXEC SQL SELECT AVG(GRADE) INTO :f2 FROM HU.STAFF
+                WHERE CITY = 'Vienna';
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01003'; its value is %s\n", SQLSTATE);
+     printf ("f2 should be 10; its value is %f\n", f2);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01003", 5) != 0)
+       flag = 0;
+     if (f2 > 11 || f2 < 9)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     c1 = -1;
+     printf ("SELECT SUM(DISTINCT GRADE) INTO :c1 FROM HU.STAFF\n");
+     EXEC SQL SELECT SUM(DISTINCT GRADE) INTO :c1 FROM HU.STAFF;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01003'; its value is %s\n", SQLSTATE);
+     printf ("c1 should be 22; its value is %d\n", c1);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01003", 5) != 0 || c1 != 22)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.HH \n");
+     printf ("  SELECT MAX(GRADE) FROM HU.STAFF;\n");
+     EXEC SQL INSERT INTO HU.HH 
+                SELECT MAX(GRADE) FROM HU.STAFF;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01003'; its value is %s\n", SQLSTATE);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01003", 5) != 0)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf ("DELETE FROM HU.HH WHERE SMALLTEST <  \n");
+     printf (" (SELECT MIN(GRADE) FROM HU.STAFF\n");
+     printf ("  WHERE CITY = 'Vienna');\n");
+     EXEC SQL DELETE FROM HU.HH WHERE SMALLTEST <
+               (SELECT MIN(GRADE) FROM HU.STAFF
+                WHERE CITY = 'Vienna');
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01003'; its value is %s\n", SQLSTATE);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01003", 5) != 0)
+       flag = 0;
+
+     /* Begin maligned code segment */
+
+     wflag = 0;
+
+     printf("\n");
+     printf ("DECLARE SKIER CURSOR FOR \n");
+     printf ("  SELECT CITY, COUNT(DISTINCT GRADE) FROM HU.STAFF\n");
+     printf ("  GROUP BY CITY\n");
+     printf ("  ORDER BY CITY DESC;\n\n");
+     EXEC SQL DECLARE SKIER CURSOR FOR 
+                SELECT CITY, COUNT(DISTINCT GRADE) FROM HU.STAFF
+                GROUP BY CITY
+                ORDER BY CITY DESC;
+
+     printf ("OPEN SKIER;\n");
+     EXEC SQL OPEN SKIER;
+     SQLSTATE[5] = '\0';
+     NOSUBCLASS();
+     if (strcmp (NORMSQ, "01003") == 0)
+       wflag = 1;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01003; its value is %s\n", SQLSTATE);
+if (strcmp (NORMSQ, "00000")!=0 && strcmp (NORMSQ, "01003")!=0)
+  flag=0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+     strcpy (SQLSTATE, "x");
+     strcpy (ch22, "NOWHERE");
+     c1 = -1;
+     printf ("FETCH SKIER INTO :ch22, :c1;\n");
+     EXEC SQL FETCH SKIER INTO :ch22, :c1;
+     printf ("ch22 should be 'Vienna'; its value is %s\n",ch22);
+     printf ("c1 should be 1; its value is %d\n", c1);
+     if (c1 != 1 || strncmp (ch22, "Vienna                ", 22) != 0)
+       flag = 0;
+     SQLSTATE[5] = '\0';
+     NOSUBCLASS();
+     if (strcmp (NORMSQ, "01003") == 0)
+       wflag = 1;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01003; its value is %s\n", SQLSTATE);
+if (strcmp (NORMSQ, "00000")!=0 && strcmp (NORMSQ, "01003")!=0)
+  flag=0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+     strcpy (SQLSTATE, "x");
+     strcpy (ch22, "NOWHERE");
+     c1 = -1;
+     printf ("FETCH SKIER INTO :ch22, :c1;\n");
+     EXEC SQL FETCH SKIER INTO :ch22, :c1;
+     printf ("ch22 should be 'Deale'; its value is %s\n",ch22);
+     printf ("c1 should be 1; its value is %d\n", c1);
+     if (c1 != 1 || strncmp (ch22, "Deale                 ", 22) != 0)
+       flag = 0;
+     SQLSTATE[5] = '\0';
+     NOSUBCLASS();
+     if (strcmp (NORMSQ, "01003") == 0)
+       wflag = 1;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01003; its value is %s\n", SQLSTATE);
+if (strcmp (NORMSQ, "00000")!=0 && strcmp (NORMSQ, "01003")!=0)
+  flag=0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+     strcpy (SQLSTATE, "x");
+     strcpy (ch22, "NOWHERE");
+     c1 = -1;
+     printf ("FETCH SKIER INTO :ch22, :c1;\n");
+     EXEC SQL FETCH SKIER INTO :ch22, :c1;
+     printf ("ch22 should be 'Akron'; its value is %s\n",ch22);
+     printf ("c1 should be 0; its value is %d\n", c1);
+     if (c1 != 0 || strncmp (ch22, "Akron                 ", 22) != 0)
+       flag = 0;
+     SQLSTATE[5] = '\0';
+     NOSUBCLASS();
+     if (strcmp (NORMSQ, "01003") == 0)
+       wflag = 1;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE should be 00000 or 01003; its value is %s\n", SQLSTATE);
+if (strcmp (NORMSQ, "00000")!=0 && strcmp (NORMSQ, "01003")!=0)
+  flag=0;
+if (strcmp (NORMSQ, "00000") == 0 && strcmp (NORMSQ, SQLSTATE) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+     printf ("We should have gotten at least one 01003 warning.\n");
+     if (wflag == 0)
+     {
+       printf ("But we didn't.\n\n");
+       flag = 0;
+     }
+     else
+     {
+       printf ("Indeed we did.\n\n");
+     }
+
+     /* End maligned code segment */
+
+     printf("\n");
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0500','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml083.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0500','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0500 *********************/
+
+/******************** BEGIN TEST0501 ********************/
+flag = 1;
+
+     printf("                  TEST0501 \n");
+     printf("SQLSTATE = 01004: warning \n");
+     printf("(string data, right truncation)\n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 9.1 <Retrieval assignment> GR #3b\n");
+     printf("  section 3.3.4.1  Exceptions\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT EMPNAME INTO :ch1 FROM HU.STAFF\n");
+     printf ("  WHERE EMPNUM = 'E3';\n");
+     EXEC SQL SELECT EMPNAME INTO :ch1 FROM HU.STAFF
+       WHERE EMPNUM = 'E3';
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01004'; its value is %s\n", SQLSTATE);
+     printf ("ch1 should be 'C'; its value is %s\n",ch1);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+       flag = 0;
+     if (strcmp (ch1, "C") != 0)
+       flag = 0;
+
+     printf("\n");
+     strcpy (SQLSTATE, "x");
+     printf ("DECLARE JOHNS CURSOR FOR\n");
+     printf ("  SELECT EMPNAME FROM HU.STAFF\n");
+     printf ("  WHERE EMPNUM = 'E3';\n");
+     printf ("OPEN JOHNS;\n");
+     printf ("FETCH JOHNS INTO :ch1;\n");
+     EXEC SQL DECLARE JOHNS CURSOR FOR
+                SELECT EMPNAME FROM HU.STAFF
+                WHERE EMPNUM = 'E3';
+     EXEC SQL OPEN JOHNS;
+     EXEC SQL FETCH JOHNS INTO :ch1;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '01004'; its value is %s\n", SQLSTATE);
+     if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+       flag = 0;
+     printf ("ch1 should be 'C'; its value is %s\n",ch1);
+     if (strcmp (ch1, "C") != 0)
+       flag = 0;
+ 
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0501','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml083.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0501','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0501 *********************/
+
+     exit(errcnt);
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}

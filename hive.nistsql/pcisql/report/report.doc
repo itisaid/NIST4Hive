@@ -1,0 +1,60 @@
+Short instructions for installing and running the test reporting mechanism
+--------------------------------------------------------------------------
+
+If there are any problems or questions, please read the long
+instructions in file report_l.doc.
+
+
+INSTALLATION
+------------
+
+All actions should be done in the HU account using the test database.
+
+Run the following in Interactive SQL:
+
+1.  report.sql, in directory report   (creates the tables)
+2.  dataload.sql, in directory report   (loads the static data)
+**  If dataload.sql causes problems, refer to the long instructions.
+
+Compile the following programs:
+
+1.  reporta (any embedded or module language)
+2.  reportb (any embedded or module language)
+3.  reportzx.c, in directory report (ANSI C with no embedded SQL)
+
+Put the executables for reporta, reportb, and reportzx together in a
+directory where it is OK for them to create temporary files.
+
+
+USAGE
+-----
+
+1.  Insert one or more of the following values into BINDING_CLAIMED
+    according to which bindings you wish to test:  'PCO', 'PFO', 'PC ',
+    'PPA', 'PAD', 'MCO', 'MFO', 'MC ', 'MPA', 'MAD', 'SQL'.  For example,
+    to test Embedded C:  INSERT INTO BINDING_CLAIMED VALUES ('PC ');.
+
+2.  Insert the profile identifiers for the profiles that you want to
+    test into FEATURE_CLAIMED.  For example, to test Transitional SQL:
+    INSERT INTO FEATURE_CLAIMED VALUES ('P135');.  The profile identifiers
+    can be found in the diagram profiles.ps or by typing SELECT * FROM
+    REPORTFEATURE WHERE FEATURE1 LIKE 'P%'; in Interactive SQL.
+
+    NOTE:  Subprofiles are automatically selected when you select a parent
+    profile.  Refer to the diagram profiles.ps.  For example, if you
+    select 'P135', the following subprofiles are automatically selected:
+    P110, P120, P125.
+
+3.  Run reporta and capture the output to get a list of programs that you
+    must run to test the profile(s) that you selected.  If only some of the
+    tests in a particular program are required, reporta will also provide a
+    TEd change to delete the extra tests.  Include the TEd change spec. in
+    your TEd file.
+
+4.  Run the test suite programs, if you have not already done so.
+
+5.  Run reportb to generate the temporary files used by reportzx.
+
+6.  Run reportzx and look at combined.lst to see the results of testing.
+
+The diagram reportin.ps shows the data flow of the above procedure.

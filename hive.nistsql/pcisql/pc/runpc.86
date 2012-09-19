@@ -1,0 +1,189 @@
+NOTE ***********************************************************************
+NOTE    NIST SQL Test Suite, V6.0, Pseudo-Shell, runpc.86
+NOTE      This file lists the programs to be run for test suite type:
+NOTE      Embedded C
+NOTE      For the FIPS 127-1 Profile WITHOUT IEF, the complete SQL-86 standard.
+NOTE      Identified by file extension .PC
+NOTE      Authorization id is shown after the file name
+NOTE ***********************************************************************
+NOTE    This is a list of all programs for SQL features in FIPS 127-1
+NOTE      WITHOUT Integrity Enhancement Feature (IEF).
+NOTE    IEF includes referential integrity, table check clauses, and
+NOTE      default column values.
+NOTE    This lists SQL-89 features, with corrections from SQL-92.  That is,
+NOTE      this lists Entry SQL-92 minus IEF and most major enhancements over
+NOTE      SQL-89: delimited identifiers, renaming columns with AS, and SQLSTATE.
+NOTE ***********************************************************************
+NOTE     program authid is an optional subroutine for login
+NOTE     program ccc004S is a subroutine to be linked with ccc004
+NOTE     program ccc009S is a subroutine to be linked with ccc009
+NOTE     program dml063 should be modified before running - see documentation
+NOTE     program flg005 should be modified before running - see documentation
+NOTE     mpb* programs are to be run concurrently with mpa* programs;
+NOTE        for example, mpb001.pc is to be run concurrently with mpa001.pc
+
+NOTE     RUNPC_S indicates a subroutine needs to be linked
+NOTE     RUNPC_2 indicates 2 programs to be run concurrently
+NOTE     RUNSQL indicates an interactive SQL command file
+NOTE     RUNC indicates a C language program
+
+NOTE     ------------- Dataload Programs  -------------
+RUNPC    basetab   HU
+RUNPC    cugtab    CUGINI
+RUNPC    flattab   FLATER
+RUNPC    predml    HU
+
+NOTE     ------------- Entry Syntax Flags -------------
+RUNPC    flg010    FLATER
+RUNPC    flg011    FLATER
+RUNPC    flg012    FLATER
+RUNPC    flg013    FLATER
+RUNPC    flg005    HU
+RUNPC    flg008    HU
+NOTE     ------------- Entry SQL -------------
+RUNPC    sdl026    CANWEPARSELENGTH18
+RUNPC    sdl005    CUGINI
+RUNPC    dml087    FLATER
+RUNPC    dml143    FLATER
+RUNPC    sdl032    FLATER
+RUNPC    ccc001    HU
+RUNPC    ccc002    HU
+RUNPC    ccc003    HU
+RUNPC_S  ccc004    HU
+RUNPC    ccc005    HU
+RUNPC    ccc006    HU
+RUNPC    ccc007    HU
+RUNPC    ccc008    HU
+RUNPC_S  ccc009    HU
+RUNPC    dml001    HU
+RUNPC    dml002    HU
+RUNPC    dml003    HU
+RUNPC    dml004    HU
+RUNPC    dml006    HU
+RUNPC    dml007    HU
+RUNPC    dml008    HU
+RUNPC    dml009    HU
+RUNPC    dml010    HU
+RUNPC    dml011    HU
+RUNPC    dml012    HU
+RUNPC    dml013    HU
+RUNPC    dml014    HU
+RUNPC    dml015    HU
+RUNPC    dml017    HU
+RUNPC    dml018    HU
+RUNPC    dml019    HU
+RUNPC    dml020    HU
+RUNPC    dml021    HU
+RUNPC    dml022    HU
+RUNPC    dml023    HU
+RUNPC    dml024    HU
+RUNPC    dml025    HU
+RUNPC    dml026    HU
+RUNPC    dml027    HU
+RUNPC    dml028    HU
+RUNPC    dml029    HU
+RUNPC    dml033    HU
+RUNPC    dml034    HU
+RUNPC    dml035    HU
+RUNPC    dml036    HU
+RUNPC    dml037    HU
+RUNPC    dml038    HU
+RUNPC    dml039    HU
+RUNPC    dml040    HU
+RUNPC    dml041    HU
+RUNPC    dml051    HU
+RUNPC    dml052    HU
+RUNPC    dml053    HU
+RUNPC    dml054    HU
+RUNPC    dml058    HU
+RUNPC    dml059    HU
+RUNPC    dml060    HU
+RUNPC    dml061    HU
+RUNPC    dml062    HU
+RUNPC    dml063    HU
+RUNPC    dml064    HU
+RUNPC    dml065    HU
+RUNPC    dml066    HU
+RUNPC    dml067    HU
+RUNPC    dml069    HU
+RUNPC    dml070    HU
+RUNPC    dml071    HU
+RUNPC    dml072    HU
+RUNPC    dml073    HU
+RUNPC    dml075    HU
+RUNPC    dml076    HU
+RUNPC    dml077    HU
+RUNPC    dml079    HU
+RUNPC    dml090    HU
+RUNPC    dml142    HU
+RUNPC    sdl001    HU
+RUNPC    sdl012    HU
+RUNPC    sdl013    HU
+RUNPC    sdl014    HU
+RUNPC    sdl015    HU
+RUNPC    sdl016    HU
+RUNPC    sdl017    HU
+RUNPC    sdl018    HU
+RUNPC    sdl019    HU
+RUNPC    sdl020    HU
+RUNPC    sdl024    HU
+RUNPC    sdl025    HU
+RUNPC    sdl027    HU
+RUNPC    sdl028    HU
+RUNPC    dml080    SCHANZLE
+RUNPC    sdl003    SCHANZLE
+RUNPC    sdl023    SCHANZLE
+RUNPC    sdl029    SCHANZLE
+RUNPC    sdl030    SCHANZLE
+RUNPC    sdl031    SCHANZLE
+RUNPC    sdl033    SCHANZLE
+RUNPC    sdl034    SCHANZLE
+RUNPC    sdl035    SCHANZLE
+RUNPC    sdl036    SCHANZLE
+RUNPC    dml016    SULLIVAN
+RUNPC    sdl002    SULLIVAN
+RUNPC    sdl004    SULLIVAN
+RUNPC    sdl006    SULLIVAN
+RUNPC    sdl007    SULLIVAN
+RUNPC    sdl008    SULLIVAN
+RUNPC    sdl009    SULLIVAN
+RUNPC    sdl010    SULLIVAN
+RUNPC    sdl021    SULLIVAN
+RUNPC    sdl022    SULLIVAN
+RUNPC_2  mpa001    SULLIVAN1
+RUNPC_2  mpa002    SULLIVAN1
+RUNPC_2  mpa003    SULLIVAN1
+RUNPC_2  mpa004    SULLIVAN1
+RUNPC_2  mpa005    SULLIVAN1
+RUNPC_2  mpa006    SULLIVAN1
+RUNPC_2  mpa007    SULLIVAN1
+RUNPC_2  mpa008    SULLIVAN1
+RUNPC    sdl011    SULLIVAN1
+RUNPC    sdl037    SULLIVAN1
+NOTE     ------------- Entry Sizing -------------
+RUNPC    dml132    FLATER
+RUNPC    dml005    HU
+RUNPC    dml042    HU
+RUNPC    dml043    HU
+RUNPC    dml044    HU
+RUNPC    dml045    HU
+RUNPC    dml046    HU
+RUNPC    dml047    HU
+RUNPC    dml048    HU
+RUNPC    dml049    HU
+RUNPC    dml050    HU
+RUNPC    dml055    HU
+RUNPC    dml056    HU
+RUNPC    dml057    HU
+NOTE     ------------- Optional/Informational Tests -------------
+RUNPC    flg009    HU
+RUNPC    flg006    MCGINN
+RUNPC    dml068    HU
+RUNPC    dml078    HU
+RUNPC    dml084    SCHANZLE
+NOTE     ----- Automated Reporting System
+RUNSQL   report    HU
+RUNSQL   dataload  HU
+RUNPC    reporta   HU
+RUNPC    reportb   HU
+RUNC     reportzx  HU

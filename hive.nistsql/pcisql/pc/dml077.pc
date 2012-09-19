@@ -1,0 +1,383 @@
+/*  EMBEDDED C (file "DML077.PC")  */ 
+ 
+/*****************************************************************/ 
+/*                                                               */ 
+/*                  COMMENT SECTION                              */ 
+/*                                                               */ 
+/*  DATE 1991/07/30 EMBEDDED C LANGUAGE                          */ 
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */ 
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */ 
+/*  DML077.PC                                                    */ 
+/*  WRITTEN BY: YOLANDA HERD                                     */ 
+/*                                                               */ 
+/*                                                               */ 
+/*  REFERENCES                                                   */ 
+/*        AMERICAN NATIONAL STANDARD database language           */ 
+/*        X3.135-1989                                            */ 
+/*                                                               */ 
+/*                                                               */ 
+/*****************************************************************/ 
+ 
+ 
+#include <stdio.h> 
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+     
+EXEC SQL BEGIN DECLARE SECTION; 
+  long GRDE; 
+  long count1; 
+  long count2; 
+  long count3; 
+  long HRS;
+  long NUM;
+  long INT1;
+  long INT2;
+  short indic1; 
+  char enum3[4]; 
+  char EMPNO1[4];
+  char PNO1[4]; 
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION; 
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+ 
+  long i; 
+  long flag1;
+ 
+main() 
+{ 
+ 
+strcpy(uid,"HU"); 
+AUTHID(uid); 
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml077.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+ 
+ 
+/******************** BEGIN TEST0443 ********************/ 
+printf("\n                 TEST0443         \n");
+printf("\n VIEW with check option rejects unknown (NULL)\n"); 
+printf("       Reference 6.9 GR 3a, 4.5 para 6 \n"); 
+printf("     - - - - - - - - - - - - - - - - - - - -\n\n"); 
+ 
+ 
+EXEC SQL INSERT INTO TEMP_SS VALUES('E7',NULL,'Frankfurt'); 
+printf("SQLCODE after NULL literal INSERT = %ld\n",SQLCODE); 
+ 
+GRDE = 15; 
+indic1 = -1; 
+ 
+EXEC SQL INSERT INTO TEMP_SS VALUES('E8',:GRDE:indic1,'Atlanta'); 
+printf("SQLCODE after NULL with indic INSERT = %ld\n",SQLCODE); 
+ 
+EXEC SQL INSERT INTO TEMP_SS(EMPNUM) VALUES('E9'); 
+printf("SQLCODE after NULL INSERT by excluding column = %ld\n",SQLCODE); 
+ 
+ 
+EXEC SQL UPDATE WORKS 
+  SET HOURS = NULL 
+  WHERE PNUM = 'P2'; 
+printf("SQLCODE after UPDATE WORKS 'P2' = %ld\n",SQLCODE); 
+ 
+EXEC SQL INSERT INTO TEMP_SS 
+   SELECT PNUM,HOURS,'Nowhere'  
+     FROM WORKS 
+     WHERE EMPNUM = 'E1'; 
+printf("SQLCODE after INSERT SELECT 'E1' = %ld\n",SQLCODE); 
+ 
+EXEC SQL UPDATE TEMP_SS 
+  SET GRADE = NULL 
+  WHERE EMPNUM = 'E3'; 
+printf("SQLCODE after UPDATE TEMP_SS 'E3' = %ld\n",SQLCODE); 
+ 
+EXEC SQL UPDATE TEMP_SS 
+  SET GRADE = :GRDE:indic1 
+  WHERE EMPNUM = 'E5'; 
+printf("SQLCODE after UPDATE TEMP_SS with indic = %ld\n",SQLCODE); 
+  
+count1 = -1; 
+count2 = -1; 
+count3 = -1; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count1 
+  FROM STAFF 
+  WHERE GRADE IS NULL; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count2 
+  FROM TEMP_SS; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count3 
+  FROM STAFF; 
+ 
+EXEC SQL ROLLBACK WORK; 
+ 
+printf("\n"); 
+printf(" The correct answers are:\n"); 
+printf("  count1 = 0, count2 = 2 and count3 = 5\n"); 
+printf("\n"); 
+printf(" Your answers are:\n"); 
+printf("  count1 = %ld, count2 = %ld and count3 = %ld\n",count1,count2,count3);
+
+ 
+  if (count1 == 0 && count2 == 2 && count3 == 5) 
+       { 
+       EXEC SQL INSERT INTO TESTREPORT 
+          VALUES('0443','pass','PC'); 
+       printf("\n\n                 *** pass ***     "); 
+       } 
+     else 
+       { 
+       EXEC SQL INSERT INTO TESTREPORT 
+          VALUES('0443','fail','PC'); 
+          errcnt = errcnt + 1;
+       printf("\n\n       dml077.pc  *** fail ***     "); 
+       } 
+     printf("\n================================================"); 
+ 
+     printf("\n\n\n\n"); 
+     EXEC SQL COMMIT WORK; 
+ 
+/******************** END TEST0443 ********************/ 
+ 
+/******************** BEGIN TEST0444 ********************/ 
+ 
+ 
+printf("\n               TEST0444             \n"); 
+printf(" Updatable cursor, modify value selected on\n"); 
+printf("        reference X3.135-1989 \n"); 
+printf(" ---------------------------------------------\n"); 
+ 
+ 
+strcpy(enum3,"E1"); 
+strcpy(EMPNO1,"XX"); 
+  
+EXEC SQL DECLARE Y CURSOR FOR 
+  SELECT EMPNUM 
+  FROM STAFF 
+  WHERE EMPNUM > 'E1'; 
+ 
+EXEC SQL DECLARE X CURSOR FOR 
+  SELECT EMPNUM 
+  FROM WORKS 
+  WHERE EMPNUM > :enum3; 
+ 
+EXEC SQL OPEN X; 
+ 
+for (i=1; i<8; i++) 
+  { 
+    EXEC SQL FETCH X INTO :EMPNO1; 
+ 
+    if (strncmp(EMPNO1,"E2",2) == 0) 
+      strcpy(EMPNO1,"E9"); 
+ 
+    if (strncmp(EMPNO1,"E3",2) == 0) 
+      strcpy(EMPNO1,"E7"); 
+ 
+    if (strncmp(EMPNO1,"E4",2) == 0) 
+      strcpy(EMPNO1,"E6"); 
+ 
+    EXEC SQL UPDATE WORKS 
+      SET EMPNUM = :EMPNO1 
+      WHERE CURRENT OF X; 
+  } 
+ 
+EXEC SQL CLOSE X; 
+ 
+strcpy(EMPNO1,"XX"); 
+ 
+EXEC SQL OPEN Y; 
+ 
+for (i=1; i<6; i++) 
+  { 
+    EXEC SQL FETCH Y INTO :EMPNO1; 
+ 
+    if (strncmp(EMPNO1,"E2",2) == 0) 
+      strcpy(EMPNO1,"E9"); 
+ 
+    if (strncmp(EMPNO1,"E3",2) == 0) 
+      strcpy(EMPNO1,"E7"); 
+ 
+    if (strncmp(EMPNO1,"E4",2) == 0) 
+      strcpy(EMPNO1,"E6"); 
+ 
+    if (strncmp(EMPNO1,"E5",2) == 0) 
+       strcpy(EMPNO1,"E8"); 
+ 
+    EXEC SQL UPDATE STAFF 
+      SET EMPNUM = :EMPNO1 
+      WHERE CURRENT OF Y; 
+  } 
+ 
+count1 = -1; 
+count2 = -1; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count1 
+  FROM WORKS 
+  WHERE EMPNUM > 'E5'; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count2 
+  FROM STAFF 
+  WHERE EMPNUM > 'E5'; 
+
+printf("\n"); 
+printf(" The correct answers are:\n"); 
+printf("  count1 = 6 and count2 = 4\n"); 
+printf("\n"); 
+printf(" Your answers are:\n"); 
+printf("  count1 = %ld and count2 = %ld\n",count1,count2); 
+ 
+EXEC SQL ROLLBACK WORK; 
+ 
+if (count1 == 6 && count2 == 4) 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0444','pass','PC'); 
+    printf("\n\n                 *** pass ***     "); 
+  } 
+else 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0444','fail','PC'); 
+          errcnt = errcnt + 1;
+    printf("\n\n       dml077.pc  *** fail ***     "); 
+  } 
+printf("\n================================================"); 
+ 
+printf("\n\n\n\n"); 
+EXEC SQL COMMIT WORK; 
+ 
+/******************** END TEST0444 ********************/ 
+ 
+ 
+ 
+/******************** BEGIN TEST0445 ********************/ 
+printf("\n                  TEST0445              \n"); 
+printf(" Values not assigned to targets for SQLCODE=100 \n"); 
+printf("            reference X3.135-1989\n"); 
+printf(" ----------------------------------------------------\n"); 
+
+flag1 = 0; 
+strcpy(PNO1,"ZZZ");
+
+EXEC SQL SELECT PNUM INTO :PNO1
+  FROM WORKS
+  WHERE HOURS = 13;
+printf("PNO1 = %s, SQLCODE after SELECT PNUM = %ld\n",PNO1,SQLCODE);
+printf("\n");
+
+if (SQLCODE != 100 || (strncmp(PNO1,"ZZZ",3 != 0)))
+  flag1 = 1;
+
+HRS = 99;
+
+EXEC SQL SELECT HOURS INTO :HRS
+  FROM WORKS
+  WHERE EMPNUM = 'E4' AND PNUM = 'P1';
+printf("HRS = %ld, SQLCODE after SELECT HOURS = %ld\n",HRS,SQLCODE);
+printf("\n");
+
+if (SQLCODE != 100 || HRS != 99)
+  flag1 = 1;
+
+NUM = 999;
+
+EXEC SQL SELECT COL1 INTO :NUM
+  FROM VTABLE
+  WHERE COL2 > 500;
+printf("NUM = %ld, SQLCODE after SELECT COL1 = %ld\n",NUM,SQLCODE);
+
+if (SQLCODE != 100 || NUM != 999)
+  flag1 = 1;
+
+EXEC SQL DECLARE XX CURSOR FOR
+  SELECT PNUM,HOURS
+  FROM WORKS
+  WHERE EMPNUM > 'E1';
+
+EXEC SQL DECLARE YY CURSOR FOR
+  SELECT COL2, COL3
+  FROM VTABLE;
+
+count1 = 0;
+count2 = 0;
+
+strcpy(PNO1,"YY");
+HRS = 99;
+INT1 = 99;
+INT2 = 99;
+
+EXEC SQL OPEN XX;
+
+  for (i=1;i<15;i++)
+    {
+      EXEC SQL FETCH XX INTO :PNO1, :HRS;
+
+      if (SQLCODE == 0)
+        count1 = count1 + 1;
+    }
+
+EXEC SQL CLOSE XX;
+
+EXEC SQL OPEN YY;
+
+  for (i=1; i<10; i++)
+    {
+      EXEC SQL FETCH YY INTO :INT1, :INT2;
+
+      if (SQLCODE == 0)
+        count2 = count2 + 1;
+    }
+
+EXEC SQL CLOSE YY;
+
+printf("\n");
+printf("The correct answers are:\n");
+printf(" count1 = 6, count2 = 4 and flag1 = 0\n");
+printf("\n");
+printf("Your answers are:\n");
+printf(" count1 = %ld, count2 = %ld and flag1 = %ld\n",count1,count2,flag1);
+
+EXEC SQL ROLLBACK WORK; 
+ 
+if (count1 == 6 && count2 == 4 && flag1 == 0) 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0445','pass','PC'); 
+    printf("\n\n                 *** pass ***     "); 
+  } 
+else 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0445','fail','PC'); 
+          errcnt = errcnt + 1;
+    printf("\n\n       dml077.pc  *** fail ***     "); 
+  } 
+printf("\n================================================"); 
+ 
+printf("\n\n\n\n"); 
+EXEC SQL COMMIT WORK; 
+ 
+/******************** END TEST0445 ********************/ 
+ 
+exit(errcnt);
+} 

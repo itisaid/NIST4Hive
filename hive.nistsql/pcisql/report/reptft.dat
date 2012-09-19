@@ -1,0 +1,79 @@
+0001 Dynamic SQL
+0002 Basic information schema
+0003 Basic schema manipulation
+0004 Joined table
+0005 DATETIME data types
+0006 VARCHAR data type
+0007 TRIM function
+0008 UNION in views
+0009 Implicit numeric casting
+0010 Implicit character casting
+0011 Transaction isolation
+0012 Get diagnostics
+0013 Grouped operations
+0014 Qualified * in select list
+0015 Lowercase identifiers
+0016 PRIMARY KEY enhancement
+0017 Multiple schemas per user
+0018 Multiple module support
+0019 Referential delete actions
+0020 CAST functions
+0021 INSERT expressions
+0022 Explicit defaults
+0023 Privilege tables
+0024 Keyword relaxations
+0025 Domain definition
+0026 CASE expression
+0027 Compound character literals
+0028 LIKE enhancements
+0029 UNIQUE predicate
+0030 Table operations
+0031 Schema definition statement
+0032 User authorization
+0033 Constraint tables
+0034 Usage tables
+0035 Intermediate information schem
+0036 Subprogram support
+0037 Intermediate SQL Flagging
+0038 Schema manipulation
+0039 Long identifiers
+0040 Full outer join
+0041 Time zone specification
+0042 National character
+0043 Scrolled cursors
+0044 Intermediate set function
+0045 Character set definition
+0046 Named character sets
+0047 Scalar subquery values
+0048 Expanded null predicate
+0049 Constraint management
+0050 Documentation schema
+00L2 SQL-89 Level 2
+0CFL OPTIONAL Catalog-Lookup Flag
+0EFL FIPS 127-2 Entry Syntax Flag
+0ENT SQL-92 New Entry SQL Feature
+0FIP FIPS/ISO SQL only - not X/Open
+0FSZ FIPS sizing - not X/Open
+0IEF SQL-89 Integrity Enhancement
+0INF Informational Test
+0SZE Sizing Test - Entry
+0SZT Sizing Test - Transitional
+0SZI Sizing Test - Intermediate
+0XC2 XPG4 SQL, App.C, C.2 > Entry
+0XC3 XPG4 SQL, App.C, C.3 extension
+0XSZ XPG4 SQL ONLY Sizing Test
+P110 FIPS 127-2 Entry Syntax Flags
+P120 ISO/IEC 9075:1992 Entry SQL
+P125 FIPS 127-2 Entry SQL
+P135 FIPS 127-2 Transitional SQL
+P140 ISO/IEC 9075:1992 Intermediate
+P145 FIPS 127-2 Intermediate SQL
+P210 XPG4 SQL Profile without IEF
+P230 XPG4 SQL Profile with IEF
+P325 Sizing Tests - Entry
+P335 Sizing Tests - Transitional
+P345 Sizing Tests - Intermediate
+P405 Entry Catalog-Lookup Flagging
+P410 Miscellaneous Informational
+P415 Optional/Informational Tests
+P998 Individual Features

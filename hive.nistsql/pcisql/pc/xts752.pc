@@ -1,0 +1,397 @@
+/*  EMBEDDED C (file " XTS752.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS752.PC                                                   */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  ALTER TABLE ADD TABLE CONSTRAINT                             */ 
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.10   -- <Alter table statement>                         */
+/*    11.10 AR.1                                                 */
+/*    11.16   -- <Add table constraint definition>               */
+/*    F#1     -- Dynamic SQL                                     */
+/*    F#2     -- Basic Information Schema                        */
+/*    F#38    -- Schema manipulation                             */
+/*                                                               */ 
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 15/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA STATUS : QA CHECK                                         */
+/*                                                               */
+/*  Revised by DWF 1996-02-15                                    */
+/*    Fixed SDL transactions                                     */
+/*    Changed long string code                                   */
+/*    Fixed SQL syntax errors                                    */
+/*    Upcased info schem identifiers                             */
+/*    Fixed Dynamic SQL                                          */
+/*    Removed printf field widths                                */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long counok;
+char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts752.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf(" \n Time Run :  %s \n ", ctime(&cal));
+
+/******************** BEGIN TEST7052 ********************/
+flag = 1;
+printf("                   TEST7052\n");
+printf("    ALTER TABLE ADD TABLE CONSTRAINT \n"); 
+printf(" References:\n");
+printf("    11.10   -- <Alter table statement>\n");
+printf("    11.10   AR.1 \n");
+printf("    11.16   -- <Add table constraint definition> \n");
+printf("    F#1     -- Dynamic SQL \n");
+printf("    F#2     -- Basic Information Schema \n");
+printf("    F#38    -- Schema manipulation \n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+/* create tables TAB752a and TAB752b for the tests */
+printf("CREATE TABLE TAB752a\n");
+printf("(COL1 NUMERIC(5),\n");
+printf(" COL2 CHAR(15) NOT NULL UNIQUE,\n");
+printf(" COL3 CHAR(15));\n");
+EXEC SQL CREATE TABLE TAB752a
+         (COL1 NUMERIC(5),
+          COL2 CHAR(15) NOT NULL UNIQUE,
+          COL3 CHAR(15));
+CHCKOK();   
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+ 
+/* create the second table */  
+printf("CREATE TABLE TAB752b\n");
+printf("(C1 NUMERIC(5) PRIMARY KEY,\n");
+printf(" C2 CHAR(15),\n");
+printf(" C3 CHAR(15));\n");
+EXEC SQL CREATE TABLE TAB752b
+         (C1 NUMERIC(5) PRIMARY KEY,
+          C2 CHAR(15),
+          C3 CHAR(15));
+CHCKOK();   
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+ 
+printf("ALTER TABLE TAB752a ADD CONSTRAINT TA752a_PRKEY PRIMARY KEY(COL1);\n");
+EXEC SQL ALTER TABLE CTS1.TAB752a 
+         ADD CONSTRAINT TA752a_PRKEY PRIMARY KEY(COL1);
+CHCKOK(); 
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK(); 
+printf("\n");
+
+/* Access the Information Shema KEY_COLUMN_USAGE view */
+/* and check if the table constraint was added OK     */
+counok = 0;
+printf("SELECT COUNT(*) INTO :counok\n");
+printf("FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE\n");
+printf("WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TAB752A'\n");
+printf("AND CONSTRAINT_NAME = 'TA752A_PRKEY' AND COLUMN_NAME = 'COL1';\n");
+EXEC SQL SELECT COUNT(*) INTO :counok
+         FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+         WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TA752A'
+         AND CONSTRAINT_NAME = 'TA752A_PRKEY' AND COLUMN_NAME = 'COL1';
+CHCKOK();
+printf("counok should be 1; its value is %ld\n",counok);
+if (counok != 1)
+  flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK(); 
+printf("\n");
+
+/* modify table 752b by adding a foreign key that */
+/* references a column of TAB752a                 */
+printf("ALTER TABLE TAB752b \n");
+printf("ADD CONSTRAINT TA752b_FKEY FOREIGN KEY(C2)\n");
+printf("REFERENCES TAB752a(COL2);\n");
+EXEC SQL ALTER TABLE TAB752b
+         ADD CONSTRAINT TA752b_FKEY FOREIGN KEY(C2) REFERENCES TAB752a(COL2);
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK(); 
+printf("\n");
+
+/*Use Dynamic SQL with an preparable statement*/
+/*and access the key column usage view and check */  
+/*if the constraint is present */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE' ||
+       '  WHERE TABLE_SCHEMA = ''CTS1''' ||
+       '  AND TABLE_NAME = ''TAB752B''' ||
+       '  AND CONSTRAINT_NAME = ''TA752B_FKEY''' ||
+       '  AND COLUMN_NAME = ''C2'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S FROM :longst;\n");
+EXEC SQL PREPARE S FROM :longst;
+CHCKOK();
+printf("\n");
+
+printf("DECLARE SCUR CURSOR FOR S;\n\n");
+EXEC SQL DECLARE SCUR CURSOR FOR S;
+
+printf("OPEN SCUR;\n");
+EXEC SQL OPEN SCUR;
+CHCKOK();
+printf("\n");
+
+counok = 0;
+printf("FETCH SCUR INTO :counok;\n");
+EXEC SQL FETCH SCUR INTO :counok;
+CHCKOK();
+printf("Counok should be 1; its value is %ld\n",counok);
+if (counok != 1)
+   flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* alter table TAB752a and add a check constraint */
+printf("ALTER TABLE TAB752a ADD CONSTRAINT COL3_CHECK\n");
+printf("CHECK (COL3 IN ('ATHENS','CORFU','PYLOS'));\n");
+EXEC SQL ALTER TABLE TAB752a
+         ADD CONSTRAINT COL3_CHECK CHECK (COL3 IN ('ATHENS','CORFU','PYLOS'));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+ 
+/* attempt to insert one row in TAB752a that violates */
+/* CHECK constraint COL3_CHECK */
+printf("INSERT INTO TAB752a VALUES(1000,'KILLER','PAROS');\n");
+EXEC SQL INSERT INTO TAB752a VALUES(1000,'KILLER','PAROS');
+/* Check that an exception condition of integrity      */
+/* constraint violation is raised indicated in the     */
+/* value of SQLSTATE which should be '23000'.          */
+printf("SQLCODE should be < 0; its value is %ld\n",SQLCODE);
+printf("SQLSTATE should be 23000; its value is %s\n",SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0)
+  flag = 0;
+if (strncmp(NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp(NORMSQ, "23000", 5) == 0 && strncmp(NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+ /* Drop both tables */
+printf("DROP TABLE TAB752a CASCADE;\n");
+EXEC SQL DROP TABLE TAB752a CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE TAB752b CASCADE;\n");
+EXEC SQL DROP TABLE TAB752b CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+ /* record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts752.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7052','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts752.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7052','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7052 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

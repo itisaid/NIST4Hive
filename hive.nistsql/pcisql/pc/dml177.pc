@@ -1,0 +1,496 @@
+/*  EMBEDDED C (file "DML177.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-14 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML177.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml177.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0889 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0889\n");
+     printf("    FIPS sizing, INTEGER binary prec >= 31\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 -- Sizing #11, INTEGER binary precision\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE NOMAIL (\n");
+printf("  C1 INT);\n");
+EXEC SQL CREATE TABLE NOMAIL (
+  C1 INT);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+/* 2 ^ 31 = 2147483648 */
+
+printf("INSERT INTO NOMAIL VALUES (2147483647);\n");
+EXEC SQL INSERT INTO NOMAIL VALUES (2147483647);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO NOMAIL VALUES (-2147483647);\n");
+EXEC SQL INSERT INTO NOMAIL VALUES (-2147483647);
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+printf("SELECT C1 INTO :int1\n");
+printf("  FROM NOMAIL WHERE C1 > 0;\n");
+EXEC SQL SELECT C1 INTO :int1
+  FROM NOMAIL WHERE C1 > 0;
+CHCKOK ();
+printf ("int1 should be 2147483647; its value is %ld\n\n", int1);
+if (int1 != 2147483647)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT C1 INTO :int1\n");
+printf("  FROM NOMAIL WHERE C1 < 0;\n");
+EXEC SQL SELECT C1 INTO :int1
+  FROM NOMAIL WHERE C1 < 0;
+CHCKOK ();
+printf ("int1 should be -2147483647; its value is %ld\n\n", int1);
+if (int1 != -2147483647)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT C1 - 2147483646 INTO :int1\n");
+printf("  FROM NOMAIL\n");
+printf("  WHERE C1 > 0;\n");
+EXEC SQL SELECT C1 - 2147483646 INTO :int1
+  FROM NOMAIL
+  WHERE C1 > 0;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT C1 + 2147483646 INTO :int1\n");
+printf("  FROM NOMAIL\n");
+printf("  WHERE C1 < 0;\n");
+EXEC SQL SELECT C1 + 2147483646 INTO :int1
+  FROM NOMAIL
+  WHERE C1 < 0;
+CHCKOK ();
+printf ("int1 should be -1; its value is %ld\n\n", int1);
+if (int1 != -1)
+  flag = 0;
+
+printf("UPDATE NOMAIL\n");
+printf("  SET C1 = C1 + 2147483646\n");
+printf("  WHERE C1 < 0;\n");
+EXEC SQL UPDATE NOMAIL
+  SET C1 = C1 + 2147483646
+  WHERE C1 < 0;
+CHCKOK ();
+printf ("\n");
+
+printf("SELECT C1 INTO :int1\n");
+printf("  FROM NOMAIL WHERE C1 < 0;\n");
+EXEC SQL SELECT C1 INTO :int1
+  FROM NOMAIL WHERE C1 < 0;
+CHCKOK ();
+printf ("int1 should be -1; its value is %ld\n\n", int1);
+if (int1 != -1)
+  flag = 0;
+
+printf("UPDATE NOMAIL\n");
+printf("  SET C1 = C1 - 1;\n");
+EXEC SQL UPDATE NOMAIL
+  SET C1 = C1 - 1;
+CHCKOK ();
+printf ("\n");
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NOMAIL\n");
+printf("  WHERE C1 = 2147483645;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NOMAIL
+  WHERE C1 = 2147483645;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NOMAIL\n");
+printf("  WHERE C1 = 2147483646;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NOMAIL
+  WHERE C1 = 2147483646;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NOMAIL\n");
+printf("  WHERE C1 = 2147483647;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NOMAIL
+  WHERE C1 = 2147483647;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE NOMAIL CASCADE;\n");
+EXEC SQL DROP TABLE NOMAIL CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0889','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml177.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0889','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0889 *********************/
+/******************** BEGIN TEST0890 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0890\n");
+     printf("    FIPS sizing, SMALLINT binary prec >= 15\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 -- Sizing #13, SMALLINT binary precision\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE YESMAIL (\n");
+printf("  C1 SMALLINT);\n");
+EXEC SQL CREATE TABLE YESMAIL (
+  C1 SMALLINT);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+/* 2 ^ 15 = 32768 */
+
+printf("INSERT INTO YESMAIL VALUES (32767);\n");
+EXEC SQL INSERT INTO YESMAIL VALUES (32767);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO YESMAIL VALUES (-32767);\n");
+EXEC SQL INSERT INTO YESMAIL VALUES (-32767);
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+printf("SELECT C1 INTO :int1\n");
+printf("  FROM YESMAIL WHERE C1 > 0;\n");
+EXEC SQL SELECT C1 INTO :int1
+  FROM YESMAIL WHERE C1 > 0;
+CHCKOK ();
+printf ("int1 should be 32767; its value is %ld\n\n", int1);
+if (int1 != 32767)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT C1 INTO :int1\n");
+printf("  FROM YESMAIL WHERE C1 < 0;\n");
+EXEC SQL SELECT C1 INTO :int1
+  FROM YESMAIL WHERE C1 < 0;
+CHCKOK ();
+printf ("int1 should be -32767; its value is %ld\n\n", int1);
+if (int1 != -32767)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT C1 - 32766 INTO :int1\n");
+printf("  FROM YESMAIL\n");
+printf("  WHERE C1 > 0;\n");
+EXEC SQL SELECT C1 - 32766 INTO :int1
+  FROM YESMAIL
+  WHERE C1 > 0;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 0;
+printf("SELECT C1 + 32766 INTO :int1\n");
+printf("  FROM YESMAIL\n");
+printf("  WHERE C1 < 0;\n");
+EXEC SQL SELECT C1 + 32766 INTO :int1
+  FROM YESMAIL
+  WHERE C1 < 0;
+CHCKOK ();
+printf ("int1 should be -1; its value is %ld\n\n", int1);
+if (int1 != -1)
+  flag = 0;
+
+printf("UPDATE YESMAIL\n");
+printf("  SET C1 = C1 + 32766\n");
+printf("  WHERE C1 < 0;\n");
+EXEC SQL UPDATE YESMAIL
+  SET C1 = C1 + 32766
+  WHERE C1 < 0;
+CHCKOK ();
+printf ("\n");
+
+printf("SELECT C1 INTO :int1\n");
+printf("  FROM YESMAIL WHERE C1 < 0;\n");
+EXEC SQL SELECT C1 INTO :int1
+  FROM YESMAIL WHERE C1 < 0;
+CHCKOK ();
+printf ("int1 should be -1; its value is %ld\n\n", int1);
+if (int1 != -1)
+  flag = 0;
+
+printf("UPDATE YESMAIL\n");
+printf("  SET C1 = C1 - 1;\n");
+EXEC SQL UPDATE YESMAIL
+  SET C1 = C1 - 1;
+CHCKOK ();
+printf ("\n");
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM YESMAIL\n");
+printf("  WHERE C1 = 32765;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM YESMAIL
+  WHERE C1 = 32765;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM YESMAIL\n");
+printf("  WHERE C1 = 32766;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM YESMAIL
+  WHERE C1 = 32766;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM YESMAIL\n");
+printf("  WHERE C1 = 32767;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM YESMAIL
+  WHERE C1 = 32767;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE YESMAIL CASCADE;\n");
+EXEC SQL DROP TABLE YESMAIL CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0890','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml177.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0890','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0890 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

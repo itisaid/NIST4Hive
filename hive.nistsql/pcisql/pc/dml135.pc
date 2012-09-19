@@ -1,0 +1,1660 @@
+/*  EMBEDDED C (file "DML135.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/8/30 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML135.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This program tests multiple TSQL features together.          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+char tchar[7];
+     char longst[241];
+char tname[19];
+char ttype[11];
+char cname[19];
+short indic1;
+float flt1;
+char emnum[4];
+char ename[21];
+char city[16];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml135.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0692 ********************/
+flag = 1;
+
+     printf("                  TEST0692 \n");
+     printf("Many TSQL features #3:  enhanced proj/works\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("    F# 13 -- Grouped operations\n");
+     printf("    F# 15 -- Lowercase identifiers\n");
+     printf("    F# 16 -- PRIMARY KEY enhancement\n");
+     printf("    F# 19 -- Referential delete actions\n");
+     printf("    F# 22 -- Explicit defaults\n");
+     printf("    F# 24 -- Keyword relaxations\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE \"Proj\" (\n");
+printf("   PNUM     CHAR(3) PRIMARY KEY,\n");
+printf("   PNAME    CHAR(20),\n");
+printf("   PTYPE    CHAR(6)    DEFAULT 'Code',\n");
+printf("   BUDGET   DECIMAL(9) DEFAULT 10000,\n");
+printf("   CITY     CHAR(15)   DEFAULT 'Berlin');\n");
+EXEC SQL CREATE TABLE "Proj" (
+   PNUM     CHAR(3) PRIMARY KEY,
+   PNAME    CHAR(20),
+   PTYPE    CHAR(6)    DEFAULT 'Code',
+   BUDGET   DECIMAL(9) DEFAULT 10000,
+   CITY     CHAR(15)   DEFAULT 'Berlin');
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW \"PTypes\" (\"TYPE\", NUM) AS\n");
+printf("  SELECT PTYPE, COUNT(*) FROM \"Proj\"\n");
+printf("  GROUP BY PTYPE;\n");
+EXEC SQL CREATE VIEW "PTypes" ("TYPE", NUM) AS
+  SELECT PTYPE, COUNT(*) FROM "Proj"
+  GROUP BY PTYPE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW PTYPES AS\n");
+printf("  SELECT * FROM \"PTypes\"\n");
+printf("  WHERE NUM > 1;\n");
+EXEC SQL CREATE VIEW PTYPES AS
+  SELECT * FROM "PTypes"
+  WHERE NUM > 1;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE \"Works\" (\n");
+printf("    EMPNUM   CHAR(3),\n");
+printf("    PNUM     CHAR(3)\n");
+printf("      REFERENCES \"Proj\" ON DELETE CASCADE,\n");
+printf("    HOURS    DECIMAL(5),\n");
+printf("    PRIMARY KEY (EMPNUM,PNUM));\n");
+EXEC SQL CREATE TABLE "Works" (
+    EMPNUM   CHAR(3),
+    PNUM     CHAR(3)
+      REFERENCES "Proj" ON DELETE CASCADE,
+    HOURS    DECIMAL(5),
+    PRIMARY KEY (EMPNUM,PNUM));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW \"PStaff\" (PNUM, NUM) AS\n");
+printf("  SELECT PNUM, COUNT(*) FROM \"Works\"\n");
+printf("  WHERE HOURS >= 20\n");
+printf("  GROUP BY PNUM;\n");
+EXEC SQL CREATE VIEW "PStaff" (PNUM, NUM) AS
+  SELECT PNUM, COUNT(*) FROM "Works"
+  WHERE HOURS >= 20
+  GROUP BY PNUM;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO \"Proj\"\n");
+printf("  SELECT * FROM Hu.Proj;\n");
+EXEC SQL INSERT INTO "Proj"
+  SELECT * FROM Hu.Proj;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO \"Proj\" (PNUM, PNAME, BUDGET)\n");
+printf("  VALUES ('P7', 'FROB', DEFAULT);\n");
+EXEC SQL INSERT INTO "Proj" (PNUM, PNAME, BUDGET)
+  VALUES ('P7', 'FROB', DEFAULT);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO \"Proj\" (PNUM, PNAME, BUDGET)\n");
+printf("  VALUES ('P8', 'BORF', 15000);\n");
+EXEC SQL INSERT INTO "Proj" (PNUM, PNAME, BUDGET)
+  VALUES ('P8', 'BORF', 15000);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO \"Proj\" (PNUM, PNAME, PTYPE)\n");
+printf("  VALUES ('P9', 'FORB', DEFAULT);\n");
+EXEC SQL INSERT INTO "Proj" (PNUM, PNAME, PTYPE)
+  VALUES ('P9', 'FORB', DEFAULT);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO \"Proj\" VALUES\n");
+printf("  ('P10', 'ROBF', 'Docs', 1000, 'Sofia');\n");
+EXEC SQL INSERT INTO "Proj" VALUES
+  ('P10', 'ROBF', 'Docs', 1000, 'Sofia');
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO \"Works\"\n");
+printf("  SELECT * FROM Hu.Works;\n");
+EXEC SQL INSERT INTO "Works"
+  SELECT * FROM Hu.Works;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C13511 CURSOR FOR\n");
+printf("  SELECT * FROM PTYPES ORDER BY NUM;\n");
+EXEC SQL DECLARE C13511 CURSOR FOR
+  SELECT * FROM PTYPES ORDER BY NUM;
+
+printf("OPEN C13511;\n");
+EXEC SQL OPEN C13511;
+CHCKOK ();
+printf ("\n");
+
+strcpy (tchar, "xxxxxx");
+int1 = -1;
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+CHCKOK ();
+tchar[6] = '\0';
+printf ("tchar should be 'Test  '; its value is '%s'\n", tchar);
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (strcmp (tchar, "Test  ") != 0 || int1 != 2)
+  flag = 0;
+
+strcpy (tchar, "xxxxxx");
+int1 = -1;
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+CHCKOK ();
+tchar[6] = '\0';
+printf ("tchar should be 'Design'; its value is '%s'\n", tchar);
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+if (strcmp (tchar, "Design") != 0 || int1 != 3)
+  flag = 0;
+
+strcpy (tchar, "xxxxxx");
+int1 = -1;
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+CHCKOK ();
+tchar[6] = '\0';
+printf ("tchar should be 'Code  '; its value is '%s'\n", tchar);
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+if (strcmp (tchar, "Code  ") != 0 || int1 != 4)
+  flag = 0;
+
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13511;\n");
+EXEC SQL CLOSE C13511;
+CHCKOK ();
+printf ("\n");
+
+/* Grouped dynamic cursor over a grouped view */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT NUM, COUNT(*) FROM "PStaff"' ||
+       '  GROUP BY NUM ORDER BY NUM'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S13512 FROM :longst;\n");
+EXEC SQL PREPARE S13512 FROM :longst;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C13512 CURSOR FOR S13512;\n");
+EXEC SQL DECLARE C13512 CURSOR FOR S13512;
+
+printf("OPEN C13512;\n");
+EXEC SQL OPEN C13512;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n", int1);
+printf ("int2 should be 2; its value is %ld\n\n", int2);
+if (int1 != 1 || int2 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n", int1);
+printf ("int2 should be 2; its value is %ld\n\n", int2);
+if (int1 != 2 || int2 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n", int1);
+printf ("int2 should be 1; its value is %ld\n\n", int2);
+if (int1 != 4 || int2 != 1)
+  flag = 0;
+
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13512;\n");
+EXEC SQL CLOSE C13512;
+CHCKOK ();
+printf ("\n");
+
+/* Cascaded delete -- ditch all that costly Design work */
+
+printf("DELETE FROM \"Proj\" WHERE PTYPE = 'Design';\n");
+EXEC SQL DELETE FROM "Proj" WHERE PTYPE = 'Design';
+CHCKOK ();
+printf ("\n");
+
+printf("OPEN C13511;\n");
+EXEC SQL OPEN C13511;
+CHCKOK ();
+printf ("\n");
+
+strcpy (tchar, "xxxxxx");
+int1 = -1;
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+CHCKOK ();
+tchar[6] = '\0';
+printf ("tchar should be 'Test  '; its value is '%s'\n", tchar);
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (strcmp (tchar, "Test  ") != 0 || int1 != 2)
+  flag = 0;
+
+strcpy (tchar, "xxxxxx");
+int1 = -1;
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+CHCKOK ();
+tchar[6] = '\0';
+printf ("tchar should be 'Code  '; its value is '%s'\n", tchar);
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+if (strcmp (tchar, "Code  ") != 0 || int1 != 4)
+  flag = 0;
+
+printf("FETCH C13511 INTO :tchar, :int1;\n");
+EXEC SQL FETCH C13511 INTO :tchar, :int1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13511;\n");
+EXEC SQL CLOSE C13511;
+CHCKOK ();
+printf ("\n");
+
+printf("OPEN C13512;\n");
+EXEC SQL OPEN C13512;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n", int1);
+printf ("int2 should be 2; its value is %ld\n\n", int2);
+if (int1 != 1 || int2 != 2)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n", int1);
+printf ("int2 should be 1; its value is %ld\n\n", int2);
+if (int1 != 4 || int2 != 1)
+  flag = 0;
+
+printf("FETCH C13512 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13512 INTO :int1, :int2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13512;\n");
+EXEC SQL CLOSE C13512;
+CHCKOK ();
+printf ("\n");
+
+printf("ROLLBACK;\n");
+EXEC SQL ROLLBACK;
+CHCKOK ();
+printf ("\n");
+
+/* TEd hook ababababa */
+printf("DROP TABLE \"Proj\" CASCADE;\n");
+EXEC SQL DROP TABLE "Proj" CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE \"Works\" CASCADE;\n");
+EXEC SQL DROP TABLE "Works" CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+/* TEd hook zyzyzyzyzyz */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0692','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml135.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0692','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0692 *********************/
+/******************** BEGIN TEST0693 ********************/
+flag = 1;
+
+     printf("                  TEST0693 \n");
+     printf("Many TSQL features #4:  enhanced INFO_SCHEM\n");
+     printf("References:\n");
+     printf("    F# 2 -- Basic information schema\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("    F# 5 -- DATETIME data types\n");
+     printf("    F# 11 -- Transaction isolation\n");
+     printf("    F# 15 -- Lowercase identifiers\n");
+     printf("    F# 22 -- Explicit defaults\n");
+     printf("    F# 24 -- Keyword relaxations\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* The Information Schema is defined to give a view to only the */
+/* current catalog, so it is not necessary to join across       */
+/* TABLE_CAT.                                                   */
+
+printf("CREATE TABLE CreationTimes (\n");
+printf("  TABLE_SCHEM CHAR (50),\n");
+printf("  TABLE_NAME  CHAR (50),\n");
+printf("  CREATE_TIME TIMESTAMP);\n");
+EXEC SQL CREATE TABLE CreationTimes (
+  TABLE_SCHEM CHAR (50),
+  TABLE_NAME  CHAR (50),
+  CREATE_TIME TIMESTAMP);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW TablesColumns AS\n");
+printf("  SELECT TABLE_SCHEM, TABLE_NAME,\n");
+printf("  TABLE_TYPE, COLUMN_NAME, CREATE_TIME\n");
+printf("  FROM Info_Schem.Tables\n");
+printf("  NATURAL JOIN Info_Schem.Columns\n");
+printf("  NATURAL JOIN CreationTimes;\n");
+EXEC SQL CREATE VIEW TablesColumns AS
+  SELECT TABLE_SCHEM, TABLE_NAME,
+  TABLE_TYPE, COLUMN_NAME, CREATE_TIME
+  FROM Info_Schem.Tables
+  NATURAL JOIN Info_Schem.Columns
+  NATURAL JOIN CreationTimes;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+/* Populate CreationTimes with data for all tables we wish to */
+/* see -- the natural join will eliminate all others!         */
+
+printf("INSERT INTO CREATIONTIMES VALUES\n");
+printf("  ('FLATER', 'CREATIONTIMES',\n");
+printf("  TIMESTAMP '1994-09-01 16:15:00');\n");
+EXEC SQL INSERT INTO CREATIONTIMES VALUES
+  ('FLATER', 'CREATIONTIMES',
+  TIMESTAMP '1994-09-01 16:15:00');
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO CREATIONTIMES VALUES\n");
+printf("  ('FLATER', 'TABLESCOLUMNS', DEFAULT);\n");
+EXEC SQL INSERT INTO CREATIONTIMES VALUES
+  ('FLATER', 'TABLESCOLUMNS', DEFAULT);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C13521 CURSOR FOR\n");
+printf("  SELECT TABLE_NAME, TABLE_TYPE, COLUMN_NAME,\n");
+printf("  EXTRACT (HOUR FROM CREATE_TIME)\n");
+printf("  FROM TABLESCOLUMNS\n");
+printf("  ORDER BY TABLE_NAME, COLUMN_NAME\n");
+printf("  FOR READ ONLY;\n");
+EXEC SQL DECLARE C13521 CURSOR FOR
+  SELECT TABLE_NAME, TABLE_TYPE, COLUMN_NAME,
+  EXTRACT (HOUR FROM CREATE_TIME)
+  FROM TABLESCOLUMNS
+  ORDER BY TABLE_NAME, COLUMN_NAME
+  FOR READ ONLY;
+
+printf("OPEN C13521;\n");
+EXEC SQL OPEN C13521;
+CHCKOK ();
+printf ("\n");
+
+int1 = 99;
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'CREATIONTIMES     '; its value is '%s'\n", tname);
+printf ("ttype should be 'BASE TABLE'; its value is '%s'\n", ttype);
+printf ("cname should be 'CREATE_TIME       '; its value is '%s'\n", cname);
+printf ("int1 should be 16; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %ld\n\n", indic1);
+if (strcmp (tname, "CREATIONTIMES     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "BASE TABLE") != 0)
+  flag = 0;
+if (strcmp (cname, "CREATE_TIME       ") != 0)
+  flag = 0;
+if (int1 != 16 || indic1 != 0)
+  flag = 0;
+
+int1 = 99;
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'CREATIONTIMES     '; its value is '%s'\n", tname);
+printf ("ttype should be 'BASE TABLE'; its value is '%s'\n", ttype);
+printf ("cname should be 'TABLE_NAME        '; its value is '%s'\n", cname);
+printf ("int1 should be 16; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %ld\n\n", indic1);
+if (strcmp (tname, "CREATIONTIMES     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "BASE TABLE") != 0)
+  flag = 0;
+if (strcmp (cname, "TABLE_NAME        ") != 0)
+  flag = 0;
+if (int1 != 16 || indic1 != 0)
+  flag = 0;
+
+int1 = 99;
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'CREATIONTIMES     '; its value is '%s'\n", tname);
+printf ("ttype should be 'BASE TABLE'; its value is '%s'\n", ttype);
+printf ("cname should be 'TABLE_SCHEM       '; its value is '%s'\n", cname);
+printf ("int1 should be 16; its value is %ld\n", int1);
+printf ("indic1 should be 0; its value is %ld\n\n", indic1);
+if (strcmp (tname, "CREATIONTIMES     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "BASE TABLE") != 0)
+  flag = 0;
+if (strcmp (cname, "TABLE_SCHEM       ") != 0)
+  flag = 0;
+if (int1 != 16 || indic1 != 0)
+  flag = 0;
+
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'TABLESCOLUMNS     '; its value is '%s'\n", tname);
+printf ("ttype should be 'VIEW      '; its value is '%s'\n", ttype);
+printf ("cname should be 'COLUMN_NAME       '; its value is '%s'\n", cname);
+printf ("indic1 should be -1; its value is %ld\n\n", indic1);
+if (strcmp (tname, "TABLESCOLUMNS     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "VIEW      ") != 0)
+  flag = 0;
+if (strcmp (cname, "COLUMN_NAME       ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'TABLESCOLUMNS     '; its value is '%s'\n", tname);
+printf ("ttype should be 'VIEW      '; its value is '%s'\n", ttype);
+printf ("cname should be 'CREATE_TIME       '; its value is '%s'\n", cname);
+printf ("indic1 should be -1; its value is %ld\n\n", indic1);
+if (strcmp (tname, "TABLESCOLUMNS     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "VIEW      ") != 0)
+  flag = 0;
+if (strcmp (cname, "CREATE_TIME       ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'TABLESCOLUMNS     '; its value is '%s'\n", tname);
+printf ("ttype should be 'VIEW      '; its value is '%s'\n", ttype);
+printf ("cname should be 'TABLE_NAME        '; its value is '%s'\n", cname);
+printf ("indic1 should be -1; its value is %ld\n\n", indic1);
+if (strcmp (tname, "TABLESCOLUMNS     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "VIEW      ") != 0)
+  flag = 0;
+if (strcmp (cname, "TABLE_NAME        ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'TABLESCOLUMNS     '; its value is '%s'\n", tname);
+printf ("ttype should be 'VIEW      '; its value is '%s'\n", ttype);
+printf ("cname should be 'TABLE_SCHEM       '; its value is '%s'\n", cname);
+printf ("indic1 should be -1; its value is %ld\n\n", indic1);
+if (strcmp (tname, "TABLESCOLUMNS     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "VIEW      ") != 0)
+  flag = 0;
+if (strcmp (cname, "TABLE_SCHEM       ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+indic1 = 99;
+strcpy (tname, "xxxxxxxxxxxxxxxxxx");
+strcpy (ttype, "xxxxxxxxxx");
+strcpy (cname, "xxxxxxxxxxxxxxxxxx");
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+CHCKOK ();
+tname[18] = '\0';
+ttype[10] = '\0';
+cname[18] = '\0';
+printf ("tname should be 'TABLESCOLUMNS     '; its value is '%s'\n", tname);
+printf ("ttype should be 'VIEW      '; its value is '%s'\n", ttype);
+printf ("cname should be 'TABLE_TYPE        '; its value is '%s'\n", cname);
+printf ("indic1 should be -1; its value is %ld\n\n", indic1);
+if (strcmp (tname, "TABLESCOLUMNS     ") != 0)
+  flag = 0;
+if (strcmp (ttype, "VIEW      ") != 0)
+  flag = 0;
+if (strcmp (cname, "TABLE_TYPE        ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+printf("FETCH C13521\n");
+printf("  INTO :tname, :ttype, :cname, :int1:indic1;\n");
+EXEC SQL FETCH C13521
+  INTO :tname, :ttype, :cname, :int1:indic1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO CREATIONTIMES VALUES\n");
+printf("  ('FLATER', 'USIG', DEFAULT);\n");
+EXEC SQL INSERT INTO CREATIONTIMES VALUES
+  ('FLATER', 'USIG', DEFAULT);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK;\n");
+EXEC SQL ROLLBACK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE CreationTimes CASCADE;\n");
+EXEC SQL DROP TABLE CreationTimes CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT;\n");
+EXEC SQL COMMIT;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0693','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml135.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0693','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0693 *********************/
+/******************** BEGIN TEST0694 ********************/
+flag = 1;
+
+     printf("                  TEST0694 \n");
+     printf("       Interval Arithmetic and Casts\n");
+     printf("References:\n");
+     printf("    F# 5 -- DATETIME data types\n");
+     printf("    F# 20 -- CAST functions\n");
+     printf("    TC #2 5.3 -- Extended syntax of interval strings\n");
+     printf("    6.15 FT.1 -- Syntax for subtracting two datetimes\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* you have: approximate numeric */
+/* you want: interval hour to minute */
+/* You can't cast an approximate numeric as an interval (6.10 SR.4). */
+
+/* you have: exact numeric */
+/* you want: interval hour to minute */
+/* You can't cast an exact numeric as an interval with more than one */
+/* <datetime field> (6.10 SR.5). */
+
+/*       This is how you do it:         */
+/* 1.9 * INTERVAL '1:00' HOUR TO MINUTE */
+
+/* If you've only got one <datetime field> you can do this: */
+/*  CAST (CAST (1.9 AS NUMERIC (2, 1)) AS INTERVAL SECOND)  */
+/* but you're probably still better off to say              */
+/*     1.9 * INTERVAL '1.000000' SECOND                     */
+
+printf("CREATE TABLE WORKS (\n");
+printf("  EMPNUM CHAR (3) NOT NULL,\n");
+printf("  PNUM CHAR (3) NOT NULL,\n");
+printf("  HOURS DECIMAL (5),\n");
+printf("  UNIQUE(EMPNUM,PNUM));\n");
+EXEC SQL CREATE TABLE WORKS (
+  EMPNUM CHAR (3) NOT NULL,
+  PNUM CHAR (3) NOT NULL,
+  HOURS DECIMAL (5),
+  UNIQUE(EMPNUM,PNUM));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW PROJ_HOURS (PNUM, HOURS) AS\n");
+printf("  SELECT PNUM, AVG (HOURS) * INTERVAL '01:00' HOUR TO MINUTE\n");
+printf("  FROM WORKS GROUP BY PNUM;\n");
+EXEC SQL CREATE VIEW PROJ_HOURS (PNUM, HOURS) AS
+  SELECT PNUM, AVG (HOURS) * INTERVAL '01:00' HOUR TO MINUTE
+  FROM WORKS GROUP BY PNUM;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW PROJ_HOURS2 (PNUM, HOURS) AS\n");
+printf("  SELECT PNUM,\n");
+printf("  AVG (CAST (CAST (HOURS AS INTERVAL HOUR)\n");
+printf("    AS INTERVAL HOUR TO MINUTE))\n");
+printf("  FROM WORKS GROUP BY PNUM;\n");
+EXEC SQL CREATE VIEW PROJ_HOURS2 (PNUM, HOURS) AS
+  SELECT PNUM,
+  AVG (CAST (CAST (HOURS AS INTERVAL HOUR)
+    AS INTERVAL HOUR TO MINUTE))
+  FROM WORKS GROUP BY PNUM;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE RUN_TIMES (\n");
+printf("  JOB_ID INT NOT NULL UNIQUE,\n");
+printf("  JOB_TYPE CHAR (3) NOT NULL,\n");
+printf("  RUN_SECONDS REAL);\n");
+EXEC SQL CREATE TABLE RUN_TIMES (
+  JOB_ID INT NOT NULL UNIQUE,
+  JOB_TYPE CHAR (3) NOT NULL,
+  RUN_SECONDS REAL);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW TYPE_TIMES (JOB_TYPE, RUN_SECONDS) AS\n");
+printf("  SELECT JOB_TYPE,\n");
+printf("  AVG (RUN_SECONDS) * INTERVAL '01.000000' SECOND\n");
+printf("  FROM RUN_TIMES GROUP BY JOB_TYPE;\n");
+EXEC SQL CREATE VIEW TYPE_TIMES (JOB_TYPE, RUN_SECONDS) AS
+  SELECT JOB_TYPE,
+  AVG (RUN_SECONDS) * INTERVAL '01.000000' SECOND
+  FROM RUN_TIMES GROUP BY JOB_TYPE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW TYPE_TIMES2 (JOB_TYPE, RUN_SECONDS) AS\n");
+printf("  SELECT JOB_TYPE,\n");
+printf("  CAST (CAST (AVG (RUN_SECONDS) AS NUMERIC (8, 6))\n");
+printf("    AS INTERVAL SECOND)\n");
+printf("  FROM RUN_TIMES GROUP BY JOB_TYPE;\n");
+EXEC SQL CREATE VIEW TYPE_TIMES2 (JOB_TYPE, RUN_SECONDS) AS
+  SELECT JOB_TYPE,
+  CAST (CAST (AVG (RUN_SECONDS) AS NUMERIC (8, 6))
+    AS INTERVAL SECOND)
+  FROM RUN_TIMES GROUP BY JOB_TYPE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE VIEW HUNDREDS (WORKTOTL) AS\n");
+printf("  SELECT SUM (CAST (HOURS AS INTERVAL DAY TO MINUTE)) / 100\n");
+printf("  FROM PROJ_HOURS;\n");
+EXEC SQL CREATE VIEW HUNDREDS (WORKTOTL) AS
+  SELECT SUM (CAST (HOURS AS INTERVAL DAY TO MINUTE)) / 100
+  FROM PROJ_HOURS;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO WORKS\n");
+printf("  SELECT * FROM HU.WORKS;\n");
+EXEC SQL INSERT INTO WORKS
+  SELECT * FROM HU.WORKS;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO WORKS VALUES\n");
+printf("  ('EX', 'P1', 50);\n");
+EXEC SQL INSERT INTO WORKS VALUES
+  ('EX', 'P1', 50);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO WORKS VALUES\n");
+printf("  ('EX', 'P3', 25);\n");
+EXEC SQL INSERT INTO WORKS VALUES
+  ('EX', 'P3', 25);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO RUN_TIMES VALUES\n");
+printf("  (0, 'DMP', 1.22);\n");
+EXEC SQL INSERT INTO RUN_TIMES VALUES
+  (0, 'DMP', 1.22);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO RUN_TIMES VALUES\n");
+printf("  (1, 'DMP', .49);\n");
+EXEC SQL INSERT INTO RUN_TIMES VALUES
+  (1, 'DMP', .49);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO RUN_TIMES VALUES\n");
+printf("  (2, 'CHK', 5.2);\n");
+EXEC SQL INSERT INTO RUN_TIMES VALUES
+  (2, 'CHK', 5.2);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO RUN_TIMES VALUES\n");
+printf("  (3, 'CHK', 4.04);\n");
+EXEC SQL INSERT INTO RUN_TIMES VALUES
+  (3, 'CHK', 4.04);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO RUN_TIMES VALUES\n");
+printf("  (4, 'CHK', 23.74);\n");
+EXEC SQL INSERT INTO RUN_TIMES VALUES
+  (4, 'CHK', 23.74);
+CHCKOK ();
+printf ("\n");
+
+/* The views PROJ_HOURS and PROJ_HOURS2 should be equivalent */
+/* modulo any roundoff or truncation error.                  */
+
+/* Allowing the sign to move inside of the quotes:  TC #2 5.3 */
+/* ( datetime - datetime ) <interval qualifier>:  6.15 FT.1   */
+/* Comparability of HOUR TO MINUTE vs. MINUTE:  4.5.2         */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM PROJ_HOURS A, PROJ_HOURS2 B\n");
+printf("  WHERE A.PNUM = B.PNUM\n");
+printf("  AND (A.HOURS - B.HOURS) HOUR TO MINUTE\n");
+printf("    BETWEEN INTERVAL '-1' MINUTE AND INTERVAL '+1' MINUTE;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM PROJ_HOURS A, PROJ_HOURS2 B
+  WHERE A.PNUM = B.PNUM
+  AND (A.HOURS - B.HOURS) HOUR TO MINUTE
+    BETWEEN INTERVAL '-1' MINUTE AND INTERVAL '+1' MINUTE;
+CHCKOK ();
+printf ("int1 should be 6; its value is %ld\n\n", int1);
+if (int1 != 6)
+  flag = 0;
+
+/* The views TYPE_TIMES and TYPE_TIMES2 should be equivalent */
+/* modulo any roundoff or truncation error.                  */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM TYPE_TIMES A, TYPE_TIMES2 B\n");
+printf("  WHERE A.JOB_TYPE = B.JOB_TYPE\n");
+printf("  AND (A.RUN_SECONDS - B.RUN_SECONDS) SECOND\n");
+printf("    BETWEEN INTERVAL '-00.000010' SECOND\n");
+printf("    AND INTERVAL '+00.000010' SECOND;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM TYPE_TIMES A, TYPE_TIMES2 B
+  WHERE A.JOB_TYPE = B.JOB_TYPE
+  AND (A.RUN_SECONDS - B.RUN_SECONDS) SECOND
+    BETWEEN INTERVAL '-00.000010' SECOND
+    AND INTERVAL '+00.000010' SECOND;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+/* Check contents of PROJ_HOURS */
+
+printf("DECLARE C13531 CURSOR FOR\n");
+printf("  SELECT EXTRACT (HOUR FROM HOURS),\n");
+printf("         EXTRACT (MINUTE FROM HOURS)\n");
+printf("  FROM PROJ_HOURS ORDER BY PNUM;\n\n");
+EXEC SQL DECLARE C13531 CURSOR FOR
+  SELECT EXTRACT (HOUR FROM HOURS),
+         EXTRACT (MINUTE FROM HOURS)
+  FROM PROJ_HOURS ORDER BY PNUM;
+
+printf("OPEN C13531;\n");
+EXEC SQL OPEN C13531;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 43; its value is %ld\n", int1);
+printf ("int2 should be 20; its value is %ld\n", int2);
+if (int1 != 43)
+  flag = 0;
+if (int2 < 19 || int2 > 20)
+  flag = 0;
+if (flag == 1 && int2 == 19)
+  printf ("truncation/roundoff error for int2 OK\n");
+printf ("\n");
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 35; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n\n", int2);
+if (int1 != 35 || int2 != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 52; its value is %ld\n", int1);
+printf ("int2 should be 30; its value is %ld\n\n", int2);
+if (int1 != 52 || int2 != 30)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 30; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n\n", int2);
+if (int1 != 30 || int2 != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 46; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n\n", int2);
+if (int1 != 46 || int2 != 0)
+  flag = 0;
+
+int1 = -1;
+int2 = -1;
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n", int1);
+printf ("int2 should be 0; its value is %ld\n\n", int2);
+if (int1 != 12 || int2 != 0)
+  flag = 0;
+
+printf("FETCH C13531 INTO :int1, :int2;\n");
+EXEC SQL FETCH C13531 INTO :int1, :int2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13531;\n");
+EXEC SQL CLOSE C13531;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C13532 CURSOR FOR\n");
+printf("  SELECT EXTRACT (SECOND FROM RUN_SECONDS)\n");
+printf("  FROM TYPE_TIMES ORDER BY JOB_TYPE;\n\n");
+EXEC SQL DECLARE C13532 CURSOR FOR
+  SELECT EXTRACT (SECOND FROM RUN_SECONDS)
+  FROM TYPE_TIMES ORDER BY JOB_TYPE;
+
+printf("OPEN C13532;\n");
+EXEC SQL OPEN C13532;
+CHCKOK ();
+printf ("\n");
+
+flt1 = -1.0;
+printf("FETCH C13532 INTO :flt1;\n");
+EXEC SQL FETCH C13532 INTO :flt1;
+CHCKOK ();
+printf ("flt1 should be 10.993333 +- 0.00001; its value is %f\n\n", flt1);
+if (flt1 < 10.993323 || flt1 > 10.993343)
+  flag = 0;
+
+flt1 = -1.0;
+printf("FETCH C13532 INTO :flt1;\n");
+EXEC SQL FETCH C13532 INTO :flt1;
+CHCKOK ();
+printf ("flt1 should be 0.855 +- 0.00001; its value is %f\n\n", flt1);
+if (flt1 < 0.85499 || flt1 > 0.85501)
+  flag = 0;
+
+printf("FETCH C13532 INTO :flt1;\n");
+EXEC SQL FETCH C13532 INTO :flt1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13532;\n");
+EXEC SQL CLOSE C13532;
+CHCKOK ();
+printf ("\n");
+
+/* Test interval divide */
+
+int1 = -1;
+printf("SELECT EXTRACT (DAY FROM WORKTOTL)\n");
+printf("  INTO :int1 FROM HUNDREDS;\n");
+EXEC SQL SELECT EXTRACT (DAY FROM WORKTOTL)
+  INTO :int1 FROM HUNDREDS;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT EXTRACT (HOUR FROM WORKTOTL)\n");
+printf("  INTO :int1 FROM HUNDREDS;\n");
+EXEC SQL SELECT EXTRACT (HOUR FROM WORKTOTL)
+  INTO :int1 FROM HUNDREDS;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT EXTRACT (MINUTE FROM WORKTOTL)\n");
+printf("  INTO :int1 FROM HUNDREDS;\n");
+EXEC SQL SELECT EXTRACT (MINUTE FROM WORKTOTL)
+  INTO :int1 FROM HUNDREDS;
+CHCKOK ();
+printf ("int1 should be 11; its value is %ld\n\n", int1);
+if (int1 != 11)
+  flag = 0;
+
+/* Exact value would have been 2 hours, 11 minutes,  */
+/* 18 seconds.  It should get rounded downwards even */
+/* if there is rounding/truncation error in previous */
+/* calculations.                                     */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE WORKS CASCADE;\n");
+EXEC SQL DROP TABLE WORKS CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE RUN_TIMES CASCADE;\n");
+EXEC SQL DROP TABLE RUN_TIMES CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0694','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml135.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0694','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0694 *********************/
+/******************** BEGIN TEST0695 ********************/
+flag = 1;
+
+     printf("                  TEST0695 \n");
+     printf("  <updatability clause> in <declare cursor>\n");
+     printf("References:\n");
+     printf("    F# 11 -- Transaction isolation\n");
+     printf("    13.1 LR.2.b -- <updatability clause> in <declare cursor>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Note that there are special restrictions on updating through */
+/* an ordered cursor, see 13.9 LR.1.a                           */
+
+printf("DECLARE C13541 CURSOR FOR\n");
+printf("  SELECT GRADE FROM HU.STAFF\n");
+printf("  FOR READ ONLY;\n\n");
+EXEC SQL DECLARE C13541 CURSOR FOR
+  SELECT GRADE FROM HU.STAFF
+  FOR READ ONLY;
+
+printf("OPEN C13541;\n");
+EXEC SQL OPEN C13541;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("FETCH C13541 INTO :int1;\n");
+EXEC SQL FETCH C13541 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n\n", int1);
+
+/* This may be rejected at compile time.  If it is,      */
+/* save the error message(s) and TEd out this statement. */
+
+/* Violation of 13.9 SR.2 */
+
+printf("UPDATE HU.STAFF\n");
+printf("  SET GRADE = 11 WHERE CURRENT OF C13541;\n");
+EXEC SQL UPDATE HU.STAFF
+  SET GRADE = 11 WHERE CURRENT OF C13541;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.21 PP.9:  state of cursor is now unknown */
+
+printf("CLOSE C13541;\n");
+EXEC SQL CLOSE C13541;
+CHCKOK ();
+printf ("\n");
+
+printf("OPEN C13541;\n");
+EXEC SQL OPEN C13541;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("FETCH C13541 INTO :int1;\n");
+EXEC SQL FETCH C13541 INTO :int1;
+CHCKOK ();
+printf ("int1 is %ld\n\n", int1);
+
+/* This may be rejected at compile time.  If it is,      */
+/* save the error message(s) and TEd out this statement. */
+
+/* Violation of 13.6 SR.2 */
+
+printf("DELETE FROM HU.STAFF\n");
+printf("  WHERE CURRENT OF C13541;\n");
+EXEC SQL DELETE FROM HU.STAFF
+  WHERE CURRENT OF C13541;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C13541;\n");
+EXEC SQL CLOSE C13541;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C13542 CURSOR FOR\n");
+printf("  SELECT * FROM HU.STAFF\n");
+printf("  FOR UPDATE OF GRADE, CITY;\n\n");
+EXEC SQL DECLARE C13542 CURSOR FOR
+  SELECT * FROM HU.STAFF
+  FOR UPDATE OF GRADE, CITY;
+
+printf("OPEN C13542;\n");
+EXEC SQL OPEN C13542;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("FETCH C13542 INTO :emnum, :ename, :int1, :city;\n");
+EXEC SQL FETCH C13542 INTO :emnum, :ename, :int1, :city;
+emnum[3] = '\0';
+ename[20] = '\0';
+city[15] = '\0';
+CHCKOK ();
+printf ("emnum is %s\n", emnum);
+printf ("ename is %s\n", ename);
+printf ("int1 is %ld\n", int1);
+printf ("city is %s\n\n", city);
+
+/* This may be rejected at compile time.  If it is,      */
+/* save the error message(s) and TEd out this statement. */
+
+/* Violation of 13.9 SR.8 */
+
+printf("UPDATE HU.STAFF\n");
+printf("  SET EMPNUM = 'HAR' WHERE CURRENT OF C13542;\n");
+EXEC SQL UPDATE HU.STAFF
+  SET EMPNUM = 'HAR' WHERE CURRENT OF C13542;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.21 PP.9:  state of cursor is now unknown */
+
+printf("CLOSE C13542;\n");
+EXEC SQL CLOSE C13542;
+CHCKOK ();
+printf ("\n");
+
+printf("OPEN C13542;\n");
+EXEC SQL OPEN C13542;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("FETCH C13542 INTO :emnum, :ename, :int1, :city;\n");
+EXEC SQL FETCH C13542 INTO :emnum, :ename, :int1, :city;
+emnum[3] = '\0';
+ename[20] = '\0';
+city[15] = '\0';
+CHCKOK ();
+printf ("emnum is %s\n", emnum);
+printf ("ename is %s\n", ename);
+printf ("int1 is %ld\n", int1);
+printf ("city is %s\n\n", city);
+
+printf("UPDATE HU.STAFF\n");
+printf("  SET GRADE = 11 WHERE CURRENT OF C13542;\n");
+EXEC SQL UPDATE HU.STAFF
+  SET GRADE = 11 WHERE CURRENT OF C13542;
+CHCKOK ();
+printf ("\n");
+
+/* This appears to be legal!  13.6 */
+
+printf("DELETE FROM HU.STAFF\n");
+printf("  WHERE CURRENT OF C13542;\n");
+EXEC SQL DELETE FROM HU.STAFF
+  WHERE CURRENT OF C13542;
+CHCKOK ();
+printf ("\n");
+
+printf("CLOSE C13542;\n");
+EXEC SQL CLOSE C13542;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C13543 CURSOR FOR\n");
+printf("  SELECT * FROM HU.STAFF\n");
+printf("  FOR UPDATE;\n\n");
+EXEC SQL DECLARE C13543 CURSOR FOR
+  SELECT * FROM HU.STAFF
+  FOR UPDATE;
+
+printf("OPEN C13543;\n");
+EXEC SQL OPEN C13543;
+CHCKOK ();
+printf ("\n");
+
+int1 = -1;
+printf("FETCH C13543 INTO :emnum, :ename, :int1, :city;\n");
+EXEC SQL FETCH C13543 INTO :emnum, :ename, :int1, :city;
+emnum[3] = '\0';
+ename[20] = '\0';
+city[15] = '\0';
+CHCKOK ();
+printf ("emnum is %s\n", emnum);
+printf ("ename is %s\n", ename);
+printf ("int1 is %ld\n", int1);
+printf ("city is %s\n\n", city);
+
+printf("UPDATE HU.STAFF\n");
+printf("  SET EMPNUM = 'HAR' WHERE CURRENT OF C13543;\n");
+EXEC SQL UPDATE HU.STAFF
+  SET EMPNUM = 'HAR' WHERE CURRENT OF C13543;
+CHCKOK ();
+printf ("\n");
+
+printf("DELETE FROM HU.STAFF\n");
+printf("  WHERE CURRENT OF C13543;\n");
+EXEC SQL DELETE FROM HU.STAFF
+  WHERE CURRENT OF C13543;
+CHCKOK ();
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0695','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml135.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0695','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0695 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

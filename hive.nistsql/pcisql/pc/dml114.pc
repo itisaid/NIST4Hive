@@ -1,0 +1,1025 @@
+/*  EMBEDDED C (file "DML114.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/3/30 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML114.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS features 13, 14, 15, and 16.         */
+/*  This is the non-dynamic version of DML115.PC.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+char ch1[4];
+char ch2[21];
+char ch3[16];
+char ch4[4];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+long ctr1;
+long ctr2;
+long ctr3;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml114.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0635 ********************/
+flag = 1;
+
+     printf("                  TEST0635 \n");
+     printf("   Feature 13, grouped operations (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 13\n");
+     printf("     7.3  LR.2.a\n");
+     printf("     7.4  LR.2.a\n");
+     printf("     7.9  LR.2.c\n");
+     printf("     7.11 LR.2.a\n");
+     printf("    13.5  LR.2.b\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE VIEW WORKWEEK AS\n");
+printf("  SELECT EMPNUM, HOURS FROM HU.WORKS\n");
+printf("  GROUP BY HOURS, EMPNUM;\n");
+
+EXEC SQL CREATE VIEW WORKWEEK AS
+  SELECT EMPNUM, HOURS FROM HU.WORKS
+  GROUP BY HOURS, EMPNUM;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* Removal of leveling rule 2a of Subclause 7.3 */
+/* Removal of leveling rule 2c of Subclause 7.9 */
+/* Removal of leveling rule 2b of Subclause 13.5 */
+
+strcpy (ch1, "xyz");
+int1 = -1;
+printf("SELECT EMPNUM, SUM (HOURS) INTO :ch1, :int1\n");
+printf("  FROM WORKWEEK\n");
+printf("  WHERE HOURS > 20\n");
+printf("  GROUP BY EMPNUM\n");
+printf("  HAVING EMPNUM = 'E1';\n");
+EXEC SQL SELECT EMPNUM, SUM (HOURS) INTO :ch1, :int1
+  FROM WORKWEEK
+  WHERE HOURS > 20
+  GROUP BY EMPNUM
+  HAVING EMPNUM = 'E1';
+ch1[3] = '\0';
+CHCKOK ();
+printf("ch1 should be 'E1 '; its value is '%s'\n", ch1);
+printf("int1 should be 120; its value is %ld\n\n", int1);
+if (strcmp (ch1, "E1 ") != 0 || int1 != 120)
+  flag = 0;
+
+/* This is more meaningful -- how many people work too hard? */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM WORKWEEK WHERE HOURS > 40;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM WORKWEEK WHERE HOURS > 40;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+/* Removal of leveling rule 2a of Subclause 7.4 */
+
+strcpy (ch2, "aaaaaaaaaaaaaaaaaaaa");
+printf("SELECT EMPNAME INTO :ch2\n");
+printf("  FROM HU.STAFF, WORKWEEK\n");
+printf("  WHERE HU.STAFF.EMPNUM = WORKWEEK.EMPNUM\n");
+printf("  AND HOURS = 12;\n");
+EXEC SQL SELECT EMPNAME INTO :ch2
+  FROM HU.STAFF, WORKWEEK
+  WHERE HU.STAFF.EMPNUM = WORKWEEK.EMPNUM
+  AND HOURS = 12;
+ch2[20] = '\0';
+CHCKOK ();
+printf("ch2 should be Alice; its value is %s\n\n", ch2);
+if (strncmp (ch2, "Alice", 5) != 0)
+  flag = 0;
+
+/* Removal of leveling rule 2c of Subclause 7.9 */
+
+int1 = -1;
+int2 = -1;
+strcpy (ch1, "xxx");
+strcpy (ch4, "xxx");
+printf("SELECT COUNT(*), MAX(EMPNUM), MIN(EMPNUM), AVG(HOURS)\n");
+printf("  INTO :int1, :ch1, :ch4, :int2\n");
+printf("  FROM WORKWEEK;\n");
+EXEC SQL SELECT COUNT(*), MAX(EMPNUM), MIN(EMPNUM), AVG(HOURS)
+  INTO :int1, :ch1, :ch4, :int2
+  FROM WORKWEEK;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n", int1);
+printf ("ch1 should be 'E4 '; its value is '%s'\n", ch1);
+printf ("ch4 should be 'E1 '; its value is '%s'\n", ch4);
+printf ("int2 should be 43; its value is %ld\n\n", int2);
+if (int1 != 10 || strcmp (ch1, "E4 ") != 0)
+  flag = 0;
+if (strcmp (ch4, "E1 ") != 0 || int2 != 43)
+  flag = 0;
+
+/* Removal of leveling rule 2a of Subclause 7.11 */
+
+strcpy (ch2, "aaaaaaaaaaaaaaaaaaaa");
+printf("SELECT EMPNAME INTO :ch2\n");
+printf("  FROM HU.STAFF WHERE EMPNUM =\n");
+printf("  (SELECT EMPNUM FROM WORKWEEK\n");
+printf("    WHERE HOURS = 12);\n");
+EXEC SQL SELECT EMPNAME INTO :ch2
+  FROM HU.STAFF WHERE EMPNUM =
+  (SELECT EMPNUM FROM WORKWEEK
+    WHERE HOURS = 12);
+ch2[20] = '\0';
+CHCKOK ();
+printf("ch2 should be Alice; its value is %s\n\n", ch2);
+if (strncmp (ch2, "Alice", 5) != 0)
+  flag = 0;
+
+strcpy (ch2, "aaaaaaaaaaaaaaaaaaaa");
+printf("SELECT EMPNAME INTO :ch2\n");
+printf("  FROM HU.STAFF WHERE EMPNUM =\n");
+printf("  (SELECT EMPNUM FROM HU.WORKS\n");
+printf("    GROUP BY EMPNUM, HOURS\n");
+printf("    HAVING HOURS = 12);\n");
+EXEC SQL SELECT EMPNAME INTO :ch2
+  FROM HU.STAFF WHERE EMPNUM =
+  (SELECT EMPNUM FROM HU.WORKS
+    GROUP BY EMPNUM, HOURS
+    HAVING HOURS = 12);
+ch2[20] = '\0';
+CHCKOK ();
+printf("ch2 should be Alice; its value is %s\n\n", ch2);
+if (strncmp (ch2, "Alice", 5) != 0)
+  flag = 0;
+
+/* Cursor operation */
+
+ctr1 = 3;
+ctr2 = 1;
+ctr3 = 4;
+
+printf ("The following cursor scan should return 3 three times\n");
+printf ("and 1 once, then we should get NO DATA (02000).\n\n");
+
+printf("DECLARE C11411 CURSOR FOR\n");
+printf("  SELECT COUNT(*) FROM WORKWEEK\n");
+printf("  GROUP BY HOURS;\n");
+
+EXEC SQL DECLARE C11411 CURSOR FOR
+  SELECT COUNT(*) FROM WORKWEEK
+  GROUP BY HOURS;
+
+printf("\n");
+
+printf("OPEN C11411;\n");
+EXEC SQL OPEN C11411;
+CHCKOK ();
+printf("\n");
+
+P100:
+int1 = -1;
+printf("FETCH C11411 INTO :int1;\n");
+EXEC SQL FETCH C11411 INTO :int1;
+printf ("SQLCODE is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE is %s\n", SQLSTATE);
+if (SQLCODE != 0)
+  goto P101;
+printf ("int1 is %ld\n\n", int1);
+ctr3 = ctr3 - 1;
+if (int1 == 1)
+  ctr2 = ctr2 - 1;
+if (int1 == 3)
+  ctr1 = ctr1 - 1;
+goto P100;
+
+P101:
+if (ctr1 != 0 || ctr2 != 0 || ctr3 != 0)
+  flag = 0;
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Let the commit close the cursor */
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW WORKWEEK CASCADE;\n");
+EXEC SQL DROP VIEW WORKWEEK CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0635','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml114.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0635','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0635 *********************/
+/******************** BEGIN TEST0637 ********************/
+flag = 1;
+
+     printf("                  TEST0637 \n");
+     printf("  Feature 14, Qualified * in select list (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 14\n");
+     printf("     7.9  LR.2.b\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE VIEW QUALSTAR AS\n");
+printf("  SELECT HU.STAFF.*, HOURS FROM HU.STAFF, HU.WORKS\n");
+printf("  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM;\n");
+EXEC SQL CREATE VIEW QUALSTAR AS
+  SELECT HU.STAFF.*, HOURS FROM HU.STAFF, HU.WORKS
+  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW CORRQUALSTAR AS\n");
+printf("  SELECT BLAH.*, HOURS FROM HU.STAFF BLAH, HU.WORKS\n");
+printf("  WHERE BLAH.EMPNUM = HU.WORKS.EMPNUM;\n");
+EXEC SQL CREATE VIEW CORRQUALSTAR AS
+  SELECT BLAH.*, HOURS FROM HU.STAFF BLAH, HU.WORKS
+  WHERE BLAH.EMPNUM = HU.WORKS.EMPNUM;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW SUBQ2 AS\n");
+printf("  SELECT DISTINCT * FROM QUALSTAR;\n");
+EXEC SQL CREATE VIEW SUBQ2 AS
+  SELECT DISTINCT * FROM QUALSTAR;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW CORRSUBQ2 AS\n");
+printf("  SELECT DISTINCT * FROM CORRQUALSTAR;\n");
+EXEC SQL CREATE VIEW CORRSUBQ2 AS
+  SELECT DISTINCT * FROM CORRQUALSTAR;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM QUALSTAR;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM QUALSTAR;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM SUBQ2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM SUBQ2;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+/* Subtest one:  through the view */
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("SELECT EMPNUM, GRADE, CITY, HOURS\n");
+printf("  INTO :ch1, :int1, :ch3, :int2\n");
+printf("  FROM QUALSTAR WHERE EMPNAME = 'Carmen';\n");
+EXEC SQL SELECT EMPNUM, GRADE, CITY, HOURS
+  INTO :ch1, :int1, :ch3, :int2
+  FROM QUALSTAR WHERE EMPNAME = 'Carmen';
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+/* Subtest two:  with a cursor */
+/* Ordering of columns:  7.4 SR.1.b */
+
+printf("DECLARE JOANS CURSOR FOR\n");
+printf("  SELECT HU.STAFF.*, HOURS FROM HU.STAFF, HU.WORKS\n");
+printf("  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM\n");
+printf("  AND EMPNAME > 'Betty'\n");
+printf("  ORDER BY EMPNAME;\n\n");
+EXEC SQL DECLARE JOANS CURSOR FOR
+  SELECT HU.STAFF.*, HOURS FROM HU.STAFF, HU.WORKS
+  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM
+  AND EMPNAME > 'Betty'
+  ORDER BY EMPNAME;
+
+printf("OPEN JOANS;\n");
+EXEC SQL OPEN JOANS;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xxx");
+strcpy (ch2, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("FETCH JOANS INTO :ch1, :ch2, :int1, :ch3, :int2;\n");
+EXEC SQL FETCH JOANS INTO :ch1, :ch2, :int1, :ch3, :int2;
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("ch2 should be 'Carmen              '; its value is '%s'\n", ch2);
+if (strcmp (ch2, "Carmen              ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+printf("CLOSE JOANS;\n");
+EXEC SQL CLOSE JOANS;
+CHCKOK ();
+printf("\n");
+
+/* Subtest three:  single row select */
+
+strcpy (ch1, "xxx");
+strcpy (ch2, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("SELECT HU.STAFF.*, HOURS\n");
+printf("  INTO :ch1, :ch2, :int1, :ch3, :int2\n");
+printf("  FROM HU.STAFF, HU.WORKS\n");
+printf("  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM\n");
+printf("  AND EMPNAME = 'Carmen';\n");
+EXEC SQL SELECT HU.STAFF.*, HOURS
+  INTO :ch1, :ch2, :int1, :ch3, :int2
+  FROM HU.STAFF, HU.WORKS
+  WHERE HU.STAFF.EMPNUM = HU.WORKS.EMPNUM
+  AND EMPNAME = 'Carmen';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("ch2 should be 'Carmen              '; its value is '%s'\n", ch2);
+if (strcmp (ch2, "Carmen              ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+/* Contiue with view testing */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM CORRQUALSTAR;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM CORRQUALSTAR;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM CORRSUBQ2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM CORRSUBQ2;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+int2 = -1;
+printf("SELECT EMPNUM, GRADE, CITY, HOURS\n");
+printf("  INTO :ch1, :int1, :ch3, :int2\n");
+printf("  FROM CORRQUALSTAR WHERE EMPNAME = 'Carmen';\n");
+EXEC SQL SELECT EMPNUM, GRADE, CITY, HOURS
+  INTO :ch1, :int1, :ch3, :int2
+  FROM CORRQUALSTAR WHERE EMPNAME = 'Carmen';
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+printf ("int2 should be 20; its value is %ld\n\n", int2);
+if (int2 != 20)
+  flag = 0;
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW QUALSTAR CASCADE;\n");
+EXEC SQL DROP VIEW QUALSTAR CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW CORRQUALSTAR CASCADE;\n");
+EXEC SQL DROP VIEW CORRQUALSTAR CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0637','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml114.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0637','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0637 *********************/
+/******************** BEGIN TEST0639 ********************/
+flag = 1;
+
+     printf("                  TEST0639 \n");
+     printf("  Feature 15, Lowercase Identifiers (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 15\n");
+     printf("    5.2 LR.2.b\n");
+     printf("    5.2 SR.15 -- Lowercase keywords are Entry SQL\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("Exec SQL create view Staff (Empnum, empname, Grade, City) as\n");
+printf("  select empnum, EMPNAME, Grade, cItY from Hu.Staff;\n");
+Exec SQL create view Staff (Empnum, empname, Grade, City) as
+  select empnum, EMPNAME, Grade, cItY from Hu.Staff;
+
+CHCKOK ();
+printf("\n");
+
+printf("exec sql commit work;\n");
+exec sql commit work;
+
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("exec sql SELECT Count(*) INTO :int1 FROM STAFF;\n");
+exec sql SELECT Count(*) INTO :int1 FROM STAFF;
+CHCKOK ();
+printf ("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+printf("SELECT EMPNUM as WhatsHisNumber, GRADE, CITY\n");
+printf("  INTO :ch1, :int1, :ch3\n");
+printf("  FROM Flater.staff FLaterStaff_Flater\n");
+printf("  WHERE EMPNAME = 'Carmen'\n");
+printf("  AND FLATERstaff_fLATER.whatshisnumber = 'E3';\n");
+EXEC SQL SELECT EMPNUM as WhatsHisNumber, GRADE, CITY
+  INTO :ch1, :int1, :ch3
+  FROM Flater.staff FLaterStaff_Flater
+  WHERE EMPNAME = 'Carmen'
+  AND FLATERstaff_fLATER.whatshisnumber = 'E3';
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+
+printf("DECLARE c63931 CURSOR FOR\n");
+printf("  SELECT EMPNUM as WhatsHisNumber, GRADE, CITY\n");
+printf("    FROM Flater.staff FLaterStaff_Flater\n");
+printf("    WHERE EMPNAME > 'Betty'\n");
+printf("    ORDER BY whatshisnumber;\n\n");
+EXEC SQL DECLARE c63931 CURSOR FOR
+  SELECT EMPNUM as WhatsHisNumber, GRADE, CITY
+    FROM Flater.staff FLaterStaff_Flater
+    WHERE EMPNAME > 'Betty'
+    ORDER BY WHATSHISNUMBER;
+
+printf("OPEN C63931;\n");
+EXEC SQL OPEN C63931;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "xxx");
+strcpy (ch3, "xxxxxxxxxxxxxxx");
+int1 = -1;
+printf("FETCH c63931 INTO :ch1, :int1, :ch3;\n");
+EXEC SQL FETCH c63931 INTO :ch1, :int1, :ch3;
+ch1[3] = '\0';
+ch3[15] = '\0';
+CHCKOK ();
+printf ("ch1 should be 'E3 '; its value is '%s'\n", ch1);
+if (strcmp (ch1, "E3 ") != 0)
+  flag = 0;
+printf ("int1 should be 13; its value is %ld\n", int1);
+if (int1 != 13)
+  flag = 0;
+printf ("ch3 should be 'Vienna         '; its value is '%s'\n\n", ch3);
+if (strcmp (ch3, "Vienna         ") != 0)
+  flag = 0;
+
+/* Translation note for module:  change a procedure name to lower */
+/* case if host language permits it, both in module and in host */
+/* language. */
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW STAFF CASCADE;\n");
+EXEC SQL DROP VIEW STAFF CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0639','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml114.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0639','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0639 *********************/
+/******************** BEGIN TEST0641 ********************/
+flag = 1;
+
+     printf("                  TEST0641 \n");
+     printf("  Feature 16, PRIMARY KEY enhancement (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 16\n");
+     printf("    11.7  LR.2.a\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE FEAT16 (\n");
+printf("  EMPNUM INT PRIMARY KEY,\n");
+printf("  PNUM   INT UNIQUE);\n");
+EXEC SQL CREATE TABLE FEAT16 (
+  EMPNUM INT PRIMARY KEY,
+  PNUM   INT UNIQUE);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE TABLE BARNO (\n");
+printf("  P1 INT, P2 CHAR, X1 INT, X2 CHAR,\n");
+printf("  UNIQUE (X2, X1),\n");
+printf("  PRIMARY KEY (P1, P2));\n");
+EXEC SQL CREATE TABLE BARNO (
+  P1 INT, P2 CHAR, X1 INT, X2 CHAR,
+  UNIQUE (X2, X1),
+  PRIMARY KEY (P1, P2));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO FEAT16 VALUES (1, 10);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (1, 10);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO FEAT16 VALUES (2, 20);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (2, 20);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO FEAT16 VALUES (1, 30);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (1, 30);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO FEAT16 VALUES (3, 20);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (3, 20);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Multiple nulls are OK -- See 8.9 GR.2 */
+
+printf("INSERT INTO FEAT16 VALUES (3, NULL);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (3, NULL);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO FEAT16 VALUES (4, NULL);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (4, NULL);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO FEAT16 VALUES (5, NULL);\n");
+EXEC SQL INSERT INTO FEAT16 VALUES (5, NULL);
+CHCKOK ();
+printf("\n");
+
+/* Start on second table */
+
+printf("INSERT INTO BARNO VALUES (1, 'A', 10, 'a');\n");
+EXEC SQL INSERT INTO BARNO VALUES (1, 'A', 10, 'a');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO BARNO VALUES (2, 'A', 20, 'a');\n");
+EXEC SQL INSERT INTO BARNO VALUES (2, 'A', 20, 'a');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO BARNO VALUES (1, 'A', 30, 'a');\n");
+EXEC SQL INSERT INTO BARNO VALUES (1, 'A', 30, 'a');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO BARNO VALUES (3, 'A', 20, 'a');\n");
+EXEC SQL INSERT INTO BARNO VALUES (3, 'A', 20, 'a');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO BARNO VALUES (3, NULL, 30, 'a');\n");
+EXEC SQL INSERT INTO BARNO VALUES (3, NULL, 30, 'a');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO BARNO VALUES (3, NULL, 30, 'b');\n");
+EXEC SQL INSERT INTO BARNO VALUES (3, NULL, 30, 'b');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO BARNO VALUES (3, 'A', 30, NULL));\n");
+EXEC SQL INSERT INTO BARNO VALUES (3, 'A', 30, NULL);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO BARNO VALUES (3, 'B', 30, NULL));\n");
+EXEC SQL INSERT INTO BARNO VALUES (3, 'B', 30, NULL);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO BARNO VALUES (4, 'B', NULL, NULL));\n");
+EXEC SQL INSERT INTO BARNO VALUES (4, 'B', NULL, NULL);
+CHCKOK ();
+printf("\n");
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE FEAT16 CASCADE;\n");
+EXEC SQL DROP TABLE FEAT16 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE BARNO CASCADE;\n");
+EXEC SQL DROP TABLE BARNO CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0641','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml114.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0641','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0641 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,116 @@
+/*  EMBEDDED C (file "DML038.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/09/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML038.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS PROGRAM TESTS THE CARTESIAN PRODUCT.                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*             SECTION 5.20 <from clause> GR2)b                  */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          long HOURS1;
+          long GRADE1;
+          long BUGET1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long  i;
+          long  ii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml038.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0205 ********************/
+
+     printf("\n                 TEST0205   \n");
+     printf("reference X3.135-1989 5.20 General Rules 2) b)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT GRADE, HOURS, BUDGET
+              FROM STAFF, WORKS, PROJ;
+
+     EXEC SQL OPEN X;
+     
+     ii = 0;
+     for (i=0;i<400;i++)
+     {
+     EXEC SQL FETCH X INTO :GRADE1, :HOURS1, :BUGET1;
+     if (SQLCODE == 0)
+      {
+       ii = i + 1;
+       printf(" GRADE1=%ld, HOURS1=%ld, BUGET1=%ld\n",GRADE1,HOURS1,BUGET1);
+      }
+     }
+
+     printf("      ii = %ld \n", ii);
+     printf(" The correct answer should be ii = 360 \n");
+
+     if ( ii == 360 )
+       {
+       printf("\n\n                   *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0205','pass','PC');
+       }
+     else
+       {
+       printf("\n\n         dml038.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0205','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0205 ********************/
+
+     exit(errcnt);
+
+}
+

@@ -1,0 +1,328 @@
+/*  EMBEDDED C (file "DML151.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/09/07 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML151.PC                                                    */
+/*  WRITTEN BY: David Flater                                     */
+/*                                                               */
+/*  This routine tests exceptions not affecting position of      */
+/*  cursor.                                                      */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+long int1;
+char enaam[21];
+char enuum[4];
+float flt1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml151.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* TEST0540, SQLSTATE 01001: cursor operation conflict, is deleted. */
+
+/******************** BEGIN TEST0853 ********************/
+flag = 1;
+
+     printf("                  TEST0853 \n");
+     printf("Exceptions not affecting position of cursor\n");
+     printf("References:\n");
+     printf("    13.3 GR.9 -- Assignment error doesn't move cursor\n");
+     printf("    13.3 GR.7 -- Derived column error doesn't move cursor\n");
+printf("    13.9 GR.7 -- Error in positioned update doesn't move cursor\n");
+printf("    X3H2-95-439 -- Failed ISO (prohibit out-of-place exceptions)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("(These rules were not in SQL-89, but exist in SQL-92.)\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* 9.1 GR.1.b  SQLSTATE 22002 (null value no indicator parm) */
+
+printf("UPDATE HU.STAFF SET EMPNAME = NULL WHERE GRADE = 10;\n");
+EXEC SQL UPDATE HU.STAFF SET EMPNAME = NULL WHERE GRADE = 10;
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C15122 CURSOR FOR\n");
+printf("  SELECT EMPNAME, GRADE FROM HU.STAFF\n");
+printf("  ORDER BY GRADE, EMPNAME DESC;\n\n");
+EXEC SQL DECLARE C15122 CURSOR FOR
+  SELECT EMPNAME, GRADE FROM HU.STAFF
+  ORDER BY GRADE, EMPNAME DESC;
+
+printf("OPEN C15122;\n");
+EXEC SQL OPEN C15122;
+CHCKOK ();
+printf ("\n");
+
+printf("FETCH C15122 INTO :enaam, :int1;\n");
+EXEC SQL FETCH C15122 INTO :enaam, :int1;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be '22002'; its value is %s\n\n", SQLSTATE);
+if (SQLCODE >= 0 || strncmp (SQLSTATE, "22002", 5) != 0)
+  flag = 0;
+
+strcpy (enaam, "xxxxxxxxxxxxxxxxxxxx");
+int1 = 0;
+printf("FETCH C15122 INTO :enaam, :int1;\n");
+EXEC SQL FETCH C15122 INTO :enaam, :int1;
+CHCKOK ();
+printf ("enaam should be 'Don                 '; its value is '%s'\n", enaam);
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (strcmp (enaam, "Don                 ") != 0 || int1 != 12)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n\n");
+EXEC SQL ROLLBACK WORK;
+
+/* GR.7 as written:  if the exception is returned on the row that */
+/* causes it, then cursor position cannot be lost.  Unfortunately, */
+/* the exception can be returned in plenty of other places, */
+/* resulting in a pass by default. */
+
+printf("DECLARE C15123 CURSOR FOR\n");
+printf("  SELECT EMPNUM, GRADE / (GRADE - 10)\n");
+printf("  FROM HU.STAFF ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C15123 CURSOR FOR
+  SELECT EMPNUM, GRADE / (GRADE - 10)
+  FROM HU.STAFF ORDER BY EMPNUM;
+
+printf("OPEN C15123;\n");
+EXEC SQL OPEN C15123;
+if (strcmp (SQLSTATE, "22012") == 0)
+  goto P101;
+CHCKOK ();
+printf ("\n");
+
+strcpy (enuum, "xxx");
+flt1 = 0.0;
+printf("FETCH C15123 INTO :enuum, :flt1;\n");
+EXEC SQL FETCH C15123 INTO :enuum, :flt1;
+if (strcmp (SQLSTATE, "22012") == 0)
+  goto P101;
+CHCKOK ();
+printf ("enuum should be 'E1 '; its value is '%s'\n", enuum);
+printf ("flt1 should be 6 +- 0.01; its value is %f\n\n", flt1);
+if (strcmp (enuum, "E1 ") != 0)
+  flag = 0;
+if (flt1 < 5.99 || flt1 > 6.01)
+  flag = 0;
+
+printf("FETCH C15123 INTO :enuum, :flt1;\n");
+EXEC SQL FETCH C15123 INTO :enuum, :flt1;
+printf ("SQLSTATE should be '22012'; its value is '%s'\n\n", SQLSTATE);
+if (strcmp (SQLSTATE, "22012") != 0)
+  flag = 0;
+
+strcpy (enuum, "xxx");
+flt1 = 0.0;
+printf("FETCH C15123 INTO :enuum, :flt1;\n");
+EXEC SQL FETCH C15123 INTO :enuum, :flt1;
+CHCKOK ();
+printf ("enuum should be 'E3 '; its value is '%s'\n", enuum);
+/* Either 4.0 or 4.3 would be reasonable depending on exact */
+/* numeric expression semantics */
+printf ("flt1 should be 4.3 +- 0.4; its value is %f\n\n", flt1);
+if (strcmp (enuum, "E3 ") != 0)
+  flag = 0;
+if (flt1 < 3.9 || flt1 > 4.7)
+  flag = 0;
+
+/* Test 13.9 GR.7 (exception in positioned update) */
+/* The rule for assignment error is missing.  Hmmm.... */
+
+printf("UPDATE HU.STAFF\n");
+printf("  SET GRADE = 500 / (GRADE - 13)\n");
+printf("  WHERE CURRENT OF C15123;\n");
+EXEC SQL UPDATE HU.STAFF
+  SET GRADE = 500 / (GRADE - 13)
+  WHERE CURRENT OF C15123;
+printf ("SQLSTATE should be '22012'; its value is '%s'\n\n", SQLSTATE);
+if (strcmp (SQLSTATE, "22012") != 0)
+  flag = 0;
+
+strcpy (enuum, "xxx");
+flt1 = 0.0;
+printf("FETCH C15123 INTO :enuum, :flt1;\n");
+EXEC SQL FETCH C15123 INTO :enuum, :flt1;
+CHCKOK ();
+printf ("enuum should be 'E4 '; its value is '%s'\n", enuum);
+printf ("flt1 should be 6 +- 0.01; its value is %f\n\n", flt1);
+if (strcmp (enuum, "E4 ") != 0)
+  flag = 0;
+if (flt1 < 5.99 || flt1 > 6.01)
+  flag = 0;
+
+strcpy (enuum, "xxx");
+flt1 = 0.0;
+printf("FETCH C15123 INTO :enuum, :flt1;\n");
+EXEC SQL FETCH C15123 INTO :enuum, :flt1;
+CHCKOK ();
+printf ("enuum should be 'E5 '; its value is '%s'\n", enuum);
+/* Either 4.0 or 4.3 would be reasonable depending on exact */
+/* numeric expression semantics */
+printf ("flt1 should be 4.3 +- 0.4; its value is %f\n\n", flt1);
+if (strcmp (enuum, "E5 ") != 0)
+  flag = 0;
+if (flt1 < 3.9 || flt1 > 4.7)
+  flag = 0;
+
+goto P100;
+
+P101:
+printf ("Exception raised early -- pass by default\n\n");
+
+P100:
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0853','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml151.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0853','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0853 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

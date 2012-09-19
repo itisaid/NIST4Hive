@@ -1,0 +1,356 @@
+/*  EMBEDDED C (file "DML128.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/7/25 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML128.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS feature 12 (GET DIAGNOSTICS).        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char svrnam[51];
+char xnnam[51];
+char ctcat[51];
+char ctnam[51];
+char catnam[51];
+char yorn[2];
+long int1;
+long int2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml128.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0674 ********************/
+flag = 1;
+
+     printf("                  TEST0674 \n");
+     printf("    Diagnostics:  TSQL orphaned features\n");
+     printf("References:\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    18.1 -- <get diagnostics statement>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("INSERT INTO HU.STAFF VALUES (\n");
+printf("  'E1', 'Bart', 10, 'Annapolis');\n");
+EXEC SQL INSERT INTO HU.STAFF VALUES (
+  'E1', 'Bart', 10, 'Annapolis');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+strcpy (svrnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (xnnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (ctcat, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (ctnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (catnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS EXCEPTION 1\n");
+printf("  :svrnam = SERVER_NAME, :xnnam = CONNECTION_NAME,\n");
+printf("  :ctcat = CONSTRAINT_CATALOG, :ctnam = CONSTRAINT_NAME,\n");
+printf("  :catnam = CATALOG_NAME;\n");
+EXEC SQL GET DIAGNOSTICS EXCEPTION 1
+  :svrnam = SERVER_NAME, :xnnam = CONNECTION_NAME,
+  :ctcat = CONSTRAINT_CATALOG, :ctnam = CONSTRAINT_NAME,
+  :catnam = CATALOG_NAME;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000 or 01004; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) != 0 && strncmp (NORMSQ, "01004", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+svrnam[50] = '\0';
+xnnam[50] = '\0';
+ctcat[50] = '\0';
+ctnam[50] = '\0';
+catnam[50] = '\0';
+printf ("svrnam should be blank or set to a value; its value is %s\n", svrnam);
+printf ("xnnam should be blank or set to a value; its value is %s\n", xnnam);
+printf ("ctcat should be blank or set to a value; its value is %s\n", ctcat);
+printf ("ctnam should be blank or set to a value; its value is %s\n", ctnam);
+printf("catnam should be blank or set to a value; its value is %s\n\n",catnam);
+if (strcmp(svrnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+if (strcmp(xnnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+if (strcmp(ctcat, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+if (strcmp(ctnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+if (strcmp(catnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx") == 0)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0674','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml128.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0674','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0674 *********************/
+/******************** BEGIN TEST0675 ********************/
+flag = 1;
+
+     printf("                  TEST0675 \n");
+     printf("             Diagnostics:  MORE\n");
+     printf("References:\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    18.1 -- <get diagnostics statement>\n");
+     printf("    TC #2 4.18.1 -- precedence rules for SQLSTATE\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE DOUBLE_TROUBLE (\n");
+printf("  TOO_LITTLE INT, TOO_LATE CHAR (10));\n");
+EXEC SQL CREATE TABLE DOUBLE_TROUBLE (
+  TOO_LITTLE INT, TOO_LATE CHAR (10));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO DOUBLE_TROUBLE VALUES ( 1, NULL);\n");
+EXEC SQL INSERT INTO DOUBLE_TROUBLE VALUES ( 1, NULL);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION DIAGNOSTICS SIZE 1;\n");
+EXEC SQL SET TRANSACTION DIAGNOSTICS SIZE 1;
+CHCKOK ();
+printf("\n");
+
+int2 = 0;
+printf("int2 = 0\n");
+printf("SELECT TOO_LITTLE / :int2, TOO_LATE\n");
+printf("  INTO :int1, :svrnam FROM DOUBLE_TROUBLE;\n");
+EXEC SQL SELECT TOO_LITTLE / :int2, TOO_LATE 
+   INTO :int1, :svrnam FROM DOUBLE_TROUBLE;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("SQLSTATE is %s\n\n", SQLSTATE);
+
+strcpy (yorn, "x");
+printf("GET DIAGNOSTICS :yorn = MORE;\n");
+EXEC SQL GET DIAGNOSTICS :yorn = MORE;
+CHCKOK ();
+yorn[1] = '\0';
+printf ("yorn should be Y; its value is %s\n\n", yorn);
+if (strcmp (yorn, "N") == 0)
+{
+  printf ("Nogo:  implementation might only catch one error.\n\n");
+  flag = 2;
+}
+if (strcmp (yorn, "Y") != 0 && strcmp (yorn, "N") != 0)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE DOUBLE_TROUBLE CASCADE;\n");
+EXEC SQL DROP TABLE DOUBLE_TROUBLE CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 2)
+     {
+          printf("\n\n                *** nogo *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0675','nogo','PC');
+          goto P199;
+     }
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0675','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml128.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0675','fail','PC');
+          errcnt = errcnt + 1;
+       }
+P199:
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0675 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

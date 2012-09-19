@@ -1,0 +1,677 @@
+/*  EMBEDDED C (file "DML150.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/2/22 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML150.PC                                                    */
+/*  WRITTEN BY:  Joan Sullivan                                   */
+/*                                                               */
+/*  This routine tests dynamic parameters.                       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long   int1;
+char   ch15[16];
+char   ch20[21];
+char   ch3[4];
+short  indic1;
+short  indic2;
+short  indic3;
+short  indic4;
+char   dstmt[51];
+char   longst[241];
+long   SQLCODE;
+char   SQLSTATE[6];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+int flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml150.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0845 ********************/
+flag = 1;
+
+     printf("                     TEST0845\n");
+     printf("Parameters and indicators in dynamic SQL statement\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    17.6 -- preparable statements\n");
+     printf("    17.12 -- <dynamic declare cursor> \n");
+     printf("    17.14 -- <dynamic open statement> \n");
+     printf("    17.15 -- <dynamic fetch statement> \n");
+     printf("    17.16 -- <dynamic close statement> \n");
+     printf("    17.17 -- <dynamic delete statement: positioned> \n");
+     printf("    17.18 -- <dynamic update statement: positioned> \n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* dynamic parameter spec. in INSERT... VALUES */
+/* 17.6 preparable <insert statement> with 13.8 <insert column list>*/
+
+printf("dstmt=\"INSERT INTO HU.STAFF VALUES (?,?,?,?)\"\n");
+strcpy(dstmt,
+     "INSERT INTO HU.STAFF VALUES ( ?, ?, ?, ?)         ");
+
+printf("PREPARE INS1 FROM :dstmt;\n");
+EXEC SQL PREPARE INS1 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+strcpy(ch3,"E6 ");
+strcpy(ch20,"XxXxXxXxXxXxXxXxXxXx");
+int1 = 11;
+strcpy(ch15,"MinneapolisPaul");
+indic1 = -1;
+indic2 = 0;
+printf("ch3 = %s\n",ch3);
+printf("ch20 = %s\n",ch20);
+printf("int1 = %ld\n",int1);
+printf("ch15 = %s\n",ch15);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("EXECUTE INS1 USING :ch3, :ch20 :indic1, :int1:indic2, :ch15;\n");
+EXEC SQL EXECUTE INS1 USING :ch3, :ch20 :indic1, :int1:indic2, :ch15;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+strcpy(ch15,"xxxxxxxxxxxxxxx");
+indic1 = 99;
+indic2 = 99;
+printf("SELECT * INTO :ch3, :ch20:indic1, :int1 :indic2, :ch15\n");
+printf("   FROM HU.STAFF WHERE EMPNUM = 'E6';\n");
+EXEC SQL SELECT * INTO :ch3, :ch20:indic1, :int1 :indic2, :ch15
+   FROM HU.STAFF WHERE EMPNUM = 'E6';
+CHCKOK ();
+printf("\n");
+printf("int1 should be 11; its value is %ld\n",int1);
+printf("ch15 should be 'MinneapolisPaul'; its value is %s\n",ch15);
+printf("indic1 should be -1; its value is %d\n",indic1);
+printf("indic2 should be 0; its value is %d\n\n",indic2);
+if (int1 != 11 || strcmp(ch15,"MinneapolisPaul") !=0)
+   flag = 0;
+if (indic1 != -1 || indic2 != 0)
+   flag = 0;
+
+/* dynamic parameter spec. in INSERT... SELECT... WHERE */
+/* 17.6 preparable <insert statement> with 13.8 <query expression>*/
+
+ 
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+               'INSERT INTO HU.STAFF SELECT PNUM,' ||
+               '  CAST (? AS CHAR (20)),'          ||
+               '  CAST (? AS DECIMAL (4)),'        ||
+               '  CAST (? AS CHAR (15))'           ||
+       ' FROM HU.PROJ'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+
+printf("PREPARE INS2 FROM :longst;\n");
+EXEC SQL PREPARE INS2 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+int1 = 13;
+strcpy(ch20,"Madonna of the Woods");
+strcpy(ch15,"MinneapolisPaul");
+indic1 = 0;
+indic2 = -1;
+printf("int1 = %ld\n",int1);
+printf("ch20 = %s\n",ch20);
+printf("ch15 = %s\n",ch15);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("EXECUTE INS2 USING :ch20:indic1, :int1 :indic2, :ch15;\n");
+EXEC SQL EXECUTE INS2 USING :ch20:indic1, :int1 :indic2, :ch15;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("    WHERE PNUM = 'P3' AND EMPNAME = 'Madonna of the Woods'\n");
+printf("      AND GRADE IS NULL AND CITY = 'MinneapolisPaul';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+    WHERE EMPNUM = 'P3' AND EMPNAME = 'Madonna of the Woods'
+      AND GRADE IS NULL AND CITY = 'MinneapolisPaul';
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n",int1);
+if (int1 != 1)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF;
+CHCKOK ();
+printf("int1 should be 12; its value is %ld\n\n",int1);
+if (int1 != 12)
+   flag = 0;
+
+/* dynamic parameter spec. in 17.6 <dynamic select statement> */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT * FROM HU.STAFF WHERE EMPNUM = ?' ||
+       ' OR EMPNAME = ? OR GRADE = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE SEL1 FROM :longst;\n");
+EXEC SQL PREPARE SEL1 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+/* 17.12 <dynamic declare cursor> */
+
+printf("DECLARE S1 CURSOR FOR SEL1;\n");
+EXEC SQL DECLARE S1 CURSOR FOR SEL1;
+printf("\n");
+
+/* parameter spec. in 17.14 <dynamic open statement> */
+
+strcpy(ch3,"E13");
+int1 = 11;
+strcpy(ch20,"Madonna of the Woods");
+indic1 = 0;
+indic2 = -1;
+printf("ch3 = %s\n",ch3);
+printf("ch20 = %s\n",ch20);
+printf("int1 = %ld\n",int1);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("OPEN S1 USING :ch3, :ch20:indic1, :int1:indic2;\n");
+EXEC SQL OPEN S1 USING :ch3, :ch20:indic1, :int1:indic2;
+CHCKOK ();
+printf("\n");
+
+/* 17.15 <dynamic fetch statement> */
+
+strcpy(ch20,"xxxxxxxxxxxxxxxxxxxx");
+printf("FETCH S1 INTO :ch3, :ch20:indic1, :int1:indic2, :ch15;\n");
+EXEC SQL FETCH S1 INTO :ch3, :ch20:indic1, :int1:indic2, :ch15;
+CHCKOK ();
+printf("ch20 should be 'Madonna of the Woods'; its value is %s\n",ch20);
+printf("indic1 should be 0; its value is %d\n",indic1);
+printf("indic2 should be -1; its value is %d\n",indic2);
+if (indic1 != 0 || indic2 != -1)
+   flag = 0;
+if (strcmp(ch20,"Madonna of the Woods") != 0)
+   flag = 0;
+printf("\n");
+
+/* parameter spec. in 17.18 <dynamic update statement: positioned> */
+
+indic1 = -1;
+printf("indic1 = %d\n",indic1);
+printf("UPDATE HU.STAFF SET EMPNAME = :ch20:indic1 WHERE CURRENT OF S1;\n");
+EXEC SQL UPDATE HU.STAFF SET EMPNAME = :ch20:indic1 WHERE CURRENT OF S1;
+CHCKOK ();
+printf("\n");
+
+/* 17.15 <dynamic fetch statement> */
+
+strcpy(ch20,"xxxxxxxxxxxxxxxxxxxx");
+printf("FETCH S1 INTO :ch3, :ch20:indic1, :int1:indic2, :ch15;\n");
+EXEC SQL FETCH S1 INTO :ch3, :ch20:indic1, :int1:indic2, :ch15;
+CHCKOK ();
+printf("ch20 should be 'Madonna of the Woods'; its value is %s\n",ch20);
+printf("indic1 should be 0; its value is %d\n",indic1);
+printf("indic2 should be -1; its value is %d\n",indic2);
+if (indic1 != 0 || indic2 != -1)
+   flag = 0;
+if (strcmp(ch20,"Madonna of the Woods") != 0)
+   flag = 0;
+printf("\n");
+
+/* 17.17 <dynamic delete statement: positioned> */
+
+printf("DELETE FROM HU.STAFF WHERE CURRENT OF S1;\n");
+EXEC SQL DELETE FROM HU.STAFF WHERE CURRENT OF S1;
+CHCKOK ();
+printf("\n");
+
+/* 17.16 <dynamic close statement> */
+
+printf("CLOSE S1;\n");
+EXEC SQL CLOSE S1;
+CHCKOK ();
+printf("\n");
+
+/* parameter spec. in 17.14 <dynamic open statement> */
+
+strcpy(ch3,"E13");
+int1 = 11;
+strcpy(ch20,"Madonna of the Woods");
+indic1 = -1;
+indic2 = 0;
+printf("ch3 = %s\n",ch3);
+printf("ch20 = %s\n",ch20);
+printf("int1 = %ld\n",int1);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("OPEN S1 USING :ch3, :ch20:indic1, :int1:indic2;\n");
+EXEC SQL OPEN S1 USING :ch3, :ch20:indic1, :int1:indic2;
+CHCKOK ();
+printf("\n");
+
+/* 17.15 <dynamic fetch statement> */
+
+strcpy(ch20,"xxxxxxxxxxxxxxxxxxxx");
+printf("FETCH S1 INTO :ch3, :ch20:indic1, :int1:indic2, :ch15;\n");
+EXEC SQL FETCH S1 INTO :ch3, :ch20:indic1, :int1:indic2, :ch15;
+CHCKOK ();
+printf("int1 should be 11; its value is %ld\n",int1);
+printf("indic1 should be -1; its value is %d\n",indic1);
+printf("indic2 should be 0; its value is %d\n",indic2);
+if (indic1 != -1 || indic2 != 0 || int1 != 11)
+   flag = 0;
+printf("\n");
+
+/* parameter spec. in 17.18 <dynamic update statement: positioned> */
+
+indic1 = -1;
+printf("indic1 = %d\n",indic1);
+printf("UPDATE HU.STAFF SET CITY = :ch15:indic1 WHERE CURRENT OF S1;\n");
+EXEC SQL UPDATE HU.STAFF SET CITY = :ch15:indic1 WHERE CURRENT OF S1;
+CHCKOK ();
+printf("\n");
+
+/* 17.16 <dynamic close statement> */
+
+printf("CLOSE S1;\n");
+EXEC SQL CLOSE S1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("    WHERE EMPNAME = 'Madonna of the Woods;'\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+    WHERE EMPNAME = 'Madonna of the Woods';
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n",int1);
+if (int1 != 4)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("    WHERE EMPNAME IS NULL\n");
+printf("       AND (CITY IS NULL OR GRADE IS NULL);\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+             WHERE EMPNAME IS NULL
+               AND (CITY IS NULL OR GRADE IS NULL);
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n",int1);
+if (int1 != 2)
+   flag = 0;
+
+/* dynamic parameter spec. in DELETE... WHERE */
+/* 17.6 preparable <delete statement: searched> */
+ 
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'DELETE FROM HU.STAFF WHERE EMPNUM=?' ||
+       ' OR GRADE=? OR CITY=?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+
+printf("PREPARE MOD1 FROM :longst;\n");
+EXEC SQL PREPARE MOD1 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+strcpy(ch3,"E1 ");
+int1 = 10;
+strcpy(ch15,"Deale          ");
+indic1 = 0;
+indic2 = -1;
+printf("ch3 = %s\n",ch3);
+printf("int1 = %ld\n",int1);
+printf("ch15 = %s\n",ch15);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("EXECUTE MOD1 USING :ch3, :int1:indic1, :ch15:indic2;\n");
+EXEC SQL EXECUTE MOD1 USING :ch3, :int1:indic1, :ch15:indic2;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF;
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n\n",int1);
+if (int1 != 9)
+   flag = 0;
+
+int1 = 10;
+indic1 = -1;
+indic2 = 0;
+printf("int1 = %ld\n",int1);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("EXECUTE MOD1 USING :ch3, :int1:indic1, :ch15:indic2;\n");
+EXEC SQL EXECUTE MOD1 USING :ch3, :int1:indic1, :ch15:indic2;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF;
+CHCKOK ();
+printf("int1 should be 8; its value is %ld\n\n",int1);
+if (int1 != 8)
+   flag = 0;
+
+/* dynamic parameter spec. in UPDATE.. WHERE */
+/* 17.6 preparable <update statement: searched> */
+
+ 
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'UPDATE HU.STAFF SET EMPNAME = ?, CITY = ?' ||
+       ' WHERE EMPNUM = ? OR GRADE = ?'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+/* 17.6 GR 6 , existing SQL statement MOD1 implicitly deallocated */
+printf("PREPARE MOD1 FROM :longst;\n");
+EXEC SQL PREPARE MOD1 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+strcpy(ch3,"E5 ");
+strcpy(ch20,"Flash in the pan    ");
+int1 = 13;
+strcpy(ch15,"Migrane        ");
+indic1 = 0;
+indic2 = -1;
+indic3 = 0;
+indic4 = -1;
+printf("ch3 = %s\n",ch3);
+printf("ch20 = %s\n",ch20);
+printf("int1 = %ld\n",int1);
+printf("ch15 = %s\n",ch15);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("indic3 = %d\n",indic3);
+printf("indic4 = %d\n",indic4);
+printf("EXECUTE MOD1 \n");
+printf("  USING :ch20:indic1,:ch15:indic2,:ch3:indic3,:int1:indic4;\n");
+EXEC SQL EXECUTE MOD1 USING                           
+         :ch20:indic1,
+         :ch15:indic2,
+         :ch3:indic3,
+         :int1:indic4;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE EMPNAME = 'Flash in the pan';\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE EMPNAME = 'Flash in the pan';
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n",int1);
+if (int1 != 1)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE CITY = 'Migrane';\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE CITY = 'Migrane';
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n",int1);
+if (int1 != 0)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE EMPNAME IS NULL;\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE EMPNAME IS NULL;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n",int1);
+if (int1 != 2)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE CITY IS NULL;\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE CITY IS NULL;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n",int1);
+if (int1 != 2)
+   flag = 0;
+
+strcpy(ch3,"P4 ");
+strcpy(ch20,"Flash in the pan    ");
+int1 = 13;
+strcpy(ch15,"Migrane        ");
+indic1 = -1;
+indic2 = 0;
+indic3 = -1;
+indic4 = 0;
+printf("ch3 = %s\n",ch3);
+printf("ch20 = %s\n",ch20);
+printf("int1 = %ld\n",int1);
+printf("ch15 = %s\n",ch15);
+printf("indic1 = %d\n",indic1);
+printf("indic2 = %d\n",indic2);
+printf("indic3 = %d\n",indic3);
+printf("indic4 = %d\n",indic4);
+printf("EXECUTE MOD1 \n");
+printf("  USING :ch20:indic1,:ch15:indic2,:ch3:indic3,:int1:indic4;\n");
+EXEC SQL EXECUTE MOD1 USING                           
+         :ch20:indic1,
+         :ch15:indic2,
+         :ch3:indic3,
+         :int1:indic4;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE EMPNAME = 'Flash in the pan';\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE EMPNAME = 'Flash in the pan';
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n",int1);
+if (int1 != 0)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE CITY = 'Migrane';\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE CITY = 'Migrane';
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n\n",int1);
+if (int1 != 2)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE EMPNAME IS NULL;\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE EMPNAME IS NULL;
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n",int1);
+if (int1 != 4)
+   flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM HU.STAFF\n");
+printf("   WHERE CITY IS NULL;\n"); 
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM HU.STAFF
+   WHERE CITY IS NULL;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n",int1);
+if (int1 != 1)
+   flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0845','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml150.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0845','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0845 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

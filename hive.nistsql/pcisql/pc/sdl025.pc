@@ -1,0 +1,133 @@
+/*  EMBEDDED C (file "SDL025.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/09/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL025.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 6. Schema Definition Language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     EMPNO1[4];
+     long     HOURS1;
+     char     USERID[20];
+     long     i;
+     long     ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     i2;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl025.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("                  TEST0204 \n");
+     printf(" Create VIEW with check option to enforce a 'domain'\n");
+     printf(" Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf(" *** CREATE VIEW DOMAIN_VIEW  \n");
+     printf(" ***   AS SELECT * FROM WORKS \n");
+     printf(" ***      WHERE EMPNUM='E1' AND HOURS=80 \n");
+     printf(" ***         OR EMPNUM='E2' AND HOURS=40 \n");
+     printf(" ***         OR EMPNUM='E4' AND HOURS=20 \n");
+     printf(" ***   WITH CHECK OPTION \n");
+
+     EXEC SQL SELECT EMPNUM, HOURS
+              INTO  :EMPNO1,:HOURS1
+              FROM   DOMAIN_VIEW
+              WHERE  PNUM = 'P3';
+
+     printf(" EMPNO1 = %s, HOURS1 = %ld \n", EMPNO1, HOURS1);
+
+     EXEC SQL INSERT INTO DOMAIN_VIEW
+              VALUES('E1', 'P7', 80);
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :i
+              FROM   DOMAIN_VIEW;
+
+     EXEC SQL ROLLBACK WORK;
+
+     EXEC SQL INSERT INTO DOMAIN_VIEW
+              VALUES('E2', 'P4', 80);
+
+     EXEC SQL INSERT INTO DOMAIN_VIEW
+              VALUES('E5', 'P5', 20);
+
+     i2 = SQLCODE;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :ii
+              FROM   DOMAIN_VIEW;
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf(" i = %ld, ii = %ld, i2 = %ld\n\n", i, ii, i2);
+     printf("The correct answer should be HOURS1=80, i=4, ii=3 & i2<0 \n");
+
+     if ( HOURS1 == 80 && i == 4 && ii == 3 && i2 < 0 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0204','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl025.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0204','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+}

@@ -1,0 +1,527 @@
+/*  EMBEDDED C (file "DML168.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-06 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML168.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+char c4[5];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml168.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0876 ********************/
+flag = 1;
+
+     printf("                  TEST0876\n");
+     printf(" SQL_IDENTIFIER and CHARACTER_DATA domains\n");
+     printf("References:\n");
+     printf("    F#25 -- Domain definition\n");
+     printf("    F#35 -- Intermediate information schema\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE T0876 (\n");
+printf("  C1 INFORMATION_SCHEMA.SQL_IDENTIFIER,\n");
+printf("  C2 INFORMATION_SCHEMA.CHARACTER_DATA);\n");
+EXEC SQL CREATE TABLE T0876 (
+  C1 INFORMATION_SCHEMA.SQL_IDENTIFIER,
+  C2 INFORMATION_SCHEMA.CHARACTER_DATA);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0876 VALUES ('T0876',\n");
+printf("  'This table tests a couple of domains.');\n");
+EXEC SQL INSERT INTO T0876 VALUES ('T0876',
+  'This table tests a couple of domains.');
+CHCKOK ();
+printf ("\n");
+
+int1 = 99;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T0876\n");
+printf("  WHERE C1 = 'T0876';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T0876
+  WHERE C1 = 'T0876';
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0876 CASCADE;\n");
+EXEC SQL DROP TABLE T0876 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0876','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml168.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0876','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0876 *********************/
+/******************** BEGIN TEST0878 ********************/
+flag = 1;
+
+     printf("                  TEST0878\n");
+     printf(" Keyword COLUMN in ALTER TABLE is optional\n");
+     printf("References:\n");
+     printf("    F#38 -- Schema manipulation\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE T0878 (\n");
+printf("  C1 INT);\n");
+EXEC SQL CREATE TABLE T0878 (
+  C1 INT);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0878\n");
+printf("  ADD C2 CHAR (4);\n");
+EXEC SQL ALTER TABLE T0878
+  ADD C2 CHAR (4);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0878\n");
+printf("  ALTER C2 SET DEFAULT 'ABCD';\n");
+EXEC SQL ALTER TABLE T0878
+  ALTER C2 SET DEFAULT 'ABCD';
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0878\n");
+printf("  DROP C1 CASCADE;\n");
+EXEC SQL ALTER TABLE T0878
+  DROP C1 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0878 VALUES (DEFAULT);\n");
+EXEC SQL INSERT INTO T0878 VALUES (DEFAULT);
+CHCKOK ();
+printf ("\n");
+
+strcpy (c4, "xxxx");
+printf("SELECT * INTO :c4\n");
+printf("  FROM T0878;\n");
+EXEC SQL SELECT * INTO :c4
+  FROM T0878;
+CHCKOK ();
+printf ("c4 should be 'ABCD'; its value is '%s'\n\n", c4);
+if (strcmp (c4, "ABCD") != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0878 CASCADE;\n");
+EXEC SQL DROP TABLE T0878 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0878','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml168.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0878','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0878 *********************/
+/******************** BEGIN TEST0879 ********************/
+flag = 1;
+
+     printf("                  TEST0879\n");
+     printf("    <drop table constraint definition>\n");
+     printf("References:\n");
+     printf("    F#38 -- Schema manipulation\n");
+     printf("    F#49 -- Constraint management\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE T0879 (\n");
+printf("  C1 INT,\n");
+printf("  C2 INT,\n");
+printf("    CONSTRAINT DELME CHECK (C1 > 0),\n");
+printf("    CONSTRAINT REFME UNIQUE (C2));\n");
+EXEC SQL CREATE TABLE T0879 (
+  C1 INT,
+  C2 INT,
+    CONSTRAINT DELME CHECK (C1 > 0),
+    CONSTRAINT REFME UNIQUE (C2));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE U0879 (\n");
+printf("  C1 INT REFERENCES T0879 (C2));\n");
+EXEC SQL CREATE TABLE U0879 (
+  C1 INT REFERENCES T0879 (C2));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0879\n");
+printf("  DROP CONSTRAINT DELME RESTRICT;\n");
+EXEC SQL ALTER TABLE T0879
+  DROP CONSTRAINT DELME RESTRICT;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0879 VALUES (0, 0);\n");
+EXEC SQL INSERT INTO T0879 VALUES (0, 0);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0879 VALUES (-1, -1);\n");
+EXEC SQL INSERT INTO T0879 VALUES (-1, -1);
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T0879;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T0879;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("INSERT INTO U0879 VALUES (20);\n");
+EXEC SQL INSERT INTO U0879 VALUES (20);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO T0879 VALUES (2, 0);\n");
+EXEC SQL INSERT INTO T0879 VALUES (2, 0);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0879\n");
+printf("  DROP CONSTRAINT REFME RESTRICT;\n");
+EXEC SQL ALTER TABLE T0879
+  DROP CONSTRAINT REFME RESTRICT;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0879\n");
+printf("  DROP CONSTRAINT REFME CASCADE;\n");
+EXEC SQL ALTER TABLE T0879
+  DROP CONSTRAINT REFME CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO U0879 VALUES (20);\n");
+EXEC SQL INSERT INTO U0879 VALUES (20);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0879 VALUES (0, 0);\n");
+EXEC SQL INSERT INTO T0879 VALUES (0, 0);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0879 CASCADE;\n");
+EXEC SQL DROP TABLE T0879 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE U0879 CASCADE;\n");
+EXEC SQL DROP TABLE U0879 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0879','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml168.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0879','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0879 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

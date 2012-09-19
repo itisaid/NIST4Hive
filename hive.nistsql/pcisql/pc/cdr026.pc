@@ -1,0 +1,360 @@
+/* EMBEDDED C (file "CDR026.PC")        */
+
+/*************************************************************/
+/*                                                           */
+/*                      COMMENT SECTION                      */
+/*                                                           */
+/*  DATE 1991/06/20 EMBEDDED C LANGUAGE                      */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                      */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                           */
+/*  CDR026.PC                                                */
+/*  WRITTEN BY: YOLANDA HERD                                 */
+/*                                                           */
+/*  THIS ROUTINE TESTS PARTIAL NULL FOREIGN KEYS             */
+/*                                                           */
+/*  REFERENCES                                               */
+/*    AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                                 X3.135-1989               */
+/*                                                           */
+/*       SECTION 6.7, GR1 Referential Constraint Definition  */
+/*                                                           */
+/*                                                           */
+/*************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char DNME[21];
+  char ENME[21];
+  char NME[21];  
+  long DTE;
+  long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+long code1;
+long code2;
+long code3;
+long code4;
+long code5;
+long code6;
+long flag1;
+
+main()
+{
+strcpy(uid,"SUN");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr026.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/**************** BEGIN TEST0438 **********************/
+/*  This program tests the Partial - NULL F.K.        */
+/*  feature supported for insert F.k.                    */
+
+printf("\n              TEST0438                \n");
+printf("   partial-NULL F.K. INSERT supported      \n");
+printf("     reference Section 6.7 GR 1a, 1b         \n");
+printf("--------------------------------------------\n\n");
+
+code1 = -1001;
+count1 = 0;
+DTE = 0;
+strcpy(NME,"XXXXXXXXXXXXXXXXXXXX");
+
+EXEC SQL DELETE FROM EXPERIENCE
+    WHERE DESCR = 'Car Mechanic';
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Tom',NULL,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Yolanda',NULL,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES(NULL,112156,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES(NULL,062068,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES(NULL,NULL,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Tom',052744,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Yolanda',040523,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Yolanda',062968,NULL,'Car Mechanic');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Lilian',112156,NULL,'Car Mechanic');
+
+EXEC SQL SELECT EXP_NAME, BTH_DATE INTO :NME, :DTE
+    FROM EXPERIENCE
+    WHERE EXP_NAME IS NOT NULL AND BTH_DATE IS NOT NULL 
+         AND DESCR = 'Car Mechanic';
+
+code1 = SQLCODE;
+
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM EXPERIENCE
+    WHERE DESCR = 'Car Mechanic';
+
+EXEC SQL ROLLBACK WORK;
+
+printf(" The correct answers are:\n");
+printf("   code1 = 0 and count1 = 6\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("   code1 = %ld and count1 = %ld\n",code1,count1);
+
+if (code1 == 0 && count1 == 6)
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0438','pass','PC');
+    printf("\n\n                    *** pass ***      ");
+  }
+else
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0438','fail','PC');
+          errcnt = errcnt + 1;
+    printf("\n\n         cdr026.pc  *** fail ***       ");
+  }
+
+printf("\n===================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/********************* END TEST0438 *******************/
+
+/**************** BEGIN TEST0439 **********************/
+/* This program tests partial-NULL F.K. feature       */
+/* support for update F.K.                            */
+
+printf("                   TEST0439           \n");
+printf("    partial-NULL F.K. UPDATE support    \n");
+printf(" --------------------------------------------------  \n\n");
+
+code1 = 0;
+code2 = 0;
+code3 = 0;
+code4 = 0;
+code5 = 0;
+code6 = 0;
+
+flag1 = 0;
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('Lilian',NULL,NULL,'Soccer Player');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES('David',NULL,NULL,'Monk');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES(NULL,NULL,NULL,'Fireman');
+
+EXEC SQL INSERT INTO EXPERIENCE
+    VALUES(NULL,NULL,NULL,'Artist');
+
+EXEC SQL UPDATE EXPERIENCE
+    SET BTH_DATE = 040523
+    WHERE EXP_NAME = 'Lilian' AND DESCR = 'Soccer Player';
+
+code1 = SQLCODE;
+if (code1 >= 0)
+  flag1 = 1;
+
+EXEC SQL UPDATE EXPERIENCE
+    SET EXP_NAME = NULL
+    WHERE DESCR = 'Photographer';
+
+code2 = SQLCODE;
+if (code2 != 0)
+  flag1 = 1;
+
+EXEC SQL UPDATE EXPERIENCE
+    SET EXP_NAME = NULL ,BTH_DATE = NULL
+    WHERE DESCR = 'Fashion Model';
+
+code3 = SQLCODE;
+if (code3 != 0)
+  flag1 = 1;
+
+EXEC SQL UPDATE EXPERIENCE
+    SET BTH_DATE = 101024
+    WHERE EXP_NAME = 'David' AND DESCR = 'Monk';
+
+code4 = SQLCODE;
+if (code4 != 0)
+ flag1 = 1;
+
+EXEC SQL UPDATE EXPERIENCE
+    SET EXP_NAME = 'Mary', BTH_DATE = 121245
+    WHERE DESCR = 'Fireman';
+
+code5 = SQLCODE;
+if (code5 != 0)
+  flag1 = 1;
+
+EXEC SQL UPDATE EXPERIENCE
+    SET EXP_NAME = 'Dick' , BTH_DATE = 020454
+    WHERE DESCR = 'Artist';
+
+code6 = SQLCODE;
+if (code6 >= 0)
+  flag1 = 1;
+
+printf("The correct results are:\n");
+printf("          code1 <  0\n");
+printf("          code2 =  0\n");
+printf("          code3 =  0\n");
+printf("          code4 =  0\n");
+printf("          code5 =  0\n");
+printf("          code6 <  0\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("          code1 = %ld\n",code1);
+printf("          code2 = %ld\n",code2);
+printf("          code3 = %ld\n",code3);
+printf("          code4 = %ld\n",code4);
+printf("          code5 = %ld\n",code5);
+printf("          code6 = %ld\n",code6);
+
+EXEC SQL ROLLBACK WORK;
+
+if (flag1 == 0)
+
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0439','pass','PC');
+    printf("\n\n                    *** pass ***      ");
+  }
+else
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0439','fail','PC');
+          errcnt = errcnt + 1;
+    printf("\n\n         cdr026.pc  *** fail ***       ");
+  }
+
+printf("\n===================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/********************* END TEST0439 *******************/
+
+
+/**************** BEGIN TEST0440 **********************/
+/* This program tests partial-NULL F.K. no restrict   */
+/* P.K. update/delete                                 */
+
+  printf("                    TEST0440             \n");
+  printf("    partial-NULL F.K. no restrict P.K. update/delete  \n");
+  printf(" -----------------------------------------------------\n\n");
+
+  strcpy(ENME,"XXXXXXXXXXXXXXXXXXXX");
+  strcpy(DNME,"XXXXXXXXXXXXXXXXXXXX");
+
+  EXEC SQL DELETE FROM EXPERIENCE
+      WHERE EXP_NAME = 'Joseph' OR EXP_NAME = 'John';
+
+  EXEC SQL INSERT INTO EXPERIENCE
+      VALUES('John',NULL,NULL,'Gardener');
+
+  EXEC SQL INSERT INTO EXPERIENCE
+      VALUES('Joseph',NULL,NULL,'Snake Charmer');
+
+  EXEC SQL DELETE FROM EMP
+      WHERE ENAME = 'Joseph';
+
+  EXEC SQL UPDATE EMP
+      SET ENAME = 'Joan'
+      WHERE EDESC = 'Fraction';
+
+  code1 = 0;
+
+  EXEC SQL SELECT ENAME INTO :ENME
+      FROM EMP
+      WHERE DNAME = 'Education';
+
+  code1 = SQLCODE;
+
+  EXEC SQL SELECT DNAME INTO :DNME
+      FROM EMP
+      WHERE ENAME = 'Joan';
+
+  printf(" The correct results are:\n");
+  printf("   ENME = XXXXXXXXXXXXXXXXXXXX\n");
+  printf("   DNME = Physics\n");
+  printf("\n");
+  printf(" Your answers are:\n");
+  printf("   ENME = %s\n",ENME);
+  printf("   DNME = %s\n",DNME);
+
+  EXEC SQL ROLLBACK WORK;
+
+  flag1 = 0;
+
+  if ((strncmp(ENME,"XXXXXXXXXXXXXXXXXXXX",20)) != 0 )
+    flag1 = 1;
+
+  if ((strncmp(DNME,"Physics",7)) != 0)
+    flag1 = 1;
+
+  if (flag1 == 0 && code1 == 100)
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0440','pass','PC');
+    printf("\n\n                    *** pass ***      ");
+  }
+else
+  {
+    EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0440','fail','PC');
+          errcnt = errcnt + 1;
+    printf("\n\n         cdr026.pc  *** fail ***       ");
+  }
+
+printf("\n===================================================");
+
+printf("\n\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/********************* END TEST0440 *******************/
+
+
+exit(errcnt);
+
+}

@@ -1,0 +1,158 @@
+/*  EMBEDDED C (file "SDL028.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1990/09/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL028.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS VIEW DEFINITION.                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 6.9 View Definition                  */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     EMPNO1[4];
+     long     avg1;
+     long     max1;
+     long     H1;
+     long     H2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl028.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("===============================================\n\n");
+
+     printf("                  TEST0397       \n");
+     printf("                Grouped view \n");
+     printf("    Reference X3.135-89 section 6.9 GR 1) \n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("\n");
+printf("       CREATE VIEW SET_TEST (EMP1, EMP_AVG, EMP_MAX) AS\n");
+printf("           SELECT STAFF.EMPNUM, AVG(HOURS), MAX(HOURS)\n");
+printf("           FROM STAFF, WORKS\n");
+printf("           GROUP BY STAFF.EMPNUM\n");
+printf("          \n");
+
+     EXEC SQL DECLARE ST CURSOR FOR SELECT EMP1, EMP_AVG, EMP_MAX 
+              FROM SET_TEST
+              ORDER BY EMP1;
+
+     EXEC SQL OPEN ST;
+     EXEC SQL FETCH ST 
+              INTO :EMPNO1, :avg1, :max1;
+     EXEC SQL CLOSE ST;
+
+     printf(" The correct answer should be: \n");
+     printf("      E1,   38 or 39,   80\n");
+     printf(" Your answer is:\n");
+     printf("      %s,    %ld,  %ld\n", EMPNO1, avg1, max1);
+
+ if (strncmp(EMPNO1, "E1", 2) == 0 && max1 == 80 && (avg1 == 38 || avg1 == 39))
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0397','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl028.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0397','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+
+
+     printf("===============================================\n\n");
+
+     printf("                  TEST0420       \n");
+     printf("    View with multiple SELECT of same column \n");
+     printf("    Reference X3.135-89 section 6.9 GR 1) \n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+printf("       CREATE VIEW DUP_COL (EMP1, PNO, HOURS, HOURS_2) AS\n");
+printf("           SELECT EMPNUM, PNUM, HOURS, HOURS * 2\n");
+printf("           FROM WORKS;\n");
+printf("\n");
+
+     EXEC SQL SELECT EMP1, HOURS, HOURS_2 
+              INTO :EMPNO1, :H1, :H2
+              FROM DUP_COL
+              WHERE EMP1 = 'E3';
+
+     printf(" The correct answer should be: \n");
+     printf("      E3,   20,   40\n");
+     printf(" Your answer is:\n");
+     printf("      %s,    %ld,  %ld\n", EMPNO1, H1, H2);
+
+ if (strncmp(EMPNO1, "E3", 2) == 0 && H1 == 20 && H2 == 40)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0420','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl028.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0420','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+}

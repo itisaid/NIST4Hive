@@ -1,0 +1,325 @@
+/*  EMBEDDED C (file "CDR030.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/08/06 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR030.PC                                                    */
+/*  WRITTEN BY: Joan Sullivan                                    */
+/*                                                               */
+/*    THIS ROUTINE TESTS SQLSTATE 23000                          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     char junkit[11];
+     long CPNUM1;
+     long count1;
+EXEC SQL END DECLARE SECTION;
+long ii;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"SUN");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, cdr030.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0516 ********************/
+flag = 1;
+
+     printf("                  TEST0516 \n");
+     printf(" SQLSTATE = 23000: integrity constraint violation\n");
+     printf ("Note: VALID implementation-defined subclass will be\n");
+     printf ("      accepted instead of no-subclass value of 000 \n");
+     printf("Reference ANSI SQL-1992 10.6 <constraint...>\n");
+     printf("   General Rule 4\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     /* Testing referential integrity ERROR, parent missing */
+     printf("INSERT INTO EMP VALUES\n");
+     printf("   (41,'Tom','China Architecture',\n");
+     printf("   20,'Architecture',040553);\n\n");
+     strcpy (SQLSTATE, "x");
+     EXEC SQL INSERT INTO EMP VALUES
+        (41,'Tom','China Architecture',
+        20,'Architecture',040553);
+     printf("Testing referential integrity ERROR, parent missing\n");
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+       flag = 0;
+
+  printf("-------------------------------------------------\n");
+
+     /* Testing referential integrity ERROR, children exist*/
+     printf("DELETE FROM EMP\n");
+     printf("         WHERE ENO = 21;  \n\n");
+     strcpy (SQLSTATE, "x");     
+     EXEC SQL DELETE FROM EMP
+           WHERE ENO = 21;  
+     printf("Testing referential integrity ERROR, children exist\n");
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+       flag = 0;
+
+     printf("-------------------------------------------------\n");
+     
+     /* Testing referential integrity ERROR, children exist */
+     printf("UPDATE EMP\n");
+     printf("         SET ENAME = 'Thomas' WHERE ENO = 21;  \n\n");
+     strcpy (SQLSTATE, "x");     
+     EXEC SQL UPDATE EMP
+           SET ENAME = 'Thomas'
+           WHERE ENO = 21;  
+     printf("Testing referential integrity ERROR, children exist \n");
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+     printf("\n");
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+       flag = 0;
+
+     printf("-------------------------------------------------\n");
+  
+     /* Testing unique constraint ERROR    */
+    printf(" ****  PRIMARY KEY (EMPNUM) **** \n");
+    printf("DELETE FROM STAFF7;\n");
+    printf("INSERT INTO STAFF7 (EMPNUM) VALUES ('XXX');\n\n");
+
+    EXEC SQL DELETE FROM STAFF7;
+
+   strcpy (SQLSTATE, "x");
+   EXEC SQL INSERT INTO STAFF7 (EMPNUM) VALUES ('XXX');
+   printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '00000'; its value is %s\n\n",SQLSTATE);
+     NOSUBCLASS();
+   if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+     flag = 0;
+
+   strcpy (SQLSTATE, "x");
+   EXEC SQL INSERT INTO STAFF7 (EMPNUM) VALUES ('XXX');
+   printf("INSERT INTO STAFF7 (EMPNUM) VALUES ('XXX');\n\n");
+   printf("Testing unique constraint ERROR \n");
+   SQLSTATE[5] = '\0';
+   printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+   printf("\n");
+     NOSUBCLASS();
+   if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+     flag = 0;
+
+   printf("-------------------------------------------------\n");
+
+   /* Testing unique constraint ERROR    */
+   printf("  **** UNIQUE (PNUM) **** \n");
+   printf(" DELETE FROM PROJ3;\n");
+   printf(" INSERT INTO PROJ3 (PNUM) VALUES ('787');\n");
+   printf(" INSERT INTO PROJ3 (PNUM) VALUES ('789');\n\n");
+
+   EXEC SQL DELETE FROM PROJ3;
+
+   EXEC SQL INSERT INTO PROJ3 (PNUM) VALUES ('787');
+   strcpy (SQLSTATE, "x");
+   EXEC SQL INSERT INTO PROJ3 (PNUM) VALUES ('789');
+   printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '00000'; its value is %s\n\n",SQLSTATE);
+     NOSUBCLASS();
+   if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+     flag = 0;
+
+   strcpy (SQLSTATE, "x");
+   EXEC SQL UPDATE PROJ3 SET PNUM = '787' WHERE PNUM = '789';
+   printf("UPDATE PROJ3 SET PNUM = '787' WHERE PNUM = '789';\n\n");
+   printf("Testing unique constraint ERROR \n");
+   SQLSTATE[5] = '\0'; 
+   printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+   printf("\n");
+     NOSUBCLASS();
+   if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+     flag = 0;
+
+   printf("-------------------------------------------------\n");
+
+   /* Testing check constraint ERROR    */
+   printf(" **** CHECK GRADE NOT IN (5,22) ****\n");
+   printf(" DELETE FROM STAFF11;\n");
+   printf(" INSERT INTO STAFF11\n");
+   printf("         VALUES('E3','Susan',11,'Hawaii');\n\n");
+
+
+
+   EXEC SQL DELETE FROM STAFF11;
+   strcpy (SQLSTATE, "x");
+   EXEC SQL INSERT INTO STAFF11
+        VALUES('E3','Susan',11,'Hawaii');
+   printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '00000'; its value is %s\n\n",SQLSTATE);
+     NOSUBCLASS();
+   if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+     flag = 0;
+
+   strcpy (SQLSTATE, "x");
+   EXEC SQL UPDATE STAFF11
+        SET GRADE = 5
+        WHERE EMPNUM = 'E3';
+
+   printf(" UPDATE STAFF11\n");
+   printf("        SET GRADE = 5\n");
+   printf("        WHERE EMPNUM = 'E3';\n\n");
+   printf("Testing check constraint ERROR \n");
+   SQLSTATE[5] = '\0';
+   printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+   printf("\n");
+     NOSUBCLASS();
+   if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+     flag = 0;
+
+   printf("-------------------------------------------------\n");
+
+/* Testing check constraint ERROR  */
+   printf(" ***** CHECK NOT EMPNAME LIKE 'T%%' ****\n\n");
+   printf("UPDATE STAFF11\n");
+   printf("       SET EMPNAME = 'Tom'\n");
+   printf("       WHERE EMPNUM = 'E3';\n\n");
+
+   strcpy (SQLSTATE, "x");
+   EXEC SQL UPDATE STAFF11
+        SET EMPNAME = 'Tom'
+        WHERE EMPNUM = 'E3';
+   printf("Testing check constraint ERROR\n");
+   SQLSTATE[5] = '\0'; 
+   printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+   printf("SQLSTATE should be '23000'; its value is %s\n\n", SQLSTATE);
+   printf("\n");
+     NOSUBCLASS();
+   if (SQLCODE >= 0 || strncmp (NORMSQ, "23000", 5) != 0)
+     flag = 0;
+
+  EXEC SQL ROLLBACK WORK;
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0516','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr030.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0516','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0516 *********************/
+
+     exit(errcnt);
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}

@@ -1,0 +1,228 @@
+/*  EMBEDDED C (file "DML016.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML016.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE VALUE SPECIFICATION AND TARGET      */
+/*  SPECIFICATION IN COMMON ELEMENT OF THE SQL LANGUAGE.         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*  SECTION 5.6 <value specification> and <target specification> */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char PNO[4];
+     char PNAME1[21]; 
+     char EMPNO1[4];
+     long CNT; 
+     long BUGET1; 
+     char LITRAL[20];
+     char PUSER[13]; 
+     char TRUNC[5]; 
+     char TAIL[10];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long  i;
+
+main()
+{
+     strcpy(uid,"SULLIVAN");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml016.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0064 ********************/
+
+     printf("\n                 TEST0064             \n");
+     printf("                 value: USER           \n");
+     printf("    Reference X3.135-1989 section 5.6 GR 4).\n");
+     printf("    - - - - - - - - - - - - - - - - - - - -    \n\n");
+     EXEC SQL DECLARE F CURSOR FOR SELECT USER, PNAME FROM HU.PROJ;
+
+     EXEC SQL OPEN F; 
+     EXEC SQL FETCH F INTO :PUSER, :PNAME1; 
+
+     printf( "\nFetch USER from a cursor value is %s", PUSER);
+
+     if (SQLCODE == 0 && strncmp(PUSER,"SULLIVAN",8) == 0)
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+     VALUES('0064','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+     VALUES('0064','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml016.pc  *** fail ***     ");
+       } 
+     printf("\n================================================\n\n");
+     printf("\n\n\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0064 ********************/
+/******************** BEGIN TEST0172 ********************/
+
+     strcpy(TAIL,"iiiiiiiii");
+     strcpy(TRUNC,"iiii");
+
+     printf("\n                  TEST0172             \n");
+     printf("                  value: USER           \n");
+     printf("    Reference X3.135-1989 section 5.6 GR 4).\n");
+     printf("    - - - - - - - - - - - - - - - - - - - -   \n\n");
+
+     EXEC SQL DECLARE FF CURSOR FOR SELECT USER, PNAME FROM HU.PROJ;
+ 
+     printf("\n Fetch USER directly into a smaller field");
+
+     EXEC SQL OPEN FF;
+     EXEC SQL FETCH FF INTO :TRUNC,:PNAME1;
+
+     printf("\nuser truncated to 4 chars is %s", TRUNC); 
+
+     EXEC SQL CLOSE FF;
+
+     if (strncmp(TRUNC,"SULL",4)==0 && strncmp(TAIL,"iiiiiiiii",9)==0)
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+       VALUES('0172','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+       VALUES('0172','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml016.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0172 ********************/
+/******************** BEGIN TEST0065 ********************/
+
+     printf("\n                 TEST0065             \n");
+     printf("         <character string literal>           \n");
+     printf("    Reference X3.135-1989 section 5.6 GR 3).\n");
+     printf("    - - - - - - - - - - - - - - - - - - - -   \n\n");
+     EXEC SQL DECLARE F1 CURSOR FOR SELECT 'USER', PNAME FROM HU.PROJ;
+
+     EXEC SQL OPEN F1; 
+     EXEC SQL FETCH F1 INTO :PUSER, :PNAME1; 
+ 
+     printf( "\nFetch 'USER' from a cursor value is %s", PUSER); ;
+     EXEC SQL CLOSE F1;
+
+     EXEC SQL SELECT  PNUM, 'BUDGET IN GRAMS IS ', BUDGET*5
+           INTO :PNO,:LITRAL,:BUGET1
+           FROM HU.PROJ
+           WHERE PNUM='P1';
+
+     printf("\nThe character string should be 'BUDGET IN GRAMS IS '");
+     printf("\n PNO=%s,  string=%s,  BUGET1=%ld",PNO,LITRAL,BUGET1);
+
+     if (SQLCODE==0 && strncmp(LITRAL,"BUDGET IN GRAMS IS ",19)==0)
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+       VALUES('0065','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+       VALUES('0065','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml016.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0065 ********************/
+/******************** BEGIN TEST0066 ********************/
+
+     printf("\n                  TEST0066             \n");
+     printf("               <numeric literal>           \n");
+     printf("    Reference X3.135-1989 section 5.6 GR 3).\n");
+     printf("    - - - - - - - - - - - - - - - - - - - -  \n\n");
+
+     BUGET1 = 0;
+     CNT = 0;
+
+     EXEC SQL SELECT EMPNUM, 10 
+              INTO :EMPNO1, :BUGET1
+              FROM HU.STAFF
+              WHERE GRADE = 10;
+     
+     printf(" EMPNO1=%s,BUGET1=%ld,sqlcode=%ld\n",EMPNO1,BUGET1,SQLCODE);
+
+     EXEC SQL DECLARE E1 CURSOR FOR SELECT EMPNUM, 10 FROM HU.STAFF;
+     EXEC SQL OPEN E1;
+     EXEC SQL FETCH E1 INTO :EMPNO1, :CNT;
+
+     printf(" EMPNO1=%s,CNT=%ld & sqlcode=%ld\n",EMPNO1,CNT,SQLCODE);
+
+     if (SQLCODE == 0 && CNT == 10 && BUGET1 == 10)
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+       VALUES('0066','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT
+       VALUES('0066','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml016.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0066 ********************/
+     exit(errcnt);
+
+}

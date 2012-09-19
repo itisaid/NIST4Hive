@@ -1,0 +1,430 @@
+/*  EMBEDDED C (file "DML158.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/12/8 EMBEDDED C LANGUAGE                           */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML158.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests joined tables.                            */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char emnum[4];
+char prnum[4];
+long sumh;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml158.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0857 ********************/
+flag = 1;
+
+     printf("                  TEST0857\n");
+     printf("<join condition> set function, outer reference\n");
+     printf("References:\n");
+     printf("    7.5 SR.4.a -- outer reference in <join condition>\n");
+     printf("    7.5 SR.4.b -- set function in <join condition>\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* <join condition> ::= ON <search condition> */
+
+/* Note 7.5 SR.4.b cannot be completely tested in Transitional; see */
+/* F# 47 and 6.11 LR.2.e */
+
+
+/* 7.5 SR.4.a -- outer reference in <join condition> */
+/* The new management has cancelled all travel.  Delete rows from */
+/* HU.WORKS that have employees working on projects in cities other */
+/* than the ones in which they live. */
+
+/* 6.4 SR.2 name scoping */
+
+printf("DELETE FROM WORKS\n");
+printf("WHERE EXISTS (\n");
+printf("  SELECT * FROM PROJ JOIN STAFF\n");
+printf("  ON PROJ.CITY <> STAFF.CITY\n");
+printf("  AND EMPNUM = WORKS.EMPNUM\n");
+printf("  AND PNUM = WORKS.PNUM\n");
+printf(");\n");
+EXEC SQL DELETE FROM WORKS
+WHERE EXISTS (
+  SELECT * FROM PROJ JOIN STAFF
+  ON PROJ.CITY <> STAFF.CITY
+  AND EMPNUM = WORKS.EMPNUM
+  AND PNUM = WORKS.PNUM
+);
+CHCKOK ();
+printf("\n");
+
+/* Check results. */
+
+printf("DECLARE C15811 CURSOR FOR\n");
+printf("  SELECT EMPNUM, PNUM FROM WORKS\n");
+printf("  ORDER BY EMPNUM, PNUM;\n\n");
+EXEC SQL DECLARE C15811 CURSOR FOR
+  SELECT EMPNUM, PNUM FROM WORKS
+  ORDER BY EMPNUM, PNUM;
+
+printf("OPEN C15811;\n");
+EXEC SQL OPEN C15811;
+CHCKOK ();
+printf("\n");
+
+strcpy (emnum, "xxx");
+strcpy (prnum, "xxx");
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+CHCKOK ();
+printf ("emnum should be 'E1 '; its value is '%s'\n", emnum);
+printf ("prnum should be 'P1 '; its value is '%s'\n\n", prnum);
+if (strcmp (emnum, "E1 ") != 0 || strcmp (prnum, "P1 ") != 0)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+strcpy (prnum, "xxx");
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+CHCKOK ();
+printf ("emnum should be 'E1 '; its value is '%s'\n", emnum);
+printf ("prnum should be 'P4 '; its value is '%s'\n\n", prnum);
+if (strcmp (emnum, "E1 ") != 0 || strcmp (prnum, "P4 ") != 0)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+strcpy (prnum, "xxx");
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+CHCKOK ();
+printf ("emnum should be 'E1 '; its value is '%s'\n", emnum);
+printf ("prnum should be 'P6 '; its value is '%s'\n\n", prnum);
+if (strcmp (emnum, "E1 ") != 0 || strcmp (prnum, "P6 ") != 0)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+strcpy (prnum, "xxx");
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+CHCKOK ();
+printf ("emnum should be 'E2 '; its value is '%s'\n", emnum);
+printf ("prnum should be 'P2 '; its value is '%s'\n\n", prnum);
+if (strcmp (emnum, "E2 ") != 0 || strcmp (prnum, "P2 ") != 0)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+strcpy (prnum, "xxx");
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+CHCKOK ();
+printf ("emnum should be 'E3 '; its value is '%s'\n", emnum);
+printf ("prnum should be 'P2 '; its value is '%s'\n\n", prnum);
+if (strcmp (emnum, "E3 ") != 0 || strcmp (prnum, "P2 ") != 0)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+strcpy (prnum, "xxx");
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+CHCKOK ();
+printf ("emnum should be 'E4 '; its value is '%s'\n", emnum);
+printf ("prnum should be 'P4 '; its value is '%s'\n\n", prnum);
+if (strcmp (emnum, "E4 ") != 0 || strcmp (prnum, "P4 ") != 0)
+  flag = 0;
+
+printf("FETCH C15811 INTO :emnum, :prnum;\n");
+EXEC SQL FETCH C15811 INTO :emnum, :prnum;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* List the total hours worked for employees that have grade above */
+/* 10 and have some project such that they are devoting less than */
+/* a third of their time to it. */
+
+printf("DECLARE C15812 CURSOR FOR\n");
+printf("  SELECT EMPNUM, SUM (HOURS) FROM WORKS OWORKS\n");
+printf("  GROUP BY EMPNUM\n");
+printf("  HAVING EMPNUM IN (\n");
+printf("  SELECT WORKS.EMPNUM FROM WORKS JOIN STAFF\n");
+printf("  ON WORKS.EMPNUM = STAFF.EMPNUM\n");
+printf("  AND HOURS < SUM (OWORKS.HOURS) / 3\n");
+printf("  AND GRADE > 10)\n");
+printf("  ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C15812 CURSOR FOR
+  SELECT EMPNUM, SUM (HOURS) FROM WORKS OWORKS
+  GROUP BY EMPNUM
+  HAVING EMPNUM IN (
+  SELECT WORKS.EMPNUM FROM WORKS JOIN STAFF
+  ON WORKS.EMPNUM = STAFF.EMPNUM
+  AND HOURS < SUM (OWORKS.HOURS) / 3
+  AND GRADE > 10)
+  ORDER BY EMPNUM;
+
+printf("OPEN C15812;\n");
+EXEC SQL OPEN C15812;
+CHCKOK ();
+printf("\n");
+
+strcpy (emnum, "xxx");
+sumh = -1;
+printf("FETCH C15812 INTO :emnum, :sumh;\n");
+EXEC SQL FETCH C15812 INTO :emnum, :sumh;
+CHCKOK ();
+printf ("emnum should be 'E1 '; its value is '%s'\n", emnum);
+printf ("sumh should be 184; its value is %ld\n\n", sumh);
+if (strcmp (emnum, "E1 ") != 0 || sumh != 184)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+sumh = -1;
+printf("FETCH C15812 INTO :emnum, :sumh;\n");
+EXEC SQL FETCH C15812 INTO :emnum, :sumh;
+CHCKOK ();
+printf ("emnum should be 'E4 '; its value is '%s'\n", emnum);
+printf ("sumh should be 140; its value is %ld\n\n", sumh);
+if (strcmp (emnum, "E4 ") != 0 || sumh != 140)
+  flag = 0;
+
+printf("FETCH C15812 INTO :emnum, :sumh;\n");
+EXEC SQL FETCH C15812 INTO :emnum, :sumh;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("CLOSE C15812;\n");
+EXEC SQL CLOSE C15812;
+CHCKOK ();
+printf("\n");
+
+/* List the total hours worked for employees that live in Deale */
+/* and have some project such that they are devoting 10 more than */
+/* their average hours per project to it. */
+
+printf("DECLARE C15813 CURSOR FOR\n");
+printf("  SELECT EMPNUM, SUM (HOURS) FROM WORKS OWORKS\n");
+printf("  GROUP BY EMPNUM\n");
+printf("  HAVING EMPNUM IN (\n");
+printf("  SELECT WORKS.EMPNUM FROM WORKS JOIN STAFF\n");
+printf("  ON WORKS.EMPNUM = STAFF.EMPNUM\n");
+printf("  AND HOURS >= 10 + AVG (OWORKS.HOURS)\n");
+printf("  AND CITY = 'Deale')\n");
+printf("  ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C15813 CURSOR FOR
+  SELECT EMPNUM, SUM (HOURS) FROM WORKS OWORKS
+  GROUP BY EMPNUM
+  HAVING EMPNUM IN (
+  SELECT WORKS.EMPNUM FROM WORKS JOIN STAFF
+  ON WORKS.EMPNUM = STAFF.EMPNUM
+  AND HOURS >= 10 + AVG (OWORKS.HOURS)
+  AND CITY = 'Deale')
+  ORDER BY EMPNUM;
+
+printf("OPEN C15813;\n");
+EXEC SQL OPEN C15813;
+CHCKOK ();
+printf("\n");
+
+strcpy (emnum, "xxx");
+sumh = -1;
+printf("FETCH C15813 INTO :emnum, :sumh;\n");
+EXEC SQL FETCH C15813 INTO :emnum, :sumh;
+CHCKOK ();
+printf ("emnum should be 'E1 '; its value is '%s'\n", emnum);
+printf ("sumh should be 184; its value is %ld\n\n", sumh);
+if (strcmp (emnum, "E1 ") != 0 || sumh != 184)
+  flag = 0;
+
+strcpy (emnum, "xxx");
+sumh = -1;
+printf("FETCH C15813 INTO :emnum, :sumh;\n");
+EXEC SQL FETCH C15813 INTO :emnum, :sumh;
+CHCKOK ();
+printf ("emnum should be 'E4 '; its value is '%s'\n", emnum);
+printf ("sumh should be 140; its value is %ld\n\n", sumh);
+if (strcmp (emnum, "E4 ") != 0 || sumh != 140)
+  flag = 0;
+
+printf("FETCH C15813 INTO :emnum, :sumh;\n");
+EXEC SQL FETCH C15813 INTO :emnum, :sumh;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0857','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml158.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0857','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0857 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

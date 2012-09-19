@@ -1,0 +1,646 @@
+
+/*  EMBEDDED C (file "DML076.PC")     */ 
+ 
+/**********************************************************/ 
+/*                                                        */ 
+/*              COMMENT SECTION                           */ 
+/*                                                        */ 
+/*  DATE 1991/06/18 EMBEDDED C LANGUAGE                   */ 
+/*  NIST SQL VALIDATION TEST SUITE V6.0                   */ 
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                        */ 
+/*  DML076.PC                                             */ 
+/*  WRITTEN BY: YOLANDA HERD                              */ 
+/*                                                        */ 
+/*  THIS ROUTINE TESTS NULLS AND CURSORS                  */ 
+/*                                                        */ 
+/*  REFERENCES                                            */ 
+/*   AMERICAN NATIONAL STANDARD database language - SQL   */ 
+/*                                X3.135-1989             */ 
+/*                                                        */ 
+/*                 SECTION 4.2                            */ 
+/*                   DATA TYPES, DEFINITION OF NULL       */ 
+/*                   SECTION 8.10, GR 8                   */ 
+/*                                                        */ 
+/**********************************************************/ 
+ 
+#include <stdio.h> 
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+ 
+EXEC SQL BEGIN DECLARE SECTION; 
+  char CHARTP[2]; 
+  long INTTP; 
+  float REALTP; 
+  short SMLTP; 
+  double DBLETP; 
+  float FLTP; 
+  long NUMTP; 
+  long DECTP; 
+  long GRDE;
+  char NME1[21];
+  char NME2[21];
+  char CITY1[16];
+  char VAR1[4];
+  short indic1; 
+  short indic2; 
+  short indic3; 
+  short indic4; 
+  short indic5; 
+  short indic6; 
+  short indic7; 
+  short indic8;
+  short indic9;
+  short indicx; 
+  long count1; 
+  long count2; 
+  long count3;
+  long count4;
+  long count5;
+  long count6;
+  long count7;
+  long count8;
+  long count9;
+  long countx; 
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION; 
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+ 
+  long flag1; 
+  long flag2;
+  long flag3;
+  int i;
+ 
+  main() 
+  { 
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml076.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+  /********************** BEGIN TEST0410 **********************/
+  /* This program tests NULL values in OPEN CURSORS           */
+  /*                                                          */
+
+  printf("\n                      TEST0410           \n");
+  printf("             NULL value in OPEN CURSOR     \n");
+  printf("    reference X3.135-1989 5.11 GR2 and 5.21 GR2   \n");
+  printf(" -------------------------------------------------\n");
+
+  strcpy(NME1,"IRM");
+  strcpy(VAR1,"XXX");
+  indic1 = -1;
+  indic2 = 0;
+  count1 = 10000;
+  count3 = 0;
+
+  EXEC SQL DECLARE X CURSOR
+    FOR SELECT PNUM
+    FROM PROJ
+    WHERE PNAME = :NME1:indic1 OR BUDGET > :count1:indic2;
+
+  EXEC SQL OPEN X;
+
+  for (i=1;i<7;i++)
+    {
+      EXEC SQL FETCH X INTO :VAR1;
+      if (SQLCODE == 0)
+        count3 = count3 + 1;
+      printf("VAR1 = %s\n",VAR1);
+    }
+
+  strcpy(NME1,"MXSS");
+  strcpy(CITY1,"XXXXXX");
+  count1 = 50000;
+  count2 = 0;
+  indic1 = -1;
+  indic2 = 0;
+
+  EXEC SQL DECLARE Y CURSOR
+    FOR SELECT CITY
+    FROM PROJ
+    WHERE PNAME = :NME1:indic2 OR BUDGET < :count1:indic1;
+
+  EXEC SQL OPEN Y;
+
+  for (i=1;i<7;i++)
+    {
+      EXEC SQL FETCH Y INTO :CITY1;
+      if (SQLCODE == 0)
+        count2 = count2 + 1;
+      printf("CITY1 = %s\n", CITY1);
+    }
+
+  printf(" The correct answers are:\n");
+  printf("   count3 = 4 and count2 = 1  \n");
+  printf("\n");
+  printf(" Your answers are:\n");
+  printf("   count3 = %ld and count2 = %ld \n",count3, count2);
+
+  if ((count3 == 4) && (count2 == 1))
+    { 
+      EXEC SQL INSERT INTO TESTREPORT 
+        VALUES('0410','pass','PC'); 
+      printf("\n\n                  *** pass ***     "); 
+    } 
+  else 
+    { 
+      EXEC SQL INSERT INTO TESTREPORT 
+        VALUES('0410','fail','PC'); 
+          errcnt = errcnt + 1;
+      printf("\n\n        dml076.pc  *** fail ***     "); 
+    } 
+    
+  printf("\n====================================================="); 
+ 
+  printf("\n\n\n\n"); 
+
+
+  EXEC SQL COMMIT WORK; 
+ 
+  /********************** END TEST0410 **********************/
+
+  /********************** BEGIN TEST0435 **********************/
+  /* This program tests UPDATES WHERE CURRENT                 */
+  /*                                                          */  
+
+  printf("\n                      TEST0435          \n");
+  printf("        Host variables in UPDATE WHERE CURRENT\n");
+  printf("    reference X3.135-1989 8.11, value expression\n");
+  printf("  --------------------------------------------------\n");
+
+  EXEC SQL DECLARE DINO CURSOR 
+    FOR SELECT EMPNUM, CITY
+    FROM STAFF
+    WHERE CITY > 'Dino';
+
+  EXEC SQL OPEN DINO;
+
+  GRDE = 0;
+  strcpy(CITY1,"XXXXX");
+  strcpy(NME1,"XXX");
+  strcpy(VAR1,"XXX");
+
+  for (i=1; i<6; i++)
+    {
+      GRDE = i;
+      EXEC SQL FETCH DINO INTO :VAR1, :CITY1;
+  
+      if (SQLCODE == 0)
+        {
+          printf(" VAR1 = %s, CITY1 = %s\n", VAR1, CITY1);
+          strcpy(CITY1,"Dinoville");
+          EXEC SQL UPDATE STAFF
+                     SET GRADE = :GRDE + 10, CITY = :CITY1
+                     WHERE CURRENT OF DINO; 
+        }
+
+
+      if (i == 2)
+        {
+          strcpy(NME1,"Smith");
+          EXEC SQL UPDATE STAFF
+                     SET GRADE = GRADE * :GRDE, EMPNAME = :NME1
+                     WHERE CURRENT OF DINO;
+          printf(" VAR1 = %s, GRDE = %ld\n",VAR1, GRDE);
+        }
+    }
+
+  GRDE = -1;
+  strcpy(NME1,"Joan");
+ 
+  EXEC SQL SELECT SUM(GRADE) INTO :GRDE
+    FROM STAFF
+    WHERE CITY = :CITY1;
+
+  EXEC SQL SELECT EMPNAME INTO :NME1
+    FROM STAFF
+    WHERE EMPNAME > 'Ed';
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf("\n");
+  printf(" The correct answers are:\n");
+  printf(" GRDE = 35 and NME1 = Smith\n");
+  printf("\n");
+  printf(" Your answers are:\n");
+  printf(" GRDE = %ld and NME1 = %s\n", GRDE, NME1);
+  
+  if ((GRDE == 35) && (strncmp(NME1,"Smith               ",20) == 0)) 
+    { 
+      EXEC SQL INSERT INTO TESTREPORT 
+        VALUES('0435','pass','PC'); 
+      printf("\n\n                  *** pass ***     "); 
+    } 
+  else 
+    { 
+      EXEC SQL INSERT INTO TESTREPORT 
+        VALUES('0435','fail','PC'); 
+          errcnt = errcnt + 1;
+      printf("\n\n        dml076.pc  *** fail ***     "); 
+    } 
+    
+  printf("\n====================================================="); 
+ 
+  printf("\n\n\n\n"); 
+
+
+  EXEC SQL COMMIT WORK; 
+ 
+  /********************** END TEST0435 **********************/
+       
+
+
+  /********************** BEGIN TEST0436 **********************/ 
+  /* This program tests the NULL values for various           */ 
+  /* SQL Data Types                                           */ 
+  
+  printf("\n                        TEST0436              \n"); 
+  printf("        NULL values for various SQL Data Types      \n"); 
+  printf("     reference X3.135-1989 section 4.2, 8.10 GR 8 \n"); 
+  printf("   -------------------------------------------------\n\n"); 
+ 
+   
+  strcpy(CHARTP,"X"); 
+  indic1 = 0; 
+  indic2 = 0; 
+  indic3 = 0; 
+  indic4 = 0; 
+  indic5 = 0; 
+  indic6 = 0; 
+  indic7 = 0; 
+  indic8 = 0; 
+  count1 = 0; 
+  count2 = 0; 
+  count3 = 0; 
+  INTTP = 99999; 
+  REALTP = 99.99; 
+  SMLTP = 99; 
+  DBLETP = 999999.99999; 
+  FLTP = 99.999; 
+  NUMTP = 999; 
+  DECTP = 999; 
+ 
+EXEC SQL INSERT INTO BB VALUES(NULL); 
+EXEC SQL INSERT INTO EE VALUES(NULL); 
+EXEC SQL INSERT INTO GG VALUES(NULL); 
+EXEC SQL INSERT INTO HH VALUES(NULL); 
+EXEC SQL INSERT INTO II VALUES(NULL); 
+EXEC SQL INSERT INTO JJ VALUES(NULL); 
+EXEC SQL INSERT INTO MM VALUES(NULL); 
+EXEC SQL INSERT INTO SS VALUES(NULL);
+  
+EXEC SQL SELECT CHARTEST INTO :CHARTP:indic1 
+    FROM BB; 
+ 
+EXEC SQL SELECT INTTEST INTO :INTTP:indic2 
+    FROM EE; 
+ 
+EXEC SQL SELECT REALTEST INTO :REALTP:indic3 
+    FROM GG; 
+EXEC SQL SELECT COUNT(*) INTO :count1 
+    FROM GG 
+    WHERE REALTEST IS NULL; 
+ 
+EXEC SQL SELECT SMALLTEST INTO :SMLTP:indic4 
+    FROM HH; 
+ 
+EXEC SQL SELECT DOUBLETEST INTO :DBLETP:indic5 
+    FROM II; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count2 
+    FROM II 
+    WHERE DOUBLETEST IS NULL; 
+ 
+EXEC SQL SELECT FLOATTEST INTO :FLTP:indic6 
+    FROM JJ; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count3 
+    FROM JJ 
+    WHERE FLOATTEST IS NULL; 
+ 
+EXEC SQL SELECT NUMTEST INTO :NUMTP:indic7 
+    FROM MM; 
+ 
+EXEC SQL SELECT NUMTEST INTO :DECTP:indic8 
+    FROM SS; 
+
+EXEC SQL ROLLBACK WORK;
+
+printf(" The correct answers are:\n");
+printf("    All indicator variables should be -1\n");
+printf("    count1, count2, and count3 = 1\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("    indic1 = %d, indic2 = %d\n",indic1, indic2);
+printf("    indic3 = %d, indic4 = %d\n",indic3, indic4);
+printf("    indic5 = %d, indic6 = %d\n",indic5, indic6);
+printf("    indic7 = %d, indic8 = %d\n",indic7, indic8);
+printf("    count1 = %ld, count2 = %ld, count3 = %ld\n",count1,count2,count3);
+ 
+flag1 = 0;
+
+flag2 = 0;
+
+if (indic1 != -1 || indic2 != -1 || indic3 != -1 || indic4 != -1) 
+    flag1 = 1; 
+
+if (indic5 != -1 || indic6 != -1 || indic7 != -1 || indic8 != -1)  
+    flag1 = 1; 
+ 
+if (count1 != 1 || count2 != 1 || count3 != 1) 
+    flag2 = 1; 
+ 
+ 
+if (flag1 == 0 && flag2 == 0) 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0436','pass','PC'); 
+    printf("\n\n                  *** pass ***     "); 
+  } 
+else 
+  { 
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0436','fail','PC'); 
+          errcnt = errcnt + 1;
+    printf("\n\n        dml076.pc  *** fail ***     "); 
+  } 
+  
+printf("\n====================================================="); 
+ 
+printf("\n\n\n\n"); 
+
+EXEC SQL COMMIT WORK; 
+ 
+/********************** END TEST0436 **********************/
+       
+
+/********************** BEGIN TEST0437 ********************/
+  
+printf("\n                      TEST0437             \n");
+printf("       NULL values for various host variables     \n");
+printf("   reference X3.135-1989 section 4.2, 8.7, 5.6 GR 1 or 2   \n");
+printf("  --------------------------------------------------   \n");
+
+indic1 = -1;
+indic2 = -1;
+indic3 = -1;
+indic4 =  0;
+indic5 =  0;
+indic6 =  0;
+count1 = 0;
+count2 = 0;
+count3 = 0;
+count4 = 0;
+
+strcpy(CHARTP,"2");
+DECTP = -23;
+REALTP = 99;
+EXEC SQL INSERT INTO BB VALUES(:CHARTP :indic1);
+EXEC SQL INSERT INTO SS VALUES(:DECTP  :indic2);
+EXEC SQL INSERT INTO GG VALUES(:REALTP :indic3);
+
+
+strcpy(CHARTP,"X");
+DECTP = 23;
+REALTP = 45;
+EXEC SQL INSERT INTO BB VALUES(:CHARTP :indic4);
+EXEC SQL INSERT INTO SS VALUES(:DECTP  :indic5);
+EXEC SQL INSERT INTO GG VALUES(:REALTP :indic6);
+
+EXEC SQL INSERT INTO DD SELECT * FROM BB;
+EXEC SQL INSERT INTO PP SELECT NUMTEST FROM SS;
+EXEC SQL INSERT INTO JJ SELECT REALTEST FROM GG
+         WHERE REALTEST IS NULL OR REALTEST > 0;
+
+EXEC SQL SELECT CHARTEST INTO :CHARTP 
+           FROM DD 
+           WHERE CHARTEST IS NOT NULL;
+  
+EXEC SQL SELECT NUMTEST INTO :DECTP 
+           FROM PP 
+           WHERE NUMTEST IS NOT NULL;
+
+EXEC SQL SELECT FLOATTEST INTO :REALTP
+           FROM JJ 
+           WHERE FLOATTEST IS NOT NULL;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+           FROM JJ 
+           WHERE FLOATTEST IS NOT NULL;
+    
+EXEC SQL SELECT COUNT(*) INTO :count2
+           FROM DD
+           WHERE CHARTEST IS NULL;
+
+EXEC SQL SELECT COUNT(*) INTO :count3
+           FROM PP
+           WHERE NUMTEST IS NULL;
+
+EXEC SQL SELECT COUNT(*) INTO :count4
+           FROM JJ
+           WHERE FLOATTEST IS NULL;
+
+EXEC SQL ROLLBACK WORK;
+
+printf(" The correct answers are:\n");
+printf("   CHARTP = X, DECTP = 23, REALTP is between 44 and 46\n");
+printf("   count1 = 1, count2 = 1\n"); 
+printf("   count3 = 1, count4 = 1\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("   CHARTP = %s, DECTP = %ld, REALTP = %f\n",CHARTP,DECTP,REALTP);
+printf("   count1 = %ld, count2 = %ld\n",count1,count2);
+printf("   count3 = %ld, count4 = %ld\n",count3,count4);
+
+flag1 = 0;
+   
+if ((strncmp(CHARTP,"X",1) != 0) || DECTP != 23)
+   flag1 = 1;
+
+flag2 = 0;
+
+if (REALTP < 44 || REALTP > 46)
+   flag2 = 1;
+
+flag3 = 0;
+
+if (count1 != 1 || count2 != 1 || count3 != 1 || count4 != 1)
+   flag3 = 1;       
+
+if (flag1 == 0 && flag2 == 0 && flag3 == 0)
+    {
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0437','pass','PC');
+      printf("\n\n                 *** pass ***      ");
+    }
+else
+    {
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0437','fail','PC');
+          errcnt = errcnt + 1;
+      printf("\n\n       dml076.pc  *** fail ***      ");
+    }
+
+  EXEC SQL COMMIT WORK; 
+printf("\n=====================================================");
+  
+printf("\n\n\n\n");
+/********************** END TEST0437 **********************/
+
+/********************** BEGIN TEST0441 ********************/
+  
+printf("\n                    TEST0441     \n");
+printf("\n           NULL values for various predicates\n");
+printf("    reference 5.6 <value specification> GR 1 or 2  \n");
+printf("----------------------------------------------------\n");
+    
+count1 = 0; 
+count2 = -1; 
+count3 = 0; 
+count4 = -1; 
+count5 = 0; 
+count6 = -1; 
+count7 = 0; 
+count8 = -1; 
+count9 = 0;
+countx = -1;
+indic1 = 0; 
+indic2 = -1; 
+indic3 = 0;
+indic4 = -1;
+indic5 = 0;
+indic6 = -1;
+indic7 = 0;
+indic8 = -1;
+indic9 = 0;
+indicx = -1;
+ 
+DECTP = 11;
+strcpy(CITY1,"V___na%");
+strcpy(NME1,"S_P%");
+
+EXEC SQL SELECT COUNT(*) INTO :count1 
+  FROM STAFF 
+  WHERE GRADE BETWEEN 9 AND :DECTP :indic1; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count2 
+  FROM STAFF 
+  WHERE GRADE BETWEEN 9 AND :DECTP :indic2; 
+ 
+DECTP = 39999;
+
+EXEC SQL SELECT COUNT(*) INTO :count3 
+  FROM PROJ 
+  WHERE BUDGET NOT BETWEEN 9999 AND :DECTP :indic3; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count4  
+  FROM PROJ 
+  WHERE BUDGET NOT BETWEEN 999 AND :DECTP :indic4; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count5 
+  FROM  PROJ 
+  WHERE PNAME LIKE :NME1 :indic5; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count6 
+  FROM PROJ 
+  WHERE PNAME LIKE :NME1 :indic6; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count7 
+  FROM STAFF 
+  WHERE CITY NOT LIKE :CITY1 :indic7; 
+ 
+EXEC SQL SELECT COUNT(*) INTO :count8 
+  FROM STAFF 
+  WHERE CITY NOT LIKE :CITY1 :indic8; 
+
+DECTP = 20;
+
+EXEC SQL SELECT COUNT(*) INTO :count9
+  FROM WORKS
+  WHERE HOURS <> :DECTP :indic9;
+
+EXEC SQL SELECT COUNT(*) INTO :countx
+  FROM WORKS
+  WHERE HOURS <> :DECTP :indicx;
+ 
+EXEC SQL ROLLBACK WORK; 
+ 
+printf(" The correct answers are:\n"); 
+printf("  count1 = 1,  count2 = 0\n"); 
+printf("  count3 = 1,  count4 = 0\n"); 
+printf("  count5 = 2,  count6 = 0\n");
+printf("  count7 = 3,  count8 = 0\n");
+printf("  count9 = 8,  countx = 0\n"); 
+printf("\n"); 
+printf(" Your answers are:\n"); 
+printf("  count1 = %ld,  count2 = %ld\n",count1,count2); 
+printf("  count3 = %ld,  count4 = %ld\n",count3,count4); 
+printf("  count5 = %ld,  count6 = %ld\n",count5,count6);
+printf("  count7 = %ld,  count8 = %ld\n",count7,count8);
+printf("  count9 = %ld,  countx = %ld\n",count9,countx); 
+ 
+flag1 = 0; 
+flag2 = 0;
+flag3 = 0; 
+ 
+if ((count1 != 1) || (count2 != 0) || (count3 != 1) || (count4 != 0)) 
+  flag1 = 1; 
+ 
+if ((count5 != 2) || (count6 != 0) || (count7 != 3) || (count8 != 0)) 
+  flag2 = 1; 
+ 
+if ((count9 != 8) || (countx != 0))
+  flag3 = 1;
+
+if ((flag1 == 0) && (flag2 == 0) && (flag3 == 0))
+    { 
+      EXEC SQL INSERT INTO TESTREPORT 
+        VALUES('0441','pass','PC'); 
+      printf("\n\n                  *** pass ***     "); 
+    } 
+  else 
+    { 
+      EXEC SQL INSERT INTO TESTREPORT 
+        VALUES('0441','fail','PC'); 
+          errcnt = errcnt + 1;
+      printf("\n\n        dml076.pc  *** fail ***     "); 
+    } 
+    
+  printf("\n====================================================="); 
+ 
+  printf("\n\n\n\n"); 
+
+
+  EXEC SQL COMMIT WORK; 
+ 
+  /********************** END TEST0441 **********************/
+
+exit(errcnt); 
+
+
+
+} 
+

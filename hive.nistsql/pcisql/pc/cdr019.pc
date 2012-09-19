@@ -1,0 +1,367 @@
+/*  EMBEDDED C (file "CDR019.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR019.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENTIAL INTEGRITY CONSTRAINT FOR*/
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+long code1;
+long code2;
+
+main()
+
+{
+        strcpy(uid,"SUN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr019.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0365 ********************/
+
+/*  insert row into FOREIGN KEY TABLE EMP, check        */
+/*  referential integrity.  TABLE EMP is also a PRIMARY */
+/*  KEY TABLE to EXPERIENCE TABLE                      */
+
+printf("\n                     TEST0365             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("      SQL with Integrity Enhancement section 6.5,6.6\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        INSERT INTO EMP VALUES\n");
+printf("        (41,'Tom','China Architecture',\n");
+printf("        20,'Architecture',040553);\n");
+printf("\n");
+printf("        INSERT INTO DEPT VALUES\n");
+printf("        (20,'Architecture','Richard');\n");
+printf("\n");
+printf("        INSERT INTO EMP VALUES\n");
+printf("        (41,'Tom','China Architecture',\n");
+printf("        20,'Architecture',040553);\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1 FROM EMP\n");
+printf("        WHERE ENO = 41;\n");
+printf("\n");
+count1 = -1;
+EXEC SQL INSERT INTO EMP VALUES
+        (41,'Tom','China Architecture',
+        20,'Architecture',040553);
+code1 = SQLCODE;
+EXEC SQL INSERT INTO DEPT VALUES
+        (20,'Architecture','Richard');
+EXEC SQL INSERT INTO EMP VALUES
+        (41,'Tom','China Architecture',
+        20,'Architecture',040553);
+code2 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM EMP
+        WHERE ENO = 41;
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("           code1 is less than 0.\n");
+printf("           code2 is equal to 0.\n");
+printf("           count1 is 1\n");
+printf(" Your answer is :\n");
+printf("           code1  is %ld\n",code1);
+printf("           code2  is %ld\n",code2);
+printf("           count1 is %ld\n",count1);
+if (code1 < 0 && count1 == 1 && code2 == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0365','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0365','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr019.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0365 ***********/
+
+
+
+
+/******************** BEGIN TEST0366 ********************/
+
+/*  insert row into PRIMARY KEY TABLE EMP, check        */
+/*  referential integrity.  TABLE EMP is also a FOREIGN */
+/*  KEY TABLE to TABLE DEPT                       */
+
+printf("\n                     TEST0366             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("      SQL with Integrity Enhancement section 6.5,6.6\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE FROM EMP\n");
+printf("        WHERE ENO = 21;\n");
+printf("\n");
+printf("        DELETE FROM EXPERIENCE\n");
+printf("        WHERE EXP_NAME = 'Tom' AND BTH_DATE = 040523;\n");
+printf("\n");
+printf("        DELETE FROM EMP\n");
+printf("        WHERE ENO = 21;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1 FROM EMP\n");
+printf("        WHERE ENO = 21;\n");
+count1 = -1;
+EXEC SQL DELETE FROM EMP
+        WHERE ENO = 21;
+code1 = SQLCODE;
+EXEC SQL DELETE FROM EXPERIENCE
+        WHERE EXP_NAME = 'Tom' AND BTH_DATE = 040523;
+EXEC SQL DELETE FROM EMP
+        WHERE ENO = 21;
+code2 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM EMP
+        WHERE ENO = 21;
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("           code1 is not equal to 0.\n");
+printf("           code2 is equal to 0.\n");
+printf("           count1 is 0\n");
+printf(" Your answer is :\n");
+printf("           code1 is %ld\n",code1);
+printf("           code2 is %ld\n",code2);
+printf("           count1 is %ld\n",count1);
+if (code1 != 0 && count1 == 0 && code2 == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0366','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0366','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr019.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0366 ***********/
+
+
+
+
+
+/******************** BEGIN TEST0367 ********************/
+
+/*  Update middle table, check the effect of this table */
+/*  as both PRIMARY TABLE (to upper level) and FOREIGN  */
+/*  TABLE (to lower level).                             */
+
+printf("\n                     TEST0367             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("  SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        UPDATE EMP\n");
+printf("        SET ENAME = 'Thomas'\n");
+printf("        WHERE ENO = 21;\n");
+printf("\n");
+printf("        UPDATE EMP\n");
+printf("        SET DNAME = 'Agriculture'\n");
+printf("        WHERE  ENO = 21;\n");
+printf("\n");
+printf("        UPDATE EMP\n");
+printf("        SET DNAME = 'Education'\n");
+printf("        WHERE  ENO = 21;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM EMP\n");
+printf("        WHERE DNO = 12 AND DNAME = 'Education'\n");
+printf("              AND ENO = 21 AND ENAME = 'Tom';\n");
+printf("\n");
+count1 = -1;
+EXEC SQL UPDATE EMP
+        SET ENAME = 'Thomas'
+        WHERE ENO = 21;
+code1 = SQLCODE;
+EXEC SQL UPDATE EMP
+        SET DNAME = 'Agriculture'
+        WHERE  ENO = 21;
+code2 = SQLCODE;
+EXEC SQL UPDATE EMP
+        SET DNAME = 'Education'
+        WHERE  ENO = 21;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM EMP
+        WHERE DNO = 12 AND DNAME = 'Education'
+              AND ENO = 21 AND ENAME = 'Tom';
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("           code1 is not equal to 0.\n");
+printf("           code2 is not equal to 0.\n");
+printf("           count1 is 1\n");
+printf(" Your answer is :\n");
+printf("           code1 is %ld\n",code1);
+printf("           code2 is %ld\n",code2);
+printf("           count1 is %ld\n",count1);
+ if (code1 < 0 && code2 < 0 && count1 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0367','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0367','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr019.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0367 *************************/
+
+
+
+
+/******************** BEGIN TEST0368 ********************/
+/* The employee Tom in EMP, his name is changed into    */
+/* Thomas, this will affect the integrity.              */
+printf("\n                     TEST0368             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("  SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        UPDATE EMP\n");
+printf("        SET ENAME = 'Thomas'\n");
+printf("        WHERE ENO = 21;\n");
+printf("\n");
+printf("        INSERT INTO EMP VALUES\n");
+printf("        (30,'Thomas','Languages & Operating System',\n");
+printf("        12,'Computer',040523);\n");
+printf("\n");
+printf("        UPDATE EXPERIENCE\n");
+printf("        SET EXP_NAME = 'Thomas'\n");
+printf("        WHERE  EXP_NAME = 'Tom' AND BTH_DATE = 040523;\n");
+printf("\n");
+printf("        DELETE EMP\n");
+printf("        WHERE  ENO = 21;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM EMP\n");
+printf("        WHERE DNO = 12 AND ENO = 21 \n");
+printf("              AND ENAME = 'Tom';\n");
+printf("\n");
+count1 = -1;
+EXEC SQL UPDATE EMP
+        SET ENAME = 'Thomas'
+        WHERE ENO = 21;
+code1 = SQLCODE;
+EXEC SQL INSERT INTO EMP VALUES
+         (30,'Thomas','Languages & Operating System',
+         12,'Computer',040523);
+EXEC SQL UPDATE EXPERIENCE
+        SET EXP_NAME = 'Thomas'
+        WHERE EXP_NAME = 'Tom' AND BTH_DATE = 040523;
+code2 = SQLCODE;
+EXEC SQL DELETE FROM EMP
+        WHERE  ENO = 21;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM EMP
+        WHERE DNO = 12 AND ENO = 21 
+              AND ENAME = 'Tom';
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("           code1 is not equal to 0.\n");
+printf("           code2 is equal to 0.\n");
+printf("           count1 is 0\n");
+printf(" Your answer is :\n");
+printf("           code1 is %ld\n",code1);
+printf("           code2 is %ld\n",code2);
+printf("           count1 is %ld\n",count1);
+ if (code1 < 0 && code2 == 0 && count1 == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0368','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0368','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr019.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0368 *************************/
+     exit(errcnt);
+}
+
+
+

@@ -1,0 +1,514 @@
+/*  EMBEDDED C (file "SDL032.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/06/15 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL032.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char mpnm[4];
+     char mpna[21];
+     long grd;
+     char cty[16];
+     char uid[19];
+     char uidx[19];
+     long tmpcnt;
+EXEC SQL END DECLARE SECTION;
+
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     ii;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl032.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0472 ********************/
+flag = 1;
+
+     printf("                  TEST0472 \n");
+     printf("   Priv.violation: indiv. SELECT & col. UPDATE\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("SELECT EMPNU, EMPNAME, GRADE, CITY\n");
+     printf ("  INTO :mpnm, :mpna, :grd, :cty\n");
+     printf ("  FROM HU.STAFF3 WHERE EMPNUM = 'E1';\n");
+     strcpy (mpnm, "x");
+     strcpy (mpna, "x");
+     grd = 0;
+     strcpy (cty, "x");
+     EXEC SQL SELECT EMPNUM, EMPNAME, GRADE, CITY
+       INTO :mpnm, :mpna, :grd, :cty
+       FROM HU.STAFF3 WHERE EMPNUM = 'E1';
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     mpnm[3] = '\0';
+     printf ("mpnm should be 'E1'; its value is %s\n", mpnm);
+     mpna[20] = '\0';
+     printf ("mpna should be 'Alice'; its value is %s\n", mpna);
+     printf ("grd should be 12; its value is %ld\n", grd);
+     cty[15] = '\0';
+     printf ("cty should be 'Deale'; its value is %s\n", cty);
+
+     if (ii != 0 || strncmp (mpnm, "E1", 2) != 0)
+       flag = 0;
+     if (strncmp (mpna, "Alice", 5) != 0 || grd != 12)
+       flag = 0;
+     if (strncmp (cty, "Deale", 5) != 0)
+       flag = 0;
+
+   printf ("UPDATE HU.STAFF3 SET EMPNUM = 'E0' WHERE EMPNUM = 'E1';\n");
+     EXEC SQL UPDATE HU.STAFF3
+       SET EMPNUM = 'E0'
+       WHERE EMPNUM = 'E1';
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("UPDATE HU.STAFF3 SET EMPNAME = 'Larry'\n");
+     printf ("  WHERE EMPNUM = 'E0';\n");
+     EXEC SQL UPDATE HU.STAFF3
+       SET EMPNAME = 'Larry'
+       WHERE EMPNUM = 'E0';
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("UPDATE HU.STAFF3 SET GRADE = 15;\n");
+     EXEC SQL UPDATE HU.STAFF3
+       SET GRADE = 15;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("UPDATE HU.STAFF3 SET CITY = 'Greenmount';\n");
+     EXEC SQL UPDATE HU.STAFF3
+       SET CITY = 'Greenmount';
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("SELECT COUNT(*) FROM HU.STAFF3\n");
+     printf ("WHERE CITY = 'Greenmount' OR\n");
+     printf ("GRADE = 15;\n");
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.STAFF3 WHERE CITY = 'Greenmount'
+       OR GRADE = 15;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 0; its value is %ld\n", tmpcnt);
+
+     if (ii != 0 || tmpcnt != 0)
+       flag = 0;
+
+  printf ("INSERT INTO HU.STAFF3 VALUES ('E6','Mickey',12,'Nice');\n");
+     printf ("SELECT COUNT(*) FROM HU.STAFF3;\n");
+     EXEC SQL INSERT INTO HU.STAFF3
+       VALUES ('E6','Mickey',12,'Nice');
+     ii = SQLCODE;
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF3;
+printf ("SQLCODE should be < 0, 0;its value is %ld, %ld\n", ii,SQLCODE);
+     printf ("COUNT should be 5; its value is %ld\n", tmpcnt);
+
+     if (ii >= 0 || SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+
+     printf ("DELETE FROM HU.STAFF3;\n");
+     printf ("SELECT COUNT(*) FROM HU.STAFF3;\n");
+     EXEC SQL DELETE FROM HU.STAFF3;
+     ii = SQLCODE;
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF3;
+printf ("SQLCODE should be < 0, 0;its value is %ld, %ld\n", ii,SQLCODE);
+     printf ("COUNT should be 5; its value is %ld\n", tmpcnt);
+
+     if (ii >= 0 || SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0472','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl032.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0472','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0472 *********************/
+
+/******************** BEGIN TEST0484 ********************/
+flag = 1;
+
+     printf("                  TEST0484 \n");
+     printf("   Priv.violation: SELECT & col. UPDATE on view\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("SELECT EMPNU, EMPNAME, GRADE, CITY\n");
+     printf ("  INTO :mpnm, :mpna, :grd, :cty\n");
+     printf ("  FROM HU.VSTAFF3 WHERE EMPNUM = 'E1';\n");
+     strcpy (mpnm, "x");
+     strcpy (mpna, "x");
+     grd = 0;
+     strcpy (cty, "x");
+     EXEC SQL SELECT EMPNUM, EMPNAME, GRADE, CITY
+       INTO :mpnm, :mpna, :grd, :cty
+       FROM HU.VSTAFF3 WHERE EMPNUM = 'E1';
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     mpnm[3] = '\0';
+     printf ("mpnm should be 'E1'; its value is %s\n", mpnm);
+     mpna[20] = '\0';
+     printf ("mpna should be 'Alice'; its value is %s\n", mpna);
+     printf ("grd should be 12; its value is %ld\n", grd);
+     cty[15] = '\0';
+     printf ("cty should be 'Deale'; its value is %s\n", cty);
+
+     if (ii != 0 || strncmp (mpnm, "E1", 2) != 0)
+       flag = 0;
+     if (strncmp (mpna, "Alice", 5) != 0 || grd != 12)
+       flag = 0;
+     if (strncmp (cty, "Deale", 5) != 0)
+       flag = 0;
+
+  printf ("UPDATE HU.VSTAFF3 SET EMPNUM = 'E0' WHERE EMPNUM = 'E1';\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET EMPNUM = 'E0'
+       WHERE EMPNUM = 'E1';
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("UPDATE HU.VSTAFF3 SET EMPNAME = 'Larry'\n");
+     printf ("  WHERE EMPNUM = 'E0';\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET EMPNAME = 'Larry'
+       WHERE EMPNUM = 'E0';
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("UPDATE HU.VSTAFF3 SET GRADE = 15;\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET GRADE = 15;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("UPDATE HU.VSTAFF3 SET CITY = 'Greenmount';\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET CITY = 'Greenmount';
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("SELECT COUNT(*) FROM HU.VSTAFF3\n");
+     printf ("WHERE CITY = 'Greenmount' OR\n");
+     printf ("GRADE = 15;\n");
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.VSTAFF3 WHERE CITY = 'Greenmount'
+       OR GRADE = 15;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 0; its value is %ld\n", tmpcnt);
+
+     if (ii != 0 || tmpcnt != 0)
+       flag = 0;
+
+  printf ("INSERT INTO HU.VSTAFF3 VALUES ('E6','Mickey',12,'Nice');\n");
+     printf ("SELECT COUNT(*) FROM HU.VSTAFF3;\n");
+     EXEC SQL INSERT INTO HU.VSTAFF3
+       VALUES ('E6','Mickey',12,'Nice');
+     ii = SQLCODE;
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.VSTAFF3;
+printf ("SQLCODE should be < 0, 0;its value is %ld, %ld\n", ii,SQLCODE);
+     printf ("COUNT should be 5; its value is %ld\n", tmpcnt);
+
+     if (ii >= 0 || SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+
+     printf ("DELETE FROM HU.VSTAFF3;\n");
+     printf ("SELECT COUNT(*) FROM HU.VSTAFF3;\n");
+     EXEC SQL DELETE FROM HU.VSTAFF3;
+     ii = SQLCODE;
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.VSTAFF3;
+printf ("SQLCODE should be < 0, 0;its value is %ld, %ld\n", ii,SQLCODE);
+     printf ("COUNT should be 5; its value is %ld\n", tmpcnt);
+
+     if (ii >= 0 || SQLCODE != 0 || tmpcnt != 5)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0484','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl032.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0484','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0484 *********************/
+
+/******************** BEGIN TEST0485 ********************/
+flag = 1;
+
+     printf("                  TEST0485 \n");
+     printf("   Priv.violation: SELECT & col. UPDATE cursor\n");
+     printf("Reference ANSI SQL-1992 11.36 <grant statement>\n");
+     printf("                               13.1  <declare cursor>\n");
+     printf("                               13.2  <open statement>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf ("DECLARE BRAD CURSOR FOR\n");
+     printf ("SELECT EMPNUM, EMPNAME, GRADE, CITY\n");
+     printf ("FROM HU.VSTAFF3 WHERE EMPNUM = 'E1';\n");
+     EXEC SQL DECLARE BRAD CURSOR FOR
+       SELECT EMPNUM, EMPNAME, GRADE, CITY
+       FROM HU.VSTAFF3 WHERE EMPNUM = 'E1';
+
+     printf ("OPEN BRAD;\n");
+     EXEC SQL OPEN BRAD;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     strcpy (mpnm, "x");
+     strcpy (mpna, "x");
+     grd = 0;
+     strcpy (cty, "x");
+     printf ("FETCH BRAD INTO :mpnm, :mpna, :grd, :cty;\n");
+     EXEC SQL FETCH BRAD INTO :mpnm, :mpna, :grd, :cty;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     mpnm[3] = '\0';
+     printf ("mpnm should be 'E1'; its value is %s\n", mpnm);
+     mpna[20] = '\0';
+     printf ("mpna should be 'Alice'; its value is %s\n", mpna);
+     printf ("grd should be 12; its value is %ld\n", grd);
+     cty[15] = '\0';
+     printf ("cty should be 'Deale'; its value is %s\n", cty);
+
+     if (ii != 0)
+       flag = 0;
+     if (strncmp (mpnm, "E1", 2) != 0)
+       flag = 0;
+     if (strncmp (mpna, "Alice", 5) != 0 || grd != 12)
+       flag = 0;
+     if (strncmp (cty, "Deale", 5) != 0)
+       flag = 0;
+
+     printf ("CLOSE BRAD;\n");
+     EXEC SQL CLOSE BRAD;
+
+     printf ("DECLARE MAGENTA CURSOR FOR\n");
+     printf ("SELECT EMPNUM, EMPNAME FROM HU.VSTAFF3;\n");
+     EXEC SQL DECLARE MAGENTA CURSOR FOR
+       SELECT EMPNUM, EMPNAME
+       FROM HU.VSTAFF3;
+     /* Magenta Declaration */
+     /* Do not delete these comments--TED uses them */
+
+     printf ("OPEN MAGENTA;\n");
+     EXEC SQL OPEN MAGENTA;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("FETCH MAGENTA INTO :mpnm, :mpna;\n");
+     EXEC SQL FETCH MAGENTA INTO :mpnm, :mpna;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("UPDATE HU.VSTAFF3 SET EMPNUM = 'E0'\n");
+     printf ("WHERE CURRENT OF MAGENTA;\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET EMPNUM = 'E0' WHERE CURRENT OF MAGENTA;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     printf ("UPDATE HU.VSTAFF3 SET EMPNAME = 'Janet'\n");
+     printf ("WHERE CURRENT OF MAGENTA;\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET EMPNAME = 'Janet'
+       WHERE CURRENT OF MAGENTA;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+
+     if (ii != 0)
+       flag = 0;
+
+     /* Do Not Delete This  001 */
+     printf ("UPDATE HU.VSTAFF3 SET GRADE = 15\n");
+     printf ("WHERE CURRENT OF MAGENTA;\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET GRADE = 15
+       WHERE CURRENT OF MAGENTA;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("UPDATE HU.VSTAFF3 SET CITY = 'Denton'\n");
+     printf ("WHERE CURRENT OF MAGENTA;\n");
+     EXEC SQL UPDATE HU.VSTAFF3
+       SET CITY = 'Denton'
+       WHERE CURRENT OF MAGENTA;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     printf ("SELECT COUNT(*) FROM HU.VSTAFF3\n");
+     printf ("WHERE CITY = 'Denton' OR\n");
+     printf ("GRADE = 15;\n");
+     tmpcnt = -1;
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.VSTAFF3 WHERE CITY = 'Denton'
+       OR GRADE = 15;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 0; its value is %ld\n", tmpcnt);
+
+     if (ii != 0 || tmpcnt != 0)
+       flag = 0;
+
+     printf ("DELETE FROM HU.VSTAFF3 WHERE CURRENT OF MAGENTA;\n");
+     EXEC SQL DELETE FROM HU.VSTAFF3
+       WHERE CURRENT OF MAGENTA;
+     ii = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", ii);
+
+     if (ii >= 0)
+       flag = 0;
+
+     /* Do Not Delete This  002 */
+     printf ("CLOSE MAGENTA;\n");
+     EXEC SQL CLOSE MAGENTA;
+
+     tmpcnt = -1;
+     printf ("SELECT COUNT(*) FROM HU.VSTAFF3;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.VSTAFF3;
+     ii = SQLCODE;
+     printf ("SQLCODE should be 0; its value is %ld\n", ii);
+     printf ("COUNT should be 5; its value is %ld\n", tmpcnt);
+
+     if (ii != 0)
+       flag = 0;
+     if (tmpcnt != 5)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0485','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl032.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0485','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0485 *********************/
+
+     exit(errcnt);
+}

@@ -1,0 +1,194 @@
+/*  EMBEDDED C (file "CCC011.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1991/09/11 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC011.PC                                                    */
+/*  WRITTEN BY: YOLANDA HERD                                     */
+/*                                                               */
+/*  THIS FLAGGER PROGRAM TESTS C VARIABLE INITIAL VALUES.        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+	
+EXEC SQL BEGIN DECLARE SECTION;
+
+/* BEGIN TEST0398 variables */
+  char enum3[4] = {'E', '7', ' ', '\0'};
+  long GD1 = 15;
+  short SMAL_INT = 5;
+  float RL1 = 1.2345;
+  double DP1 = 2.34E20;
+  short indic1 = -1;
+/* END TEST0398 variables */
+ 
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+  int errflg;
+  int i;
+
+main()
+{
+
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc011.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+errflg = 0;
+
+/******************** BEGIN TEST0398 ********************/
+printf("\n                  TEST0398             \n");
+printf("  FIPS Flagger - Embedded C initial value \n");
+printf(" - - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+EXEC SQL INSERT INTO STAFF(EMPNUM, GRADE)
+  VALUES(:enum3,:GD1);
+strcpy(enum3,"E8");
+GD1 = 0;
+
+EXEC SQL INSERT INTO STAFF(EMPNUM, GRADE)
+  VALUES(:enum3:indic1,:GD1);
+i = SQLCODE;
+
+EXEC SQL DELETE FROM HH;
+
+EXEC SQL INSERT INTO HH
+  VALUES(:SMAL_INT);
+
+SMAL_INT = 0;
+
+
+EXEC SQL DELETE FROM GG;
+
+EXEC SQL INSERT INTO GG
+  VALUES(:RL1);
+
+RL1 = 0;
+
+EXEC SQL DELETE FROM II;
+
+EXEC SQL INSERT INTO II
+  VALUES(:DP1);
+
+DP1 = 0;
+
+/* GET VALUE BACK FROM DATABASE TO SEE IF INITIAL VALUE INSERTED
+   CORRECTLY. */
+
+EXEC SQL SELECT EMPNUM, GRADE INTO :enum3, :GD1
+  FROM STAFF
+  WHERE EMPNUM = 'E7';
+
+EXEC SQL SELECT * INTO :SMAL_INT FROM HH;
+
+EXEC SQL SELECT * INTO :RL1 FROM GG;
+
+EXEC SQL SELECT * INTO :DP1 FROM II;
+
+EXEC SQL ROLLBACK WORK;
+
+printf("The correct answers are:\n");
+printf(" enum3 = E7, GD1 = 15, i < 0\n");
+printf(" RL1 = 1.2345, DP1 = 2.345E20\n");
+printf("\n");
+printf("Your answers are:\n");
+printf(" enum3 = %s, GD1 = %ld, i = %d\n",enum3,GD1,i);
+printf(" RL1 = %f, DP1 = %f\n",RL1,DP1);
+printf("\n");
+
+if ((strncmp(enum3,"E7 ",3) != 0))
+  {
+    printf("*** Problem Found (1) ! CHAR ERR ***\n");
+    errflg++;
+  }
+
+if (GD1 != 15)
+  {
+    printf("*** Problem Found (2) ! INT ERR ***\n");
+    errflg++; 
+  }
+ 
+if (i > 0)
+  {
+    printf("*** Problem Found (3) ! INDICATOR ERR ***\n");
+    errflg++;
+  }
+
+if (RL1 > 1.2346 || RL1 < 1.2344)
+  {
+    printf("*** Problem Found (4) ! REAL ERR ***\n");
+    errflg++;
+  }
+  
+if (DP1 > 2.35E20 || DP1 < 2.33E20)
+  {
+    printf("*** Problem Found (5) ! DOUBLE PREC. ERR ***\n");
+    errflg++;
+  }
+
+     if (errflg == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0398','pass','PC');
+       printf("\n\n                   *** pass ***");   
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0398','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n        ccc011.pc  *** fail ***");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0398 ********************/
+
+
+     exit(errcnt);
+
+}
+

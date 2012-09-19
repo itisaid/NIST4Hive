@@ -1,0 +1,289 @@
+/*  EMBEDDED C (file "DML025.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML025.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE QUERY SPECIFICATION FOR SQL.        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                SECTION 5.25 <query specification>             */
+/*                        5.8 <set function specification>       */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char    WPNUM[4];
+     long    ii;
+     long    SUMH;
+     long    AVGH;
+     long    MINH;
+     long    MAXH;
+     short indic1;
+     short indic2;
+     short indic3;
+     short indic4;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+     long     i;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml025.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0114 ********************/
+
+printf("                   TEST0114\n");
+printf(" Reference ANSI X3.135-1989 5.25 <query specification> GR1\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** SELECT SUM(HOURS),AVG(HOURS),MIN(HOURS),MAX(HOURS) \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  EMPNUM='E1' \n");
+
+EXEC SQL DECLARE S1 CURSOR FOR
+          SELECT SUM(HOURS),AVG(HOURS),MIN(HOURS),MAX(HOURS)
+          FROM    WORKS
+          WHERE   EMPNUM='E1';
+EXEC SQL OPEN S1;
+i = 0;
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S1 INTO
+               :SUMH,:AVGH,:MINH,:MAXH;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+printf("SUM = %ld,  AVG = %ld,  MIN = %ld,  MAX = %ld\n",SUMH,AVGH,MINH,MAXH);
+          }
+     }
+
+if (i==1 && SUMH == 184 && MAXH == 80)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0114','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml025.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0114','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0114 ********************/
+/******************** BEGIN TEST0115 ********************/
+ 
+printf("                   TEST0115\n");
+printf(" Reference ANSI X3.135-1989 5.25 <query specification> GR3\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** The result of table expression has zero groups \n");
+printf ("*** SELECT PNUM,AVG(HOURS),MIN(HOURS),MAX(HOURS) \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  EMPNUM='E8' \n");
+printf ("*** GROUP BY PNUM \n");
+
+EXEC SQL DECLARE S2 CURSOR FOR
+          SELECT PNUM,AVG(HOURS),MIN(HOURS),MAX(HOURS)
+          FROM    WORKS
+          WHERE   EMPNUM='E8'
+          GROUP BY PNUM;
+
+EXEC SQL OPEN S2;
+i = 0;
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S2 INTO
+               :WPNUM,:AVGH,:MINH,:MAXH;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf("  %s     %ld\n",WPNUM,MAXH);
+          }
+     }
+
+if (i == 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0115','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml025.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0115','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0115 ********************/
+/******************** BEGIN TEST0116 ********************/
+ 
+/*  5.25 GR3) is not correct. ANSI has updated the rule into:    */
+/*    3). if R is a grouped table that has zero group, the       */
+/*        result of the <query specification> is an empty table. */
+
+printf("                   TEST0116\n");
+printf(" Reference ANSI X3.135-1989 5.25 <query specification> GR3\n");
+printf("          Cross reference: 5.8 GR4 Case c). \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** The result of table expression has zero groups \n");
+printf ("*** SELECT SUM(HOURS),AVG(HOURS),MIN(HOURS),MAX(HOURS) \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** WHERE  EMPNUM='E8' \n");
+printf ("*** GROUP BY PNUM \n");
+
+EXEC SQL DECLARE S3 CURSOR FOR
+          SELECT SUM(HOURS),AVG(HOURS),MIN(HOURS),MAX(HOURS)
+          FROM    WORKS
+          WHERE   EMPNUM='E8'
+          GROUP BY PNUM;
+
+EXEC SQL OPEN S3;
+i = 0;
+indic1 = 0;
+indic2 = 0;
+indic3 = 0;
+indic4 = 0;
+
+EXEC SQL FETCH S3 INTO
+          :SUMH:indic1,:AVGH:indic2,:MINH:indic3,:MAXH:indic4;
+  
+if (SQLCODE == 0)
+          {
+          i = i + 1;
+          }
+
+printf(" i = %ld, indic1 = %d, sqlcode = %ld\n",i,indic1,SQLCODE);
+
+if ( i == 0 && SQLCODE == 100 )
+     {
+       printf("\n\n               *** pass ***  ");
+       printf("\n                *** (i = 0) *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0116','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml025.pc  *** fail ***   ");
+       printf("\n       *** (i = 1 or sqlcode is not 100) *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0116','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0116 ********************/
+/******************** BEGIN TEST0117 ********************/
+ 
+printf("                   TEST0117\n");
+printf(" Reference ANSI X3.135-1989 5.25 <query specification> GR4\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** The result of table expression has one or more groups \n");
+printf ("*** SELECT PNUM,AVG(HOURS),MIN(HOURS),MAX(HOURS) \n");
+printf ("*** FROM   WORKS \n");
+printf ("*** GROUP BY PNUM \n");
+
+EXEC SQL DECLARE S4 CURSOR FOR
+          SELECT PNUM,AVG(HOURS),MIN(HOURS),MAX(HOURS)
+          FROM    WORKS
+          GROUP BY PNUM;
+
+EXEC SQL OPEN S4;
+i = 0;
+
+printf("  PNUM  AVG(HOURS) \n");
+
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S4 INTO
+               :WPNUM,:AVGH,:MINH,:MAXH;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf("  %s     %ld\n",WPNUM,AVGH);
+          }
+     }
+
+if (i == 6)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0117','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml025.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0117','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0117 ********************/
+
+exit(errcnt);
+}

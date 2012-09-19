@@ -1,0 +1,731 @@
+/*  EMBEDDED C (file "DML157.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/09/19 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML157.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Transitional SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long pstaid;
+int pdcp;
+varchar pnam[41];
+char platc[9];
+float platf;
+char plongc[10];
+float plongf;
+int pmerid;
+float pmllw;
+float pcurr;
+short indic1;
+short indic2;
+short indic3;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml157.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0856 ********************/
+flag = 1;
+
+     printf("                  TEST0856\n");
+     printf("       Transitional Schema Definition\n");
+     printf("References:\n");
+     printf("    11.1 -- <schema definition>\n");
+     printf("    F# 5 -- DATETIME data types\n");
+     printf("    F# 6 -- VARCHAR data type (and SUBSTRING function)\n");
+     printf("    F# 17 -- Multiple schemas per user\n");
+     printf("    F# 20 -- CAST functions\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* You must run sc11tab to initialize the table */
+/* before running this test. */
+
+printf("DECLARE C15711 CURSOR FOR\n");
+printf("  SELECT STATION_ID, DCP, STATION_NAME, DEG_LATITUDE,\n");
+printf("  DEG_LONGITUDE, EXTRACT (HOUR FROM MERIDIAN), FEET_MLLW,\n");
+printf("  KNOTS_PERM_CURRENT FROM HYDROGRAPHY.STATIONS\n");
+printf("  ORDER BY STATION_ID, DCP;\n\n");
+EXEC SQL DECLARE C15711 CURSOR FOR
+  SELECT STATION_ID, DCP, STATION_NAME, DEG_LATITUDE,
+  DEG_LONGITUDE, EXTRACT (HOUR FROM MERIDIAN), FEET_MLLW,
+  KNOTS_PERM_CURRENT FROM HYDROGRAPHY.STATIONS
+  ORDER BY STATION_ID, DCP;
+
+printf("OPEN C15711;\n");
+EXEC SQL OPEN C15711;
+CHCKOK ();
+printf("\n");
+
+pstaid = -1;
+pdcp = -1;
+strcpy (pnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (platc, "xxxxxxxx");
+strcpy (plongc, "xxxxxxxxx");
+pmerid = 20;
+indic1 = 20;
+pmllw = 20.0;
+indic2 = 20;
+pcurr = 20.0;
+indic3 = 20;
+
+printf("FETCH C15711 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15711 INTO :pstaid, :pdcp, :pnam,
+  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 670001; its value is %ld\n", pstaid);
+if (pstaid != 670001)
+  flag = 0;
+printf ("pdcp should be 0; its value is %ld\n", pdcp);
+if (pdcp != 0)
+  flag = 0;
+printf ("pnam should be 'NAHA HARBOR, OKINAWA'; its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "NAHA HARBOR, OKINAWA") != 0)
+  flag = 0;
+printf ("platc should be '26 12.5N'; its value is '%s'\n", platc);
+if (strcmp (platc, "26 12.5N") != 0)
+  flag = 0;
+printf ("plongc should be '127 40.1E'; its value is '%s'\n", plongc);
+if (strcmp (plongc, "127 40.1E") != 0)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be 9; its value is %ld\n", pmerid);
+if (pmerid != 9)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 1.18 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 1.179 || pmllw > 1.181)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15711 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15711 INTO :pstaid, :pdcp, :pnam,
+  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 1495000; its value is %ld\n", pstaid);
+if (pstaid != 1495000)
+  flag = 0;
+printf ("pdcp should be 1; its value is %ld\n", pdcp);
+if (pdcp != 1)
+  flag = 0;
+printf ("pnam should be 'ESPERANZA, ANTARCTICA'; its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "ESPERANZA, ANTARCTICA") != 0)
+  flag = 0;
+printf ("platc should be '63 23.7S'; its value is '%s'\n", platc);
+if (strcmp (platc, "63 23.7S") != 0)
+  flag = 0;
+printf ("plongc should be '56  59.7W'; its value is '%s'\n", plongc);
+if (strcmp (plongc, "56  59.7W") != 0)
+  flag = 0;
+printf ("indic1 should be -1; its value is %d\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+printf ("indic2 should be -1; its value is %d\n", indic2);
+if (indic2 != -1)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15711 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15711 INTO :pstaid, :pdcp, :pnam,
+  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 1495000; its value is %ld\n", pstaid);
+if (pstaid != 1495000)
+  flag = 0;
+printf ("pdcp should be 2; its value is %ld\n", pdcp);
+if (pdcp != 2)
+  flag = 0;
+printf ("pnam should be 'ESPERANZA, ANTARCTICA'; its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "ESPERANZA, ANTARCTICA") != 0)
+  flag = 0;
+printf ("platc should be '63 23.7S'; its value is '%s'\n", platc);
+if (strcmp (platc, "63 23.7S") != 0)
+  flag = 0;
+printf ("plongc should be '56  59.7W'; its value is '%s'\n", plongc);
+if (strcmp (plongc, "56  59.7W") != 0)
+  flag = 0;
+printf ("indic1 should be -1; its value is %d\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+printf ("indic2 should be -1; its value is %d\n", indic2);
+if (indic2 != -1)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15711 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15711 INTO :pstaid, :pdcp, :pnam,
+  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 9414290; its value is %ld\n", pstaid);
+if (pstaid != 9414290)
+  flag = 0;
+printf ("pdcp should be 0; its value is %ld\n", pdcp);
+if (pdcp != 0)
+  flag = 0;
+printf ("pnam should be 'SAN FRANCISCO, SAN FRANCISCO BAY';\n");
+printf ("  its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "SAN FRANCISCO, SAN FRANCISCO BAY") != 0)
+  flag = 0;
+printf ("platc should be '37 48.4N'; its value is '%s'\n", platc);
+if (strcmp (platc, "37 48.4N") != 0)
+  flag = 0;
+printf ("plongc should be '122 27.9W'; its value is '%s'\n", plongc);
+if (strcmp (plongc, "122 27.9W") != 0)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be -8; its value is %ld\n", pmerid);
+if (pmerid != -8)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 3.13 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 3.129 || pmllw > 3.131)
+  flag = 0;
+printf ("indic3 should be 0; its value is %d\n", indic3);
+if (indic3 != 0)
+  flag = 0;
+printf ("pcurr should be -0.2 +- 0.001; its value is %f\n", pcurr);
+if (pcurr < -0.201 || pcurr > -0.199)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15711 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15711 INTO :pstaid, :pdcp, :pnam,
+  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 9452210; its value is %ld\n", pstaid);
+if (pstaid != 9452210)
+  flag = 0;
+printf ("pdcp should be 0; its value is %ld\n", pdcp);
+if (pdcp != 0)
+  flag = 0;
+printf ("pnam should be 'JUNEAU, GASTINEAU CHANNEL, STEPHENS';\n");
+printf ("  its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "JUNEAU, GASTINEAU CHANNEL, STEPHENS") != 0)
+  flag = 0;
+printf ("platc should be '58 17.9N'; its value is '%s'\n", platc);
+if (strcmp (platc, "58 17.9N") != 0)
+  flag = 0;
+printf ("plongc should be '134 24.7W'; its value is '%s'\n", plongc);
+if (strcmp (plongc, "134 24.7W") != 0)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be -9; its value is %ld\n", pmerid);
+if (pmerid != -9)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 5.62 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 5.619 || pmllw > 5.621)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15711 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15711 INTO :pstaid, :pdcp, :pnam,
+  :platc, :plongc, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 9962420; its value is %ld\n", pstaid);
+if (pstaid != 9962420)
+  flag = 0;
+printf ("pdcp should be 1; its value is %ld\n", pdcp);
+if (pdcp != 1)
+  flag = 0;
+printf ("pnam should be 'EASTER ISLAND, HANGA PIKO HARBOR';\n");
+printf ("  its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "EASTER ISLAND, HANGA PIKO HARBOR") != 0)
+  flag = 0;
+printf ("platc should be '27  9.0S'; its value is '%s'\n", platc);
+if (strcmp (platc, "27  9.0S") != 0)
+  flag = 0;
+printf ("plongc should be '109 26.9W'; its value is '%s'\n", plongc);
+if (strcmp (plongc, "109 26.9W") != 0)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be -7; its value is %ld\n", pmerid);
+if (pmerid != -7)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 1.5 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 1.499 || pmllw > 1.501)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("CLOSE C15711;\n");
+EXEC SQL CLOSE C15711;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C15712 CURSOR FOR\n");
+printf("  SELECT STATION_ID, DCP, STATION_NAME, DEG_LATITUDE,\n");
+printf("  DEG_LONGITUDE, EXTRACT (HOUR FROM MERIDIAN), FEET_MLLW,\n");
+printf("  KNOTS_PERM_CURRENT FROM HYDROGRAPHY.STATIONS_D\n");
+printf("  ORDER BY STATION_ID, DCP;\n\n");
+EXEC SQL DECLARE C15712 CURSOR FOR
+  SELECT STATION_ID, DCP, STATION_NAME, DEG_LATITUDE,
+  DEG_LONGITUDE, EXTRACT (HOUR FROM MERIDIAN), FEET_MLLW,
+  KNOTS_PERM_CURRENT FROM HYDROGRAPHY.STATIONS_D
+  ORDER BY STATION_ID, DCP;
+
+printf("OPEN C15712;\n");
+EXEC SQL OPEN C15712;
+CHCKOK ();
+printf("\n");
+
+pstaid = -1;
+pdcp = -1;
+strcpy (pnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+platf = 100.0;
+plongf = 200.0;
+pmerid = 20;
+indic1 = 20;
+pmllw = 20.0;
+indic2 = 20;
+pcurr = 20.0;
+indic3 = 20;
+
+printf("FETCH C15712 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15712 INTO :pstaid, :pdcp, :pnam,
+  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 670001; its value is %ld\n", pstaid);
+if (pstaid != 670001)
+  flag = 0;
+printf ("pdcp should be 0; its value is %ld\n", pdcp);
+if (pdcp != 0)
+  flag = 0;
+printf ("pnam should be 'NAHA HARBOR, OKINAWA'; its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "NAHA HARBOR, OKINAWA") != 0)
+  flag = 0;
+printf ("platf should be 26.208 +- 0.001; its value is %f\n", platf);
+if (platf < 26.207 || platf > 26.209)
+  flag = 0;
+printf ("plongf should be 127.668 +- 0.001; its value is %f\n", plongf);
+if (plongf < 127.667 || plongf > 127.669)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be 9; its value is %ld\n", pmerid);
+if (pmerid != 9)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 1.18 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 1.179 || pmllw > 1.181)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15712 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15712 INTO :pstaid, :pdcp, :pnam,
+  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 1495000; its value is %ld\n", pstaid);
+if (pstaid != 1495000)
+  flag = 0;
+printf ("pdcp should be 1; its value is %ld\n", pdcp);
+if (pdcp != 1)
+  flag = 0;
+printf ("pnam should be 'ESPERANZA, ANTARCTICA'; its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "ESPERANZA, ANTARCTICA") != 0)
+  flag = 0;
+printf ("platf should be -63.395 +- 0.001; its value is %f\n", platf);
+if (platf < -63.396 || platf > -63.394)
+  flag = 0;
+printf ("plongf should be -56.995 +- 0.001; its value is %f\n", plongf);
+if (plongf < -56.996 || plongf > -56.994)
+  flag = 0;
+printf ("indic1 should be -1; its value is %d\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+printf ("indic2 should be -1; its value is %d\n", indic2);
+if (indic2 != -1)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15712 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15712 INTO :pstaid, :pdcp, :pnam,
+  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 1495000; its value is %ld\n", pstaid);
+if (pstaid != 1495000)
+  flag = 0;
+printf ("pdcp should be 2; its value is %ld\n", pdcp);
+if (pdcp != 2)
+  flag = 0;
+printf ("pnam should be 'ESPERANZA, ANTARCTICA'; its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "ESPERANZA, ANTARCTICA") != 0)
+  flag = 0;
+printf ("platf should be -63.395 +- 0.001; its value is %f\n", platf);
+if (platf < -63.396 || platf > -63.394)
+  flag = 0;
+printf ("plongf should be -56.995 +- 0.001; its value is %f\n", plongf);
+if (plongf < -56.996 || plongf > -56.994)
+  flag = 0;
+printf ("indic1 should be -1; its value is %d\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+printf ("indic2 should be -1; its value is %d\n", indic2);
+if (indic2 != -1)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15712 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15712 INTO :pstaid, :pdcp, :pnam,
+  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 9414290; its value is %ld\n", pstaid);
+if (pstaid != 9414290)
+  flag = 0;
+printf ("pdcp should be 0; its value is %ld\n", pdcp);
+if (pdcp != 0)
+  flag = 0;
+printf ("pnam should be 'SAN FRANCISCO, SAN FRANCISCO BAY';\n");
+printf ("  its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "SAN FRANCISCO, SAN FRANCISCO BAY") != 0)
+  flag = 0;
+printf ("platf should be 37.807 +- 0.001; its value is %f\n", platf);
+if (platf < 37.806 || platf > 37.808)
+  flag = 0;
+printf ("plongf should be -122.465 +- 0.001; its value is %f\n", plongf);
+if (plongf < -122.466 || plongf > -122.464)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be -8; its value is %ld\n", pmerid);
+if (pmerid != -8)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 3.13 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 3.129 || pmllw > 3.131)
+  flag = 0;
+printf ("indic3 should be 0; its value is %d\n", indic3);
+if (indic3 != 0)
+  flag = 0;
+printf ("pcurr should be -0.2 +- 0.001; its value is %f\n", pcurr);
+if (pcurr < -0.201 || pcurr > -0.199)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15712 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15712 INTO :pstaid, :pdcp, :pnam,
+  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 9452210; its value is %ld\n", pstaid);
+if (pstaid != 9452210)
+  flag = 0;
+printf ("pdcp should be 0; its value is %ld\n", pdcp);
+if (pdcp != 0)
+  flag = 0;
+printf ("pnam should be 'JUNEAU, GASTINEAU CHANNEL, STEPHENS';\n");
+printf ("  its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "JUNEAU, GASTINEAU CHANNEL, STEPHENS") != 0)
+  flag = 0;
+printf ("platf should be 58.298 +- 0.001; its value is %f\n", platf);
+if (platf < 58.297 || platf > 58.299)
+  flag = 0;
+printf ("plongf should be -134.412 +- 0.001; its value is %f\n", plongf);
+if (plongf < -134.413 || plongf > -134.411)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be -9; its value is %ld\n", pmerid);
+if (pmerid != -9)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 5.62 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 5.619 || pmllw > 5.621)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("FETCH C15712 INTO :pstaid, :pdcp, :pnam,\n");
+printf("  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,\n");
+printf("  :pcurr INDICATOR :indic3;\n");
+EXEC SQL FETCH C15712 INTO :pstaid, :pdcp, :pnam,
+  :platf, :plongf, :pmerid INDICATOR :indic1, :pmllw:indic2,
+  :pcurr INDICATOR :indic3;
+CHCKOK ();
+printf ("pstaid should be 9962420; its value is %ld\n", pstaid);
+if (pstaid != 9962420)
+  flag = 0;
+printf ("pdcp should be 1; its value is %ld\n", pdcp);
+if (pdcp != 1)
+  flag = 0;
+printf ("pnam should be 'EASTER ISLAND, HANGA PIKO HARBOR';\n");
+printf ("  its value is '%s'\n", pnam);
+/* Do not blank pad this; it's a varchar. */
+if (strcmp (pnam, "EASTER ISLAND, HANGA PIKO HARBOR") != 0)
+  flag = 0;
+printf ("platf should be -27.15 +- 0.001; its value is %f\n", platf);
+if (platf < -27.151 || platf > -27.149)
+  flag = 0;
+printf ("plongf should be -109.448 +- 0.001; its value is %f\n", plongf);
+if (plongf < -109.449 || plongf > -109.447)
+  flag = 0;
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("pmerid should be -7; its value is %ld\n", pmerid);
+if (pmerid != -7)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+printf ("pmllw should be 1.5 +- 0.001; its value is %f\n", pmllw);
+if (pmllw < 1.499 || pmllw > 1.501)
+  flag = 0;
+printf ("indic3 should be -1; its value is %d\n", indic3);
+if (indic3 != -1)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0856','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml157.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0856','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0856 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

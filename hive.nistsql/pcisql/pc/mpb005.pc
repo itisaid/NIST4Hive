@@ -1,0 +1,346 @@
+/*  EMBEDDED C (file "MPB005.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE Halloween 1991 EMBEDDED C LANGUAGE                      */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPB005.PC                                                    */
+/*  WRITTEN BY: J Sullivan                                       */
+/*                                                               */
+/*  THIS PROGRAM IS PART A OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL - Phantom Read                  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*           SECTION  4.16 Transactions                          */
+/*                    Paragraph Two                              */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long getct;
+   char uid[19];
+   char uidx[19];
+   char CC[3];
+EXEC SQL END DECLARE SECTION;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+
+   long seqno;
+   long chekct;
+   long errflg;
+   long ii;
+   long iii;
+   long code1;
+
+   long pauze;
+   long pauze2;
+   long tranct;
+   long mpbins;
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpb005.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* transactions are inserted in multiples of the value of tranct */
+   tranct = 5;
+/* MPB005 will insert 12 rows into MP5_TT for this test suite type */
+   mpbins = 24;
+
+/* concurrency tuning variables follow: */
+/* wait pauze units between transactions in a set */
+/* wait pauze2 units between sets of transations */
+   pauze = 1;
+   pauze2 = 20;
+
+   EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0457 ********************/
+
+printf("\n                 TEST0457 \n");
+printf(" Reference X3.135-1989 Section 4.16 Transactions      \n");
+printf("                 Paragraph Two  -  Serializability   \n");
+printf("                   Phantom Read\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf (" *** This program is part B of a two-part             \n");
+printf (" *** program (A & B) that tests for the concurrency   \n");
+printf (" *** of SQL.  Program A inserts and deletes multiples \n");
+printf (" *** of 5 rows between COMMITs while Program B reads\n");
+printf (" *** and counts, ensuring that only multiples of 5 \n");
+printf (" *** are found.\n");
+printf (" \n");
+
+   seqno = 0;
+   errflg = 0;
+
+/*            -----Concurrent Transaction Loop----- */
+
+/* Count MP5_AA for phantom (uncommitted) rows */
+P110:
+   code1 = 0;
+   EXEC SQL SELECT COUNT(*) INTO :getct FROM MP5_AA;
+   if (SQLCODE != 0)
+      {
+          printf("MPB005: Negative SQLCODE counting MP5_AA (Deadlock?)\n");
+          EXEC SQL ROLLBACK WORK;
+          goto P110;
+      }
+
+   /* Has MPA005 started yet? */
+   if (getct == 0)
+      {
+         printf("Please start MPA005\n");
+   EXEC SQL COMMIT WORK;
+         goto P110;
+       }
+
+   EXEC SQL INSERT INTO MP5_TT VALUES ('PC',:getct);
+   if (SQLCODE != 0)
+         code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0 || code1 != 0)
+      {
+         printf("MPB005:1: Negative SQLCODE inserting into MP5_AA\n");
+         EXEC SQL ROLLBACK WORK;
+         goto P110;
+      }
+   printf("%ld rows counted in table MP5_AA\n",getct);
+   seqno = seqno + 1;
+   /* Is getct a multiple of tranct? */
+   chekct = getct / tranct;
+   chekct = chekct * tranct;
+   if (chekct != getct)
+      errflg = 1;
+
+/* pause a little */
+   iii = 0;
+P118:
+   EXEC SQL SELECT C1 INTO :CC FROM HU.ECCO;
+   EXEC SQL COMMIT WORK;
+   iii = iii + 1;
+   if (iii < pauze)
+         goto P118;
+/* end of pause */   
+
+
+/* Read MP5_AA for phantom (uncommitted) rows */
+P120:
+   code1 = 0;
+   EXEC SQL DECLARE MP5_CURSOR1 CURSOR FOR
+            SELECT ANUM FROM MP5_AA;
+   EXEC SQL OPEN MP5_CURSOR1;
+   if (SQLCODE != 0)
+         code1 = 1;
+   ii = 0;
+
+P122:
+   /* count rows in table MP5_AA */
+   EXEC SQL FETCH MP5_CURSOR1 INTO :getct;
+   if (SQLCODE == 0)
+      {
+         ii = ii + 1;
+         goto P122;
+      }
+   if (SQLCODE < 0)
+         code1 = 1;
+
+   if (code1 != 0)
+      {
+          printf("MPB005: Negative SQLCODE reading MP5_AA (Deadlock?)\n");
+          EXEC SQL ROLLBACK WORK;
+          goto P120;
+      }
+   getct = ii;
+   EXEC SQL INSERT INTO MP5_TT VALUES ('PC',:getct);
+   if (SQLCODE != 0)
+         code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0 || code1 != 0)
+      {
+         printf("MPB005:2: Negative SQLCODE inserting into MP5_TT\n");
+         EXEC SQL ROLLBACK WORK;
+         goto P120;
+      }
+   printf("%ld rows fetched from table MP5_AA\n",getct);
+   seqno = seqno + 1;
+   /* Is getct a multiple of tranct? */
+   chekct = getct / tranct;
+   chekct = chekct * tranct;
+   if (chekct != getct)
+      errflg = 1;
+
+/* pause a little */
+   iii = 0;
+P128:
+   EXEC SQL SELECT C1 INTO :CC FROM HU.ECCO;
+   EXEC SQL COMMIT WORK;
+   iii = iii + 1;
+   if (iii < pauze)
+         goto P128;
+/* end of pause */   
+
+
+/* Count MP5_AA_INDEX for phantom (uncommitted) rows */
+P130:
+   code1 = 0;
+   EXEC SQL SELECT COUNT(*) INTO :getct FROM MP5_AA_INDEX;
+   if (SQLCODE != 0)
+      {
+       printf("MPB005: Negative SQLCODE counting MP5_AA_INDEX (Deadlock?)\n");
+          EXEC SQL ROLLBACK WORK;
+          goto P130;
+      }
+   EXEC SQL INSERT INTO MP5_TT VALUES ('PC',:getct);
+   if (SQLCODE != 0)
+         code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0 || code1 != 0)
+      {
+         printf("MPB005:3: Negative SQLCODE inserting into MP5_TT\n");
+         EXEC SQL ROLLBACK WORK;
+         goto P130;
+      }
+   printf("%ld rows counted in table MP5_AA_INDEX\n",getct);
+   seqno = seqno + 1;
+   /* Is getct a multiple of tranct? */
+   chekct = getct / tranct;
+   chekct = chekct * tranct;
+   if (chekct != getct)
+      errflg = 1;
+
+/* pause a little */
+   iii = 0;
+P138:
+   EXEC SQL SELECT C1 INTO :CC FROM HU.ECCO;
+   EXEC SQL COMMIT WORK;
+   iii = iii + 1;
+   if (iii < pauze)
+         goto P138;
+/* end of pause */   
+
+
+/* Read MP5_AA_INDEX for phantom (uncommitted) rows */
+P140:
+   code1 = 0;
+   EXEC SQL DECLARE MP5_CURSOR2 CURSOR FOR
+            SELECT ANUM FROM MP5_AA_INDEX;
+   EXEC SQL OPEN MP5_CURSOR2;
+   if (SQLCODE != 0)
+         code1 = 1;
+   ii = 0;
+
+P142:
+   /* count rows in table MP5_AA_INDEX */
+   EXEC SQL FETCH MP5_CURSOR2 INTO :getct;
+   if (SQLCODE == 0)
+      {
+         ii = ii + 1;
+         goto P142;
+      }
+   if (SQLCODE < 0)
+         code1 = 1;
+
+   if (code1 != 0)
+      {
+       printf("MPB005: Negative SQLCODE reading MP5_AA_INDEX (Deadlock?)\n");
+          EXEC SQL ROLLBACK WORK;
+          goto P140;
+      }
+   getct = ii;
+   EXEC SQL INSERT INTO MP5_TT VALUES ('PC',:getct);
+   if (SQLCODE != 0)
+         code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0 || code1 != 0)
+      {
+         printf("MPB005:4: Negative SQLCODE inserting into MP5_TT\n");
+         EXEC SQL ROLLBACK WORK;
+         goto P140;
+      }
+   printf("%ld rows fetched from table MP5_AA_INDEX\n",getct);
+   seqno = seqno + 1;
+   /* Is getct a multiple of tranct? */
+   chekct = getct / tranct;
+   chekct = chekct * tranct;
+   if (chekct != getct)
+      errflg = 1;
+
+/* pause a little extra */
+   iii = 0;
+P148:
+   EXEC SQL SELECT C1 INTO :CC FROM HU.ECCO;
+   EXEC SQL COMMIT WORK;
+   iii = iii + 1;
+   if (iii < pauze2)
+         goto P148;
+/* end of pause */   
+
+   if (seqno < mpbins)
+      goto P110;  
+
+/*                           -----Evaluation----- */
+
+   printf(" \n"); 
+   printf("The number of rows in MP5_AA or MP5_AA_INDEX\n");
+   printf("   must always be a multiple of %ld.\n",tranct);
+
+   if ( errflg == 0)
+      {
+         printf("\n\nmpb005.pc:        *** pass *** ");
+         EXEC SQL INSERT INTO HU.TESTREPORT
+           VALUES('0457','pass','PC');
+      }
+   else
+      {
+         printf("\n\nmpb005.pc:        *** fail *** ");
+         EXEC SQL INSERT INTO HU.TESTREPORT
+           VALUES('0457','fail','PC');
+         errcnt = errcnt + 1;
+       }
+
+   printf("\n\n");
+   printf("====================================================\n\n");
+ 
+   EXEC SQL COMMIT WORK;
+
+/******************** END TEST0457 ********************/
+
+
+exit(errcnt);
+
+}

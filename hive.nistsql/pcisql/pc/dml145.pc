@@ -1,0 +1,1097 @@
+/*  EMBEDDED C (file "DML145.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/1/27 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML145.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests several string-related features that were */
+/*  hiding under VARCHAR.                                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+short indic1;
+short indic2;
+char ch1[11];
+char dstmt[51];
+char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml145.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0836 ********************/
+flag = 1;
+
+     printf("                  TEST0836 \n");
+     printf("        <length expression> (dynamic)\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 6 -- VARCHAR data type\n");
+     printf("    6.6 LR.2.a -- Leveling rule relaxed by F# 6\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE GRUB (C1 VARCHAR (10));\n");
+EXEC SQL CREATE TABLE GRUB (C1 VARCHAR (10));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT CHAR_LENGTH (EMPNAME)' ||
+       '  FROM HU.STAFF WHERE GRADE = 10'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S14511 FROM :longst;\n");
+EXEC SQL PREPARE S14511 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14511 CURSOR FOR S14511;\n");
+EXEC SQL DECLARE C14511 CURSOR FOR S14511;
+printf("\n");
+
+printf("OPEN C14511;\n");
+EXEC SQL OPEN C14511;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14511 INTO :int1;\n");
+EXEC SQL FETCH C14511 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 20; its value is %ld\n\n", int1);
+if (int1 != 20)
+  flag = 0;
+
+printf("CLOSE C14511;\n");
+EXEC SQL CLOSE C14511;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT CHARACTER_LENGTH (''HI'' ||' ||
+       ' ''THERE'') FROM HU.ECCO'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S14512 FROM :longst;\n");
+EXEC SQL PREPARE S14512 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14512 CURSOR FOR S14512;\n");
+EXEC SQL DECLARE C14512 CURSOR FOR S14512;
+printf("\n");
+
+printf("OPEN C14512;\n");
+EXEC SQL OPEN C14512;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14512 INTO :int1;\n");
+EXEC SQL FETCH C14512 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 7; its value is %ld\n\n", int1);
+if (int1 != 7)
+  flag = 0;
+
+printf("CLOSE C14512;\n");
+EXEC SQL CLOSE C14512;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT CHARACTER_LENGTH (?) FROM HU.ECCO\"\n");
+     strcpy (dstmt,
+     "SELECT CHARACTER_LENGTH (?) FROM HU.ECCO          ");
+
+printf("PREPARE S14515 FROM :dstmt;\n");
+EXEC SQL PREPARE S14515 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14515 CURSOR FOR S14515;\n");
+EXEC SQL DECLARE C14515 CURSOR FOR S14515;
+printf("\n");
+
+strcpy (ch1, "HITHERE   ");
+printf ("ch1 = '%s'\n", ch1);
+printf("OPEN C14515 USING :ch1;\n");
+EXEC SQL OPEN C14515 USING :ch1;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14515 INTO :int1;\n");
+EXEC SQL FETCH C14515 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+printf("CLOSE C14515;\n");
+EXEC SQL CLOSE C14515;
+CHCKOK ();
+printf("\n");
+
+indic1 = -1;
+printf ("indic1 = -1\n");
+printf("OPEN C14515 USING :ch1:indic1;\n");
+EXEC SQL OPEN C14515 USING :ch1:indic1;
+CHCKOK ();
+printf("\n");
+
+indic1 = 50;
+printf("FETCH C14515 INTO :int1:indic1;\n");
+EXEC SQL FETCH C14515 INTO :int1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14515;\n");
+EXEC SQL CLOSE C14515;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO GRUB VALUES ('Hi  ');\n");
+EXEC SQL INSERT INTO GRUB VALUES ('Hi  ');
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT CHARACTER_LENGTH (C1) FROM GRUB\"\n");
+     strcpy (dstmt,
+     "SELECT CHARACTER_LENGTH (C1) FROM GRUB            ");
+
+printf("PREPARE S14513 FROM :dstmt;\n");
+EXEC SQL PREPARE S14513 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14513 CURSOR FOR S14513;\n");
+EXEC SQL DECLARE C14513 CURSOR FOR S14513;
+printf("\n");
+
+printf("OPEN C14513;\n");
+EXEC SQL OPEN C14513;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14513 INTO :int1;\n");
+EXEC SQL FETCH C14513 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+printf("CLOSE C14513;\n");
+EXEC SQL CLOSE C14513;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT OCTET_LENGTH (C1) FROM GRUB\"\n");
+     strcpy (dstmt,
+     "SELECT OCTET_LENGTH (C1) FROM GRUB                ");
+
+printf("PREPARE S14514 FROM :dstmt;\n");
+EXEC SQL PREPARE S14514 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14514 CURSOR FOR S14514;\n");
+EXEC SQL DECLARE C14514 CURSOR FOR S14514;
+printf("\n");
+
+printf("OPEN C14514;\n");
+EXEC SQL OPEN C14514;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14514 INTO :int1;\n");
+EXEC SQL FETCH C14514 INTO :int1;
+CHCKOK ();
+printf ("int1 should be > 2; its value is %ld\n\n", int1);
+if (int1 <= 2)
+  flag = 0;
+
+printf("CLOSE C14514;\n");
+EXEC SQL CLOSE C14514;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE GRUB SET C1 = NULL;\n");
+EXEC SQL UPDATE GRUB SET C1 = NULL;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14513;\n");
+EXEC SQL OPEN C14513;
+CHCKOK ();
+printf("\n");
+
+indic1 = 50;
+printf("FETCH C14513 INTO :int1:indic1;\n");
+EXEC SQL FETCH C14513 INTO :int1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14513;\n");
+EXEC SQL CLOSE C14513;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14514;\n");
+EXEC SQL OPEN C14514;
+CHCKOK ();
+printf("\n");
+
+indic1 = 50;
+printf("FETCH C14514 INTO :int1:indic1;\n");
+EXEC SQL FETCH C14514 INTO :int1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14514;\n");
+EXEC SQL CLOSE C14514;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE GRUB CASCADE;\n");
+EXEC SQL DROP TABLE GRUB CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0836','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml145.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0836','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0836 *********************/
+/******************** BEGIN TEST0837 ********************/
+flag = 1;
+
+     printf("                  TEST0837 \n");
+     printf("  <character substring function> (dynamic)\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    F# 6 -- VARCHAR data type\n");
+     printf("    6.7 LR.2.a -- Leveling rule relaxed by F# 6\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE MOREGRUB (C1 VARCHAR (10), ID INT);\n");
+EXEC SQL CREATE TABLE MOREGRUB (C1 VARCHAR (10), ID INT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE VIEW X4 (S1, S2, ID) AS'    ||
+       '  SELECT SUBSTRING (C1 FROM 6),'   ||
+       '  SUBSTRING (C1 FROM 2 FOR 4), ID' ||
+       '  FROM MOREGRUB'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT SUBSTRING (CITY FROM 4)' ||
+       '  FROM HU.STAFF WHERE ''5 #'' = ' ||
+       '  SUBSTRING (EMPNUM || ? FROM 2 FOR 3) '
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S14521 FROM :longst;\n");
+EXEC SQL PREPARE S14521 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14521 CURSOR FOR S14521;\n");
+EXEC SQL DECLARE C14521 CURSOR FOR S14521;
+printf("\n");
+
+strcpy(ch1,"#         ");
+printf("ch1 = '#         '\n");
+printf("OPEN C14521 USING :ch1;\n");
+EXEC SQL OPEN C14521 USING :ch1;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14521 INTO :ch1;\n");
+EXEC SQL FETCH C14521 INTO :ch1;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 01004; its value is %s\n", SQLSTATE);
+if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+printf("ch1 should be 'on        '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "on        ") != 0)
+  flag = 0;
+
+printf("CLOSE C14521;\n");
+EXEC SQL CLOSE C14521;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT SUBSTRING (CITY FROM ? FOR ?)' ||
+       '  FROM HU.STAFF WHERE EMPNAME = ''Ed'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S14522 FROM :longst;\n");
+EXEC SQL PREPARE S14522 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14522 CURSOR FOR S14522;\n");
+EXEC SQL DECLARE C14522 CURSOR FOR S14522;
+printf("\n");
+
+int1 = 4;
+int2 = 10;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'on        '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "on        ") != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+CHCKOK ();
+printf("\n");
+
+/* 6.7 GR.1.d */
+
+int1 = 4;
+int2 = -1;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+if (SQLCODE < 0)
+  goto P100;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+P100:
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 22011; its value is %s\n\n", SQLSTATE);
+if (SQLCODE >= 0 || strncmp (SQLSTATE, "22011", 5) != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+printf("\n");
+
+/* 6.7 GR.1.e.ii.1 (let S1 be the larger of S and 1) */
+
+int1 = 0;
+int2 = 10;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'Akron     '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "Akron     ") != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+CHCKOK ();
+printf("\n");
+
+/* 6.7 GR.1.e.ii */
+
+int1 = 4;
+int2 = 100;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 01004; its value is %s\n", SQLSTATE);
+if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+printf("ch1 should be 'on        '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "on        ") != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+CHCKOK ();
+printf("\n");
+
+int1 = 1;
+int2 = 1;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'A         '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "A         ") != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+CHCKOK ();
+printf("\n");
+
+/* 6.7 GR.1.e.i */
+
+int1 = 1;
+int2 = 0;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be '          '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "          ") != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+CHCKOK ();
+printf("\n");
+
+/* 6.7 GR.1.e.i */
+
+int1 = 12;
+int2 = 1;
+printf ("int1 = %ld  int2 = %ld\n", int1, int2);
+
+printf("OPEN C14522 USING :int1, :int2;\n");
+EXEC SQL OPEN C14522 USING :int1, :int2;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14522 INTO :ch1;\n");
+EXEC SQL FETCH C14522 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be '          '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "          ") != 0)
+  flag = 0;
+
+printf("CLOSE C14522;\n");
+EXEC SQL CLOSE C14522;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES ('Pretzels', 1);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES ('Pretzels', 1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES (NULL, 2);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES (NULL, 2);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES ('Chips', 3);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES ('Chips', 3);
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT S1 FROM X4 WHERE ID = ?\"\n");
+     strcpy (dstmt,
+     "SELECT S1 FROM X4 WHERE ID = ?                    ");
+
+printf("PREPARE S14523 FROM :dstmt;\n");
+EXEC SQL PREPARE S14523 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14523 CURSOR FOR S14523;\n");
+EXEC SQL DECLARE C14523 CURSOR FOR S14523;
+printf("\n");
+
+int1 = 1;
+printf ("int1 = %ld\n", int1);
+
+printf("OPEN C14523 USING :int1;\n");
+EXEC SQL OPEN C14523 USING :int1;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14523 INTO :ch1;\n");
+EXEC SQL FETCH C14523 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'els       '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "els       ") != 0)
+  flag = 0;
+
+printf("CLOSE C14523;\n");
+EXEC SQL CLOSE C14523;
+CHCKOK ();
+printf("\n");
+
+int1 = 3;
+printf ("int1 = %ld\n", int1);
+
+printf("OPEN C14523 USING :int1;\n");
+EXEC SQL OPEN C14523 USING :int1;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14523 INTO :ch1;\n");
+EXEC SQL FETCH C14523 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be '          '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "          ") != 0)
+  flag = 0;
+
+printf("CLOSE C14523;\n");
+EXEC SQL CLOSE C14523;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT S2 FROM X4 WHERE ID = ?\"\n");
+     strcpy (dstmt,
+     "SELECT S2 FROM X4 WHERE ID = ?                    ");
+
+printf("PREPARE S14524 FROM :dstmt;\n");
+EXEC SQL PREPARE S14524 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14524 CURSOR FOR S14524;\n");
+EXEC SQL DECLARE C14524 CURSOR FOR S14524;
+printf("\n");
+
+int1 = 1;
+printf ("int1 = %ld\n", int1);
+
+printf("OPEN C14524 USING :int1;\n");
+EXEC SQL OPEN C14524 USING :int1;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14524 INTO :ch1;\n");
+EXEC SQL FETCH C14524 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'retz      '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "retz      ") != 0)
+  flag = 0;
+
+printf("CLOSE C14524;\n");
+EXEC SQL CLOSE C14524;
+CHCKOK ();
+printf("\n");
+
+int1 = 3;
+printf ("int1 = %ld\n", int1);
+
+printf("OPEN C14524 USING :int1;\n");
+EXEC SQL OPEN C14524 USING :int1;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14524 INTO :ch1;\n");
+EXEC SQL FETCH C14524 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'hips      '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "hips      ") != 0)
+  flag = 0;
+
+printf("CLOSE C14524;\n");
+EXEC SQL CLOSE C14524;
+CHCKOK ();
+printf("\n");
+
+/* Column references */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT SUBSTRING (C1 FROM ID)' ||
+       '  FROM MOREGRUB WHERE C1 LIKE ''Ch%'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S14525 FROM :longst;\n");
+EXEC SQL PREPARE S14525 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14525 CURSOR FOR S14525;\n");
+EXEC SQL DECLARE C14525 CURSOR FOR S14525;
+printf("\n");
+
+printf("OPEN C14525;\n");
+EXEC SQL OPEN C14525;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14525 INTO :ch1;\n");
+EXEC SQL FETCH C14525 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'ips       '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "ips       ") != 0)
+  flag = 0;
+
+printf("CLOSE C14525;\n");
+EXEC SQL CLOSE C14525;
+CHCKOK ();
+printf("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT SUBSTRING (C1 FROM 1 FOR ID)' ||
+       '  FROM MOREGRUB WHERE C1 LIKE ''Ch%'''
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S14526 FROM :longst;\n");
+EXEC SQL PREPARE S14526 FROM :longst;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14526 CURSOR FOR S14526;\n");
+EXEC SQL DECLARE C14526 CURSOR FOR S14526;
+printf("\n");
+
+printf("OPEN C14526;\n");
+EXEC SQL OPEN C14526;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("FETCH C14526 INTO :ch1;\n");
+EXEC SQL FETCH C14526 INTO :ch1;
+CHCKOK ();
+printf("ch1 should be 'Chi       '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "Chi       ") != 0)
+  flag = 0;
+
+printf("CLOSE C14526;\n");
+EXEC SQL CLOSE C14526;
+CHCKOK ();
+printf("\n");
+
+/* Null parameters and column references */
+
+int1 = 2;
+printf ("int1 = %ld\n", int1);
+
+printf("OPEN C14523 USING :int1;\n");
+EXEC SQL OPEN C14523 USING :int1;
+CHCKOK ();
+printf("\n");
+
+indic1 = 19;
+printf("FETCH C14523 INTO :ch1:indic1;\n");
+EXEC SQL FETCH C14523 INTO :ch1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14523;\n");
+EXEC SQL CLOSE C14523;
+CHCKOK ();
+printf("\n");
+
+printf("DELETE FROM MOREGRUB;\n");
+EXEC SQL DELETE FROM MOREGRUB;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES ('Tacos', NULL);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES ('Tacos', NULL);
+CHCKOK ();
+printf("\n");
+
+/* Case 1:  null column ref */
+
+printf("dstmt=\"SELECT SUBSTRING (C1 FROM ? FOR ID) FROM MOREGRUB\"\n");
+     strcpy (dstmt,
+     "SELECT SUBSTRING (C1 FROM ? FOR ID) FROM MOREGRUB ");
+
+printf("PREPARE S14527 FROM :dstmt;\n");
+EXEC SQL PREPARE S14527 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14527 CURSOR FOR S14527;\n");
+EXEC SQL DECLARE C14527 CURSOR FOR S14527;
+printf("\n");
+
+int1 = 1;
+printf ("int1 = %ld\n", int1);
+
+printf("OPEN C14527 USING :int1;\n");
+EXEC SQL OPEN C14527 USING :int1;
+CHCKOK ();
+printf("\n");
+
+indic1 = 19;
+printf("FETCH C14527 INTO :ch1:indic1;\n");
+EXEC SQL FETCH C14527 INTO :ch1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14527;\n");
+EXEC SQL CLOSE C14527;
+CHCKOK ();
+printf("\n");
+
+/* Case 2:  null parameter (not possible with literal) */
+
+printf("dstmt=\"SELECT SUBSTRING (C1 FROM ? FOR 1) FROM MOREGRUB\"\n");
+     strcpy (dstmt,
+     "SELECT SUBSTRING (C1 FROM ? FOR 1) FROM MOREGRUB  ");
+
+printf("PREPARE S14528 FROM :dstmt;\n");
+EXEC SQL PREPARE S14528 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14528 CURSOR FOR S14528;\n");
+EXEC SQL DECLARE C14528 CURSOR FOR S14528;
+printf("\n");
+
+int1 = 1;
+indic1 = -1;
+printf ("indic1 = %d\n", indic1);
+
+printf("OPEN C14528 USING :int1:indic1;\n");
+EXEC SQL OPEN C14528 USING :int1:indic1;
+CHCKOK ();
+printf("\n");
+
+indic1 = 19;
+printf("FETCH C14528 INTO :ch1:indic1;\n");
+EXEC SQL FETCH C14528 INTO :ch1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14528;\n");
+EXEC SQL CLOSE C14528;
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE MOREGRUB SET C1 = NULL;\n");
+EXEC SQL UPDATE MOREGRUB SET C1 = NULL;
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT SUBSTRING (C1 FROM ? FOR ?) FROM MOREGRUB\"\n");
+     strcpy (dstmt,
+     "SELECT SUBSTRING (C1 FROM ? FOR ?) FROM MOREGRUB  ");
+
+printf("PREPARE S14529 FROM :dstmt;\n");
+EXEC SQL PREPARE S14529 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14529 CURSOR FOR S14529;\n");
+EXEC SQL DECLARE C14529 CURSOR FOR S14529;
+printf("\n");
+
+int1 = 1;
+indic1 = -1;
+printf ("indic1 = %d\n", indic1);
+int2 = 1;
+indic2 = -1;
+printf ("indic2 = %d\n", indic2);
+
+printf("OPEN C14529 USING :int1:indic1, :int2:indic2;\n");
+EXEC SQL OPEN C14529 USING :int1:indic1, :int2:indic2;
+CHCKOK ();
+printf("\n");
+
+indic1 = 19;
+printf("FETCH C14529 INTO :ch1:indic1;\n");
+EXEC SQL FETCH C14529 INTO :ch1:indic1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE C14529;\n");
+EXEC SQL CLOSE C14529;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE MOREGRUB CASCADE;\n");
+EXEC SQL DROP TABLE MOREGRUB CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0837','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml145.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0837','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0837 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

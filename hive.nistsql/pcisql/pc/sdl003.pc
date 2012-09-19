@@ -1,0 +1,108 @@
+/*  EMBEDDED C (file "SDL003.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/04/27 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL003.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 6. Schema Definition Language         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     EMPNO1[4];
+     char     EMPNA1[21];
+     char     USERID[20];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl003.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("                  TEST0139       \n");
+     printf("       (GRANT ALL PRIVILEGES TO PUBLIC) \n");
+     printf(" Reference X3.135-89 section 6.10 <privilege def.> \n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL SELECT EMPNUM,EMPNAME,USER
+           INTO   :EMPNO1,:EMPNA1,:USERID
+           FROM   HU.STAFF
+           WHERE  EMPNUM = 'E3';
+     printf("\n EMPNO1=%s, EMPNA1=%s, USERID=%s",EMPNO1,EMPNA1,USERID);
+
+     EXEC SQL UPDATE HU.STAFF
+           SET  EMPNUM='E8',EMPNAME='SCHANZLE'
+           WHERE EMPNUM='E3';
+     EXEC SQL SELECT EMPNUM,EMPNAME
+          INTO :EMPNO1,:EMPNA1
+          FROM HU.STAFF
+          WHERE EMPNUM='E8';
+     printf("\n EMPNO1=%s, EMPNA1=%s \n",EMPNO1,EMPNA1);
+
+     printf("The correct answer should be USERID=SCHANZLE & EMPNO1=E8\n");
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (strncmp(USERID,"SCHANZLE",8)==0 && strncmp(EMPNO1,"E8",2)==0)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0139','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl003.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0139','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+}
+

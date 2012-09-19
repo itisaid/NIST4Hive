@@ -1,0 +1,447 @@
+/*  EMBEDDED C (file " XTS724.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS724.PC                                                   */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  Access to COLUMN_DOMAIN_USAGE view                           */ 
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    21.2.25 -- COLUMN_DOMAIN_USAGE view                        */
+/*    11.21   -- <domain definition>                             */
+/*    11.27   -- <drop domain statement>                         */
+/*    F#25    -- Domain definition                               */
+/*    F#2     -- Basic information schema                        */
+/*    F#3     -- Basic schema manipulation                       */
+/*    F#34    -- Usage tables                                    */
+/*                                                               */
+/*  DATE LAST ALTERED  14/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 04/12/95:                   */
+/*       Respect length of strings in variable initialization.   */
+/*                                                               */
+/*  QA Status: QA Check                                          */
+/*                                                               */
+/*  Revised by DWF 1/30/96                                       */
+/*    Fixed SDL transactions                                     */
+/*    Fixed SQL syntax errors                                    */
+/*    Removed extraneous SQL syntax                              */
+/*    Removed status checks after cursor definition              */
+/*    Upcased information schema identifiers                     */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ long counok;
+ char domsch[129];
+ char colnam[129];
+ char tabnam[129];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+short i;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS4              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts724.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time Run:   %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7024 ********************/
+ flag = 1;
+ printf("                  TEST7024\n");
+ printf("   Access to COLUMN_DOMAIN_USAGE view \n");
+ printf(" References \n");
+ printf("   21.2.25 -- COLUMN_DOMAIN_USAGE view\n");
+ printf("   11.21   -- <domain definition> \n");
+ printf("   11.27   -- <drop domain statement> \n");
+ printf("   F#25    -- Domain definition \n");
+ printf("   F#2     -- Basic information schema \n");
+ printf("   F#3     -- Basic schema manipulation \n");
+ printf("   F#34    -- Usage tables \n");
+ printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+/* initialise host variable */
+/* we expect a zero so initialise it to a value <> 0 */
+counok = 9;
+
+/* Access the COLUMN_DOMAIN_USAGE view */
+printf("SELECT COUNT(*) INTO :counok\n");
+printf("FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE\n");
+printf("WHERE DOMAIN_SCHEMA = 'CTS4';\n");
+EXEC SQL SELECT COUNT(*) INTO :counok
+         FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE
+         WHERE DOMAIN_SCHEMA = 'CTS4';
+CHCKOK();
+printf("counok should be 0; its value is : %ld\n",counok);
+if (counok != 0)
+  flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Now create a domain under the current schema */
+printf("CREATE DOMAIN TESTDOM AS NUMERIC(5)\n");
+printf("CONSTRAINT CONSD724 CHECK (VALUE > 500);\n");
+EXEC SQL CREATE DOMAIN TESTDOM AS NUMERIC(5)
+         CONSTRAINT CONSD724 CHECK (VALUE > 500);
+CHCKOK();
+printf("\n");
+ 
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE TAB724a\n");
+printf(" (COLNUM1 TESTDOM,\n");
+printf("  COLNUM2 TESTDOM,\n");
+printf("  COLNUM3 TESTDOM,\n");
+printf("  COLNUM4 TESTDOM);\n");
+EXEC SQL CREATE TABLE TAB724a 
+        (COLNUM1 TESTDOM,
+         COLNUM2 TESTDOM,
+         COLNUM3 TESTDOM,
+         COLNUM4 TESTDOM);  
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Current contents of COLUMN_DOMAIN_USAGE: */
+/* TESTDOM TAB724A.COLNUM1 */
+/* TESTDOM TAB724A.COLNUM2 */
+/* TESTDOM TAB724A.COLNUM3 */
+/* TESTDOM TAB724A.COLNUM4 */
+
+/*now access the COLUMN_DOMAIN_USAGE view and check that*/
+/*the columns of TAB724a are visible */ 
+
+printf("DECLARE ALPHA CURSOR FOR SELECT DOMAIN_SCHEMA,COLUMN_NAME,\n");
+printf("TABLE_NAME FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE\n"); 
+printf("WHERE DOMAIN_NAME = 'TESTDOM'\n");
+printf("ORDER BY COLUMN_NAME;\n\n");
+EXEC SQL DECLARE ALPHA CURSOR
+         FOR SELECT DOMAIN_SCHEMA,COLUMN_NAME, TABLE_NAME
+         FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE
+         WHERE DOMAIN_NAME = 'TESTDOM'
+         ORDER BY COLUMN_NAME;
+
+printf("OPEN ALPHA;\n");
+EXEC SQL OPEN ALPHA;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+for(i = 0; i < 128; i++)
+{
+  domsch[i] = 'x';
+  colnam[i] = 'x';
+  tabnam[i] = 'x';
+}
+domsch[128] = '\0';
+colnam[128] = '\0';
+tabnam[128] = '\0';
+
+/* four rows should be returned by the cursor */
+/* fetch first row */
+printf("FETCH ALPHA INTO :domsch,:colnam,:tabnam;\n");
+EXEC SQL FETCH ALPHA INTO :domsch,:colnam,:tabnam;
+CHCKOK();
+printf("DOMAIN_SCHEMA should be CTS4;    it is %s\n",domsch);
+printf("COLUMN_NAME   should be COLNUM1; it is %s\n",colnam);
+printf("TABLE_NAME    should be TAB724A; it is %S\n",tabnam);
+if (strncmp(domsch,"CTS4",4)!=0 || strncmp(colnam,"COLNUM1",7)!=0)
+     flag = 0;
+if (strncmp(tabnam,"TAB724A",7) != 0)
+     flag = 0;
+printf("\n");
+
+/* re-initialise host variables */
+for(i = 0; i < 128; i++)
+{
+  domsch[i] = 'x';
+  colnam[i] = 'x';
+  tabnam[i] = 'x';
+}
+domsch[128] = '\0';
+colnam[128] = '\0';
+tabnam[128] = '\0';
+
+/* fetch the second row */
+printf("FETCH ALPHA INTO :domsch,:colnam,:tabnam;\n");
+EXEC SQL FETCH ALPHA INTO :domsch,:colnam,:tabnam;
+CHCKOK();
+printf("DOMAIN_SCHEMA should be CTS4;    it is %s\n",domsch);
+printf("COLUMN_NAME   should be COLNUM2; it is %s\n",colnam);
+printf("TABLE_NAME    should be TAB724A; it is %s\n",tabnam);
+if (strncmp(domsch,"CTS4",4)!=0 || strncmp(colnam,"COLNUM2",7)!=0)
+     flag = 0;
+if (strncmp(tabnam,"TAB724A",7) != 0)
+     flag = 0;
+printf("\n");
+
+/* re-initialise host variables */
+for(i = 0; i < 128; i++)
+{
+  domsch[i] = 'x';
+  colnam[i] = 'x';
+  tabnam[i] = 'x';
+}
+domsch[128] = '\0';
+colnam[128] = '\0';
+tabnam[128] = '\0';
+
+/* fetch third row */ 
+printf("FETCH ALPHA INTO :domsch,:colnam,:tabnam;\n");
+EXEC SQL FETCH ALPHA INTO :domsch,:colnam,:tabnam;
+CHCKOK();
+printf("DOMAIN_SCHEMA should be CTS4;    it is %s\n",domsch);
+printf("COLUMN_NAME   should be COLNUM3; it is %s\n",colnam);
+printf("TABLE_NAME    should be TAB724A; it is %s\n",tabnam);
+if (strncmp(domsch,"CTS4",4)!=0 || strncmp(colnam,"COLNUM3",7)!=0)
+     flag = 0;
+if (strncmp(tabnam,"TAB724A",7) != 0)
+     flag = 0;
+printf("\n");
+
+/* re-initialise host variables */
+for(i = 0; i < 128; i++)
+{
+  domsch[i] = 'x';
+  colnam[i] = 'x';
+  tabnam[i] = 'x';
+}
+domsch[128] = '\0';
+colnam[128] = '\0';
+tabnam[128] = '\0';
+
+/* fetch fourth and final row */
+printf("FETCH ALPHA INTO :domsch,:colnam,:tabnam;\n");
+EXEC SQL FETCH ALPHA INTO :domsch,:colnam,:tabnam;
+CHCKOK();
+printf("DOMAIN_SCHEMA should be CTS4;    it is %s\n",domsch);
+printf("COLUMN_NAME   should be COLNUM4; it is %s\n",colnam);
+printf("TABLE_NAME    should be TAB724A; it is %s\n",tabnam);
+if (strncmp(domsch,"CTS4",4)!=0 || strncmp(colnam,"COLNUM4",7)!=0)
+     flag = 0;
+if (strncmp(tabnam,"TAB724A",7) != 0)
+     flag = 0;
+printf("\n");
+
+/* close the cursor */
+printf("CLOSE ALPHA;\n");
+EXEC SQL CLOSE ALPHA;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now drop the created domain */
+printf("DROP DOMAIN TESTDOM CASCADE;\n");
+EXEC SQL DROP DOMAIN TESTDOM CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now drop the created table */
+printf("DROP TABLE TAB724a CASCADE;\n");
+EXEC SQL DROP TABLE TAB724a CASCADE;
+CHCKOK();
+printf("\n");
+ 
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Now access the COLUMN_DOMAIN_USAGE_VIEW */
+/* and check that there exist no references */
+/* to the above <schema elements> */
+/* First initialise host variable */
+/* we expect a zero so initialise it to a value <> 0 */
+counok = 9;
+printf("SELECT COUNT(*) INTO :counok\n");
+printf(" FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE\n");
+printf(" WHERE DOMAIN_SCHEMA = 'CTS4';\n");
+EXEC SQL SELECT COUNT(*) INTO :counok
+         FROM INFORMATION_SCHEMA.COLUMN_DOMAIN_USAGE
+         WHERE DOMAIN_SCHEMA = 'CTS4';
+CHCKOK();
+printf("counok should be 0; its value is : %ld\n",counok);
+if (counok != 0)
+  flag = 0;
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts724.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7024','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts724.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7024','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+EXEC SQL COMMIT WORK;
+/******************** END TEST7024 *********************/
+
+exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,452 @@
+/*  EMBEDDED C (file "CDR009.PC")  */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/12/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR009.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENCE INTEGRITY CONSTRAINT FOR  */
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.6 <unique constraint definition>        */
+/*                <unique constraint definition>::=              */
+/*                        <unique specifition>(<unique column    */
+/*                        list>)                                 */
+/*                 <unique specifition>::= UNIQUE|PRIMARY KEY    */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+long count2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+
+long code1;
+
+main()
+
+{
+        strcpy(uid,"SUN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr009.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0327 ********************/
+/* This program inserts two rows into PRIMARY KEY TABLE */
+/* -- STAFF3, these two rows have the same value 'E1' in*/
+/* PRIMARY COLUMN and there is no (E1,*,*) in referen-  */
+/* cing table.                                          */ 
+
+
+printf("\n                     TEST0327             \n");
+printf("                     PRIMARY KEY     \n");
+printf("      SQL with Integrity Enhancement section 6.5,6.6\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+
+printf("        INSERT INTO STAFF3\n");
+printf("        VALUES('E1','Alice',12,'Deale');\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO:count1\n");
+printf("        FROM STAFF3;\n");
+printf("\n");
+printf("\n");
+printf("        INSERT INTO STAFF3\n");
+printf("        VALUES('E1','Tom',12,'Newyork');\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO:count2\n");
+printf("        FROM STAFF3;\n");
+count1 = 0;
+count2 = 0;
+EXEC SQL DELETE FROM WORKS3;
+EXEC SQL DELETE FROM STAFF3;
+EXEC SQL INSERT INTO STAFF3
+        VALUES('E1','Alice',12,'Deale');
+EXEC SQL SELECT COUNT(*) INTO:count1
+        FROM STAFF3;
+
+EXEC SQL INSERT INTO STAFF3
+        VALUES('E1','Tom',12,'Newyork');
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO:count2
+        FROM STAFF3;
+printf(" The correct answer is :\n");
+printf("           SQLCODE of second INSERT not equal to 0.\n");
+printf("           count1 is 1\n");
+printf("           count2 is 1\n");
+printf(" Your answer is :\n");
+printf("           SQLCOD of second INSERT  is %ld\n",code1);
+printf("           count1 is %ld\n",count1);
+printf("           count2 is %ld\n",count2);
+        if (code1 != 0 && count1 == 1 && count2 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0327','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0327','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr009.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0327 ***********/
+
+
+
+
+
+/******************** BEGIN TEST0328 ********************/
+/* This program updates a row in PRIMARY KEY TABLE      */
+/* -- STAFF3, set (E2,*,*,*) to (E9,*,*,*) ,there       */
+/* are (E2,*,*) In WORKS3.                              */ 
+
+printf("\n                     TEST0328             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("        UPDATE STAFF3\n");
+printf("        SET EMPNUM='E9'\n");
+printf("        WHERE EMPNUM='E2';\n");
+printf("code1 = SQLCODE;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM STAFF3\n");
+printf("        WHERE EMPNUM = 'E2';\n");
+EXEC SQL DELETE  FROM WORKS3;
+EXEC SQL DELETE  FROM PROJ3;
+EXEC SQL DELETE  FROM STAFF3;
+EXEC SQL INSERT INTO STAFF3
+        SELECT * FROM STAFF;
+EXEC SQL INSERT INTO PROJ3
+        SELECT * FROM PROJ;
+EXEC SQL INSERT INTO WORKS3
+        SELECT * FROM WORKS;
+EXEC SQL UPDATE STAFF3
+        SET EMPNUM = 'E9'
+        WHERE EMPNUM = 'E2';
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM STAFF3
+        WHERE EMPNUM = 'E2';
+printf("        The correct result is code1 not equal 0\n");
+printf("                              count1 = 1\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              count1 = %ld\n",count1);
+        if (code1 < 0 && count1 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0328','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0328','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr009.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0328 **************************/
+
+
+
+
+
+
+/******************** BEGIN TEST0329 ********************/
+/* This program updates a row in PRIMARY KEY TABLE      */
+/* -- STAFF3, that cause two rows have the same value   */
+/* 'E1' in  PRIMARY COLUMN.                             */ 
+
+
+printf("\n                     TEST0329             \n");
+printf("                     PRIMARY KEY     \n");
+printf("      SQL with Integrity Enhancement section 6.5,6.6\n");
+printf("      - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        INSERT INTO STAFF3\n");
+printf("        VALUES('E1','Alice',45,'Deale');\n");
+printf("\n");
+printf("        INSERT INTO STAFF3\n");
+printf("        VALUES('E2','Tom',45,'Deale');\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO:count1\n");
+printf("        FROM STAFF3;\n");
+printf("\n");
+printf("        UPDATE STAFF3\n");
+printf("        SET EMPNUM = 'E1'\n");
+printf("        WHERE EMPNUM = 'E2';\n");
+printf("\n");
+count1 = 0;
+count2 = 0;
+EXEC SQL DELETE FROM WORKS3;
+EXEC SQL DELETE FROM STAFF3;
+EXEC SQL INSERT INTO STAFF3
+        VALUES('E1','Alice',45,'Deale');
+EXEC SQL INSERT INTO STAFF3
+        VALUES('E2','Tom',45,'Deale');
+EXEC SQL SELECT COUNT(*) INTO:count1
+        FROM STAFF3;
+
+EXEC SQL UPDATE STAFF3
+        SET EMPNUM = 'E1'
+        WHERE EMPNUM = 'E2';
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO:count2
+        FROM STAFF3
+        WHERE EMPNUM = 'E2';
+printf(" The correct answer is :\n");
+printf("           SQLCODE of second INSERT not equal to 0.\n");
+printf("           count1 is 2\n");
+printf("           count2 is 1\n");
+printf(" Your answer is :\n");
+printf("           SQLCOD of second INSERT  is %ld\n",code1);
+printf("           count1 is %ld\n",count1);
+printf("           count2 is %ld\n",count2);
+        if (code1 != 0 && count1 == 2 && count2 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0329','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0329','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr009.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/**************** END TEST 0329 ***********/
+
+
+
+
+
+
+/******************** BEGIN TEST0330 ********************/
+/* This test update a row or rows on FOREIGN KEY        */
+/* column in table WORKS3,set those rows (E1,*,*) to   */
+/* (E9,*,*),but there is not a row ('E9',*,*,*) in     */
+/*  PRIMARY TABLE -- STAFF3, this will bring about an  */
+/*  ERROR.                                             */
+
+printf("\n                     TEST0330             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE  FROM WORKS3;\n");
+printf("\n");
+printf("        DELETE  FROM PROJ3;\n");
+printf("\n");
+printf("        DELETE  FROM STAFF3;\n");
+printf("\n");
+printf("        INSERT INTO STAFF3\n");
+printf("        SELECT * FROM STAFF;\n");
+printf("\n");
+printf("        INSERT INTO PROJ3\n");
+printf("        SELECT * FROM PROJ;\n");
+printf("\n");
+printf("        INSERT INTO WORKS3\n");
+printf("        SELECT * FROM WORKS;\n");
+printf("\n");
+printf("        UPDATE WORKS3\n");
+printf("        SET EMPNUM='E9'\n");
+printf("        WHERE EMPNUM='E2';\n");
+printf("code1 = SQLCODE;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM WORKS3\n");
+printf("        WHERE EMPNUM = 'E2';\n");
+EXEC SQL DELETE  FROM WORKS3;
+EXEC SQL DELETE  FROM PROJ3;
+EXEC SQL DELETE  FROM STAFF3;
+EXEC SQL INSERT INTO STAFF3
+        SELECT * FROM STAFF;
+EXEC SQL INSERT INTO PROJ3
+        SELECT * FROM PROJ;
+EXEC SQL INSERT INTO WORKS3
+        SELECT * FROM WORKS;
+EXEC SQL UPDATE WORKS3
+        SET EMPNUM = 'E9'
+        WHERE EMPNUM = 'E2';
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM WORKS3
+        WHERE EMPNUM = 'E2';
+printf("        The correct result is code1 not equal 0\n");
+printf("                              count1 = 2\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              count1 = %ld\n",count1);
+if (code1 != 0 && count1 == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0330','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0330','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr009.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0330 **************************/
+
+
+
+
+
+
+/******************** BEGIN TEST0331 *******************/
+/* This test update a row or rows on FOREIGN KEY       */
+/* column in table WORKS3,set those rows (E1,*,*) to   */
+/* (E2,*,*),and there are such a row (E2,-,-,-) in     */
+/*  PRIMARY TABLE -- STAFF3 and rows (E2,*,*) in       */
+/* WORKS3.                                             */
+
+printf("\n                     TEST0331             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE  FROM WORKS3;\n");
+printf("\n");
+printf("        DELETE  FROM PROJ3;\n");
+printf("\n");
+printf("        DELETE  FROM STAFF3;\n");
+printf("\n");
+printf("        INSERT INTO STAFF3\n");
+printf("        SELECT * FROM STAFF;\n");
+printf("\n");
+printf("        INSERT INTO PROJ3\n");
+printf("        SELECT * FROM PROJ;\n");
+printf("\n");
+printf("        INSERT INTO WORKS3\n");
+printf("        SELECT * FROM WORKS;\n");
+printf("\n");
+printf("        UPDATE WORKS3\n");
+printf("        SET EMPNUM='E2'\n");
+printf("        WHERE EMPNUM='E1';\n");
+printf("code1 = SQLCODE;\n");
+printf("        SELECT COUNT(*) INTO :count1\n");
+printf("        FROM WORKS3\n");
+printf("        WHERE EMPNUM = 'E1';\n");
+count1 = 0;
+EXEC SQL DELETE  FROM WORKS3;
+EXEC SQL DELETE  FROM STAFF3;
+EXEC SQL DELETE  FROM PROJ3;
+EXEC SQL INSERT INTO STAFF3
+        SELECT * FROM STAFF;
+EXEC SQL INSERT INTO PROJ3
+        SELECT * FROM PROJ;
+EXEC SQL INSERT INTO WORKS3
+        SELECT * FROM WORKS;
+EXEC SQL UPDATE WORKS3
+        SET EMPNUM = 'E2'
+        WHERE EMPNUM = 'E1';
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1
+        FROM WORKS3
+        WHERE EMPNUM = 'E1';
+printf("        The correct result is code1 equal 0\n");
+printf("                              count1 = 0\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              count1 = %ld\n",count1);
+        if (code1 == 0 && count1 == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0331','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0331','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr009.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0331 **************************/
+
+
+     exit(errcnt);
+
+}
+

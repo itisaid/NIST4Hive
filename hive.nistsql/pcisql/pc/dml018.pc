@@ -1,0 +1,340 @@
+/*  EMBEDDED C (file "DML018.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML018.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE HAVING CLAUSE IN THE SQL LANGUAGE.  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*               SECTION 5.23 <having clause>                    */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     WEMP[4];
+     char     WPNO1[4];
+     long     HOURS1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long    i;
+     long    ii;
+
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml018.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0069 ********************/
+
+printf("\n\n");
+printf ("                   TEST0069    \n");
+printf ("  References: section 5.23 <having clause> GR 2).  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** Select group by a single column and having the count\n");
+printf ("*** of the column larger than a certain value.\n");
+printf ("            *** SELECT PNUM\n");
+printf ("            *** FROM WORKS\n");
+printf ("            *** WHERE PNUM > 'P1' \n");
+printf ("            *** GROUP BY PNUM\n");
+printf ("            *** HAVING COUNT(*) > 1\n");
+EXEC SQL DECLARE WORKS1 CURSOR FOR
+          SELECT PNUM
+          FROM WORKS
+          WHERE PNUM > 'P1'
+          GROUP BY PNUM
+          HAVING COUNT(*) > 1;
+EXEC SQL OPEN WORKS1;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS1 INTO
+               :WPNO1;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("                  PNUM = %s\n",WPNO1);
+          }
+     }
+EXEC SQL CLOSE WORKS1;
+printf("              i should be 3;  i = %ld \n\n",i);
+
+if (i == 3)
+  {
+     printf("                   *** pass ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0069','pass','PC');
+  }
+else
+  {
+     printf("         dml018.pc  *** fail ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0069','fail','PC');
+          errcnt = errcnt + 1;
+  }
+
+printf ("======================================================\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0069 ********************/
+/******************** BEGIN TEST0070 ********************/
+
+printf("\n\n");
+printf ("                    TEST0070    \n");
+printf ("  References: section 5.23 <having clause> GR 2).  \n"); 
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("                 *** SELECT PNUM \n");
+printf ("                 *** FROM WORKS \n");
+printf ("                 *** GROUP BY PNUM \n");
+printf ("                 *** HAVING COUNT(*) > 2 \n");
+EXEC SQL DECLARE WORKS3 CURSOR FOR
+          SELECT PNUM
+          FROM WORKS
+          GROUP BY PNUM
+          HAVING COUNT(*) > 2;
+EXEC SQL OPEN WORKS3;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS3 INTO
+               :WPNO1;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("                  PNUM = %s\n",WPNO1);
+          }
+     }
+EXEC SQL CLOSE WORKS3;
+
+if (i == 1 && strncmp(WPNO1,"P2",2) == 0)
+  {
+     printf("                   *** pass ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0070','pass','PC');
+  }
+else
+  {
+     printf("         dml018.pc  *** fail ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0070','fail','PC');
+          errcnt = errcnt + 1;
+  }
+
+printf ("======================================================\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0070 ********************/
+/******************** BEGIN TEST0071 ********************/
+
+printf("\n\n");
+printf ("                     TEST0071    \n");
+printf ("  References: section 5.23 <having clause> GR 3).  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+printf ("*** Select group by all the columns in WORKS and having HOURS\n");
+printf ("*** between a certain range.\n");
+printf ("      *** SELECT EMPNUM, PNUM, HOURS\n");
+printf ("      *** FROM WORKS\n");
+printf ("      *** GROUP BY PNUM,EMPNUM,HOURS\n");
+printf ("      *** HAVING MIN(HOURS) > 12 AND MAX(HOURS) < 80\n");
+
+EXEC SQL DECLARE WORKS4 CURSOR FOR
+          SELECT EMPNUM, PNUM, HOURS
+          FROM WORKS
+          GROUP BY PNUM,EMPNUM,HOURS
+          HAVING MIN(HOURS) > 12 AND MAX(HOURS) < 80;
+
+/*  This query satisfies the 5.25 SR 7), becuase table WORKS     */
+/*  only have three columns which are in GROUP BY clause.        */
+/*  see 5.25 SR 4). about <select list> "*".                     */
+
+EXEC SQL OPEN WORKS4;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     PNUM     HOURS \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS4 INTO
+               :WEMP,:WPNO1,:HOURS1;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("%s     %s     %ld\n",WEMP,WPNO1,HOURS1);
+          }
+     }
+EXEC SQL CLOSE WORKS4;
+
+
+if (i == 7)
+  {
+     printf("                   *** pass ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0071','pass','PC');
+  }
+else
+  {
+     printf("         dml018.pc  *** fail ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0071','fail','PC');
+          errcnt = errcnt + 1;
+  }
+
+printf ("======================================================\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0071 ********************/
+/******************** BEGIN TEST0072 ********************/
+
+printf("\n\n");
+printf ("                    TEST0072    \n");
+printf ("  References: section 5.23 <having clause> GR 4).  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+printf ("  *** SELECT WORKS.PNUM\n");
+printf ("  *** FROM   WORKS\n");
+printf ("  *** GROUP BY WORKS.PNUM\n");
+printf ("  *** HAVING WORKS.PNUM IN ( SELECT PROJ.PNUM\n");
+printf ("  ***                  FROM   PROJ\n");
+printf ("  ***                  GROUP BY PROJ.PNUM\n");
+printf ("  ***                 HAVING SUM(PROJ.BUDGET) > 25000 )\n");
+
+EXEC SQL DECLARE WORKS5 CURSOR FOR
+          SELECT WORKS.PNUM
+          FROM WORKS
+          GROUP BY WORKS.PNUM
+          HAVING WORKS.PNUM IN ( SELECT PROJ.PNUM
+                    FROM   PROJ
+                    GROUP BY PROJ.PNUM
+                    HAVING SUM(PROJ.BUDGET) > 25000 );
+EXEC SQL OPEN WORKS5;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS5 INTO
+               :WPNO1;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("                  PNUM = %s\n",WPNO1);
+          }
+     }
+EXEC SQL CLOSE WORKS5;
+printf("            i should be 3;  i = %ld \n\n",i);
+
+if (i == 3)
+  {
+     printf("                   *** pass ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0072','pass','PC');
+  }
+else
+  {
+     printf("         dml018.pc  *** fail ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0072','fail','PC');
+          errcnt = errcnt + 1;
+  }
+
+printf ("======================================================\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0072 ********************/
+/******************** BEGIN TEST0073 ********************/
+
+printf("\n\n");
+printf ("                    TEST0073    \n");
+printf ("  References: section 5.23 <having clause> GR 1).  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n"); 
+
+printf ("             *** SELECT SUM(HOURS)  \n");
+printf ("             *** FROM   WORKS  \n");
+printf ("             *** HAVING MIN(PNUM) > 'P0'  \n");
+
+EXEC SQL DECLARE WORKS6 CURSOR FOR
+          SELECT SUM(HOURS)
+          FROM WORKS
+          HAVING MIN(PNUM) > 'P0';
+EXEC SQL OPEN WORKS6;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS6 INTO
+               :HOURS1;
+     if (SQLCODE == 0)
+          {
+          i = i + 1;
+          printf ("              SUM of the HOURS1s = %ld\n",HOURS1);
+          }
+     }
+EXEC SQL CLOSE WORKS6;
+printf("              i should be 1;  i = %ld \n\n",i);
+
+if (i == 1 && HOURS1 == 464)
+  {
+     printf("                   *** pass ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0073','pass','PC');
+  }
+else
+  {
+     printf("         dml018.pc  *** fail ***   \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0073','fail','PC');
+          errcnt = errcnt + 1;
+  }
+
+printf ("======================================================\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0073 ********************/
+
+exit(errcnt);
+}

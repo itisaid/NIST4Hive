@@ -1,0 +1,298 @@
+/*  EMBEDDED C (file " XTS750.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS750.PC                                                   */
+/*  WRITTEN BY: Manolis Megaloikonomou                           */
+/*                                                               */
+/*  Named domain constraint.                                     */ 
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.21 -- <domain definition>                               */
+/*    11.21 SR.6a                                                */
+/*    11.21 GR.5                                                 */
+/*    11.21 GR.6                                                 */
+/*    10.6  -- <constraint name definition> and                  */
+/*                 <constraint attributes>                       */
+/*    10.6  SR.1                                                 */
+/*    10.6  SR.2                                                 */
+/*    10.6  LR.2a -- Raised. Entry SQL restriction which         */
+/*                   prohibits the use of a                      */
+/*                   <constraint name definition>.               */
+/*    11.9  -- <check constraint definition>                     */
+/*    F#2   -- Basic information schema.                         */
+/*    F#3   -- Basic schema manipulation.                        */
+/*    F#25  -- Domain definition.                                */
+/*    F#33  -- Constraint tables.                                */
+/*    F#49  -- Constraint management.                            */
+/*                                                               */
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 15/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-02-15                                    */
+/*    Cleanups                                                   */
+/*    Removed field widths                                       */
+/*    Fixed wrong table reference                                */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+    long coun;
+    char cname[30];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts750.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time Run :  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7050 ********************/
+
+flag = 1;
+printf("                  TEST7050 \n");
+printf("    Named domain constraint.\n");
+printf("References:\n");
+printf("    11.21 -- <domain definition>\n");
+printf("    11.21 SR.6a\n");
+printf("    11.21 GR.5\n");
+printf("    11.21 GR.6\n");
+printf("    10.6  -- <constraint name definition> and\n");
+printf("             <constraint attributes>\n");
+printf("    10.6  SR.1\n");
+printf("    10.6  SR.2\n");
+printf("    10.6  LR.2a -- Raised. Entry SQL restriction which\n");
+printf("                prohibits the use of a\n");
+printf("                <constraint name definition>.\n");
+printf("    11.9  -- <check constraint definition>\n");
+printf("    F#2   -- Basic information schema.\n");
+printf("    F#3   -- Basic schema manipulation.\n");
+printf("    F#25  -- Domain definition.\n");
+printf("    F#33  -- Constraint tables.\n");
+printf("    F#49  -- Constraint management.\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* Create Domain CTS1.D12749 */
+printf("CREATE DOMAIN D12749 AS NUMERIC(5)\n");
+printf("CONSTRAINT CTS1.CND12749 CHECK(VALUE > 0);\n");
+EXEC SQL CREATE DOMAIN D12749 AS NUMERIC(5)
+         CONSTRAINT CTS1.CND12749 CHECK(VALUE > 0);
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+coun = 99;
+strcpy (cname, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+/* Ensure domain constraint is referenced in the information schema */
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS\n");
+printf("WHERE CONSTRAINT_SCHEMA = 'CTS1' AND DOMAIN_SCHEMA = 'CTS1'\n");
+printf("AND DOMAIN_NAME = 'D12749';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun 
+         FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS
+         WHERE CONSTRAINT_SCHEMA = 'CTS1' 
+         AND DOMAIN_SCHEMA = 'CTS1'
+         AND DOMAIN_NAME = 'D12749';
+CHCKOK();
+printf("coun should be 1; its value is %ld\n", coun);
+printf("\n");
+if ( coun != 1 )
+   flag = 0;
+
+/* Check that one row is returned and that the CONSTRAINT_NAME */
+/* column contains the expected <constraint name>              */
+printf("SELECT CONSTRAINT_NAME INTO :cname\n");
+printf("FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS\n");
+printf("WHERE CONSTRAINT_SCHEMA = 'CTS1' AND DOMAIN_SCHEMA = 'CTS1'\n");
+printf("AND DOMAIN_NAME = 'D12749';\n");
+EXEC SQL SELECT CONSTRAINT_NAME INTO :cname
+         FROM INFORMATION_SCHEMA.DOMAIN_CONSTRAINTS
+         WHERE CONSTRAINT_SCHEMA = 'CTS1' AND DOMAIN_SCHEMA = 'CTS1'
+         AND DOMAIN_NAME = 'D12749';
+CHCKOK();
+printf("cname should be CND12749; its value is %s\n", cname);
+if (strncmp(cname,"CND12749",8) != 0 )
+   flag = 0;
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* Clean-up database */
+printf("DROP DOMAIN D12749 CASCADE;\n");
+EXEC SQL DROP DOMAIN D12749 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts750.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7050','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts750.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7050','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7050 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

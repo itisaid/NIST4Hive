@@ -1,0 +1,153 @@
+/*  EMBEDDED C (file "FLG009.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/08 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLG009.PC                                                    */
+/*  WRITTEN BY: JOAN SULLIVAN                                    */
+/*                                                               */
+/*    THIS ROUTINE TESTS AN EXTENSION TO SQL.                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        FEDERAL INFORMATION PROCESSING STANDARDS - SQL         */
+/*                    FIPS PUB 127                               */
+/*                                                               */
+/*              10. Specifications.                              */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+char CHAR3[4];
+char CHAR15[16];
+long INT5;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+long cnt1;
+long cnt2;
+long cnt3;
+int errcnt;
+long i;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, flg009.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0455 ********************/
+
+     printf("\n            OPTIONAL TEST0455             \n");
+     printf("reference FIPS PUB 127 section 10. Specifications\n");
+     printf("X3.135-1989, 8.3 <declare cursor> SR 5 b\n");
+     printf("Relaxed union compatability rules for columns.\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+   cnt1 = 0;
+   cnt2 = 0;
+   cnt3 = 0;
+
+/* begin different char column length */
+   EXEC SQL DECLARE C1 CURSOR FOR
+   SELECT EMPNUM, CITY FROM STAFF
+       UNION
+   SELECT PTYPE, CITY FROM PROJ;
+   EXEC SQL OPEN C1;
+   for (i = 0; i < 20; i++)
+     {
+      EXEC SQL FETCH C1 INTO :CHAR3, :CHAR15;
+      if (SQLCODE == 0)
+          cnt1 = cnt1 + 1;
+     }
+/* end different char column length */
+if (cnt1 > 0)
+printf("SUPPORTED: Union of CHAR columns with different lengths\n");
+
+/* begin CHAR col and shorter literal  */
+   EXEC SQL DECLARE C2 CURSOR FOR
+   SELECT EMPNUM, CITY FROM STAFF
+       UNION
+   SELECT 'e1', CITY FROM PROJ;
+   EXEC SQL OPEN C2;
+   for (i = 0; i < 20; i++)
+     {
+      EXEC SQL FETCH C2 INTO :CHAR3, :CHAR15;
+      if (SQLCODE == 0)
+          cnt2 = cnt2 + 1;
+     }
+/* end CHAR col and shorter literal  */
+if (cnt2 > 0)
+printf("SUPPORTED: Union of CHAR col with shorter literal\n");
+
+
+/* begin different decimal column precision */
+   EXEC SQL DECLARE C3 CURSOR FOR
+   SELECT EMPNUM, GRADE FROM STAFF
+       UNION
+   SELECT EMPNUM, HOURS FROM WORKS;
+   EXEC SQL OPEN C3;
+   for (i = 0; i < 20; i++)
+     {
+      EXEC SQL FETCH C3 INTO :CHAR3, :INT5;
+      if (SQLCODE == 0)
+          cnt3 = cnt3 + 1;
+     }
+/* end different decimal column precision */
+if (cnt3 > 0)
+printf("SUPPORTED: Union of DECIMAL columns with different precision\n");
+
+  if (cnt1 > 0 || cnt2 > 0 || cnt3 > 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT VALUES('0455','pass','PC');
+       printf("SQL extension for relaxed union rules executed successfully.\n");
+       printf("Vendor must demonstrate FIPS flagger WARNING.\n");
+       }
+  else
+       {
+       EXEC SQL INSERT INTO TESTREPORT VALUES ('0455','nogo','PC');
+          errcnt = errcnt + 1;
+       printf("Vendor does not support relaxed union rules as tested.\n");
+       printf("Support of relaxed union rules is not required.\n");
+       }
+
+     EXEC SQL COMMIT WORK;
+
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+/******************** END TEST0455 ********************/
+
+     exit(errcnt);
+
+}

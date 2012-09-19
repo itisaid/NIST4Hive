@@ -1,0 +1,432 @@
+/*  EMBEDDED C (file "CDR027.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1991/07/30 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR027.PC                                                    */
+/*  WRITTEN BY: YOLANDA HERD                                     */
+/*                                                               */
+/*  MISCELLANEOUS                                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language -         */
+/*        X3.135-1989                                            */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  long GRDE;
+  long count1;
+  long count2;
+  char NME[21];
+  short indic1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+  long flag1;
+  
+main()
+{
+
+strcpy(uid,"SUN");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr027.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0446 ********************/
+printf("\n                   TEST0446          \n");
+printf("  Table CHECK constraint allows unknown (NULL)\n");
+printf("     Reference: ANSI X3.168-1989 6.8 GR1\n");
+printf("- - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+EXEC SQL DELETE FROM STAFF5;
+
+EXEC SQL INSERT INTO STAFF5 VALUES('E7','Mimi',NULL,'Miami');
+printf("SQLCODE after INSERT #1 STAFF5 = %ld\n",SQLCODE);
+
+indic1 = -1;
+GRDE = 15;
+
+EXEC SQL INSERT INTO STAFF5 VALUES('E8','Joe',:GRDE:indic1,'Boston'); 
+printf("SQLCODE after INSERT #2 STAFF5 = %ld\n",SQLCODE);
+
+EXEC SQL INSERT INTO STAFF5(EMPNUM) VALUES('E9');
+printf("SQLCODE after INSERT #3 STAFF5 = %ld\n",SQLCODE);
+
+EXEC SQL UPDATE STAFF
+  SET GRADE = NULL
+  WHERE EMPNUM = 'E1';
+printf("SQLCODE after UPDATE STAFF 'E1' = %ld\n",SQLCODE);
+
+EXEC SQL INSERT INTO STAFF5 
+  SELECT *
+  FROM STAFF;
+printf("SQLCODE after INSERT #4 STAFF5 = %ld\n",SQLCODE);
+
+EXEC SQL UPDATE STAFF5 
+  SET GRADE = NULL
+  WHERE EMPNUM = 'E2';
+printf("SQLCODE after UPDATE STAFF5 'E2' = %ld\n",SQLCODE);
+
+GRDE = 13;
+indic1 = -1;
+
+EXEC SQL UPDATE STAFF5
+  SET GRADE = :GRDE:indic1 
+  WHERE EMPNUM = 'E4';
+printf("SQLCODE after UPDATE STAFF5 'E4' = %ld\n",SQLCODE);
+
+count1 = 0;
+count2 = 0;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+  FROM STAFF5;
+
+EXEC SQL SELECT COUNT(*) INTO :count2
+  FROM STAFF5
+  WHERE GRADE IS NULL;
+
+EXEC SQL ROLLBACK WORK;
+
+printf("\n");
+printf(" The correct answers are:\n");
+printf("  count1 = 8 and count2 = 6\n");
+printf("\n");
+printf(" Your answers are:\n");
+printf("  count1 = %ld and count2 = %ld\n",count1,count2);
+
+if (count1 == 8 && count2 == 6) 
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0446','pass','PC');
+}
+else
+{
+  printf("\n\n   cdr027.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0446','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0446 ********************/
+
+/******************** BEGIN TEST0447 ********************/
+printf("\n                   TEST0447          \n");
+printf("     with Check Constraint and Check Option\n");
+printf(" Reference: ANSI X3.168-1989 6.8 GR1, 6.9 GR3 a) \n");
+printf("- - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+count1 = 0;
+count2 = 0;
+strcpy(NME,"XXXXX");
+flag1 = 0;
+
+EXEC SQL DELETE FROM STAFF6;
+
+EXEC SQL INSERT INTO STAFF6_WITH_GRADES
+  VALUES('X1','Vicki',NULL,'Houston');
+printf("SQLCODE after INSERT STAFF6_WITH_GRADES = %ld\n",SQLCODE);
+
+if (SQLCODE >= 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO STAFF6
+  VALUES('X2','Tina',NULL,'Orlando');
+printf("SQLCODE after INSERT STAFF6 = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+  FROM STAFF6_WITH_GRADES;
+
+EXEC SQL SELECT COUNT(*) INTO :count2
+  FROM STAFF6;
+
+EXEC SQL SELECT EMPNAME INTO :NME
+  FROM STAFF6
+  WHERE GRADE IS NULL;
+
+EXEC SQL ROLLBACK WORK;
+
+if (strncmp(NME,"Tina                ",20) != 0)
+  flag1 = 1;
+
+printf("\n");
+printf("The correct answers are:\n");
+printf(" count1 = 0, count2 = 1, flag1 = 0\n");
+printf("\n");
+printf("Your answers are:\n");
+printf(" count1 = %ld, count2 = %ld, flag1 = %ld\n",count1,count2,flag1);
+printf("\n");
+
+
+if (count1 == 0 && count2 == 1 && flag1 == 0) 
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0447','pass','PC');
+}
+else
+{
+  printf("\n\n   cdr027.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0447','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0447 ********************/
+
+/******************** BEGIN TEST0448 ********************/
+printf("\n           TEST0448          \n");
+printf("     Primary Key Implies UNIQUE\n");
+printf("    Reference: X3.135-1989 GR 2\n");
+printf("- - - - - - - - - - - - - - - - - -\n\n");
+
+count1 = 0;
+flag1 = 0;
+
+EXEC SQL DELETE FROM STAFF9;
+
+EXEC SQL INSERT INTO STAFF9(EMPNUM,EMPNAME)
+  VALUES('D1','Muddley');
+printf("SQLCODE after INSERT #1 STAFF9 = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO STAFF9(EMPNUM,EMPNAME)
+  VALUES('D1','Muddley');
+printf("SQLCODE after INSERT #2 STAFF9 = %ld\n",SQLCODE);
+
+if (SQLCODE >= 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO STAFF9(EMPNUM,EMPNAME)
+  VALUES('d1','Muddley');
+printf("SQLCODE after INSERT #3 STAFF9 = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+  FROM STAFF9;
+
+EXEC SQL ROLLBACK WORK;
+
+printf("The correct answers are:\n");
+printf(" flag1 = 0 and count1 = 2\n");
+printf("\n");
+printf("Your answers are:\n");
+printf(" flag1 = %ld and count1 = %ld\n",flag1,count1);
+printf("\n");
+
+if (flag1 == 0 && count1 == 2) 
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0448','pass','PC');
+}
+else
+{
+  printf("\n\n   cdr027.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0448','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0448 ********************/
+
+/******************** BEGIN TEST0449 ********************/
+printf("\n                   TEST0449          \n");
+printf("   Check Constraint Definition is Case Sensitive\n");
+printf(" Reference: 6.8 GR1, 5.11 GR 6, 5.1 <character format> \n");
+printf(" - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+count1 = 0;
+flag1 = 0;
+
+EXEC SQL DELETE FROM STAFF9;
+
+EXEC SQL INSERT INTO STAFF9(EMPNUM,EMPNAME)
+  VALUES('Z1','Tina');
+printf("SQLCODE after INSERT #1 STAFF9 = %ld\n",SQLCODE);
+
+if (SQLCODE >= 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO STAFF9(EMPNUM,EMPNAME)
+  VALUES('Z2','tina');
+printf("SQLCODE after INSERT #2 STAFF9 = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO STAFF9(EMPNUM,EMPNAME)
+  VALUES('Z3','ANTHONY');
+printf("SQLCODE after INSERT #3 STAFF9 = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL SELECT COUNT(*) INTO :count1
+   FROM STAFF9;
+
+EXEC SQL ROLLBACK WORK;
+
+printf("\n");
+printf("The correct answers are:\n");
+printf(" flag1 = 0 and count1 = 2\n");
+printf("\n"); 
+printf("Your answers are:\n");
+printf(" flag1 = %ld and count1 = %ld\n",flag1,count1);
+
+if (flag1 == 0 && count1 == 2) 
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0449','pass','PC');
+}
+else
+{
+  printf("\n\n   cdr027.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0449','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0449 ********************/
+
+/******************** BEGIN TEST0450 ********************/
+printf("\n                TEST0450          \n");
+printf("      Referential Integrity is Case Sensitive\n");
+printf(" Reference: 5.11 GR6, 5.1 <character format>, 6.7 GR 1a) \n");
+printf("- - - - - - - - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+flag1 = 0;
+
+EXEC SQL INSERT INTO DEPT
+  VALUES(11,'VOLLEYBALL','VICKI');
+printf("insert parent(setup), SQLCODE = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO DEPT 
+  VALUES(10,'volleyball','vicki');
+printf("insert lower case value of parent(setup), SQLCODE = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO EMP
+  VALUES(13,'MARY','Dancer',15,'VOLLEYBALL',010101);
+printf("insert child(setup),  SQLCODE = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL DELETE FROM DEPT
+  WHERE DNO = 10;
+printf("SQLCODE after delete parent = %ld\n",SQLCODE);
+
+if (SQLCODE != 0)
+  flag1 = 1;
+
+EXEC SQL UPDATE DEPT
+  SET DNAME = 'EDUCATION'
+  WHERE DNAME = 'Education';
+printf("SQLCODE after update parent = %ld\n",SQLCODE);
+
+if (SQLCODE >= 0)
+  flag1 = 1;
+
+EXEC SQL INSERT INTO EMP
+  VALUES(28,'BARBARA','Jogger',14,'EDUCATION',010101);
+printf("SQLCODE after insert child = %ld\n",SQLCODE);
+
+if (SQLCODE >= 0)
+  flag1 = 1;
+
+EXEC SQL UPDATE EMP
+  SET DNAME = 'PHYSICS'
+  WHERE ENO = 25;
+printf("SQLCODE after update child = %ld\n",SQLCODE);
+
+if (SQLCODE >= 0)
+  flag1 = 1;
+
+EXEC SQL ROLLBACK WORK;
+
+printf("\n");
+printf("The correct answer is:\n");
+printf(" flag1 = 0\n");
+printf("\n");
+printf("Your answer is:\n");
+printf(" flag1 = %ld\n",flag1);
+
+if (flag1 == 0) 
+{
+  printf("\n\n             *** pass *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0450','pass','PC');
+}
+else
+{
+  printf("\n\n   cdr027.pc  *** fail *** \n\n");
+  EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0450','fail','PC');
+          errcnt = errcnt + 1;
+}
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0450 ********************/
+
+exit(errcnt);
+
+}

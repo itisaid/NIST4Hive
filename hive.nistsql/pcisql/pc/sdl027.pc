@@ -1,0 +1,265 @@
+/*  EMBEDDED C (file "SDL027.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1990/09/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL027.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 6.9 View Definition                  */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     CITY1[10];
+     long     YEAR1;
+     float     Hi;
+     float     Hi2;
+     float     Lo;
+     float     AVGHi;
+     long      MAX1;
+     long      MIN1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     flag;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl027.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     EXEC SQL DELETE FROM TEMP_OBSERV;
+
+     EXEC SQL INSERT INTO TEMP_OBSERV
+              VALUES (1984, 'Sun City', 110, 44);
+
+     EXEC SQL INSERT INTO TEMP_OBSERV
+              VALUES (1984, 'Iceburg', 45, -90);
+
+     EXEC SQL INSERT INTO TEMP_OBSERV
+              VALUES (1984, 'Abeland', 101, 10);
+
+     EXEC SQL INSERT INTO TEMP_OBSERV
+              VALUES (1985, 'Sun City', 105, 50);
+
+     EXEC SQL INSERT INTO TEMP_OBSERV
+              VALUES (1985, 'Iceburg', 47, -82);
+
+     EXEC SQL INSERT INTO TEMP_OBSERV
+              VALUES (1985, 'Abeland', 98, -3);
+
+/******************** BEGIN TEST0401 ********************/
+     printf("                  TEST0401 \n");
+     printf("     VIEW with computed columns\n");
+     printf(" Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf(" ***\n");
+printf(" ***   CREATE TABLE TEMP_OBSERV\n");
+printf(" ***               (YEAR_OBSERV     NUMERIC(4),\n");
+printf(" ***                CITY            CHAR(10),\n");
+printf(" ***                MAX_TEMP        NUMERIC(5,2),\n");
+printf(" ***                MIN_TEMP        NUMERIC(5,2))\n");
+printf(" ***\n");
+printf(" ***   CREATE VIEW CELSIUS_OBSERV (CITY, YEAR_OBSERV, MIN_C, MAX_C)\n");
+printf(" ***      AS SELECT CITY, YEAR_OBSERV, (MIN_TEMP - 32) * 5 / 9,\n");
+printf(" ***                (MAX_TEMP - 32) * 5 / 9\n");
+printf(" ***         FROM TEMP_OBSERV\n");
+printf(" ***\n");
+printf(" ***   CREATE VIEW MULTI_YEAR_OBSERV (CITY, HIGH, LOW)\n");
+printf(" ***      AS SELECT CITY, AVG(MAX_TEMP), AVG(MIN_TEMP)\n");
+printf(" ***            FROM TEMP_OBSERV\n");
+printf(" ***            GROUP BY CITY\n");
+printf(" ***\n");
+printf(" ***   CREATE VIEW EXTREME_TEMPS (YEAR_OBSERV, HIGH, LOW)\n");
+printf(" ***      AS SELECT YEAR_OBSERV, MAX(MAX_TEMP), MIN(MIN_TEMP)\n");
+printf(" ***            FROM TEMP_OBSERV\n");
+printf(" ***            GROUP BY YEAR\n");
+printf(" \n");
+     flag = 1;
+     Hi = 0;
+     Lo = 0;
+     EXEC SQL SELECT CITY, YEAR_OBSERV, MIN_C, MAX_C
+              INTO :CITY1, :YEAR1, :Lo, :Hi
+              FROM CELSIUS_OBSERV
+              WHERE YEAR_OBSERV = 1984 AND MIN_C > 5;
+
+     printf(" The correct answer is approximately:\n");
+     printf("        CITY1 = Sun City, Year1 = 1984\n");
+     printf("        Lo = 6.67, Hi = 43.33\n");
+     printf("        SQLCODE >= 0\n");
+
+     printf(" Your answer is:\n");
+     printf("        CITY1 = %s, YEAR1 = %ld\n", CITY1, YEAR1);
+     printf("        Lo = %f, Hi = %f\n", Lo, Hi);
+     printf("        SQLCODE = %ld\n", SQLCODE);
+if (SQLCODE < 0)
+     flag = 0;
+
+if (strncmp(CITY1, "Sun City", 8) != 0 || YEAR1 != 1984)
+     flag = 0;
+if (Lo < 6.65 || Lo > 6.68 || Hi < 43.31 || Hi > 43.35)
+     flag = 0;
+
+     EXEC SQL DECLARE MYOB CURSOR FOR SELECT CITY, HIGH, LOW 
+              FROM MULTI_YEAR_OBSERV
+              ORDER BY CITY ASC;
+
+
+     EXEC SQL OPEN MYOB;
+
+     EXEC SQL FETCH MYOB INTO
+              :CITY1,:Hi, :Lo;
+     
+     EXEC SQL CLOSE MYOB;
+
+     printf(" The correct answer is approximately:\n");
+     printf("        Hi = 99.5,  Lo = 3.5\n");
+
+     printf(" Your answer is:\n");
+     printf("        Hi = %f, Lo = %f\n", Hi, Lo);
+
+if (Hi < 99.3 || Hi > 99.7 || Lo > 3.7 || Lo < 3.3)
+     flag = 0;
+
+     EXEC SQL DECLARE ET CURSOR FOR SELECT HIGH, YEAR_OBSERV, LOW 
+              FROM EXTREME_TEMPS
+              ORDER BY YEAR_OBSERV DESC;
+
+
+     EXEC SQL OPEN ET;
+     EXEC SQL FETCH ET
+              INTO :MAX1, :YEAR1,:MIN1;
+     EXEC SQL CLOSE ET;
+
+     printf(" The correct answer is:\n");
+     printf("        MAX1 = 105,  MIN1 = -82\n");
+
+     printf(" Your answer is:\n");
+     printf("        MAX1 = %ld, MIN1 = %ld\n", MAX1, MIN1);
+
+if (MAX1 != 105 && MIN1 != -82)
+     flag = 0;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0401','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl027.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0401','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+  /******************** END TEST0401 *********************/
+
+
+
+/******************** BEGIN TEST0391 ********************/
+     printf("                  TEST0391 \n");
+     printf("  Correlation names used in self-join of view\n");
+     printf(" Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf(" \n");
+     flag = 1;
+     Hi = 0;
+     Hi2 = 0;
+     strcpy(CITY1,"NV");
+     EXEC SQL DECLARE THERMO CURSOR FOR
+              SELECT X.CITY, X.MAX_C, Y.MAX_C,
+                     (X.MAX_C + Y.MAX_C) / 2
+              FROM CELSIUS_OBSERV X, CELSIUS_OBSERV Y
+              WHERE X.YEAR_OBSERV = 1984 AND
+                    Y.YEAR_OBSERV = 1985 AND
+                    X.CITY = Y.CITY
+              ORDER BY 4 DESC;
+
+     EXEC SQL OPEN THERMO;
+     EXEC SQL FETCH THERMO INTO :CITY1, :Hi, :Hi2, :AVGHi;
+
+     printf(" The correct answer is approximately:\n");
+     printf("        CITY1 = Sun City, AVGHi = 41.945\n");
+     printf("        1984 Hi = 43.33, 1985 Hi = 40.56\n");
+     printf("        SQLCODE >= 0\n");
+
+     printf(" Your answer is:\n");
+     printf("        CITY1 = %s, AVGHi = %f\n", CITY1, AVGHi);
+     printf("        1984 Hi = %f, 1985 Hi = %f\n", Hi, Hi2);
+     printf("        SQLCODE = %ld\n", SQLCODE);
+if (SQLCODE < 0)
+     flag = 0;
+
+if (strncmp(CITY1, "Sun City", 8) != 0 || AVGHi > 41.96 || AVGHi < 41.93)
+     flag = 0;
+if (Hi2 < 40.54 || Hi2 > 40.57 || Hi < 43.31 || Hi > 43.35)
+     flag = 0;
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0391','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl027.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0391','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+  /******************** END TEST0391 *********************/
+
+     exit(errcnt);
+}

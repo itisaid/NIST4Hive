@@ -1,0 +1,384 @@
+/*  EMBEDDED C (file "DML071.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML071.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE WHENEVER CONDITIONS.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.168-1989                          */
+/*                                                               */
+/*        SECTION 9.2   <embedded exception declaration>         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char EMPNO1[4];
+  char SNUM[4];
+  long ind1;
+  short indic1;
+  long HOURS1;
+  long i;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  long cnt;
+  long cnt2;
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml071.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0414 ********************/
+
+ind1 = 0;
+cnt = 0;
+cnt2 = 0;
+
+printf("\n                   TEST0414          \n");
+printf("      WHENEVER NOT FOUND, multiple settings \n");
+printf("Reference: ANSI X3.168-1989 Section 9.2 General Rules 1) a)\n");
+printf("Reference: ANSI X3.135-1989 Section 7.3 General Rules 3) a)\n");
+printf("   - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("**** If this test lasts too long, stop it and ***\n");
+printf("**** the result should be FAIL. ***\n");
+
+EXEC SQL WHENEVER NOT FOUND GOTO P100;
+EXEC SQL DECLARE X CURSOR
+    FOR SELECT EMPNUM,HOURS
+        FROM   WORKS
+        WHERE  PNUM='P2'
+        ORDER  BY EMPNUM DESC;
+
+P200:  
+  printf("At label P200 with cnt=%ld and cnt2=%ld\n",cnt,cnt2);
+  cnt = cnt + 1;
+  EXEC SQL OPEN X;
+  /* Fetch past end of cursor: */
+  for (i=0;i<20;i++)
+    {
+    EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+    printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+    }
+  ind1 = -1;
+  printf("\n\n***  should never get here: whenever NOT FOUND failed\n" ); 
+  printf("\n***  SQLCODE should be 100, it was %ld\n", SQLCODE);
+
+P100:
+  printf("At label P100 with cnt=%ld and cnt2=%ld\n", cnt,cnt2);
+  EXEC SQL CLOSE X;
+  if (cnt == 5)
+     goto P300;
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+
+  /* Empty SELECT.  SQLCODE = 100 with no GOTO in effect */
+  EXEC SQL SELECT EMPNUM INTO :EMPNO1 FROM STAFF 
+           WHERE CITY = 'Kensington';
+
+  /*  Cardinality error.  SQLCODE < 0 with no GOTO in effect */
+  EXEC SQL SELECT EMPNUM INTO :EMPNO1 FROM WORKS;
+
+  EXEC SQL DECLARE LION CURSOR FOR
+           SELECT EMPNUM FROM STAFF
+           WHERE EMPNUM = 'E20';
+  if (cnt2 > 0)
+     {
+        EXEC SQL CLOSE LION;
+     }
+  EXEC SQL OPEN LION;
+  EXEC SQL WHENEVER NOT FOUND GO TO P200;
+  cnt2 = cnt2 + 1;
+  /*  FETCH on empty cursor: */
+  EXEC SQL FETCH LION INTO :EMPNO1;
+  ind1 = -1;
+  printf("\n\n***  should never get here: whenever NOT FOUND failed\n" ); 
+  printf("\n***  SQLCODE should be 100, it was %ld\n", SQLCODE);
+
+P300:
+  printf("At label P300\n");
+  EXEC SQL WHENEVER NOT FOUND GOTO P400;
+  /*  Delete searched not found: */
+  EXEC SQL DELETE FROM WORKS WHERE HOURS = 77;
+  ind1 = -1;
+  printf("\n***  SQLCODE should be 100, it was %ld\n", SQLCODE);
+  printf("\n\n***  should never get here: whenever NOT FOUND failed\n" ); 
+
+P400:
+  printf("At label P400\n");
+  EXEC SQL WHENEVER NOT FOUND GOTO P500;
+  /*  Update searched not found: */
+  EXEC SQL UPDATE STAFF SET GRADE = 15
+           WHERE CITY =
+                 (SELECT CITY FROM PROJ
+                    WHERE PNAME = 'SDP' AND PTYPE = 'Test');
+  ind1 = -1;
+  printf("\n\n***  should never get here: whenever NOT FOUND failed\n" ); 
+  printf("\n***  SQLCODE should be 100, it was %ld\n", SQLCODE);
+
+P500: 
+  printf("At label P500\n");
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+  EXEC SQL ROLLBACK WORK;
+  if (ind1 == 0 && cnt == 5 && cnt2 == 4)  
+  {
+    printf("\n\n             *** pass *** \n\n");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0414','pass','PC');  
+  }
+  else
+  {
+    printf("\n\n   dml071.pc  *** fail *** \n\n");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0414','fail','PC');
+          errcnt = errcnt + 1;
+  }
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0414 ********************/
+
+
+/******************** BEGIN TEST0415 ********************/
+
+
+ind1 = 0;
+cnt = 0;
+cnt2 = 0;
+printf("\n\n                  TEST0415          \n");
+printf("      WHENEVER SQLERROR, multiple settings \n");
+printf("Reference: ANSI X3.168-1989 Section 9.2 General Rules 1) b)\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("**** If this test lasts too long, stop it and ***\n");
+printf("**** the result should be FAIL.\n");
+
+EXEC SQL WHENEVER SQLERROR GO TO P110;
+
+P130:
+  printf("At label P130\n");
+  cnt = cnt + 1;
+  /* View check constraint error.  Column 3 value less than 12. */
+  EXEC SQL INSERT INTO STAFFV2
+         VALUES('E20', 'John', 2, 'Potomac');
+  ind1 = -1;
+  printf( "\n\n***  should never get here: whenever SQLERROR failed");
+  printf( "\n***  SQLCODE should be <0, it was %ld\n", SQLCODE);
+
+P110: 
+  printf("At label P110\n");
+  if (cnt == 5)
+     goto P140;
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+  EXEC SQL DELETE FROM PROJ1;
+  EXEC SQL INSERT INTO PROJ1
+           SELECT * FROM PROJ;
+
+  /* Empty SELECT.  SQLCODE = 100 with no GOTO in effect */
+  EXEC SQL SELECT EMPNUM INTO :EMPNO1 FROM STAFF 
+           WHERE CITY = 'Kensington';
+
+  /*  Cardinality error.  SQLCODE < 0 with no GOTO in effect */
+  EXEC SQL SELECT EMPNUM INTO :EMPNO1 FROM WORKS;
+
+  EXEC SQL WHENEVER SQLERROR GO TO P130;
+  cnt2 = cnt2 + 1;
+  /*  Uniqueness constraint violation.  Value 'P1' duplicates. */
+       EXEC SQL INSERT INTO PROJ1
+                VALUES('P1', 'CA', 'Acro', 20, 'Tibet');
+  ind1 = -1;
+  printf( "\n\n***  should never get here: whenever SQLERROR failed"); 
+  printf( "\n***  SQLCODE should be <0, it was %ld\n", SQLCODE);
+
+P140:
+  printf("At label P140\n");
+  EXEC SQL WHENEVER SQLERROR GO TO P120;
+  /*  NOT NULL constraint violation in first column */
+  indic1 = -1;
+  EXEC SQL INSERT INTO STAFF1
+           VALUES (:EMPNO1 :indic1, 'Ford', 30, 'Tomb');
+  ind1 = -1;
+  printf( "\n\n***  should never get here: whenever SQLERROR failed");
+  printf( "\n***  SQLCODE should be <0, it was %ld\n", SQLCODE);
+
+P120:
+  printf("At label P120\n");
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+  EXEC SQL ROLLBACK WORK;
+
+
+  if (cnt == 5 && ind1 == 0 && cnt2 == 4)
+  {
+    printf("\n\n             *** pass *** \n\n");
+    EXEC SQL INSERT INTO TESTREPORT 
+      VALUES('0415','pass','PC');
+  }
+  else
+  {
+    printf("\n\n   dml071.pc  *** fail *** \n\n");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0415','fail','PC');
+          errcnt = errcnt + 1;
+  }
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0415 ********************/
+
+/******************** BEGIN TEST0416 ********************/
+
+cnt = 0;
+ind1 = 0;
+printf("\n\n                  TEST0416          \n");
+printf("      WHENEVER NOTFOUND overlaps WHENEVER SQLERROR \n");
+printf("Reference: ANSI X3.168-1989 Section 9.2 General Rules 1) c)\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("**** If this test lasts too long, stop it and the result***\n");
+printf("**** should be FAIL.\n");
+
+EXEC SQL DECLARE MONKEY CURSOR
+  FOR SELECT EMPNUM,HOURS
+      FROM   WORKS
+      WHERE  PNUM='P2'
+      ORDER  BY EMPNUM DESC;
+EXEC SQL WHENEVER SQLERROR GO TO P210;
+EXEC SQL WHENEVER NOT FOUND GOTO P280;
+
+P230:
+  printf("At label P230\n");
+  cnt = cnt + 1;
+  if (cnt != 1 && cnt != 3 && cnt != 8)
+     ind1 = -1;
+  /* Cardinality error: */
+  EXEC SQL SELECT EMPNUM
+       INTO   :EMPNO1
+       FROM   WORKS
+       WHERE  PNUM='P2';
+
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+P240:  
+  printf("At label P240\n");
+  cnt = cnt + 1;
+  if (cnt != 6)
+     ind1 = -1;
+  EXEC SQL OPEN MONKEY;
+  /*  Fetch past end of cursor: */
+  for (i=0;i<20;i++)
+  {
+  EXEC SQL FETCH MONKEY INTO :EMPNO1,:HOURS1;
+  printf("                EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+  }
+  ind1 = -1;
+  printf( "\n\n***  should never get here: whenever SQLERROR failed");
+  printf( "\n***  SQLCODE should be <0, it was %ld\n", SQLCODE);
+
+P210: 
+  printf("At label P210\n");
+  cnt = cnt + 1;
+  if (cnt == 4)
+     goto P250;
+  if (cnt == 9)
+     goto P260;
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+  EXEC SQL DELETE FROM PROJ1;
+  EXEC SQL INSERT INTO PROJ1
+           SELECT * FROM PROJ;
+
+  EXEC SQL WHENEVER SQLERROR GO TO P230;
+  /*  Uniqueness constraint violation.  Value 'P1' duplicates. */
+  if (cnt != 2)
+     ind1 = -1;
+  EXEC SQL INSERT INTO PROJ1
+           VALUES('P1', 'CA', 'Acro', 20, 'Tibet');
+  EXEC SQL WHENEVER SQLERROR CONTINUE;
+
+P250:
+  printf("At label P250\n");
+  cnt = cnt + 1;
+  if (cnt != 5)
+     ind1 = -1;
+  EXEC SQL WHENEVER NOT FOUND GOTO P240;
+  /*  Empty SELECT: */
+  EXEC SQL SELECT EMPNUM INTO :EMPNO1 FROM STAFF
+           WHERE EMPNUM = 'E30';
+
+P280:
+  printf("At label P280\n");
+  cnt = cnt + 1;
+  if (cnt != 7)
+     ind1 = -1;
+  EXEC SQL CLOSE MONKEY;
+  EXEC SQL WHENEVER NOT FOUND GOTO P230;
+  /*  Empty SELECT: */
+  EXEC SQL SELECT EMPNUM INTO :EMPNO1 FROM STAFF
+                WHERE EMPNUM = 'E30';
+
+P260:
+  printf("At label P260\n");
+  cnt = cnt + 1;
+  if (cnt != 10)
+     ind1 = -1;
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+  EXEC SQL ROLLBACK WORK;
+
+  if (ind1 == 0)
+  {
+    printf("\n\n             *** pass *** \n\n");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0416','pass','PC');
+  }
+  else
+  {
+    printf("\n\n   dml071.pc  *** fail *** \n\n");
+    EXEC SQL INSERT INTO TESTREPORT
+      VALUES('0416','fail','PC');
+          errcnt = errcnt + 1;
+  }
+  printf("====================================================\n\n");
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0416 ********************/
+
+exit(errcnt);
+}

@@ -1,0 +1,508 @@
+/*  EMBEDDED C (file "DML084.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML084.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SQLSTATE STATUS CODE.               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     char ct1[3];
+     long tmpcnt;
+EXEC SQL END DECLARE SECTION;
+long ii;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+char SQLST1[6];
+char SQLST2[6];
+char SQLST3[6];
+char SQLST4[6];
+char SQLST5[6];
+long SQLCD1;
+long SQLCD2;
+long SQLCD3;
+long SQLCD4;
+long SQLCD5;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+flag = 1;
+
+printf("SQL Test Suite, V6.0, Embedded C, dml084.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0503 ********************/
+flag = 1;
+
+     printf("                  TEST0503 \n");
+     printf("SQLSTATE = 42000: syntax error or access rule vio. 1\n");
+     printf ("Note: VALID implementation-defined subclass will be\n");
+     printf ("      accepted instead of no-subclass value of 000 \n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 6.3 <table reference> Access Rule #1\n");
+     printf("  section 3.3.4.3 Terms denoting rule requirements\n");
+     printf("  section 3.3.4.4 Rule evaluation order\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("Test numbers 0503 and 0504 check for SQLSTATE\n");
+printf("42000 on syntax errors and access violations.\n");
+printf("SQL-92 permits, but does not require, an\n");
+printf("implementation to achieve a high level of security\n");
+printf("by returning the same error for an access\n");
+printf("violation as for a reference to a non-existent\n");
+printf("table.  This test exercises several different\n");
+printf("types of syntax errors and access violations.  If\n");
+printf("you are trying for a high security level, please\n");
+printf("insure that the compilation AND the run time\n");
+printf("behavior of all these errors are\n");
+printf("indistinguishable.\n");
+printf("\n");
+printf("For minimal SQL-92 conformance, each run time\n");
+printf("error must produce SQLSTATE 42000 or 42 with some\n");
+printf("implementor-defined subclass.  The subclass can\n");
+printf("be different for each error.  Compile time errors\n");
+printf("are also permissible.\n");
+     printf("\n");
+     printf("\n");
+     printf("\n");
+     printf("\n");
+
+     /* HU.UPUNIQ has a row (1,'A'), but SCHANZLE has no privileges */
+     SQLCODE = 0;
+     strcpy (ct1, "x");
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT COL2 INTO :ct1 FROM HU.UPUNIQ WHERE NUMKEY = 1;\n");
+     EXEC SQL SELECT COL2 INTO :ct1 FROM HU.UPUNIQ WHERE NUMKEY = 1;
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST1, SQLSTATE);
+     SQLCD1 = SQLCODE;
+     ct1[1] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     printf ("ct1 should NOT be 'A '; its value is %s\n", ct1);
+     if (SQLCODE >= 0 || strncmp (ct1, "A ", 2) == 0)
+       flag = 0;
+     NOSUBCLASS();
+     if (strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+
+     /* SCHANZLE has no privileges on table HU.UPUNIQ - attempt UPDATE */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("UPDATE HU.UPUNIQ SET COL2 = 'xx';\n");
+     EXEC SQL UPDATE HU.UPUNIQ SET COL2 = 'xx';
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST2, SQLSTATE);
+     SQLCD2 = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+
+     /* SCHANZLE has no privileges on table HU.UPUNIQ - attempt DELETE */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("DELETE FROM HU.UPUNIQ;\n");
+     EXEC SQL DELETE FROM HU.UPUNIQ;
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST3, SQLSTATE);
+     SQLCD3 = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+
+     /* SCHANZLE has no privileges on table HU.UPUNIQ - attempt insert */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.UPUNIQ VALUES (9,'M');\n");
+     EXEC SQL INSERT INTO HU.UPUNIQ VALUES (9,'M');
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST4, SQLSTATE);
+     SQLCD4 = SQLCODE;
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+
+     /* Subtest 0503e begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* Privilege violation in 'inessential part' - middle subquery */
+     tmpcnt = -1;
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF\n");
+     printf ("WHERE GRADE <\n");
+     printf ("      (SELECT MAX(HOURS) FROM HU.WORKS)\n");
+     printf ("OR    GRADE >\n");
+     printf ("      (SELECT MAX(NUMKEY) FROM HU.UPUNIQ)\n");
+     printf ("OR    GRADE + 100 >\n"); 
+     printf ("      (SELECT MIN(HOURS) FROM HU.WORKS);\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF
+              WHERE GRADE <
+                    (SELECT MAX(HOURS) FROM HU.WORKS)
+              OR    GRADE >
+                    (SELECT MAX(NUMKEY) FROM HU.UPUNIQ)
+              OR    GRADE + 100 > 
+                    (SELECT MIN(HOURS) FROM HU.WORKS);
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST5, SQLSTATE);
+     SQLCD5 = SQLCODE;
+     printf ("tmpcnt should not be 5; its value is %ld\n",tmpcnt);
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (tmpcnt == 5 || SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     /* Subtest 0503e ends */
+
+     /* Subtest 0503f begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* Privilege violation AND syntax error (column 2 is CHAR(2)) */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.UPUNIQ VALUES (13,44);\n");
+     EXEC SQL INSERT INTO HU.UPUNIQ VALUES (13,44);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD4 || strncmp (SQLSTATE, SQLST4, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for access violation and \n");
+          printf (" access violation with syntax error (CHAR column) \n");
+       }
+     /* Subtest 0503f ends */
+
+     /* Subtest 0503g begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* Privilege violation AND syntax error (2 columns in row) */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.UPUNIQ VALUES (555666777);\n");
+     EXEC SQL INSERT INTO HU.UPUNIQ VALUES (555666777);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD4 || strncmp (SQLSTATE, SQLST4, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for access violation and \n");
+          printf (" access violation with syntax error (wrong # columns) \n");
+       }
+     /* Subtest 0503g ends */
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0503','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml084.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0503','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0503 *********************/
+
+/******************** BEGIN TEST0504 ********************/
+flag = 1;
+
+     printf("         OPTIONAL TEST0504 \n");
+     printf("SQLSTATE = 42000: syntax error or access rule vio. 2\n");
+     printf ("Note: VALID implementation-defined subclass will be\n");
+     printf ("      accepted instead of no-subclass value of 000 \n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 6.3 <table reference> Access Rule #1\n");
+     printf("  section 3.3.4.3 Terms denoting rule requirements\n");
+     printf("  section 3.3.4.4 Rule evaluation order\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("Test numbers 0503 and 0504 check for SQLSTATE\n");
+printf("42000 on syntax errors and access violations.\n");
+printf("SQL-92 permits, but does not require, an\n");
+printf("implementation to achieve a high level of security\n");
+printf("by returning the same error for an access\n");
+printf("violation as for a reference to a non-existent\n");
+printf("table.  This test exercises several different\n");
+printf("types of syntax errors and access violations.  If\n");
+printf("you are trying for a high security level, please\n");
+printf("insure that the compilation AND the run time\n");
+printf("behavior of all these errors are\n");
+printf("indistinguishable.\n");
+printf("\n");
+printf("For minimal SQL-92 conformance, each run time\n");
+printf("error must produce SQLSTATE 42000 or 42 with some\n");
+printf("implementor-defined subclass.  The subclass can\n");
+printf("be different for each error.  Compile time errors\n");
+printf("are also permissible.\n");
+     printf("\n");
+     printf("\n");
+     printf("\n");
+
+     /* HU.UPUPUP DOES NOT EXIST  - attempt SELECT */
+     SQLCODE = 0;
+     strcpy (ct1, "x");
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT COL2 INTO :ct1 FROM HU.UPUPUP WHERE NUMKEY = 1;\n");
+     EXEC SQL SELECT COL2 INTO :ct1 FROM HU.UPUPUP WHERE NUMKEY = 1;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD1 || strncmp (SQLSTATE, SQLST1, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for SELECT access violation \n");
+          printf ("and SELECT on table which does not exist.\n");
+       }
+
+     /* HU.UPUPUP does not exist - attempt UPDATE */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("UPDATE HU.UPUPUP SET COL2 = 'xx';\n");
+     EXEC SQL UPDATE HU.UPUPUP SET COL2 = 'xx';
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD2 || strncmp (SQLSTATE, SQLST2, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for UPDATE access violation \n");
+          printf ("and UPDATE of table which does not exist.\n");
+       }
+
+     /* HU.UPUPUP does not exist - attempt DELETE */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("DELETE FROM HU.UPUPUP;\n");
+     EXEC SQL DELETE FROM HU.UPUPUP;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD3 || strncmp (SQLSTATE, SQLST3, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for DELETE access violation \n");
+          printf ("and DELETE for table which does not exist.\n");
+       }
+
+     /* HU.UPUPUP does not exist - attempt insert */
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO HU.UPUPUP VALUES (9,'M');\n");
+     EXEC SQL INSERT INTO HU.UPUPUP VALUES (9,'M');
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD4 || strncmp (SQLSTATE, SQLST4, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for INSERT access violation \n");
+          printf ("and INSERT for table which does not exist.\n");
+       }
+
+     /* HU.UPUPUP DOES NOT EXIST - inessential part of middle subquery */
+     tmpcnt = -1;
+     printf ("\n");
+     SQLCODE = 0;
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF\n");
+     printf ("WHERE GRADE <\n");
+     printf ("      (SELECT MAX(HOURS) FROM HU.WORKS)\n");
+     printf ("OR    GRADE >\n");
+     printf ("      (SELECT MAX(NUMKEY) FROM HU.UPUPUP)\n");
+     printf ("OR    GRADE + 100 >\n"); 
+     printf ("      (SELECT MIN(HOURS) FROM HU.WORKS);\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF
+              WHERE GRADE <
+                    (SELECT MAX(HOURS) FROM HU.WORKS)
+              OR    GRADE >
+                    (SELECT MAX(NUMKEY) FROM HU.UPUPUP)
+              OR    GRADE + 100 > 
+                    (SELECT MIN(HOURS) FROM HU.WORKS);
+     SQLSTATE[5] = '\0';
+     printf ("tmpcnt should not be 5; its value is %ld\n",tmpcnt);
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '42000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (tmpcnt == 5 || SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+       flag = 0;
+     if (SQLCODE != SQLCD5 || strncmp (SQLSTATE, SQLST5, 5) != 0)
+       {
+          printf ("Optional security note:\n");
+          printf ("Different message for access violation and \n");
+          printf (" access violation with syntax error (wrong # columns) \n");
+       }
+ 
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0504','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml084.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0504','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0504 *********************/
+
+     exit(errcnt);
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested against 42000  */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}

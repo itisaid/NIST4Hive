@@ -1,0 +1,105 @@
+/*  EMBEDDED C (file "FLG013.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/12/27 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLG013.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests an extension to FIPS SQL.                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    XOP710.PC -- X/O,Acceptance of correctly placed SQLCA      */
+/*      (Colin O'Driscoll)                                       */
+/*    X/Open CAE SQL 8.1.1                                       */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+/* Declarations for SQLCODE and SQLSTATE are omitted since they might */
+/* conflict with sqlca.                                               */
+
+EXEC SQL BEGIN DECLARE SECTION;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+/* This is part of the extension that we are testing. */
+EXEC SQL INCLUDE sqlca;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+
+printf("SQL Test Suite, V6.0, Embedded C, flg013.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0833 ********************/
+flag = 1;
+
+/* If at first this test will not compile, globally replace sqlca */
+/* with SQLCA and sqlcode with SQLCODE.  If it still won't        */
+/* compile, the result is 'nogo'.                                 */
+
+/* This test is not applicable in module language. */
+
+     printf("                  TEST0833 \n");
+     printf("        FIPS Flagger - INCLUDE SQLCA\n");
+     printf("References:\n");
+     printf("    X/Open CAE SQL 8.1.1\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("     sqlca.sqlcode = -1;\n\n");
+     sqlca.sqlcode = -1;
+
+printf("SELECT USER INTO :uidx FROM HU.ECCO;\n");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+printf("sqlca.sqlcode is %d\n\n", sqlca.sqlcode);
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+    printf ("\n\n  SQL extension INCLUDE SQLCA used successfully.\n");
+    printf ("  Vendor must demonstrate FIPS flagger WARNING.\n");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0833','pass','PC');
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0833 *********************/
+
+     exit(errcnt);
+}

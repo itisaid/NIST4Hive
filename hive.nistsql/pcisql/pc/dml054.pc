@@ -1,0 +1,368 @@
+/*  EMBEDDED C (file "DML054.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 6/9/89 EMBEDDED C LANGUAGE                              */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML054.PC                                                    */
+/*  WRITTEN BY: KATHY HARVILL                                    */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE RULES FOR UPDATING VIA CURSORS      */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*         5.25 <query specification> SR 11, Section 13.5        */
+/*                    definition of "updatable"                  */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long COUNT1;
+   long COUNT2;
+   long COUNT3;
+   char CITY1[16];
+   char EMPNO[4];
+   char PNUM1[4];
+   long HOURS1;
+   long GRADE1;
+   char EMPNAM[21];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+   long ii;
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml054.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0240 ********************/
+
+  printf("\n                      TEST0240      \n");
+  printf("     This routine tests the rules for updatable tables \n");
+  printf("     Reference X3.135-89 section 5.25<query specification> \n");  
+  printf("     SR 11, definition of 'updatable'   \n");
+  printf("     Cursor with SELECT ALL, and predicates IN and BETWEEN\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL DECLARE C1 CURSOR FOR
+           SELECT ALL CITY FROM PROJ; 
+
+  EXEC SQL OPEN C1;
+  
+  for (ii=1;ii<11;ii++)
+  {
+  EXEC SQL FETCH C1 INTO :CITY1;
+  if (SQLCODE == 0 && strncmp(CITY1,"Deale",5) == 0)
+     {
+     EXEC SQL DELETE FROM PROJ WHERE CURRENT OF C1;
+     }
+  }
+  EXEC SQL CLOSE C1;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT1 FROM PROJ;
+    printf(" COUNT1 should be 3, COUNT1=%ld \n", COUNT1);
+
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL DECLARE C2 CURSOR FOR
+           SELECT HOURS, EMPNUM, PNUM FROM WORKS
+       WHERE HOURS IN (10, 20, 40);
+
+  EXEC SQL OPEN C2;
+  
+  for (ii=1;ii<15;ii++)
+  {
+  EXEC SQL FETCH C2 INTO :HOURS1, :EMPNO, :PNUM1;
+  if (SQLCODE == 0 && strncmp (EMPNO,"E4",2) == 0)
+     {
+     EXEC SQL UPDATE WORKS SET HOURS = 10 WHERE CURRENT OF C2;
+     }
+  }
+  EXEC SQL CLOSE C2;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT2 FROM WORKS WHERE HOURS = 10;
+    printf(" COUNT2 should be 2, COUNT2=%ld \n", COUNT2);
+
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL DECLARE C3 CURSOR FOR
+       SELECT * FROM WORKS
+       WHERE PNUM BETWEEN 'P2' AND 'P4'
+         AND EMPNUM NOT BETWEEN 'E2' AND 'E3';
+  EXEC SQL OPEN C3;
+  
+  for (ii=1;ii<15;ii++)
+  {
+  EXEC SQL FETCH C3 INTO :EMPNO, :PNUM1, :HOURS1;
+if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM WORKS WHERE CURRENT OF C3;
+     }
+  }
+  EXEC SQL CLOSE C3;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT3 FROM WORKS;
+  printf(" COUNT3 should be 7, COUNT3 =%ld \n", COUNT3);   
+
+  EXEC SQL ROLLBACK WORK;
+  if (COUNT1 == 3 && COUNT2 == 2 && COUNT3 == 7)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0240','pass','PC');
+    }
+  else
+    {
+      printf("      dml054.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0240','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK; 
+
+/******************** END TEST0240 ********************/
+
+/******************** BEGIN TEST0241 ********************/
+
+  printf("\n                      TEST0241      \n");
+  printf("     This routine tests the rules for updatable tables \n");
+  printf("     Reference X3.135-89 section 5.25<query specification> \n");  
+  printf("     SR 11, definition of 'updatable'   \n");
+  printf("     Cursor with LIKE, IS NULL and comparison predicates\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL DECLARE C4 CURSOR FOR
+       SELECT PNUM, EMPNUM FROM WORKS
+       WHERE PNUM LIKE '_2%';
+
+  EXEC SQL OPEN C4;
+  
+  for (ii=1;ii<15;ii++)
+  {
+  EXEC SQL FETCH C4 INTO :EMPNO, :PNUM1;
+  if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM WORKS WHERE CURRENT OF C4;
+     }
+  }
+  EXEC SQL CLOSE C4;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT1 
+                  FROM WORKS;
+    printf(" COUNT1 should be 8, COUNT1=%ld \n", COUNT1);
+
+  EXEC SQL ROLLBACK WORK;
+ 
+  EXEC SQL INSERT INTO STAFF VALUES ('E6',NULL,11,NULL);
+  EXEC SQL INSERT INTO STAFF VALUES ('E7',NULL,11,'Deale');
+  EXEC SQL INSERT INTO STAFF VALUES ('E8','Mary',11,NULL);
+
+  EXEC SQL DECLARE C5 CURSOR FOR
+       SELECT EMPNUM, EMPNAME FROM STAFF
+       WHERE EMPNAME IS NOT NULL AND CITY IS NULL;
+  EXEC SQL OPEN C5;
+  
+  for (ii=1;ii<10;ii++)
+  {
+  EXEC SQL FETCH C5 INTO :EMPNO, :EMPNAM;
+  if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM STAFF WHERE CURRENT OF C5;
+     }
+  }
+  EXEC SQL CLOSE C5;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT2 
+                  FROM STAFF;
+    printf(" COUNT2 should be 7, COUNT2=%ld \n", COUNT2);
+
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL DECLARE C6 CURSOR FOR
+       SELECT EMPNAME, CITY, GRADE FROM STAFF
+       WHERE EMPNAME >= 'Betty' AND EMPNUM < 'E35'
+      OR CITY <= 'Deale          ' AND GRADE > 12
+      OR GRADE = 13 AND CITY <> 'Akron';
+  EXEC SQL OPEN C6;
+  
+  for (ii=1;ii<10;ii++)
+  {
+  EXEC SQL FETCH C6 INTO :EMPNAM,:CITY1,:GRADE1;
+
+  if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM STAFF WHERE CURRENT OF C6;
+     }
+  }
+  EXEC SQL CLOSE C6;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT3 
+                  FROM STAFF;
+    printf(" COUNT3 should be 2, COUNT3=%ld \n", COUNT3);
+
+  EXEC SQL ROLLBACK WORK;
+  if (COUNT1 == 8 && COUNT2 == 7 && COUNT3 == 2)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0241','pass','PC');
+    }
+  else
+    {
+      printf("      dml054.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0241','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK; 
+
+/******************** END TEST0241 ********************/
+
+/******************** BEGIN TEST0242 ********************/
+
+  printf("\n                      TEST0242      \n");
+  printf("     This routine tests the rules for updatable tables \n");
+  printf("     Reference X3.135-89 section 5.25<query specification> \n");  
+  printf("     SR 11, definition of 'updatable'   \n");
+  printf("     Cursor with view, correlation name, NOT\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL DECLARE C7 CURSOR FOR
+       SELECT EMPNAME, CITY, GRADE FROM STAFFV2
+       WHERE EMPNAME >= 'Betty' AND EMPNUM < 'E35'
+      OR CITY <= 'Deale          ' AND GRADE > 12
+      OR GRADE = 13 AND CITY <> 'Akron';
+  EXEC SQL OPEN C7;
+  
+  for (ii=1;ii<10;ii++)
+  {
+  EXEC SQL FETCH C7 INTO :EMPNAM, :CITY1, :GRADE1;
+
+  if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM STAFFV2 WHERE CURRENT OF C7;
+     }
+  }
+  EXEC SQL CLOSE C7;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT1 
+                  FROM STAFF;
+    printf(" COUNT1 should be 3, COUNT1=%ld \n", COUNT1);
+
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL DECLARE C8 CURSOR FOR
+     SELECT MYTABLE.EMPNUM, MYTABLE.EMPNAME FROM STAFF MYTABLE
+     WHERE MYTABLE.GRADE =12;
+  EXEC SQL OPEN C8;
+  
+  for (ii=1;ii<10;ii++)
+  {
+  EXEC SQL FETCH C8 INTO :EMPNO, :EMPNAM;
+
+  if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM STAFF WHERE CURRENT OF C8;
+     }
+  }
+  EXEC SQL CLOSE C8;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT2 
+                  FROM STAFF;
+    printf(" COUNT2 should be 3, COUNT2=%ld \n", COUNT2);
+
+  EXEC SQL ROLLBACK WORK;
+
+  EXEC SQL DECLARE C9 CURSOR FOR
+       SELECT EMPNAME, CITY, GRADE FROM STAFF
+       WHERE NOT EMPNAME >= 'Betty' AND EMPNUM < 'E35'
+      OR NOT (CITY <= 'Deale          ') AND GRADE > 9 
+      AND NOT (GRADE = 13 AND CITY <> 'Akron')
+      OR NOT CITY IN ('Vienna','New York','Deale');
+  EXEC SQL OPEN C9;
+  
+  for (ii=1;ii<10;ii++)
+  {
+  EXEC SQL FETCH C9 INTO :EMPNAM, :CITY1, :GRADE1;
+  if(SQLCODE == 0)
+     {
+     EXEC SQL DELETE FROM STAFF WHERE CURRENT OF C9;
+     }
+  }
+  EXEC SQL CLOSE C9;
+
+  EXEC SQL SELECT COUNT (*) INTO :COUNT3 
+                  FROM STAFF;
+  printf(" COUNT3 should be 2, COUNT3=%ld \n", COUNT3);
+
+  EXEC SQL ROLLBACK WORK;
+  if (COUNT1 == 3  && COUNT2 == 3 && COUNT3 == 2)
+    {
+      printf("                *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0242','pass','PC');
+    }
+  else
+    {
+      printf("      dml054.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0242','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK; 
+
+/******************** END TEST0242 ********************/
+
+  exit(errcnt);
+
+}
+

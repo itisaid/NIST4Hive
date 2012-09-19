@@ -1,0 +1,655 @@
+/*  EMBEDDED C (file "CDR029.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/08/06 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR029.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS FOR IMPLICIT JOINS AND FOR PROBLEMS     */
+/*    WITH CONSTRAINTS WHICH COMPARE ONE COLUMN VALUE AGAINST    */
+/*    ANOTHER.                                                   */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     char junkit[11];
+     long CPNUM1;
+     long count1;
+EXEC SQL END DECLARE SECTION;
+long ii;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, cdr029.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0522 ********************/
+flag = 1;
+     printf("                  TEST0522 \n");
+     printf("    No implied natural join on FROM T1, T2\n");
+     printf("Reference ANSI SQL-1992 section 7.4\n");
+     printf("   <from clause>  GR 1b\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+  printf("INSERT INTO CPBASE VALUES (0, 'Zero');\n");
+  printf("INSERT INTO CPBASE VALUES (1, 'One');\n");
+  printf("INSERT INTO CPREF VALUES (0, 'Zero 2');\n");
+  printf("INSERT INTO CPREF VALUES (1, 'One 2');\n");
+  printf("NOTE:  Table CPREF references table CPBASE\n");
+
+  EXEC SQL DELETE FROM CPBASE;
+  EXEC SQL DELETE FROM CPREF;
+  EXEC SQL INSERT INTO CPBASE VALUES (0, 'Zero');
+  EXEC SQL INSERT INTO CPBASE VALUES (1, 'One');
+  EXEC SQL INSERT INTO CPREF VALUES (0, 'Zero 2');
+  EXEC SQL INSERT INTO CPREF VALUES (1, 'One 2');
+
+  count1 = -1;
+  printf("\n");
+  printf("SELECT COUNT(*) INTO :count1\n");
+  printf("  FROM CPBASE, CPREF;\n");
+
+  EXEC SQL SELECT COUNT(*) INTO :count1
+    FROM CPBASE, CPREF;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 4; its value is %ld\n", count1);
+  printf("A value of 2 would indicate that a natural join was done.\n");
+
+  if (SQLCODE != 0 || count1 != 4)
+    flag = 0;
+
+  count1 = -1;
+  printf("\n");
+  printf("DECLARE KURSOR CURSOR FOR SELECT KC, JUNK2\n");
+  printf("        FROM CPBASE, CPREF ORDER BY JUNK2, KC;\n");
+  printf("OPEN KURSOR;\n");
+  printf("FETCH KURSOR INTO :CPNUM1, :junkit;   SEVEN TIMES\n");
+
+  EXEC SQL DECLARE KURSOR CURSOR FOR SELECT KC, JUNK2
+                  FROM CPBASE, CPREF ORDER BY JUNK2, KC;
+  EXEC SQL OPEN KURSOR;
+  for (ii = 1; ii < 8; ii++)
+   {
+       EXEC SQL FETCH KURSOR INTO :CPNUM1, :junkit;
+       if (SQLCODE == 0)
+          count1 = ii;
+    }
+
+  printf("count1 should be 4; its value is %ld\n", count1);
+  printf("A value of 2 would indicate that a natural join was done.\n");
+
+  if (count1 != 4)
+    flag = 0;
+
+  EXEC SQL ROLLBACK WORK;
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0522','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr029.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0522','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0522 *********************/
+/******************** BEGIN TEST0537 ********************/
+flag = 1;
+     printf("                  TEST0537 \n");
+     printf("  Table check constraint:  column vs. column\n");
+     printf("Reference ANSI SQL-1992 section 11.6\n");
+     printf("   <table constraint definition>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/*                                                            */
+/*    SPECIAL NOTE                                            */
+/*                                                            */
+/*  Do not try to shorten the test by using rollbacks instead */
+/*  of insert, commit, delete, commit.  These constraints     */
+/*  can be deferred until commit time.                        */
+
+  printf("\n");
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+  /* Legal */
+
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 0, NULL, 100.00, NULL, 'D1', NULL);\n");
+  printf("COMMIT WORK;\n");
+
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 0, NULL, 100.00, NULL, 'D1', NULL);
+  EXEC SQL COMMIT WORK;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 1; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 1)
+    flag = 0;
+
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+  /* Test constraint #1 */
+
+  printf("\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 0, 80.00, 100.00, 20.00, 'D1', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 1, 80.00, 100.00, 20.00, NULL, 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 2, 80.00, 100.00, 20.00, 'D1', NULL);\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 3, 80.00, 100.00, 20.00, NULL, NULL);\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 4, 80.00, 100.00, 20.00, 'F1', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 0, 80.00, 100.00, 20.00, 'D1', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 1, 80.00, 100.00, 20.00, NULL, 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 2, 80.00, 100.00, 20.00, 'D1', NULL);
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 3, 80.00, 100.00, 20.00, NULL, NULL);
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 4, 80.00, 100.00, 20.00, 'F1', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 4; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 4)
+    flag = 0;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG\n");
+  printf("WHERE PRODUCT_ID = 0;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG
+  WHERE PRODUCT_ID = 0;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 0; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 0)
+    flag = 0;
+
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+  /* Test constraint #2 */
+
+  printf("\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 0, 80.00, 100.00, 20.00, 'F2', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 1, 80.00, 100.00, 20.00, NULL, 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 2, NULL, 100.00, NULL, 'F2', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 3, NULL, 100.00, NULL, NULL, 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 4, 10010.00, 10110.00, 100.00, 'F2', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 0, 80.00, 100.00, 20.00, 'F2', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 1, 80.00, 100.00, 20.00, NULL, 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 2, NULL, 100.00, NULL, 'F2', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 3, NULL, 100.00, NULL, NULL, 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 4, 10010.00, 10110.00, 100.00, 'F2', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 4; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 4)
+    flag = 0;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG\n");
+  printf("WHERE PRODUCT_ID = 0;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG
+  WHERE PRODUCT_ID = 0;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 0; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 0)
+    flag = 0;
+
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+  /* Test constraint #3 */
+
+  printf("\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 0, 100.01, 100.00, -0.01, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 1, 80.00, NULL, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 2, NULL, 100.00, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 3, NULL, NULL, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 4, 10010.00, 10110.00, 100.00, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 0, 100.01, 100.00, -0.01, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 1, 80.00, NULL, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 2, NULL, 100.00, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 3, NULL, NULL, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 4, 10010.00, 10110.00, 100.00, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 4; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 4)
+    flag = 0;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG\n");
+  printf("WHERE PRODUCT_ID = 0;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG
+  WHERE PRODUCT_ID = 0;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 0; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 0)
+    flag = 0;
+
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+  /* Test constraint #4 */
+
+  printf("\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 0, 100.01, 100.00, 0.00, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 1, NULL, 100.00, 20.00, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 2, 80.00, NULL, 20.00, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 3, 80.00, 100.00, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 4, NULL, NULL, 20.00, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 5, 80.00, NULL, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 6, NULL, 100.00, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 7, NULL, NULL, NULL, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+  printf("INSERT INTO RET_CATALOG VALUES\n");
+  printf("(0, 8, 80.00, 100.00, 20.00, 'F3', 'Jan 20 1993');\n");
+  printf("COMMIT WORK;\n");
+
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 0, 100.01, 100.00, 0.00, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 1, NULL, 100.00, 20.00, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 2, 80.00, NULL, 20.00, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 3, 80.00, 100.00, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 4, NULL, NULL, 20.00, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 5, 80.00, NULL, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 6, NULL, 100.00, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 7, NULL, NULL, NULL, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+  EXEC SQL INSERT INTO RET_CATALOG VALUES
+  (0, 8, 80.00, 100.00, 20.00, 'F3', 'Jan 20 1993');
+  EXEC SQL COMMIT WORK;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 8; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 8)
+    flag = 0;
+
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG\n");
+  printf("WHERE PRODUCT_ID = 0;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG
+  WHERE PRODUCT_ID = 0;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 0; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 0)
+    flag = 0;
+
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0537','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr029.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0537','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0537 *********************/
+/******************** BEGIN TEST0538 ********************/
+flag = 1;
+     printf("                  TEST0538 \n");
+     printf("  With check option:  column vs. column\n");
+     printf("Reference ANSI SQL-1992 section 11.19\n");
+     printf("   <view definition>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/*                                                            */
+/*    SPECIAL NOTE                                            */
+/*                                                            */
+/*  ANSI SQL-1992 section 11.19 GR12 specifies that with      */
+/*  check option constraints are checked after each update.   */
+
+  printf("\n");
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+  /* Illegal since with check option rejects unknowns */
+
+  printf("\n");
+  printf("INSERT INTO SALE_ITEMS VALUES\n");
+  printf("(0, 0, NULL, 100.00, NULL, 'D1', NULL);\n");
+
+  strcpy (SQLSTATE, "x");
+  EXEC SQL INSERT INTO SALE_ITEMS VALUES
+  (0, 0, NULL, 100.00, NULL, 'D1', NULL);
+  printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 44000; its value is %s\n", SQLSTATE);
+
+     NOSUBCLASS();
+  if (SQLCODE >= 0 || strncmp (NORMSQ, "44000", 5) != 0)
+    flag = 0;
+
+  printf("\n"); 
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 0; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 0)
+    flag = 0;
+
+  /* Illegal */
+
+  printf("\n");
+  printf("INSERT INTO SALE_ITEMS VALUES\n");
+  printf("(0, 0, 80.00, 100.00, 20.00, 'D1', NULL);\n");
+
+  strcpy (SQLSTATE, "x");
+  EXEC SQL INSERT INTO SALE_ITEMS VALUES
+  (0, 0, 80.00, 100.00, 20.00, 'D1', NULL);
+  printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 44000; its value is %s\n", SQLSTATE);
+
+     NOSUBCLASS();
+  if (SQLCODE >= 0 || strncmp (NORMSQ, "44000", 5) != 0)
+    flag = 0;
+
+  printf("\n");
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 0; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 0)
+    flag = 0;
+
+  /* Legal */
+
+  printf("\n");
+  printf("INSERT INTO SALE_ITEMS VALUES\n");
+  printf("(0, 0, 99.00, 100.00, 1.00, 'D1', NULL);\n");
+
+  strcpy (SQLSTATE, "x");
+  EXEC SQL INSERT INTO SALE_ITEMS VALUES
+  (0, 0, 99.00, 100.00, 1.00, 'D1', NULL);
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+     NOSUBCLASS();
+  if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+    flag = 0;
+
+  printf("\n");
+  count1 = -1;
+  printf("SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;\n");
+  EXEC SQL SELECT COUNT(*) INTO :count1 FROM RET_CATALOG;
+
+  printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  printf("count1 should be 1; its value is %ld\n", count1);
+  if (SQLCODE != 0 || count1 != 1)
+    flag = 0;
+
+  printf ("DELETE FROM RET_CATALOG;\n");
+  printf ("COMMIT WORK;\n");
+  EXEC SQL DELETE FROM RET_CATALOG;
+  EXEC SQL COMMIT WORK;
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0538','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr029.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0538','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0538 *********************/
+
+     exit(errcnt);
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}

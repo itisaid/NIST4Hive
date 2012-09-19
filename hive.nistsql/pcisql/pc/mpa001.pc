@@ -1,0 +1,258 @@
+/*  EMBEDDED C (file "MPA001.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPA001.PC                                                    */
+/*  WRITTEN BY: S HURWITZ                                        */
+/*                                                               */
+/*  THIS PROGRAM IS PART A OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*           SECTION  4.16 Transactions                          */
+/*                    Paragraph Two                              */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long i;
+   long ii;
+   long knum;
+   long newmax;
+   char auth[2];
+   char uid[19];
+   char uidx[19];
+EXEC SQL END DECLARE SECTION;
+   long code1;
+   long oldkey;
+   long keydif;
+   long concur;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+   long pauze;
+   long keymax;
+
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpa001.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* concurrency tuning variables follow: */
+   pauze = 10;
+   keymax = 50;
+
+   EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0230 ********************/
+
+printf("\n                TEST0230 \n");
+printf(" Reference X3.135-1989 Section 4.16 Transactions      \n");
+printf("                 Paragraph Two                  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** This program is part A of a two-part             \n");
+printf ("*** program (A & B) that tests for the concurrency   \n");
+printf ("*** of SQL.  Program A inserts the first value into  \n");
+printf ("*** a table and waits for Program B.                   \n");
+
+printf ("\n\n This is Program A which starts first and waits.... \n\n");
+
+/*                       -----Initialization----- */
+P100:
+   code1 = 0;
+   EXEC SQL DELETE FROM MP1_NEXTKEY;
+   if (SQLCODE < 0)
+      code1 = 1;
+   EXEC SQL INSERT
+      INTO MP1_NEXTKEY (KEYNUM,AUTHOR)
+      VALUES (1,'A');
+   if (SQLCODE != 0)
+      code1 = 1;
+   printf ("\n MPA001:  keynum = 1      \n");
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0)
+      code1 = 1;
+   if (code1 == 1)
+      {
+        printf("Cannot initialize MP1_NEXTKEY\n");
+        goto P100;
+      }
+
+/*                       -----Synchronization----- */
+P101:
+/* pause a little */
+
+   EXEC SQL DELETE FROM MP1_NN;
+   i = 0;
+P102:
+   EXEC SQL INSERT INTO MP1_NN VALUES (:i);
+   i = i + 1;
+   if (i < pauze)
+      goto P102;
+/* end of pause */
+
+   knum = 0;
+   EXEC SQL SELECT COUNT(*)
+     INTO :knum
+     FROM MP1_NEXTKEY WHERE AUTHOR = 'B';
+
+   EXEC SQL COMMIT WORK;
+
+/* are we in sync? */
+
+   if (knum == 0)
+      {      
+         printf("   PLEASE start program MPB001!!!   \n\n");
+         goto P101;
+      }  
+
+/* YES, we are in sync! */
+
+   keydif = 0;
+   oldkey = 0;
+   concur = 0;
+
+/*           -----Concurrent Transaction Loop----- */
+P110:
+
+/* start table lock */
+
+   EXEC SQL SELECT MAX(KEYNUM)
+     INTO :newmax
+     FROM MP1_NEXTKEY;
+
+   if (SQLCODE != 0)
+      {
+         printf ("\n SQLCODE not zero in SELECT MAX(KEYNUM) statement \n");
+         printf ("\n SQLCODE = %ld  \n", SQLCODE);
+         EXEC SQL COMMIT WORK;
+         goto P110;
+       }
+
+   if (newmax >= keymax)
+      goto P120;
+
+   newmax = newmax + 1;
+   code1 = 0;
+   EXEC SQL INSERT
+      INTO MP1_NEXTKEY (KEYNUM,AUTHOR)
+      VALUES (:newmax,'A');
+   if (SQLCODE != 0)
+      code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0)
+      code1 = 1;
+/* end table lock */
+
+   if (code1 == 0)
+      {
+         printf ("\n MPA001:  keynum = %ld   ",newmax); 
+         keydif = newmax - oldkey;
+         oldkey = newmax;
+      }
+   if (code1 == 0 && keydif > 1)
+      {
+         concur = concur + 1;
+         printf("  *** A interleaved #%ld***",concur);
+      }
+
+   goto P110;
+
+/*                           -----Evaluation----- */
+P120:
+   EXEC SQL COMMIT WORK;
+   EXEC SQL SELECT COUNT(*)
+          INTO :i
+          FROM MP1_NEXTKEY;
+   if (SQLCODE != 0)
+      {
+         printf("\n Cannot select for MP1_NEXTKEY");
+         goto P120;
+      }
+
+   EXEC SQL SELECT COUNT(DISTINCT KEYNUM) 
+          INTO :ii
+          FROM MP1_NEXTKEY; 
+   if (SQLCODE != 0)
+      {
+         printf("\n Cannot select for MP1_NEXTKEY!");
+         goto P120;
+      }
+
+   printf("\n\n The number of rows should be %ld   \n", keymax);
+   printf(" The number of distinct keynum values should be %ld \n",keymax);
+   printf("\n\n The number of rows = %ld      ", i);
+   printf("\n The number of distinct keynum values  = %ld   \n", ii);
+
+   if (concur < 4 && i == ii && ii == keymax)
+      {
+        printf("\n Insufficient interleaving to demonstrate concurrency!");
+        printf("\n Using TEd, decrease variable pauze to start");
+        printf("\n MPA001 sooner or increase value of variable keymax");
+        printf("\n in both MPA001 and MPB001 to lengthen test.");
+        printf("\n  Then RERUN!");
+        goto P130;
+      }
+
+   if ( i == ii && ii == keymax)
+      {
+        printf("\n\nmpa001.pc:        *** pass *** ");
+        EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0230','pass','PC');
+      }
+   else
+      {
+        printf("\n\nmpa001.pc:        *** fail *** ");
+        EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0230','fail','PC');
+        errcnt = errcnt + 1;
+      }
+
+P130:
+   printf("\n\n");
+   printf("====================================================\n\n");
+ 
+   EXEC SQL COMMIT WORK;
+
+/******************** END TEST0230 ********************/
+
+exit(errcnt);
+
+}

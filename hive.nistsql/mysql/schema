@@ -1,0 +1,21 @@
+source C:\software\pcisql\schema\schema1.smi
+source C:\software\pcisql\schema\schema2.smi
+source C:\software\pcisql\schema\schema3.smi
+source C:\software\pcisql\schema\schema4.smi
+source C:\software\pcisql\schema\schema5.smi
+source C:\software\pcisql\schema\schema6.smi
+source C:\software\pcisql\schema\schema7.smi
+source C:\software\pcisql\schema\schema8.smi
+source C:\software\pcisql\schema\schema9.smi
+source C:\software\pcisql\schema\schem10.smi
+source C:\software\pcisql\schema\schem11.std
+source C:\software\pcisql\schema\schem12.std
+source C:\software\pcisql\schema\cts5sch1.sql
+source C:\software\pcisql\schema\cts5sch2.sql
+source C:\software\pcisql\schema\cts5sch3.sql
+source C:\software\pcisql\schema\cts5sch4.sql
+source C:\software\pcisql\schema\cts5sch5.sql
+
+source C:\software\pcisql\schema\xschema1.sql
+source C:\software\pcisql\schema\xschema2.sql
+

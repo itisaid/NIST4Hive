@@ -1,0 +1,211 @@
+/*  EMBEDDED C (file "DML046.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/11/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML046.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT ON THE COLUMNS SPECIFIED IN   */
+/*  AN ORDER BY CLAUSE. THE LIMIT ON THE NUMBER OF COLUMNS IS NOT*/
+/*  LESS THAN SIX (6). THE LIMIT ON THE TOTAL LENGTH IS NOT LESS */
+/*  THAN ONE HUNDREND AND TWENTY (120).                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char vcol3[5];
+  char vcol5[9];
+  char vcol6[11];
+  char vcol4[7];
+  char vcol7[21];
+  char vcol8[31];
+  char vcol9[41];
+  long i;
+  long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml046.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0220 ********************/
+
+  printf("\n         FIPS sizing TEST0220      \n");
+  printf("     This routine tests the number of columns (6) specified \n");
+  printf("                 in a ORDER BY clause\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4444','666666','88888884','1010101010',
+           '2020...20','3030...30','4040...40','5050...50',11,12);
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4444','666666','88888883','1010101010',
+           '2020...20','3030...30','4040...40','5050...50',22,24);
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4444','666666','88888882','0101010101',
+           '2020...20','3030...30','4040...40','5050...50',33,36);
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4444','666666','88888881','0101010101',
+           '2020...20','3030...30','4040...40','5050...50',44,48);
+
+  EXEC SQL SELECT COUNT(*)
+           INTO  :i
+           FROM  T12;
+
+  EXEC SQL DECLARE X CURSOR FOR
+           SELECT COL5,COL6,COL11,COL3,COL4,COL7,COL8
+           FROM T12
+           ORDER BY COL7,COL8,COL3,COL4,COL6,COL5 DESC;
+ 
+  EXEC SQL OPEN X;
+
+  EXEC SQL FETCH X INTO :vcol5,:vcol6,:ii,:vcol3,:vcol4,:vcol7,:vcol8;
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf(" i = %ld, ii = %ld\n",i,ii);
+  printf(" vcol5 = %s, vcol6 = %s \n\n",vcol5,vcol6);
+  
+  if (i==4 && ii==33 && strncmp(vcol5,"88888882",8)==0)
+    {
+      printf("                *** pass *** \n\n");      
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0220','pass','PC');
+    }
+  else
+    {
+      printf("      dml046.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0220','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0220 ********************/
+
+
+/******************** BEGIN TEST0221 ********************/
+
+  printf("\n         FIPS sizing TEST0221      \n");
+  printf("     This routine tests total length (120) of columns specified\n");
+  printf("                 in a ORDER BY clause\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4442','666666','88888888','1010101010',
+    '20202020202020202020','303030303030303030303030303030',
+    '4040404040404040404040404040404040404040', '5050...50',111,112);
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4443','666666','88888888','1010101010',
+    '20202020202020202020','303030303030303030303030303030',
+    '4040404040404040404040404040404040404040', '5050...50',222,224);
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4441','666666','88888888','1010101010',
+    '20202020202020202020','303030303030303030303030303030',
+    '4040404040404040404040404040404040404040', '5050...50',333,336);
+
+  EXEC SQL INSERT INTO T12
+    VALUES('1','22','4444','666666','88888888','1010101010',
+    '20202020202020202020','303030303030303030303030303030',
+    '4040404040404040404040404040404040404040', '5050...50',444,448);
+
+  EXEC SQL SELECT COUNT(*)
+           INTO  :i
+           FROM  T12;
+
+  EXEC SQL DECLARE Y CURSOR FOR
+           SELECT COL3,COL11,COL9,COL8,COL7,COL5,COL4
+           FROM T12
+           ORDER BY COL9,COL8,COL7,COL5,COL4,COL3;
+ 
+  EXEC SQL OPEN Y;
+
+  EXEC SQL FETCH Y INTO :vcol3, :ii, 
+       :vcol9, :vcol8 ,:vcol7, :vcol5, :vcol4;
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf(" i = %ld, ii = %ld\n",i,ii);
+  printf(" vcol3 = %s \n\n",vcol3);
+  
+  if (i==4 && ii==333 && strncmp(vcol3,"4441",4)==0)
+    {
+      printf("                 *** pass *** \n\n");      
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0221','pass','PC');
+    }
+  else
+    {
+      printf("       dml046.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0221','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0221 ********************/
+
+
+  exit(errcnt);
+}
+

@@ -1,0 +1,447 @@
+/*  EMBEDDED C (file "XTS700.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS700.PC  TEST7001                                         */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  This routine tests NULLIF which produces null                */ 
+/*                                                               */
+/* REFERENCES                                                    */
+/* 6.9 FT.2 <case abbreviation>                                  */
+/* 6.9 SR.1                                                      */
+/* 6.9 GR.1a                                                     */
+/* 6.9 GR.2a                                                     */
+/* 6.9 LR.2a -- Raised. Entry SQL restriction which prohibited   */
+/*              the use of a <case expression>                   */   
+/* F#26 --   CASE expression                                     */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 08/12/95                    */
+/*                                                               */
+/*  Cleanups and bug fixes by DWF 11/13/95:                      */
+/*    Fixed incorrect pass criteria                              */
+/*    Reformat to be consistent with NIST tests                  */
+/*    Change int flag back to long flag                          */
+/*    Removed repeated initialization of status codes            */
+/*    Cleaned up inserts                                         */
+/*    Removed extraneous transactions, used single rollback      */
+/*    Add ROLLBACK after AUTHID (V5 global change)               */
+/*    Fixed character string initializations                     */
+/*    Fixed incorrect EMPNUM refs where should be PNUM           */
+/*    Fixed syntax errors                                        */
+/*    Fixed blank padding on character strings                   */
+/*    Added missing SQLCODE check.                               */
+/*                                                               */
+/*  QA STATUS : QA CHECK                                         */
+/*                                                               */
+/*  Fixed up again 1/18/96 DWF                                   */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long  SQLCODE;
+ char  SQLSTATE[6];
+ char  uid[19];
+ char  uidx[19];
+ long  sal;
+ long  ehours;
+ char  ename[21];
+ char  ecity[16];
+ char  epnum[4];
+ char  nlres[16];
+ long  cnif;
+ short indic1;
+ short indic2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long  flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp (uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts700.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version # \n");
+/* date_time print */
+time(&cal);
+printf( "\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7001 ********************/
+flag = 1;
+printf("        TEST7001\n");
+printf("    NULLIF producing NULL\n");
+printf(" References:\n");                                         
+printf("    6.9 FT.2 -- <case abbreviation>\n");                            
+printf("    6.9 SR.1\n");
+printf("    6.9 GR.1a\n");
+printf("    6.9 GR.2a\n");
+printf("    6.9 LR.2a -- Raised Entry SQL restriction which prohibited\n");
+printf("        the use of a <case expression>\n");
+printf("    F#26 -- CASE expression\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* printf("DELETE FROM STAFFB;\n\n"); */
+/* EXEC SQL DELETE FROM STAFFB; */
+
+/* insert 6 rows in the table STAFFb in order to test NULLIF */
+printf("INSERT INTO STAFFb VALUES(10000,'Kilroy',10000,'P4','Athens','M');\n");
+EXEC SQL INSERT INTO STAFFb VALUES(10000,'Kilroy',10000,'P4','Athens','M');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO STAFFb VALUES(15000,'Nickos',20000,'P6','Nickos','M');\n");
+EXEC SQL INSERT INTO STAFFb VALUES(15000,'Nickos',20000,'P6','Nickos','M');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO STAFFb VALUES(NULL,'Nickos',NULL,'P5','Rhodes','M');\n");
+EXEC SQL INSERT INTO STAFFb VALUES(NULL,'Nickos',NULL,'P5','Rhodes','M');
+CHCKOK();
+printf("\n");
+ 
+printf("INSERT INTO STAFFb VALUES(10010,'George',NULL,'P7','Georgia','M');\n");
+EXEC SQL INSERT INTO STAFFb VALUES(10010,'George',NULL,'P7','Georgia','M');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO STAFFb VALUES(10005,NULL,30000,'P8',NULL,'M');\n");
+EXEC SQL INSERT INTO STAFFb VALUES(10005,NULL,30000,'P8',NULL,'M');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO STAFFb VALUES(10001,'Gregory',12000,'P9',NULL,'M');\n");
+EXEC SQL INSERT INTO STAFFb VALUES(10001,'Gregory',12000,'P9',NULL,'M');
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+sal = 0;
+ehours = 0;
+strcpy(ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy(ecity, "xxxxxxxxxxxxxxx");
+
+/* Test NULLIF with numeric data types */
+printf("* NULLIF producing NULL with numeric data types *\n\n");
+printf("DECLARE ALPHA CURSOR FOR SELECT SALARY,EMPNAME,HOURS,CITY\n");
+printf("FROM CTS1.STAFFb\n");
+printf("WHERE NULLIF(SALARY,HOURS) IS NULL\n");
+printf("ORDER BY EMPNAME;\n\n");
+EXEC SQL DECLARE ALPHA CURSOR FOR SELECT SALARY, EMPNAME, HOURS, CITY
+         FROM CTS1.STAFFb
+         WHERE NULLIF(SALARY,HOURS) IS NULL
+         ORDER BY EMPNAME; 
+
+printf("OPEN ALPHA;\n");
+EXEC SQL OPEN ALPHA;
+CHCKOK();
+printf("\n");
+
+/* two rows satisfy the <search condition> of the query */
+
+printf("FETCH ALPHA INTO :sal, :ename, :ehours, :ecity;\n");
+EXEC SQL FETCH ALPHA INTO :sal, :ename, :ehours, :ecity;
+CHCKOK(); 
+   printf("Salary  should be 10000  it is %ld\n",sal);
+   printf("Empname should be 'Kilroy              ' it is '%s'\n",ename);
+   printf("Hours   should be 10000  it is %ld\n",ehours);
+   printf("City    should be 'Athens         ' it is '%s'\n\n",ecity);
+
+if (strcmp (ename, "Kilroy              ") != 0)
+  flag = 0;
+if (strcmp (ecity, "Athens         ") != 0)
+  flag = 0;
+if (ehours != 10000 || sal != 10000)
+  flag = 0;
+
+ /* fetch second row */
+
+  /* initialise host variables */
+sal = 0;
+ehours = 0;
+strcpy(ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy(ecity, "xxxxxxxxxxxxxxx");
+indic1 = 99;
+indic2 = 99;
+   
+  printf("FETCH ALPHA INTO :sal:indic1 ,:ename,:ehours:indic2,:ecity\n");
+  EXEC SQL FETCH ALPHA INTO :sal:indic1,:ename,:ehours:indic2,:ecity;
+  CHCKOK(); 
+  printf("indic1 should be -1;  its value is %d\n",indic1);
+  printf("indic2 should be -1;  its value is %d\n",indic2);
+  printf("Ename  should be 'Nickos              ';  its value is '%s'\n",ename);
+  printf("City   should be 'Rhodes         ';  its value is '%s'\n\n",ecity);
+
+if (strcmp (ename, "Nickos              ") != 0)
+  flag = 0;
+if (strcmp (ecity, "Rhodes         ") != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+ /* end fetches */
+
+/* check that no more rows were retrieved which ** fail */ 
+/* check that a condition of no data is raised */
+   
+printf("FETCH ALPHA INTO :sal, :ename, :ehours, :ecity;\n");
+EXEC SQL FETCH ALPHA INTO :sal, :ename, :ehours, :ecity;
+printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("CLOSE ALPHA;\n");
+EXEC SQL CLOSE ALPHA;
+CHCKOK();   
+printf("\n");
+
+/***** test NULLIF with character string values *****/
+/* using NULLIF in the <select list> */
+
+printf("* NULLIF producing NULL with character string values *\n\n");
+printf("DECLARE BETA CURSOR FOR SELECT SALARY,PNUM,HOURS");
+printf(",NULLIF(EMPNAME,CITY)\n");
+printf("FROM CTS1.STAFFb\n");
+printf("WHERE EMPNAME = CITY OR EMPNAME IS NULL\n");
+printf("ORDER BY PNUM;\n\n");
+EXEC SQL DECLARE BETA CURSOR FOR SELECT SALARY,PNUM,HOURS,NULLIF(EMPNAME,CITY)
+         FROM CTS1.STAFFb
+         WHERE EMPNAME = CITY OR EMPNAME IS NULL 
+         ORDER BY PNUM; 
+
+printf("OPEN BETA;\n");
+EXEC SQL OPEN BETA;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+sal = 0;
+ehours = 0;
+strcpy(epnum, "xxx");
+indic1 = 99;
+
+/* two rows satisfy the <search condition> of the query */
+printf("FETCH BETA  INTO :sal,:epnum,:ehours,:nlres:indic1;\n");
+EXEC SQL FETCH BETA INTO :sal,:epnum,:ehours,:nlres:indic1;
+CHCKOK(); 
+printf("SALARY should be 15000; its value is %ld\n",sal);
+printf("PNUM   should be 'P6 '; its value is '%s'\n",epnum);
+printf("HOURS  should be 20000; its value is %ld\n",ehours);
+printf("indic1 should be    -1; its value is %d\n\n",indic1);
+if (sal != 15000 || strcmp (epnum, "P6 ") != 0 || ehours != 20000)
+   flag = 0;
+if (indic1 != -1)
+   flag = 0;
+
+/* initialise host variables */
+sal = 0;
+ehours = 0;
+strcpy(nlres, "xxxxxxxxxxxxxxx");
+strcpy(epnum, "xxx");
+indic1 = 99;
+
+/* second row */
+printf("FETCH BETA INTO :sal,:epnum,:ehours,:nlres:indic1;\n");
+EXEC SQL FETCH BETA INTO :sal,:epnum,:ehours,:nlres:indic1;
+CHCKOK(); 
+printf("SALARY should be 10005; its value is %ld\n",sal);
+printf("PNUM   should be 'P8 '; its value is '%s'\n",epnum);
+printf("HOURS  should be 30000; its value is %ld\n",ehours);
+printf("indic1 should be -1; its value is %d\n\n",indic1);
+ if (sal != 10005 || strcmp (epnum, "P8 ") != 0 || ehours != 30000)
+    flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+/* fetch one more row and check that a condition of no */
+/* data is raised */
+printf("FETCH BETA INTO :sal,:epnum,:ehours,:nlres:indic1;\n");
+EXEC SQL FETCH BETA INTO :sal,:epnum,:ehours,:nlres:indic1;
+printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf("Valid implementation-defined SQLSTATE accepted.\n");
+printf("\n");
+
+printf("CLOSE BETA;\n");
+EXEC SQL CLOSE BETA;
+CHCKOK();
+printf("\n");
+
+/* Test NULLIF as an operand of NULLIF */
+
+cnif = 0;
+
+printf("* NULLIF <case abbreviation> as operand of NULLIF *\n\n");
+printf("SELECT SUM(NULLIF(NULLIF(SALARY,10000),20000))\n");
+printf("INTO :cnif FROM STAFFb;\n");
+/* cnif = sum of the salaries of all the departments */
+/* excluding the ones of 10000, 20000 and NULL       */
+EXEC SQL SELECT SUM(NULLIF(NULLIF(SALARY,10000),20000))
+         INTO :cnif FROM STAFFb;
+/* SQLSTATE should be 01003 */
+printf("SQLSTATE should be 01003; its value is %s\n",SQLSTATE);
+if (strncmp (SQLSTATE,"01003",5) != 0)
+  flag = 0;
+printf("Cnif should be 195016 its value is %ld\n\n",cnif);
+if (cnif != 195016)
+   flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+ /* now record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts700.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7001','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts700.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7001','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7001 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,635 @@
+/*  EMBEDDED C (file "MPB012.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/03/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPB012.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests SET TRANSACTION ISOLATION LEVEL for       */
+/*  dynamic SQL.  This is part B of a two-part program.          */
+/*                                                               */
+/*  References:                                                  */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992 14.1 <set transaction statement>             */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+void
+SLEEEP (int);
+
+EXEC SQL BEGIN DECLARE SECTION;
+char uid[19];
+char uidx[19];
+long SQLCODE;
+char SQLSTATE[6];
+long int1;
+long int2;
+long int3;
+     char dstmt[51];
+     char longst[241];
+long progno;
+EXEC SQL END DECLARE SECTION;
+long SQLCD1;
+long pauze;
+long repcnt;
+long iii;
+long fails;
+long maxfls;
+long oldtok;
+long waitin;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/*  Debugging is turned on by setting debug1 = 1 */
+long  debug1;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+
+     strcpy(uid,"SULLIVAN1         ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, mpb012.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+printf ("This is part B of a two-part test.  It should be started\n");
+printf ("AFTER mpa012.  Table TOKENS must exist in schema HU.\n\n");
+
+/* to debug program, set debug1 = 1 */
+debug1 = 0;
+maxfls = 100;
+pauze = 100;
+progno = 12;
+
+/******************** BEGIN TEST0590 ********************/
+flag = 1;
+
+/* SQL-92 14.1 GR.5 says that a transaction at a particular */
+/* isolation level must not exhibit phenomena which are not */
+/* supposed to be possible at that level, but does not      */
+/* require transactions to exhibit those phenomena which    */
+/* are possible.  A conforming implementation could simply  */
+/* ignore all SET TRANSACTION ISOLATION LEVEL statements    */
+/* and treat all transactions as SERIALIZABLE.  The         */
+/* phenomena are defined in SQL-92 4.28.                    */
+
+     printf("                  TEST0590 \n");
+     printf("       SET TR ISOLATION LEVEL (dynamic)\n");
+     printf("Reference:\n");
+     printf("  F# 11 -- Transaction Isolation\n");
+     printf("  F# 1 -- Dynamic SQL\n");
+     printf("  14.1 -- <set transaction statement>\n");
+     printf("  4.28 -- SQL-transactions\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+waitin = 1;
+fails = 0;
+oldtok = -1;
+printf ("Waiting for the token to reach %ld.\n", waitin);
+
+P165:
+if (debug1 != 0)
+  printf("Debug trace: P165\n");
+int1 = -1;
+EXEC SQL SELECT TOKEN_NO INTO :int1 FROM HU.TOKENS
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+}
+if (int1 != oldtok && SQLCODE >= 0 && SQLCODE != 100 )
+{
+  printf ("Token = %ld\n", int1);
+  oldtok = int1;
+  fails = 0;
+}
+if (SQLCODE < 0 || int1 != waitin)
+{
+  /* Waste time and try again */
+  NOSUBCLASS ();
+  if (strcmp (NORMSQ, "21000") == 0)
+    goto P198;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  014 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (2);
+  EXEC SQL ROLLBACK WORK;
+  goto P165;
+}
+
+/* The token is exchanged up front to synchronize, then the two */
+/* programs try to run concurrently.                            */
+
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("Passing token to 'A' and running concurrently....\n");
+
+P169:
+if (debug1 != 0)
+  printf("Debug trace: P169\n");
+EXEC SQL UPDATE HU.TOKENS SET TOKEN_NO = TOKEN_NO + 1
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  015 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (1);
+  EXEC SQL ROLLBACK WORK;
+  goto P169;
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  016 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (1);
+  EXEC SQL ROLLBACK WORK;
+  goto P169;
+}
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* Try to generate dirty read. */
+P131:
+if (debug1 != 0)
+  printf("Debug trace: P131\n");
+
+printf("dstmt=\"INSERT INTO USG103 VALUES (589, 985)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO USG103 VALUES (589, 985)              ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("'A' should try to read 589, 985 now.\n");
+printf ("Begin SLEEEP (10)\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+SLEEEP (10);
+printf ("End SLEEEP (10)\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+printf("dstmt=\"DELETE FROM USG103 WHERE C_1 = 985\"\n");
+     strcpy (dstmt,
+     "DELETE FROM USG103 WHERE C_1 = 985                ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+printf ("SQLCODE is %ld\n", SQLCODE);
+SQLCD1 = SQLCODE;
+printf ("Committing transaction....\n");
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0 || SQLCD1 < 0)
+{
+  printf ("SQLCODE is %ld -- Transaction voided.\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+  goto P131;
+}
+
+waitin = 3;
+fails = 0;
+oldtok = -1;
+printf ("Waiting for the token to reach %ld.\n", waitin);
+
+P167:
+if (debug1 != 0)
+  printf("Debug trace: P167\n");
+int1 = -1;
+EXEC SQL SELECT TOKEN_NO INTO :int1 FROM HU.TOKENS
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+}
+if (int1 != oldtok && SQLCODE >= 0 && SQLCODE != 100 )
+{
+  printf ("Token = %ld\n", int1);
+  oldtok = int1;
+  fails = 0;
+}
+if (SQLCODE < 0 || int1 != waitin)
+{
+  /* Waste time and try again */
+  NOSUBCLASS ();
+  if (strcmp (NORMSQ, "21000") == 0)
+    goto P198;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  017 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (2);
+  EXEC SQL ROLLBACK WORK;
+  goto P167;
+}
+
+/* The token is exchanged up front to synchronize, then the two */
+/* programs try to run concurrently.                            */
+
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("Passing token to 'A' and running concurrently....\n");
+
+P170:
+if (debug1 != 0)
+  printf("Debug trace: P170\n");
+EXEC SQL UPDATE HU.TOKENS SET TOKEN_NO = TOKEN_NO + 1
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  018 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (1);
+  EXEC SQL ROLLBACK WORK;
+  goto P170;
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  019 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (1);
+  EXEC SQL ROLLBACK WORK;
+  goto P170;
+}
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* Try to generate a non-repeatable read. */
+
+P132:
+if (debug1 != 0)
+  printf("Debug trace: P132\n");
+printf("'A' should do a read now.\n");
+printf ("Begin SLEEEP (10)\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+SLEEEP (10);
+printf ("End SLEEEP (10)\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+printf("dstmt=\"UPDATE USG103 SET C_1 = 1000 WHERE C_1 = 600\"\n");
+     strcpy (dstmt,
+     "UPDATE USG103 SET C_1 = 1000 WHERE C_1 = 600      ");
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+SQLCD1 = SQLCODE;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("'A' can do another read now.\n");
+
+printf ("Committing transaction....\n");
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0 || SQLCD1 < 0)
+{
+  printf ("SQLCODE is %ld -- Transaction voided.\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+  if (fails > 3)
+    SLEEEP (20);
+  goto P132;
+}
+
+
+waitin = 5;
+fails = 0;
+oldtok = -1;
+printf ("Waiting for the token to reach %ld.\n", waitin);
+
+P171:
+if (debug1 != 0)
+  printf("Debug trace: P171\n");
+int1 = -1;
+EXEC SQL SELECT TOKEN_NO INTO :int1 FROM HU.TOKENS
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+}
+if (int1 != oldtok && SQLCODE >= 0 && SQLCODE != 100 )
+{
+  printf ("Token = %ld\n", int1);
+  oldtok = int1;
+  fails = 0;
+}
+if (SQLCODE < 0 || int1 != waitin)
+{
+  /* Waste time and try again */
+  NOSUBCLASS ();
+  if (strcmp (NORMSQ, "21000") == 0)
+    goto P198;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  030 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (2);
+  EXEC SQL ROLLBACK WORK;
+  goto P171;
+}
+
+/* The token is exchanged up front to synchronize, then the two */
+/* programs try to run concurrently.                            */
+
+fails = 0;
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf ("Passing token to 'A' and running concurrently....\n");
+
+P172:
+if (debug1 != 0)
+  printf("Debug trace: P172\n");
+EXEC SQL UPDATE HU.TOKENS SET TOKEN_NO = TOKEN_NO + 1
+  WHERE PROG_NO = :progno;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  031 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (1);
+  EXEC SQL ROLLBACK WORK;
+  goto P172;
+}
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0)
+{
+  /* Waste time and try again */
+  printf ("SQLCODE = %ld   SQLSTATE = '%s'\n", SQLCODE, SQLSTATE);
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+/* TEd hook for fixing delays:  032 */
+  EXEC SQL ROLLBACK WORK;
+  SLEEEP (1);
+  EXEC SQL ROLLBACK WORK;
+  goto P172;
+}
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+P133:
+/* Try to generate a phantom read. */
+if (debug1 != 0)
+  printf("Debug trace: P133\n");
+printf ("'A' should select count now.\n");
+printf ("Begin SLEEEP (10)\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+SLEEEP (10);
+printf ("End SLEEEP (10)\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+printf("dstmt=\"INSERT INTO USG103 VALUES (589, 5555)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO USG103 VALUES (589, 5555)             ");
+printf ("PREPARE S1031 FROM :dstmt;\n");
+EXEC SQL PREPARE S1031 FROM :dstmt;
+if (SQLCODE < 0)
+{
+  printf ("Failure on PREPARE = failure on test\n");
+  flag = 0;
+  goto P150;
+}
+printf ("EXECUTE S1031;\n");
+EXEC SQL EXECUTE S1031;
+SQLCD1 = SQLCODE;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("'A' should select count again now.\n");
+
+printf ("Committing transaction....\n");
+EXEC SQL COMMIT WORK;
+if (SQLCODE < 0 || SQLCD1 < 0)
+{
+  printf ("SQLCODE is %ld -- Transaction voided.\n", SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+  fails = fails + 1;
+  if (fails > maxfls)
+    goto P199;
+  if (fails > 3)
+    SLEEEP (20);
+  goto P133;
+}
+
+
+P150:
+if (debug1 != 0)
+  printf("Debug trace: P150\n");
+EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0590','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       mpb012.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0590','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL COMMIT WORK;
+
+     printf("===============================================\n\n");
+exit (errcnt);
+
+/******************** END TEST0590 *********************/
+
+P198:
+if (debug1 != 0)
+  printf("Debug trace: P198\n");
+printf ("CARDINALITY VIOLATION\n");
+
+P199:
+EXEC SQL ROLLBACK WORK;
+if (debug1 != 0)
+  printf("Debug trace: P199\n");
+if (fails > maxfls) {
+  printf("The number of attempts (fails) exceeds variable maxfls.\n");
+  printf("Increase the value of variable maxfls, if needed.\n");
+  printf("Or, increase the value of variable pauze.\n");
+  }
+printf ("MAYDAY    MAYDAY    PROGRAM ABORTING\n");
+printf ("You will have to start this test over.\n");
+printf ("Trying to kill token (no retries)....\n");
+EXEC SQL DELETE FROM HU.TOKENS WHERE PROG_NO = :progno;
+EXEC SQL COMMIT WORK;
+exit (-1);
+}
+
+void
+SLEEEP (int plen)
+{
+  /* TEd hook to replace SLEEEP routine #1 */
+  repcnt = pauze * plen;
+  iii = 1;
+P133: 
+  int3 = -1;
+  EXEC SQL UPDATE HU.STAFF
+           SET GRADE = -1 WHERE GRADE = :int3;
+  iii = iii + 1;
+  if (iii < repcnt)
+    goto P133;
+  /* TEd hook to replace SLEEEP routine #2 */
+}
+
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

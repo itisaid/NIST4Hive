@@ -1,0 +1,328 @@
+/*  EMBEDDED C (file "MPB006.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/16 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPB006.PC                                                    */
+/*  WRITTEN BY: David W. Flater, based on MPB004                 */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SQLSTATE STATUS CODE.               */
+/*                                                               */
+/*  This is part B of a two-part (A & B) program.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+   long rollflg;
+   long who1;
+   long who2;
+   long knum;
+   long rslt1;
+   long rslt2;
+   char uid[19];
+   char uidx[19];
+EXEC SQL END DECLARE SECTION;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+   long cnt;
+   long tranct;
+   long code1;
+   long ii;
+   char SQLST1[6];
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpb006.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+  rollflg = -1;
+
+  strcpy (SQLSTATE, "x");
+
+/* concurrency tuning variables follow: */
+   tranct = 50;
+
+   EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0506 ********************/
+
+     printf("\n                TEST0506 \n");
+     printf("SQLSTATE = 40001: transaction rollback\n");
+     printf("                  (serialization failure)\n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 22.1    SQLSTATE\n");
+     printf("  section 4.18.1  Status parameters\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** This program is part B of a two-part\n");
+printf ("*** program (A & B).\n");
+
+printf ("\n\n This is Program B which starts after Program A... \n\n");
+
+P100:
+    EXEC SQL DELETE FROM MP6_BB;
+
+    if (SQLCODE < 0)
+        {
+              printf("*****Error initializing tables ****\n");
+              EXEC SQL ROLLBACK WORK;
+              goto P100;
+        }
+           
+    EXEC SQL COMMIT WORK;
+    if (SQLCODE != 0)
+        {
+           printf("*********Setup will not commit ********\n");
+           EXEC SQL ROLLBACK WORK;
+           goto P100;
+        } 
+
+/*                       -----Synchronization----- */
+
+P105:
+   knum = 0;
+   EXEC SQL SELECT COUNT(*)
+        INTO :knum
+        FROM MP6_NEXTKEY WHERE AUTHOR = 'A';
+
+   EXEC SQL COMMIT WORK;
+
+/* are we in sync? */
+
+   if (knum == 0)
+      {      
+        printf("   PLEASE start program MPA006!!!   \n\n");
+        goto P105;
+      }  
+
+P106:  
+   code1 = 0;
+   EXEC SQL INSERT INTO MP6_NEXTKEY (KEYNUM,AUTHOR)
+            VALUES(2, 'B');
+   if (SQLCODE != 0)
+        code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0)
+        code1 = 1;
+   if (code1 != 0)
+     {
+        EXEC SQL ROLLBACK WORK;
+        printf("Retrying synchronization logic.\n");
+        goto P106;
+     }
+   
+/* YES, we are in sync! */
+
+   printf("Transaction B Starts!!  \n");
+   /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+   printf("\n");
+   printf("IF this test lasts too long, DEADLOCK \n");
+   printf("has taken place, STOP this test!\n");
+    /*** The attack begins here. ***/
+
+    /* Rollback detection--HOPE that this doesn't fail. */
+    EXEC SQL INSERT INTO MP6_BB VALUES (1);
+    if (SQLCODE != 0)
+    {
+      printf("**** --> FATAL ERROR:  Failure within rollback detection\n");
+      printf("Aborting test--try rerunning.\n");
+      errcnt = errcnt + 1;
+      EXEC SQL ROLLBACK WORK;
+      goto P193;
+    }
+
+/*           -----Concurrent Transaction Loops----- */
+P110:
+   EXEC SQL SELECT NUMTEST INTO :who2  FROM MP6_MM2;
+   if (SQLCODE != 0)
+     goto P198;
+
+/* MP6_MM2 UPDATE loop */
+   cnt = 0;
+P111:
+   EXEC SQL UPDATE MP6_MM2
+       SET NUMTEST = NUMTEST - 3;
+   if (SQLCODE != 0)
+     goto P198;
+   cnt = cnt + 1;
+   if (cnt < tranct)
+       goto P111;
+
+   EXEC SQL SELECT NUMTEST INTO :who1 FROM MP6_NN;
+   if (SQLCODE != 0)
+     goto P198;
+
+/* MP6_NN UPDATE loop */
+   cnt = 0;
+
+P112:
+   EXEC SQL UPDATE MP6_NN
+      SET NUMTEST = NUMTEST - 5;
+   if (SQLCODE != 0)
+     goto P198;
+   cnt = cnt + 1;
+   if (cnt < 4)
+      goto P112;
+
+   EXEC SQL SELECT NUMTEST INTO :rslt1 FROM MP6_NN;
+   if (SQLCODE != 0)
+     goto P198;
+   EXEC SQL SELECT NUMTEST INTO :rslt2 FROM MP6_MM2;
+   if (SQLCODE != 0)
+     goto P198;
+    EXEC SQL COMMIT WORK;
+    /* Did we get rolled back when we tried to commit? */
+    if (SQLCODE != 0)
+      goto P198;
+
+   /* end transaction */
+   printf("MPB006 transaction completed !! at time: \n");
+   /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+    printf("\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("MPB006 was not victimized.  Look for a ??DEADLOCK??\n");
+    printf("message from MPA006.  If there isn't one, rerun\n");
+    printf("the test after increasing the value of variable\n");
+    printf("tranct.  If the implementation under test transparently\n");
+    printf("serializes all transactions, it will not be possible to\n");
+    printf("generate a negative SQLCODE regardless of the value of tranct.\n");
+
+    goto P193;
+
+P198:
+    /* We got a negative SQLCODE. */
+    /* Was this transaction rollback or statement error? */
+
+    ii = SQLCODE;
+    SQLSTATE[5] = '\0';
+    strcpy (SQLST1, SQLSTATE);
+
+    printf("\n");
+    printf("!+!+!+!+!+!+!+!+  DEADLOCK? !+!+!+!+!+!+!+!+!+!+!\n");
+    printf("Negative SQLCODE (Deadlock?) was returned earlier\n");
+    printf("!+!+!+!+!+!+!+!+  DEADLOCK? !+!+!+!+!+!+!+!+!+!+!\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("  SQLCODE is %ld\n", ii);
+    printf("  SQLSTATE is %s\n", SQLST1);
+    printf("  SQLSTATE has been saved into variable SQLST1.\n");
+
+    /* Was the whole transaction rolled back or was it just a */
+    /* single statement failure?                              */
+    printf("\n");
+    printf("SELECT COUNT(*) INTO :rollflg FROM MP6_BB\n");
+    printf("  WHERE BNUM = 1;\n");
+    printf("ROLLBACK WORK;\n");
+    EXEC SQL SELECT COUNT(*) INTO :rollflg FROM MP6_BB
+      WHERE BNUM = 1;
+    if (SQLCODE != 0)
+    {
+      printf("**** --> FATAL ERROR:  Failure within rollback detection\n");
+      printf("Aborting test--try rerunning.\n");
+      errcnt = errcnt + 1;
+      EXEC SQL ROLLBACK WORK;
+      goto P193;
+    }
+    EXEC SQL ROLLBACK WORK;
+    printf ("rollflg is %ld\n\n", rollflg);
+
+    printf("rollflg = 0   Transaction was rolled back\n");
+    printf("rollflg = 1   Transaction was not rolled back\n");
+    printf("otherwise     Database error, automatic fail\n");
+    printf("\n");
+    printf("If SQLST1 is x (never set), fail.              Else:\n");
+    printf("If rollback and SQLST1 is 40001, pass.         Else:\n");
+    printf("If rollback and SQLST1 is not 40001, fail.     Else:\n");
+    printf("If no rollback and SQLST1 is 40xxx, fail.      Else:\n");
+    printf("If SQLST1 is 00xxx or 01xxx (completion), fail Else:\n");
+    printf("For other SQLST1 values \n");
+    printf("    (we assume DBMS LOCK ERROR), pass!\n\n");
+    printf("We may be persuaded that other SQLST1 values\n");
+    printf("in the range 40xxx pass for a rollback.  Call NIST!\n\n"); 
+
+    /* If we got a statement rollback, SQLSTATE cannot be 40xxx */
+    /* since this indicates a transaction rollback; neither can */
+    /* it be 00xxx (success) or 01xxx (warning) since these are */
+    /* completion conditions and are incompatible with getting  */
+    /* a negative SQLCODE.                                      */
+
+    if (strcmp (SQLST1, "x") == 0)
+      goto P192;
+    if (strncmp (SQLST1, "40001", 5) == 0 && rollflg == 0)
+      goto P191;
+    if (rollflg == 0)
+      goto P192;
+    if (strncmp (SQLST1,"40   ",5) > 0 && strncmp (SQLST1,"41    ",5) < 0)
+      goto P192;
+    if (strncmp (SQLST1,"00   ",5) > 0 && strncmp (SQLST1,"02    ",5) < 0)
+      goto P192;
+
+P191:
+  /* PASS! */
+  printf("\n\nmpb006.pc:        *** pass *** ");
+  EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0506','pass','PC');
+  EXEC SQL COMMIT WORK;
+  goto P193;   
+
+P192:
+  /* FAIL! */
+      printf("\n\n          mpb006.pc  *** fail *** ");
+      EXEC SQL INSERT INTO HU.TESTREPORT
+        VALUES('0506','fail','PC');
+        errcnt = errcnt + 1;
+      EXEC SQL COMMIT WORK;
+
+P193:
+    printf("\n\n");
+    printf("====================================================\n\n");
+
+/******************** END TEST0506 ********************/
+    
+    exit(errcnt);
+}

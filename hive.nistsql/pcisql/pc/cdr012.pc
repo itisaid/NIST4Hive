@@ -1,0 +1,249 @@
+/*  EMBEDDED C (file "CDR012.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR012.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENTIAL INTEGRITY CONSTRAINT FOR*/
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+char EMPNO1[4];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+long code1;
+
+main()
+
+{
+        strcpy(uid,"SUN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr012.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0340 ********************/
+
+/* This test inserts two rows in foreign key TABLE -- PROJ_M,*/
+/*  corresponding primay key exists                          */
+
+printf("\n                     TEST0340             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("  SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("   INSERT INTO PROJ_M\n");
+printf("   VALUES ('P7','IAC','Head',30000,'Alexdra','E5');\n");
+printf("\n");
+printf("   INSERT INTO PROJ_M\n");
+printf("   VALUES ('P8','IBM','Head',30000,'Alexdra','E5');\n");
+printf("\n");
+printf("   SELECT COUNT(*) INTO:count1\n");
+printf("   FROM PROJ_M\n");
+printf("   WHERE MGR = 'E5';\n");
+EXEC SQL INSERT INTO PROJ_M
+   VALUES ('P7','IAC','Head',30000,'Alexdra','E5');
+
+EXEC SQL INSERT INTO PROJ_M
+   VALUES ('P8','IBM','Head',30000,'Alexdra','E5');
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO:count1
+        FROM PROJ_M
+        WHERE MGR = 'E5';
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           SQLCODE is equal to 0.\n");
+ printf("           count1 is 2\n");
+ printf(" Your answer is :\n");
+ printf("           SQLCOD of second insert is %ld\n",code1);
+ printf("           count1 is %ld\n",count1);
+        if (code1 == 0 && count1 == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0340','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0340','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr012.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0340 *************************/
+
+
+
+
+
+
+
+/******************** BEGIN TEST0341 **********************/
+/* This test deletes a row (E2,-,-,-,-) from PRIMARY KEY    */
+/* TABLE -- STAFF_M, but there are such rows (*,*,*,*,E2) in*/
+/* FOREIGN KEY TABLE -- PROJ_M, this should be an ERROR.   */
+
+printf("\n                     TEST0341             \n");
+printf("              REFERENTIAL INTEGRITY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE FROM STAFF_M\n");
+printf("        WHERE EMPNUM='E2';\n");
+printf("\n");
+printf("code1 = SQLCODE\n");
+printf("\n");
+printf("        SELECT EMPNUM INTO :EMPNO1\n");
+printf("        FROM STAFF_M\n");
+printf("        WHERE EMPNUM = 'E2';\n");
+EXEC SQL DELETE FROM STAFF_M
+        WHERE EMPNUM='E2';
+code1=SQLCODE;
+strcpy(EMPNO1,"NV");
+EXEC SQL SELECT EMPNUM INTO :EMPNO1
+        FROM STAFF_M
+        WHERE EMPNUM = 'E2';
+EXEC SQL ROLLBACK WORK;
+printf("        The correct result is code1 not equal to 0\n");
+printf("                              EMPNO1 = E2\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              EMPNO1 = %s\n",EMPNO1);
+        if (code1 < 0 && strncmp(EMPNO1,"E2",2) == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0341','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0341','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr012.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0341 *********************/
+
+
+
+
+
+
+
+/******************** BEGIN TEST0342 **********************/
+/* This test set a row (E1,-,-,-,-) in PRIMARY KEY TABLE    */
+/* -- STAFF_M to (E9,-,-,-,-), there is no such a row       */
+/* (*,*,*,*,E1) in FOREIGN KEY TABLE -- PROJ_M.             */
+
+printf("\n                     TEST0342             \n");
+printf("              REFERENTIAL INTEGRITY    \n");
+printf("     SQL with Integrity Enhancement section 6.5,6.6,6.7\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        UPDATE STAFF_M\n");
+printf("        SET EMPNUM = 'E9'\n");
+printf("        WHERE EMPNUM = 'E1';\n");
+printf("\n");
+printf("code1 = SQLCODE\n");
+printf("\n");
+printf("        SELECT EMPNUM INTO :EMPNO1\n");
+printf("        FROM STAFF_M\n");
+printf("        WHERE EMPNUM = 'E1';\n");
+EXEC SQL UPDATE STAFF_M
+        SET EMPNUM = 'E9'
+        WHERE EMPNUM = 'E1';
+code1=SQLCODE;
+strcpy(EMPNO1,"NV");
+EXEC SQL SELECT EMPNUM INTO :EMPNO1
+        FROM STAFF_M
+        WHERE EMPNUM = 'E9';
+EXEC SQL ROLLBACK WORK;
+printf("        The correct result is code1 equal to 0\n");
+printf("                              EMPNO1 = E9\n");
+printf("        Your answer is code1=%ld\n",code1);
+printf("                              EMPNO1 = %s\n",EMPNO1);
+        if (code1 == 0 && (strncmp(EMPNO1,"E9",2) == 0))
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0342','pass','PC');
+printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0342','fail','PC');
+          errcnt = errcnt + 1;
+printf("\n\n       cdr012.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/****************** END TEST0342 *********************/
+     exit(errcnt);
+
+}
+

@@ -1,0 +1,305 @@
+/*  EMBEDDED C (file "XOP702.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/03/21 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP702.PC                                                    */
+/*  WRITTEN BY: Colin O'Driscoll                                 */
+/*                                                               */
+/*  ALTER TABLE ADD COLUMN                                       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open CAE SQL                                         */
+/*        Section 5.3.2 ALTER TABLE                              */
+/*        Test Spec. in ../docs/X5.3.2.nr                        */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   02/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char col1[5];
+long col2;
+long col3;
+long col4;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+
+/* nosubclass variables */
+char NORMSQ[6];
+char ALPNUM[37];
+long norm1;
+long norm2;
+
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long  errflg;
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation defined    */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+
+norm1 = 2;
+/* subclass begins in position 3 of char array NORMSQ    */
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+        NORMSQ[norm1] = '0';
+    }
+
+if (strncmp (NORMSQ, SQLSTATE, 5) != 0)
+NOSUBBODY();
+
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+}
+
+NOSUBBODY()
+{
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+        NORMSQ[norm1] = '0';
+    }
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-z */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+        NORMSQ[norm1] = '0';
+    }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01). These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+    NORMSQ[1] = '0';
+}
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) == 0 &&
+strncmp (NORMSQ, SQLSTATE, 5) != 0)
+printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+
+
+main()
+{
+
+     strcpy(uid,"XOPEN1");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+     EXEC SQL COMMIT WORK;
+errcnt = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop702.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* initialise NOSUBCLASS comparison variable */
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0702 ********************/
+
+     printf("\n                     TEST0702                 \n");
+     printf(" X/O,ALTER TABLE ADD \n");
+     printf(" X/OPEN CAE SQL Sec. 5.3.2     \n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("### INSERT INTO COLUMN_TEST VALUES('BOOK');\n");
+     printf("### ALTER TABLE COLUMN_TEST ADD COL2 DECIMAL;\n");
+     printf("###   INSERT INTO COLUMN_TEST VALUES('TEST',1);\n");
+     printf("### ALTER TABLE COLUMN_TEST ADD(COL3 INTEGER,\n");
+     printf("###       COL4 SMALLINT);\n");
+     printf("###   INSERT INTO COLUMN_TEST VALUES('TEST',1,2,3);\n");
+     printf("### ALTER TABLE COLUMN_TEST ADD COL1 CHAR(4);\n");
+     printf("\n\n=================================================\n");
+
+     errflg = 0;
+     strcpy(col1,"    ");
+     col2 = 0;
+
+/*     CREATE TABLE COLUMN_TEST (COL1 CHAR(4)); */
+/* Added for re-test */
+     EXEC SQL DROP TABLE COLUMN_TEST;
+     EXEC SQL COMMIT WORK;
+     EXEC SQL CREATE TABLE COLUMN_TEST (COL1 CHAR(4));
+     EXEC SQL COMMIT WORK;
+
+     EXEC SQL INSERT INTO COLUMN_TEST VALUES('BOOK');
+     EXEC SQL SELECT * INTO :col1 FROM COLUMN_TEST;
+
+     printf("col1 should be BOOK, it is %s\n", col1); 
+     if (strncmp(col1,"BOOK",4) != 0)
+     {
+     printf("*** Problem found (TEST STEP NUMBER 1) ! *** \n");
+     errflg = errflg + 1;
+     }
+     printf("\n\n=================================================\n");
+
+     EXEC SQL COMMIT WORK;
+     SQLCODE = 6;
+     strcpy(SQLSTATE,"x");
+
+     EXEC SQL ALTER TABLE COLUMN_TEST ADD COL2 DECIMAL;
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0 )
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 2a) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+     EXEC SQL INSERT INTO COLUMN_TEST VALUES('TEST',1);
+
+     EXEC SQL SELECT * INTO :col1, :col2 FROM COLUMN_TEST
+       WHERE COL2 IS NOT NULL;
+
+     printf("col1 should be TEST, col2 should be 1\n");
+     printf("col1 is %s, col2 is %ld\n", col1, col2);
+
+     if (strncmp(col1,"TEST",4) != 0 || col2 != 1)
+     {
+     printf("*** Problem found (TEST STEP NUMBER 2b) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL DELETE FROM COLUMN_TEST;
+     strcpy(col1,"    ");
+     col2 = 0;
+     printf("\n\n=================================================\n");
+
+     EXEC SQL COMMIT WORK;
+     SQLCODE = 6;
+     strcpy(SQLSTATE,"x");
+
+     EXEC SQL ALTER TABLE COLUMN_TEST
+       ADD(COL3 INTEGER, COL4 SMALLINT);
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0  && SQLCODE != 0 )
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 3a) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+     EXEC SQL INSERT INTO COLUMN_TEST VALUES('TEST',1,2,3);
+
+     EXEC SQL SELECT * INTO
+       :col1,
+                    :col2,
+       :col3,
+                    :col4
+       FROM COLUMN_TEST;
+
+     printf("col1 should be TEST, col2 should be 1.\n");
+     printf("col3 should be 2, col4 should be 3.\n");
+     printf("col1 is %s, col2 is %ld.\n", col1, col2);
+     printf("col3 is %ld, col4 is %ld\n", col3, col4);
+
+     if (strncmp(col1,"TEST",4) != 0 || col2 != 1 || col3 != 2 || col4 != 3)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 3b) ! *** \n");
+     errflg = errflg + 1;
+     }
+     printf("\n\n=================================================\n");
+
+     EXEC SQL COMMIT WORK;
+     strcpy(SQLSTATE,"x");
+     EXEC SQL ALTER TABLE COLUMN_TEST ADD COL1 CHAR(4);
+     printf("SQLSTATE should be S0021 , it is %s\n",SQLSTATE);
+     if (strncmp(SQLSTATE,"S0021",5) != 0)
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 4) ! *** \n");
+        errflg = errflg + 1;
+        }
+     printf("\n\n=================================================\n");
+
+     EXEC SQL COMMIT WORK;
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 6 ###\n");
+
+if (errflg == 0)
+{
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0702','pass','PC');
+printf("\n\n       xop702.pc      *** pass ***     ");
+}
+else
+{
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0702','fail','PC');
+errcnt = errcnt + 1;
+printf("\n\n       xop702.pc      *** fail ***     ");
+}
+
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0702 ********************/
+
+     exit(errcnt);
+
+}
+

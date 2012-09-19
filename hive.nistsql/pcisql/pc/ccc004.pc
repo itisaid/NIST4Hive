@@ -1,0 +1,105 @@
+/*  EMBEDDED C (file "CCC004.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/08/18 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC004.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS PROGRAM TESTS THE C STORAGE CLASS.                      */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+          char p1[4];
+          long H1;
+          char EMP[4];
+          long  i;
+          long  total;
+          char uid[19];
+          char uidx[19];
+          int errcnt;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+     /* EMP is local to main                */
+          char EMP[4];
+          extern long H1;
+     /* H1 "extern" by explicit declaration */
+     /* p1 "extern" by default              */
+     strcpy(uid,"HU");
+     AUTHID(uid);
+     lookup(uidx);
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc004.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0194 ********************/
+
+     printf("\n                 TEST0194             \n");
+     printf("     C storage class test: Extern class     \n");          
+     printf("     - - - - - - - - - - - - - - - - - -\n\n");
+
+     strcpy(EMP,"XX");
+     strcpy(p1,"XX");
+
+     total = 15;
+
+     totalup();
+
+     printf("  EMP=%s, H1=%ld and total=%ld\n",EMP,H1,total);
+
+     printf("The correct answer should be EMP=XX,  H1=20,\n");
+     printf("                             p1=P2,   total=35.\n");
+
+     if (strncmp(EMP,"XX",2)==0 && H1==20 && strncmp(p1,"P2",2)==0 && total==35)
+       {
+       printf("\n\n                 *** pass ***     ");
+       pass0194();
+       }
+     else
+       {
+       printf("\n\n       ccc004.pc  *** fail ***     ");
+       fail0194();
+       errcnt = errcnt + 1;
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+
+/******************** END TEST0194 ********************/
+
+     exit(errcnt);
+
+}

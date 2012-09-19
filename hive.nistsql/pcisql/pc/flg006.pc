@@ -1,0 +1,132 @@
+/*  EMBEDDED C (file "FLG006.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/08 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLG006.PC                                                    */
+/*  WRITTEN BY: JOAN SULLIVAN                                    */
+/*                                                               */
+/*    THIS ROUTINE TESTS AN EXTENSION TO SQL.                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        FEDERAL INFORMATION PROCESSING STANDARDS - SQL         */
+/*                    FIPS PUB 127                               */
+/*                                                               */
+/*              10. Specifications.                              */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+         long FLG1;
+         long FLG2;
+         long FLG3;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"MCGINN");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, flg006.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0299 ********************/
+
+     printf("\n            OPTIONAL TEST0299             \n");
+     printf("reference FIPS PUB 127 section 10. Specifications\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/*   Remove any SQL statements which do not precompile or compile. */
+
+     EXEC SQL INSERT INTO TABLEFGHIJKLMNOPQ19 VALUES (299);
+     printf(" After INSERT #1, SQLCODE = %ld \n",SQLCODE);
+     EXEC SQL INSERT INTO SHORTTABLE VALUES (299);
+     printf(" After INSERT #2, SQLCODE = %ld \n",SQLCODE);
+     EXEC SQL INSERT INTO BASETABLE1 VALUES (299);
+     printf(" After INSERT #3, SQLCODE = %ld \n",SQLCODE);
+
+     FLG1 = 0;
+     FLG2 = 0;
+     FLG3 = 0;
+
+     EXEC SQL SELECT COL2
+              INTO   :FLG1
+              FROM   TABLEFGHIJKLMNOPQ19;
+     printf(" After SELECT #1, SQLCODE = %ld \n",SQLCODE);
+
+     EXEC SQL SELECT COLUMN123456789IS19
+              INTO   :FLG2
+              FROM   SHORTTABLE;
+     printf(" After SELECT #2, SQLCODE = %ld \n",SQLCODE);
+
+     EXEC SQL SELECT COL3
+              INTO   :FLG3
+              FROM   VIEWABCDEFGHIKLMN19;
+     printf(" After SELECT #3, SQLCODE = %ld \n",SQLCODE);
+
+  if(FLG1 == 299)
+       printf("Table TABLEFGHIJKLMNOPQ19 should be flagged.\n");
+  if(FLG2 == 299)
+       printf("Column COLUMN123456789IS19 should be flagged.\n");
+  if(FLG3 == 299)
+       printf("View VIEWABCDEFGIKLMN10 should be flagged.\n");
+  printf(" \n");
+
+  EXEC SQL ROLLBACK WORK;
+  if(FLG1 == 299 || FLG2 == 299 || FLG3 == 299)
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT VALUES('0299','pass','PC');
+       printf("SQL extension for a long name executed successfully.\n");
+       printf("Vendor must demonstrate FIPS flagger WARNING.\n");
+       }
+  else
+       {
+       EXEC SQL INSERT INTO HU.TESTREPORT VALUES ('0299','nogo','PC');
+          errcnt = errcnt + 1;
+       printf("Vendor does not support long names for\n");
+       printf("  tables, views or columns.\n");
+       printf("Support of long names is not required.\n");
+       }
+
+     EXEC SQL COMMIT WORK;
+
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+/******************** END TEST0299 ********************/
+
+     exit(errcnt);
+
+}

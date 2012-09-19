@@ -1,0 +1,725 @@
+/*  EMBEDDED C (file "DML149.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/02/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML149.PC                                                    */
+/*  WRITTEN BY:  David W. Flater and Joan Sullivan               */
+/*                                                               */
+/*  This routine tests SET TRANSACTION and CAST.                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    F# 11 -- Transaction isolation                             */
+/*    14.1 -- <set transaction statement>                        */
+/*    6.10 -- <cast specification>                               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+float flt1;
+long int1;
+char ch5[6];
+char ch10[11];
+short indic1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml149.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0561 ********************/
+flag = 1;
+
+     printf("                  TEST0561 \n");
+     printf("          Double SET TRANSACTION\n");
+     printf("References:\n");
+     printf("    F# 11 -- Transaction isolation\n");
+     printf("    14.1 -- <set transaction statement>\n");
+printf("    4.22.6 -- transaction statements do not initiate a transaction\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Make very sure there is no transaction outstanding */
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+/* TEd hook:  arararararar */
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION READ WRITE;\n");
+EXEC SQL SET TRANSACTION READ WRITE;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USIG VALUES (10, 20);\n");
+EXEC SQL INSERT INTO USIG VALUES (10, 20);
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* TEd hook:  arararararar */
+printf("SET TRANSACTION READ WRITE;\n");
+EXEC SQL SET TRANSACTION READ WRITE;
+CHCKOK ();
+printf("\n");
+
+printf("SET TRANSACTION READ ONLY;\n");
+EXEC SQL SET TRANSACTION READ ONLY;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USIG VALUES (10, 20);\n");
+EXEC SQL INSERT INTO USIG VALUES (10, 20);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 25000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "25000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "25000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0561','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml149.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0561','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0561 *********************/
+/******************** BEGIN TEST0846 ********************/
+flag = 1;
+
+     printf("                  TEST0846 \n");
+     printf("Feature 20, CAST functions (static) nits\n");
+     printf("References:\n");
+     printf("    F# 20 -- CAST functions\n");
+     printf("    6.10 -- <cast specification>\n");
+     printf("    6.11 LR.2.d -- in a <value expression primary>\n");
+     printf("    13.8 LR.2.a -- <value expression> in <insert statement>\n");
+     printf("    F# 21 -- INSERT expressions\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE NO_DUCK (\n");
+printf("  GOOSE       NUMERIC (4, 2),\n");
+printf("  ALBATROSS   FLOAT,\n");
+printf("  SEAGULL     INT,\n");
+printf("  OSPREY      CHAR (10));\n");
+EXEC SQL CREATE TABLE NO_DUCK (
+  GOOSE       NUMERIC (4, 2),
+  ALBATROSS   FLOAT,
+  SEAGULL     INT,
+  OSPREY      CHAR (10));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/*  1.  In numeric-to-numeric cast, loss of leading significant  */
+/*      digits raises SQLSTATE 22003.  GR.3.a.ii  GR.4.a.ii      */
+
+/* 6.10 GR.3.a.ii any numeric to exact numeric losing leading sig digs */
+printf("CAST (100 AS NUMERIC (2)) loses the leading significant digit\n");
+printf("SELECT CAST (100 AS NUMERIC (2))\n");
+printf("  INTO :flt1 FROM HU.ECCO;\n");
+EXEC SQL SELECT CAST (100 AS NUMERIC (2))
+  INTO :flt1 FROM HU.ECCO;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+if (SQLCODE >= 0 && SQLCODE != 100)
+{
+  printf ("flt1 should not be returned; its value is %f\n", flt1);
+}
+printf ("SQLSTATE should be 22003; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22003", 5) != 0)
+  flag = 0;
+
+/* 6.10 GR.4.a.ii any numeric to approx numeric losing leading sig digs */
+/* Not testable. */
+
+/*  2.  In numeric-to-numeric cast, rounding or truncation is OK */
+/*      (supported without exception).  GR.3.a.i  GR.4.a.i */
+
+/* 6.10 GR.3.a.i any numeric to exact numeric losing low order digits */
+int1 = 0;
+printf("SELECT CAST (100.5 AS DECIMAL (3))\n");
+printf("  INTO :int1 FROM HU.ECCO;\n");
+EXEC SQL SELECT CAST (100.5 AS DECIMAL (3))
+  INTO :int1 FROM HU.ECCO;
+CHCKOK ();
+printf ("int1 should be 100 or 101; its value is %ld\n\n", int1);
+if (int1 != 100 && int1 != 101)
+  flag = 0;
+
+/*  3.  Leading or trailing blanks are removed from a character */
+/*      string before cast to numeric.  GR.3.b  GR.4.b */
+
+/* to exact numeric */
+
+printf("INSERT INTO NO_DUCK VALUES (\n");
+printf("  CAST ('  23.23 ' AS NUMERIC (4, 2)), 1.57E-1, -9, 'QUACK');\n");
+EXEC SQL INSERT INTO NO_DUCK VALUES (
+  CAST ('  23.23 ' AS NUMERIC (4, 2)), 1.57E-1, -9, 'QUACK');
+CHCKOK ();
+printf("\n");
+
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NO_DUCK WHERE GOOSE = 23.23;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NO_DUCK WHERE GOOSE = 23.23;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/* to approximate numeric */
+
+printf("DELETE FROM NO_DUCK\n");
+printf("  WHERE ALBATROSS - CAST ('   15.5E0    ' AS FLOAT) < 3E-1;\n");
+EXEC SQL DELETE FROM NO_DUCK
+  WHERE ALBATROSS - CAST ('   15.5E0    ' AS FLOAT) < 3E-1;
+CHCKOK ();
+printf("\n");
+
+int1 = 10;
+printf("SELECT COUNT(*) INTO :int1 FROM NO_DUCK;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM NO_DUCK;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+/*  4.  Garbage string cast to numeric raises SQLSTATE 22018. */
+/*      GR.3.b.i  GR.4.b.i */
+
+printf("INSERT INTO NO_DUCK\n");
+printf("  SELECT 22.22, CAST (C1 AS FLOAT), 0, C1 FROM HU.ECCO;\n");
+EXEC SQL INSERT INTO NO_DUCK
+  SELECT 22.22, CAST (C1 AS FLOAT), 0, C1 FROM HU.ECCO;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf ("SQLSTATE should be 22018; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22018", 5) != 0)
+  flag = 0;
+
+printf("INSERT INTO NO_DUCK\n");
+printf("  SELECT 22.22, 2.222E1, CAST (C1 AS INT), 'QUACK!' FROM HU.ECCO;\n");
+EXEC SQL INSERT INTO NO_DUCK
+  SELECT 22.22, 2.222E1, CAST (C1 AS INT), 'QUACK!' FROM HU.ECCO;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf ("SQLSTATE should be 22018; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22018", 5) != 0)
+  flag = 0;
+
+/*  5.  An exact numeric cast to string gives the shortest literal */
+/*      with correct scale (including trailing zeroes).  GR.5.a */
+
+int1 = 3;
+strcpy (ch5, "zxyxu");
+printf("SELECT CAST (CAST (:int1 AS DEC (5, 3)) AS CHAR (5))\n");
+printf("  INTO :ch5 FROM HU.ECCO;\n");
+EXEC SQL SELECT CAST (CAST (:int1 AS DEC (5, 3)) AS CHAR (5))
+  INTO :ch5 FROM HU.ECCO;
+CHCKOK ();
+printf ("ch5 should be '3.000'; its value is '%s'\n\n", ch5);
+if (strcmp (ch5, "3.000") != 0)
+  flag = 0;
+
+/*  6.  Exact numeric to string cast gives leading hypen for negative */
+/*      numbers, no blanks or plus sign for non-negative numbers. */
+/*      GR.5.a */
+
+printf("INSERT INTO NO_DUCK VALUES (\n");
+printf("  12.00, -10.5E0, 12, 'QUACK!');\n");
+EXEC SQL INSERT INTO NO_DUCK VALUES (
+  12.00, -10.5E0, 12, 'QUACK!');
+CHCKOK ();
+printf ("\n");
+
+/* WHERE clause has 'merely comparable' data types */
+
+printf("UPDATE NO_DUCK\n");
+printf("  SET OSPREY = CAST (GOOSE AS CHAR (10))\n");
+printf("  WHERE SEAGULL = CAST (GOOSE AS DEC);\n");
+EXEC SQL UPDATE NO_DUCK
+  SET OSPREY = CAST (GOOSE AS CHAR (10))
+  WHERE SEAGULL = CAST (GOOSE AS DEC);
+CHCKOK ();
+printf ("\n");
+
+strcpy (ch10, "axbxcxdxex");
+printf("SELECT OSPREY INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT OSPREY INTO :ch10
+  FROM NO_DUCK;
+CHCKOK ();
+printf ("ch10 should be '12.00     '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "12.00     ") != 0)
+  flag = 0;
+
+int1 = 1;
+printf("int1 = 1\n");
+strcpy (ch10, "arrrrrrrgh");
+printf("SELECT OSPREY INTO :ch10\n");
+printf("  FROM NO_DUCK\n");
+printf("  WHERE OSPREY < CAST (SEAGULL + :int1 AS CHAR (10))\n");
+printf("  AND OSPREY = CAST (GOOSE * :int1 AS CHAR (10));\n");
+EXEC SQL SELECT OSPREY INTO :ch10
+  FROM NO_DUCK
+  WHERE OSPREY < CAST (SEAGULL + :int1 AS CHAR (10))
+  AND OSPREY = CAST (GOOSE * :int1 AS CHAR (10));
+CHCKOK ();
+printf ("ch10 should be '12.00     '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "12.00     ") != 0)
+  flag = 0;
+
+printf("UPDATE NO_DUCK\n");
+printf("  SET OSPREY = CAST (-SEAGULL AS CHAR (10));\n");
+EXEC SQL UPDATE NO_DUCK
+  SET OSPREY = CAST (-SEAGULL AS CHAR (10));
+CHCKOK ();
+printf ("\n");
+
+strcpy (ch10, "axbxcxdxex");
+printf("SELECT OSPREY INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT OSPREY INTO :ch10
+  FROM NO_DUCK;
+CHCKOK ();
+printf ("ch10 should be '-12       '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "-12       ") != 0)
+  flag = 0;
+
+/*  7.  Exact numeric to string cast raises SQLSTATE 22001 on */
+/*      right truncation.  GR.5.a.iv */
+
+printf("Expected value -12.00 is too long for CHAR (5) cast\n");
+printf("SELECT CAST (-GOOSE AS CHAR (5)) INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT CAST (-GOOSE AS CHAR (5)) INTO :ch10
+  FROM NO_DUCK;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+if (SQLCODE >= 0 && SQLCODE != 100)
+{
+  printf ("ch10 should not be returned; its value is %s\n", ch10);
+}
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+/*  8.  Approximate numeric value zero cast to string is 0E0. */
+/*      GR.5.b.i.1 */
+
+flt1 = 0.0;
+printf ("flt1 = %f\n", flt1);
+printf("UPDATE NO_DUCK\n");
+printf("  SET ALBATROSS = :flt1;\n");
+EXEC SQL UPDATE NO_DUCK
+  SET ALBATROSS = :flt1;
+CHCKOK ();
+printf ("\n");
+
+/* -0E0 should never happen */
+
+strcpy (ch5, "zxyxu");
+printf("SELECT CAST (-ALBATROSS AS CHAR (5))\n");
+printf("  INTO :ch5 FROM NO_DUCK;\n");
+EXEC SQL SELECT CAST (-ALBATROSS AS CHAR (5))
+  INTO :ch5 FROM NO_DUCK;
+CHCKOK ();
+printf ("ch5 should be '0E0  '; its value is '%s'\n\n", ch5);
+if (strcmp (ch5, "0E0  ") != 0)
+  flag = 0;
+
+/*  9.  Approximate numeric cast to string normalized; i.e.,  */
+/*      starts with 1-9 (after any hypen), followed by period. */
+/*      GR.5.b.i.2  GR.5.b.ii */
+
+strcpy (ch10, "axbxcxdxex");
+printf("SELECT CAST (0230E-1 AS CHAR (10)) INTO :ch10\n");
+printf("  FROM HU.ECCO;\n");
+EXEC SQL SELECT CAST (0230E-1 AS CHAR (10)) INTO :ch10
+  FROM HU.ECCO;
+CHCKOK ();
+printf ("ch10 should be '2.3E1     '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "2.3E1     ") != 0)
+  flag = 0;
+
+strcpy (ch10, "axbxcxdxex");
+printf("SELECT CAST (0230E+1 AS CHAR (10)) INTO :ch10\n");
+printf("  FROM HU.ECCO;\n");
+EXEC SQL SELECT CAST (0230E+1 AS CHAR (10)) INTO :ch10
+  FROM HU.ECCO;
+CHCKOK ();
+printf ("ch10 should be '2.3E3     '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "2.3E3     ") != 0)
+  flag = 0;
+
+/*  10. An approximate numeric cast to string gives the shortest literal. */
+/*      GR.5.b.i.2 */
+/*  This is adequately covered in the other subtests. */
+
+/*  11. Approximate numeric to string cast gives leading hypen for */
+/*      negative numbers and negative exponent, no leading blanks or */
+/*      plus sign for non-negative numbers.  GR.5.b.ii */
+
+printf("DELETE FROM NO_DUCK;\n");
+EXEC SQL DELETE FROM NO_DUCK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO NO_DUCK VALUES (\n");
+printf("  0.00, -10.5E0, -0, 'QUACK!');\n");
+EXEC SQL INSERT INTO NO_DUCK VALUES (
+  0.00, -10.5E0, -0, 'QUACK!');
+CHCKOK ();
+printf ("\n");
+
+/* Negative number, positive exponent */
+/* WHERE clause has 'merely comparable' data types */
+
+printf("UPDATE NO_DUCK\n");
+printf("  SET OSPREY = CAST (ALBATROSS AS CHAR (10))\n");
+printf("  WHERE GOOSE = CAST (SEAGULL AS NUMERIC (2));\n");
+EXEC SQL UPDATE NO_DUCK
+  SET OSPREY = CAST (ALBATROSS AS CHAR (10))
+  WHERE GOOSE = CAST (SEAGULL AS NUMERIC (2));
+CHCKOK ();
+printf ("\n");
+
+strcpy (ch10, "xxxxxyyyyy");
+printf("SELECT OSPREY INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT OSPREY INTO :ch10
+  FROM NO_DUCK;
+CHCKOK ();
+printf ("ch10 should be '-1.05E1   '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "-1.05E1   ") != 0)
+  flag = 0;
+
+/* Negative number, negative exponent */
+
+printf("UPDATE NO_DUCK SET ALBATROSS = -0.5;\n");
+EXEC SQL UPDATE NO_DUCK SET ALBATROSS = -0.5;
+CHCKOK ();
+printf ("\n");
+
+printf("UPDATE NO_DUCK\n");
+printf("  SET OSPREY = CAST (ALBATROSS AS CHAR (10));\n");
+EXEC SQL UPDATE NO_DUCK
+  SET OSPREY = CAST (ALBATROSS AS CHAR (10));
+CHCKOK ();
+printf ("\n");
+
+strcpy (ch10, "xxxxxyyyyy");
+printf("SELECT OSPREY INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT OSPREY INTO :ch10
+  FROM NO_DUCK;
+CHCKOK ();
+printf ("ch10 should be '-5E-1     '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "-5E-1     ") != 0)
+  flag = 0;
+
+/* Positive number, negative exponent */
+
+printf("UPDATE NO_DUCK\n");
+printf("  SET OSPREY = CAST (-ALBATROSS AS CHAR (10));\n");
+EXEC SQL UPDATE NO_DUCK
+  SET OSPREY = CAST (-ALBATROSS AS CHAR (10));
+CHCKOK ();
+printf ("\n");
+
+strcpy (ch10, "xxxxxyyyyy");
+printf("SELECT OSPREY INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT OSPREY INTO :ch10
+  FROM NO_DUCK;
+CHCKOK ();
+printf ("ch10 should be '5E-1      '; its value is '%s'\n\n", ch10);
+if (strcmp (ch10, "5E-1      ") != 0)
+  flag = 0;
+
+/* Positive / positive already done */
+
+/*  12. Approximate numeric to string cast raises SQLSTATE 22001 on */
+/*      right truncation.  GR.5.b.iii.4 */
+
+printf("Expected value -5E-1 is too long for CHAR (4) cast\n");
+printf("SELECT CAST (ALBATROSS AS CHAR (4)) INTO :ch10\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT CAST (ALBATROSS AS CHAR (4)) INTO :ch10
+  FROM NO_DUCK;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+if (SQLCODE >= 0 && SQLCODE != 100)
+{
+  printf ("ch10 should not be returned; its value is %s\n", ch10);
+}
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+/*  13. Cast of literal NULL yields NULL value.  GR.2.a */
+
+printf("DECLARE L_OEUF CURSOR FOR\n");
+printf("  SELECT CAST (NULL AS CHAR (10)), GOOSE FROM NO_DUCK\n");
+printf("  WHERE SEAGULL = 0\n");
+printf("  UNION\n");
+printf("  SELECT OSPREY, CAST (SEAGULL AS NUMERIC (4, 2)) FROM NO_DUCK\n");
+printf("  WHERE GOOSE > 10000;\n\n");
+EXEC SQL DECLARE L_OEUF CURSOR FOR
+  SELECT CAST (NULL AS CHAR (10)), GOOSE FROM NO_DUCK
+  WHERE SEAGULL = 0
+  UNION
+  SELECT OSPREY, CAST (SEAGULL AS NUMERIC (4, 2)) FROM NO_DUCK
+  WHERE GOOSE > 10000;
+
+printf("OPEN L_OEUF;\n");
+EXEC SQL OPEN L_OEUF;
+CHCKOK ();
+printf ("\n");
+
+indic1 = 50;
+printf("FETCH L_OEUF INTO :ch10:indic1, :int1;\n");
+EXEC SQL FETCH L_OEUF INTO :ch10:indic1, :int1;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("CLOSE L_OEUF;\n");
+EXEC SQL CLOSE L_OEUF;
+CHCKOK ();
+printf ("\n");
+
+/*  14. Cast of column or parameter with NULL value yields NULL value. */
+/*      GR.2.a */
+
+strcpy (ch10, "NOTNULL   ");
+indic1 = -1;
+printf ("indic1 = -1\n");
+printf("UPDATE NO_DUCK SET GOOSE =\n");
+printf("  CAST (:ch10:indic1 AS NUMERIC (2, 2));\n");
+EXEC SQL UPDATE NO_DUCK SET GOOSE =
+  CAST (:ch10:indic1 AS NUMERIC (2, 2));
+CHCKOK ();
+printf ("\n");
+
+int1 = 50;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM NO_DUCK WHERE GOOSE IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM NO_DUCK WHERE GOOSE IS NULL;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+indic1 = 50;
+printf("SELECT CAST (GOOSE AS INT) INTO :int1:indic1\n");
+printf("  FROM NO_DUCK;\n");
+EXEC SQL SELECT CAST (GOOSE AS INT) INTO :int1:indic1
+  FROM NO_DUCK;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE NO_DUCK CASCADE;\n");
+EXEC SQL DROP TABLE NO_DUCK CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0846','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml149.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0846','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0846 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,435 @@
+/*  EMBEDDED C (file "DML062.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/07/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML062.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*      THIS ROUTINE TESTS COMMIT AND VIEW                       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 8.2  <commit statement>               */
+/*                 SECTION 6.9  <view definition>                */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char test1[21];
+        long HOURS1;
+        long count2;
+        long count3;
+        long count4;
+        long count5;
+        long count1;
+        char SECND1[2];
+        char SECND2[2];
+        char PNUM1[4];
+        char EMPN1[4];
+        char EMPN2[4];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long i;
+    long flag;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml062.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0274 ********************/
+/* COMMIT AND ROLLBACK across schemas                   */
+
+
+    printf("         COMMIT & ROLLBACK across schemas   \n");
+    printf("Reference X3.135-1989 section 8.2 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0274     \n");
+    printf("    Reference 8.2 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("   DELETE FROM SULLIVAN1.AUTH_TABLE;\n");
+printf("\n");
+printf("   INSERT INTO SULLIVAN1.AUTH_TABLE\n");
+printf("   VALUES (10,'A');\n");
+printf("\n");
+printf("   INSERT INTO SULLIVAN1.AUTH_TABLE\n");
+printf("   VALUES (100,'B');\n");
+printf("\n");
+printf("   DELETE FROM AA;\n");
+printf("\n");
+printf("   INSERT INTO AA\n");
+printf("   VALUES ('In God we trust');\n");
+printf("\n");
+printf("   COMMIT WORK;\n");
+printf("\n");
+printf("   DELETE FROM SULLIVAN1.AUTH_TABLE;\n");
+printf("\n");
+printf("   DELETE FROM AA;\n");
+printf("   ROLLBACK WORK;\n");
+printf("\n");
+printf("   SELECT COUNT(*) INTO :count1 FROM SULLIVAN1.AUTH_TABLE;\n");
+printf("\n");
+count1 = -1;
+    EXEC SQL DELETE FROM SULLIVAN1.AUTH_TABLE;
+    EXEC SQL INSERT INTO SULLIVAN1.AUTH_TABLE
+            VALUES (10,'A');
+    EXEC SQL INSERT INTO SULLIVAN1.AUTH_TABLE
+            VALUES (100,'B');
+    EXEC SQL DELETE FROM AA;
+    EXEC SQL INSERT INTO AA
+            VALUES ('In God we trust');
+    EXEC SQL COMMIT WORK;
+    EXEC SQL DELETE FROM SULLIVAN1.AUTH_TABLE;
+    EXEC SQL DELETE FROM AA;
+    EXEC SQL ROLLBACK WORK;
+    EXEC SQL SELECT COUNT(*) INTO :count1 FROM SULLIVAN1.AUTH_TABLE;
+strcpy(test1,"NV");
+    EXEC SQL SELECT CHARTEST INTO :test1 FROM AA;
+    EXEC SQL DELETE FROM AA;
+    EXEC SQL DELETE FROM SULLIVAN1.AUTH_TABLE;
+printf(" The correct answer is :\n");
+printf("               count1 = 2\n");
+printf("               test1 = In God we trust\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+printf("               test1 =%s\n",test1);
+
+
+    if (count1 == 2 && strncmp(test1,"In God we trust",15) == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0274','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml062.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0274','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0274 ********************/
+
+
+
+
+/******************** BEGIN TEST0275 ********************/
+/* COMMIT and ROLLBACK of multiple cursors              */
+
+    printf("   COMMIT & ROLLBACK of multiple cursors   \n");
+    printf("Reference X3.135-1989 section 8.2 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0275     \n");
+    printf("    Reference 8.2 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("        DECLARE CHICHI CURSOR FOR SELECT EMPNUM FROM STAFF1\n");
+printf("                WHERE EMPNUM = 'E3';\n");
+printf("\n");
+printf("        DECLARE MAC CURSOR FOR SELECT EMPNUM FROM WORKS1\n");
+printf("                WHERE EMPNUM = 'E3';\n");
+printf("\n");
+printf("        DECLARE KING CURSOR FOR SELECT PNUM FROM PROJ1\n");
+printf("                WHERE PNUM = 'P2';\n");
+printf("\n");
+printf("         UPDATE STAFF1\n");
+printf("         SET EMPNUM = 'E9'\n");
+printf("         WHERE CURRENT OF CHICHI;\n");
+printf("\n");
+printf("         UPDATE WORKS1\n");
+printf("         SET EMPNUM = 'E9', PNUM = 'P9'\n");
+printf("         WHERE CURRENT OF MAC;\n");
+printf("\n");
+printf("         UPDATE PROJ1\n");
+printf("         SET PNUM = 'P9'\n");
+printf("         WHERE CURRENT OF KING;\n");
+printf("\n");
+printf("    COMMIT WORK;\n");
+printf("\n");
+printf("    SELECT COUNT(*) INTO :count1 FROM \n");
+printf("        STAFF1,WORKS1,PROJ1\n");
+printf("        WHERE STAFF1.EMPNUM = 'E9' AND\n");
+printf("              STAFF1.EMPNUM = WORKS1.EMPNUM AND\n");
+printf("              PROJ1.PNUM = WORKS1.PNUM;\n");
+EXEC SQL DELETE FROM STAFF1;
+printf("\n");
+count1 = -1;
+EXEC SQL INSERT INTO STAFF1
+        SELECT * FROM STAFF;
+EXEC SQL INSERT INTO WORKS1
+        SELECT * FROM WORKS;
+EXEC SQL INSERT INTO PROJ1
+        SELECT * FROM PROJ;
+EXEC SQL DECLARE CHICHI CURSOR FOR SELECT EMPNUM FROM STAFF1
+                WHERE EMPNUM = 'E3';
+                /* FOR UPDATE OF EMPNUM;*/
+EXEC SQL DECLARE MAC CURSOR FOR SELECT EMPNUM FROM WORKS1
+                WHERE EMPNUM = 'E3';
+                /* FOR UPDATE  OF EMPNUM, PNUM;*/
+EXEC SQL DECLARE KING CURSOR FOR SELECT PNUM FROM PROJ1
+                WHERE PNUM = 'P2';
+                /* FOR UPDATE OF PNUM;*/
+EXEC SQL OPEN CHICHI;
+EXEC SQL OPEN MAC;
+EXEC SQL OPEN KING;
+EXEC SQL FETCH CHICHI INTO :EMPN1;
+EXEC SQL FETCH MAC INTO :EMPN2;
+EXEC SQL FETCH KING INTO :PNUM1;
+EXEC SQL UPDATE STAFF1
+         SET EMPNUM = 'E9'
+         WHERE CURRENT OF CHICHI;
+EXEC SQL UPDATE WORKS1
+         SET EMPNUM = 'E9', PNUM = 'P9'
+         WHERE CURRENT OF MAC;
+EXEC SQL UPDATE PROJ1
+         SET PNUM = 'P9'
+         WHERE CURRENT OF KING;
+EXEC SQL COMMIT WORK;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM 
+        STAFF1,WORKS1,PROJ1
+        WHERE STAFF1.EMPNUM = 'E9' AND
+              STAFF1.EMPNUM = WORKS1.EMPNUM AND
+              PROJ1.PNUM = WORKS1.PNUM;
+EXEC SQL DELETE FROM STAFF1;
+EXEC SQL DELETE FROM PROJ1;
+EXEC SQL DELETE FROM WORKS1;
+printf(" The correct answer is :\n");
+printf("               count1 = 1\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+
+
+    if (count1 == 1)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0275','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml062.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0275','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0275 ********************/
+
+
+
+
+/******************** BEGIN TEST0276 ********************/
+/* View across schemas                                  */
+
+    printf("         VIEW across schemas   \n");
+    printf("Reference X3.135-1989 section 6.9 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0276     \n");
+    printf("    Reference 6.9 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("        DELETE FROM SULLIVAN1.AUTH_TABLE;\n");
+printf("\n");
+printf("        INSERT INTO SULLIVAN1.AUTH_TABLE\n");
+printf("        VALUES (12,'A');\n");
+printf("\n");
+printf("        DECLARE PIGGY CURSOR FOR\n");
+printf("        SELECT EMPNUM,SECOND2 FROM SULLIVAN1.MUL_SCH\n");
+printf("        ORDER BY EMPNUM;\n");
+printf("\n");
+EXEC SQL DELETE FROM SULLIVAN1.AUTH_TABLE;
+EXEC SQL INSERT INTO SULLIVAN1.AUTH_TABLE
+         VALUES (12,'A');
+EXEC SQL DECLARE PIGGY CURSOR FOR
+         SELECT EMPNUM,SECOND2 FROM SULLIVAN1.MUL_SCH
+         ORDER BY EMPNUM;
+EXEC SQL OPEN PIGGY;
+EXEC SQL FETCH PIGGY INTO :EMPN1, :SECND1;
+EXEC SQL FETCH PIGGY INTO :EMPN2, :SECND2;
+EXEC SQL CLOSE PIGGY;
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               EMPN1 = E1\n");
+printf("               SECND1 = A\n");
+printf("               EMPN2 = E4\n");
+printf("               SECND2 = A\n");
+printf(" Your answer is :\n");
+printf("               EMPN1 = %s\n",EMPN1);
+printf("               SECND1 = %s\n",SECND1);
+printf("               EMPN2 = %s\n",EMPN2);
+printf("               SECND2 = %s\n",SECND2);
+flag = 0;
+if (strncmp(EMPN1,"E1",2) != 0)
+   flag = flag + 1;
+if (strncmp(EMPN2,"E4",2) != 0)
+   flag = flag + 1;
+
+    if (strncmp(SECND1,"A",1) == 0 && strncmp(SECND2,"A",2) == 0 && flag == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0276','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml062.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0276','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0276 ********************/
+
+
+
+
+
+
+
+/******************** BEGIN TEST0279 ********************/
+/* IN is a 3-valued predicate, EXISTS is 2-valued        */
+
+    printf("   IN is a 3-valued predicate, EXISTS is 2-valued\n");
+    printf("    Reference X3.135-1989 :\n");
+    printf("               section 5.13 General Rules \n");
+    printf("               section 5.17 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0279     \n");
+    printf("    Reference 5.13  5.17 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("        UPDATE WORKS\n");
+printf("        SET HOURS = NULL\n");
+printf("        WHERE PNUM = 'P5' OR EMPNUM = 'E4';\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count1 FROM STAFF;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count2 FROM STAFF\n");
+printf("        WHERE 40 IN (SELECT HOURS FROM WORKS\n");
+printf("                     WHERE STAFF.EMPNUM = WORKS.EMPNUM);\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count3 FROM STAFF\n");
+printf("        WHERE 40 NOT IN (SELECT HOURS FROM WORKS\n");
+printf("                     WHERE STAFF.EMPNUM = WORKS.EMPNUM);\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count4 FROM STAFF\n");
+printf("        WHERE EXISTS (SELECT * FROM WORKS\n");
+printf("        WHERE HOURS = 40 AND STAFF.EMPNUM = WORKS.EMPNUM);\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count5 FROM STAFF\n");
+printf("        WHERE NOT EXISTS (SELECT * FROM WORKS\n");
+printf("        WHERE HOURS = 40 AND STAFF.EMPNUM = WORKS.EMPNUM);\n");
+printf("\n");
+count1 = -1;
+count2 = -1;
+count3 = -1;
+count4 = -1;
+count5 = -1;
+EXEC SQL UPDATE WORKS
+         SET HOURS = NULL
+         WHERE PNUM = 'P5' OR EMPNUM = 'E4';
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM STAFF;
+EXEC SQL SELECT COUNT(*) INTO :count2 FROM STAFF
+        WHERE 40 IN (SELECT HOURS FROM WORKS
+                     WHERE STAFF.EMPNUM = WORKS.EMPNUM);
+EXEC SQL SELECT COUNT(*) INTO :count3 FROM STAFF
+         WHERE 40 NOT IN (SELECT HOURS FROM WORKS
+                     WHERE STAFF.EMPNUM = WORKS.EMPNUM);
+EXEC SQL SELECT COUNT(*) INTO :count4 FROM STAFF
+         WHERE EXISTS (SELECT * FROM WORKS
+         WHERE HOURS = 40 AND STAFF.EMPNUM = WORKS.EMPNUM);
+EXEC SQL SELECT COUNT(*) INTO :count5 FROM STAFF
+         WHERE NOT EXISTS (SELECT * FROM WORKS
+         WHERE HOURS = 40 AND STAFF.EMPNUM = WORKS.EMPNUM);
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               count1 = 5\n");
+printf("               count2 = 2\n");
+printf("               count3 = 2\n");
+printf("               count4 = 2\n");
+printf("               count5 = 3\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+printf("               count2 = %ld\n",count2);
+printf("               count3 = %ld\n",count3);
+printf("               count4 = %ld\n",count4);
+printf("               count5 = %ld\n",count5);
+flag = 0;
+if (count1 != 5 || count2 != 2 || count3 != 2)
+   flag = 1;
+if (count4 != 2 || count5 != 3)
+   flag = 1;
+   if (flag == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0279','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml062.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0279','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0279 ********************/
+
+
+
+
+exit(errcnt);
+
+}

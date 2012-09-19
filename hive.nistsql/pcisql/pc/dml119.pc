@@ -1,0 +1,398 @@
+/*  EMBEDDED C (file "DML119.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/6/6 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML119.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests FIPS feature 20.                          */
+/*  This is the non-dynamic version of DML120.PC.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+float flt1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml119.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0647 ********************/
+flag = 1;
+
+     printf("                  TEST0647 \n");
+     printf("     Feature 20, CAST functions (static)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL feature 20\n");
+     printf("     6.10 -- <cast specification>\n");
+     printf("     6.11 LR.2.d -- in a <value expression primary>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Datetime casting has been beaten to death by now. */
+
+/* Here we have your average legacy system table in which numeric */
+/* data (USER_TYPED) are stored as character strings.  It seemed  */
+/* like a good idea at the time they created the table.           */
+
+printf("CREATE TABLE USER_INPUT (\n");
+printf("   USER_ID INT, USER_TYPED CHAR (10),\n");
+printf("   CASH_BALANCE NUMERIC (5, 2));\n");
+EXEC SQL CREATE TABLE USER_INPUT (
+   USER_ID INT, USER_TYPED CHAR (10),
+   CASH_BALANCE NUMERIC (5, 2));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* And here we have the band-aid that is applied years later in an */
+/* attempt to conform to a standardized interface.                 */
+
+printf("CREATE VIEW STANDARD_INPUT AS\n");
+printf("  SELECT CAST (USER_ID AS CHAR (10)) AS USER_NAME,\n");
+printf("         CAST (USER_TYPED AS NUMERIC (5, 2)) AS USER_INPUT,\n");
+printf("         CAST (CASH_BALANCE AS REAL) AS RECEIVABLE\n");
+printf("    FROM USER_INPUT;\n");
+EXEC SQL CREATE VIEW STANDARD_INPUT AS
+  SELECT CAST (USER_ID AS CHAR (10)) AS USER_NAME,
+         CAST (USER_TYPED AS NUMERIC (5, 2)) AS USER_INPUT,
+         CAST (CASH_BALANCE AS REAL) AS RECEIVABLE
+    FROM USER_INPUT;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USER_INPUT VALUES\n");
+printf("  (0, '999.99', 999.99);\n");
+EXEC SQL INSERT INTO USER_INPUT VALUES
+  (0, '999.99', 999.99);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USER_INPUT VALUES\n");
+printf("  (1, '-999.99', -999.99);\n");
+EXEC SQL INSERT INTO USER_INPUT VALUES
+  (1, '-999.99', -999.99);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USER_INPUT VALUES\n");
+printf("  (2, '  54.', 54);\n");
+EXEC SQL INSERT INTO USER_INPUT VALUES
+  (2, '  54.', 54);
+CHCKOK ();
+printf("\n");
+
+/* <cast specification> in a <row value constructor> */
+
+printf("INSERT INTO USER_INPUT VALUES\n");
+printf("  (CAST ('3' AS INT), CAST (-7.02 AS CHAR (10)),\n");
+printf("  CAST (' -.702E+1' AS NUMERIC (5, 2)));\n");
+EXEC SQL INSERT INTO USER_INPUT VALUES
+  (CAST ('3' AS INT), CAST (-7.02 AS CHAR (10)),
+  CAST (' -.702E+1' AS NUMERIC (5, 2)));
+CHCKOK ();
+printf("\n");
+
+/* <cast specification> in a <general set function>.  Note that we */
+/* cannot specify DISTINCT due to 6.5 LR.1.a                       */
+
+/* (999 - 999 + 54 - 7) / 4 = 47 / 4 = 11 or 12 */
+/* It works out the same with rounding. */
+
+int1 = -1;
+printf("SELECT AVG (CAST (USER_TYPED AS INT)) INTO :int1\n");
+printf("  FROM USER_INPUT;\n");
+EXEC SQL SELECT AVG (CAST (USER_TYPED AS INT)) INTO :int1
+  FROM USER_INPUT;
+CHCKOK ();
+printf ("int1 should be 11 or 12; its value is %ld\n\n", int1);
+if (int1 < 11 || int1 > 12)
+  flag = 0;
+
+/* (999.99 - 999.99 + 54 - 7.02) / 4 = 46.98 / 4 = 11.745 */
+/* Allow +- 0.01 for inaccuracy */
+
+flt1 = 0.0;
+printf("SELECT AVG (USER_INPUT) INTO :flt1\n");
+printf("  FROM STANDARD_INPUT;\n");
+EXEC SQL SELECT AVG (USER_INPUT) INTO :flt1
+  FROM STANDARD_INPUT;
+CHCKOK ();
+printf ("flt1 should be 11.745 +- 0.01; its value is %f\n\n", flt1);
+if (flt1 < 11.735 || flt1 > 11.755)
+  flag = 0;
+
+/* <cast specification> in an update statement */
+
+printf("DECLARE C11911 CURSOR FOR\n");
+printf("  SELECT CASH_BALANCE FROM USER_INPUT\n");
+printf("  WHERE USER_ID = CAST ('-0' AS INT);\n");
+EXEC SQL DECLARE C11911 CURSOR FOR
+  SELECT CASH_BALANCE FROM USER_INPUT
+  WHERE USER_ID = CAST ('-0' AS INT);
+printf("\n");
+
+printf("OPEN C11911;\n");
+EXEC SQL OPEN C11911;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C11911 INTO :int1;\n");
+EXEC SQL FETCH C11911 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 999 or 1000; its value is %ld\n\n", int1);
+if (int1 < 999 || int1 > 1000)
+  flag = 0;
+
+printf("UPDATE USER_INPUT\n");
+printf("  SET USER_TYPED = CAST (0 AS CHAR (10)),\n");
+printf("  CASH_BALANCE = CASH_BALANCE - CAST ('500' AS NUMERIC (5, 2))\n");
+printf("  WHERE CURRENT OF C11911;\n");
+EXEC SQL UPDATE USER_INPUT
+  SET USER_TYPED = CAST (0 AS CHAR (10)),
+  CASH_BALANCE = CASH_BALANCE - CAST ('500' AS NUMERIC (5, 2))
+  WHERE CURRENT OF C11911;
+CHCKOK ();
+printf("\n");
+
+/* Check table contents */
+
+flt1 = 0.0;
+int1 = -1;
+printf("SELECT SUM (USER_INPUT) * 100, SUM (RECEIVABLE)\n");
+printf("  INTO :int1, :flt1 FROM STANDARD_INPUT;\n");
+EXEC SQL SELECT SUM (USER_INPUT) * 100, SUM (RECEIVABLE)
+  INTO :int1, :flt1 FROM STANDARD_INPUT;
+CHCKOK ();
+printf ("int1 should be -95301 +- 4; its value is %ld\n", int1);
+printf ("flt1 should be -453.02 +- 0.04; its value is %f\n\n", flt1);
+if (int1 < -95305 || int1 > -95297)
+  flag = 0;
+if (flt1 < -453.06 || flt1 > -452.98)
+  flag = 0;
+
+printf("CLOSE C11911;\n");
+EXEC SQL CLOSE C11911;
+CHCKOK ();
+printf("\n");
+
+/* Merely comparable data types */
+
+printf("DELETE FROM USER_INPUT;\n");
+EXEC SQL DELETE FROM USER_INPUT;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USER_INPUT VALUES\n");
+printf("  (CAST ('3' AS INT), CAST (-7.02 AS CHAR (10)),\n");
+printf("  CAST (' -.702E+1' AS NUMERIC (5, 2)));\n");
+EXEC SQL INSERT INTO USER_INPUT VALUES
+  (CAST ('3' AS INT), CAST (-7.02 AS CHAR (10)),
+  CAST (' -.702E+1' AS NUMERIC (5, 2)));
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO USER_INPUT VALUES\n");
+printf("  (CAST ('3' AS SMALLINT), CAST (-7.02 AS CHAR (5)),\n");
+printf("  CAST (' -.702E+1' AS DECIMAL (3, 2)));\n");
+EXEC SQL INSERT INTO USER_INPUT VALUES
+  (CAST ('3' AS SMALLINT), CAST (-7.02 AS CHAR (5)),
+  CAST (' -.702E+1' AS DECIMAL (3, 2)));
+CHCKOK ();
+printf("\n");
+
+/* Verify equality of inserted rows */
+
+int1 = 0;
+printf("SELECT USER_ID INTO :int1\n");
+printf("  FROM USER_INPUT\n");
+printf("  GROUP BY USER_ID, USER_TYPED, CASH_BALANCE\n");
+printf("  HAVING COUNT(*) = 2;\n");
+EXEC SQL SELECT USER_ID INTO :int1
+  FROM USER_INPUT
+  GROUP BY USER_ID, USER_TYPED, CASH_BALANCE
+  HAVING COUNT(*) = 2;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+printf ("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE USER_INPUT CASCADE;\n");
+EXEC SQL DROP TABLE USER_INPUT CASCADE;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0647','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml119.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0647','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0647 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

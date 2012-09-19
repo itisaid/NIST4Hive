@@ -1,0 +1,368 @@
+/*  EMBEDDED C (file "DML186.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-24 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML186.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+long int3;
+long int4;
+long int5;
+long int6;
+long int7;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml186.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0899 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0899\n");
+     printf("FIPS sizing, INTERVAL decimal leading field precision\n");
+     printf("References:\n");
+printf("FIPS 16.6 -- Sizing #23, INTERVAL decimal leading field precision\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Intermediate value = 7 */
+
+printf("CREATE TABLE TIMEPREC (\n");
+printf("  C1 INTERVAL YEAR (7) TO MONTH,\n");
+printf("  C2 INTERVAL MONTH (7),\n");
+printf("  C3 INTERVAL DAY (7) TO HOUR,\n");
+printf("  C4 INTERVAL HOUR (7) TO MINUTE,\n");
+printf("  C5 INTERVAL MINUTE (7) TO SECOND,\n");
+printf("  C6 INTERVAL SECOND (7),\n");
+printf("  C7 INTERVAL SECOND (7, 0));\n");
+EXEC SQL CREATE TABLE TIMEPREC (
+  C1 INTERVAL YEAR (7) TO MONTH,
+  C2 INTERVAL MONTH (7),
+  C3 INTERVAL DAY (7) TO HOUR,
+  C4 INTERVAL HOUR (7) TO MINUTE,
+  C5 INTERVAL MINUTE (7) TO SECOND,
+  C6 INTERVAL SECOND (7),
+  C7 INTERVAL SECOND (7, 0));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+/* 10.1 SR.6  If interval frac seconds precision not specified, */
+/* then it's 6. */
+
+printf("INSERT INTO TIMEPREC VALUES (\n");
+printf("  INTERVAL '9999999-03' YEAR TO MONTH,\n");
+printf("  INTERVAL '9999999' MONTH,\n");
+printf("  INTERVAL '9999999 3' DAY TO HOUR,\n");
+printf("  INTERVAL '9999999:03' HOUR TO MINUTE,\n");
+printf("  INTERVAL '9999999:03' MINUTE TO SECOND,\n");
+printf("  INTERVAL '9999999.444444' SECOND,\n");
+printf("  INTERVAL '9999999' SECOND);\n");
+EXEC SQL INSERT INTO TIMEPREC VALUES (
+  INTERVAL '9999999-03' YEAR TO MONTH,
+  INTERVAL '9999999' MONTH,
+  INTERVAL '9999999 3' DAY TO HOUR,
+  INTERVAL '9999999:03' HOUR TO MINUTE,
+  INTERVAL '9999999:03' MINUTE TO SECOND,
+  INTERVAL '9999999.444444' SECOND,
+  INTERVAL '9999999' SECOND);
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+int2 = 0;
+int3 = 0;
+int4 = 0;
+int5 = 0;
+int6 = 0;
+int7 = 0;
+printf("SELECT EXTRACT (YEAR FROM C1),\n");
+printf("  EXTRACT (MONTH FROM C2),\n");
+printf("  EXTRACT (DAY FROM C3),\n");
+printf("  EXTRACT (HOUR FROM C4),\n");
+printf("  EXTRACT (MINUTE FROM C5),\n");
+printf("  EXTRACT (SECOND FROM C6),\n");
+printf("  EXTRACT (SECOND FROM C7)\n");
+printf("  INTO :int1, :int2, :int3, :int4, :int5, :int6, :int7\n");
+printf("  FROM TIMEPREC;\n");
+EXEC SQL SELECT EXTRACT (YEAR FROM C1),
+  EXTRACT (MONTH FROM C2),
+  EXTRACT (DAY FROM C3),
+  EXTRACT (HOUR FROM C4),
+  EXTRACT (MINUTE FROM C5),
+  EXTRACT (SECOND FROM C6),
+  EXTRACT (SECOND FROM C7)
+  INTO :int1, :int2, :int3, :int4, :int5, :int6, :int7
+  FROM TIMEPREC;
+CHCKOK ();
+printf ("int1 should be 9999999; its value is %ld\n", int1);
+if (int1 != 9999999)
+  flag = 0;
+printf ("int2 should be 9999999; its value is %ld\n", int2);
+if (int2 != 9999999)
+  flag = 0;
+printf ("int3 should be 9999999; its value is %ld\n", int3);
+if (int3 != 9999999)
+  flag = 0;
+printf ("int4 should be 9999999; its value is %ld\n", int4);
+if (int4 != 9999999)
+  flag = 0;
+printf ("int5 should be 9999999; its value is %ld\n", int5);
+if (int5 != 9999999)
+  flag = 0;
+printf ("int6 should be 9999999; its value is %ld\n", int6);
+if (int6 != 9999999)
+  flag = 0;
+printf ("int7 should be 9999999; its value is %ld\n\n", int7);
+if (int7 != 9999999)
+  flag = 0;
+
+printf("DELETE FROM TIMEPREC;\n");
+EXEC SQL DELETE FROM TIMEPREC;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO TIMEPREC VALUES (\n");
+printf("  INTERVAL -'9999999-03' YEAR TO MONTH,\n");
+printf("  INTERVAL -'9999999' MONTH,\n");
+printf("  INTERVAL -'9999999 3' DAY TO HOUR,\n");
+printf("  INTERVAL -'9999999:03' HOUR TO MINUTE,\n");
+printf("  INTERVAL -'9999999:03' MINUTE TO SECOND,\n");
+printf("  INTERVAL -'9999999.444444' SECOND,\n");
+printf("  INTERVAL -'9999999' SECOND);\n");
+EXEC SQL INSERT INTO TIMEPREC VALUES (
+  INTERVAL -'9999999-03' YEAR TO MONTH,
+  INTERVAL -'9999999' MONTH,
+  INTERVAL -'9999999 3' DAY TO HOUR,
+  INTERVAL -'9999999:03' HOUR TO MINUTE,
+  INTERVAL -'9999999:03' MINUTE TO SECOND,
+  INTERVAL -'9999999.444444' SECOND,
+  INTERVAL -'9999999' SECOND);
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+int2 = 0;
+int3 = 0;
+int4 = 0;
+int5 = 0;
+int6 = 0;
+int7 = 0;
+printf("SELECT EXTRACT (YEAR FROM C1),\n");
+printf("  EXTRACT (MONTH FROM C2),\n");
+printf("  EXTRACT (DAY FROM C3),\n");
+printf("  EXTRACT (HOUR FROM C4),\n");
+printf("  EXTRACT (MINUTE FROM C5),\n");
+printf("  EXTRACT (SECOND FROM C6),\n");
+printf("  EXTRACT (SECOND FROM C7)\n");
+printf("  INTO :int1, :int2, :int3, :int4, :int5, :int6, :int7\n");
+printf("  FROM TIMEPREC;\n");
+EXEC SQL SELECT EXTRACT (YEAR FROM C1),
+  EXTRACT (MONTH FROM C2),
+  EXTRACT (DAY FROM C3),
+  EXTRACT (HOUR FROM C4),
+  EXTRACT (MINUTE FROM C5),
+  EXTRACT (SECOND FROM C6),
+  EXTRACT (SECOND FROM C7)
+  INTO :int1, :int2, :int3, :int4, :int5, :int6, :int7
+  FROM TIMEPREC;
+CHCKOK ();
+printf ("int1 should be -9999999; its value is %ld\n", int1);
+if (int1 != -9999999)
+  flag = 0;
+printf ("int2 should be -9999999; its value is %ld\n", int2);
+if (int2 != -9999999)
+  flag = 0;
+printf ("int3 should be -9999999; its value is %ld\n", int3);
+if (int3 != -9999999)
+  flag = 0;
+printf ("int4 should be -9999999; its value is %ld\n", int4);
+if (int4 != -9999999)
+  flag = 0;
+printf ("int5 should be -9999999; its value is %ld\n", int5);
+if (int5 != -9999999)
+  flag = 0;
+printf ("int6 should be -9999999; its value is %ld\n", int6);
+if (int6 != -9999999)
+  flag = 0;
+printf ("int7 should be -9999999; its value is %ld\n\n", int7);
+if (int7 != -9999999)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE TIMEPREC CASCADE;\n");
+EXEC SQL DROP TABLE TIMEPREC CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0899','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml186.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0899','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0899 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}
+

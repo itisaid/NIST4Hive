@@ -1,0 +1,139 @@
+/*  EMBEDDED C (file "CUGTAB.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/06/12 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CUGTAB.PC                                                    */
+/*  WRITTEN BY: David W. Flater                                  */
+/*                                                               */
+/*  Like BASETAB.PC, but for CUGINI.  Initializes CUGINI.AA,     */
+/*  CUGINI.BB, ....                                              */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  long i;
+  long ii;
+  long iii;
+  long iv;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+strcpy(uid,"CUGINI");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cugtab.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+EXEC SQL DELETE FROM AA;
+EXEC SQL INSERT INTO AA VALUES('Twenty Characters...');
+EXEC SQL DELETE FROM BB;
+EXEC SQL DELETE FROM CC;
+EXEC SQL INSERT INTO CC VALUES('Twenty Characters...');
+EXEC SQL DELETE FROM DD;
+EXEC SQL INSERT INTO DD VALUES('a');
+
+EXEC SQL SELECT COUNT(*) INTO :i   FROM AA;
+EXEC SQL SELECT COUNT(*) INTO :iv  FROM BB;
+EXEC SQL SELECT COUNT(*) INTO :ii  FROM CC;
+EXEC SQL SELECT COUNT(*) INTO :iii FROM DD;
+
+if (i == 1 && ii == 1 && iii==1 && iv==0)
+  {
+  printf("AA, BB, CC, and DD were created successfully!\n");
+  }
+else
+  {
+    printf("*****************************************\n");
+    printf("*            AA, BB, CC, DD ERROR !!!   *\n");
+    printf("*****************************************\n");
+    errcnt = errcnt + 1;
+  }
+EXEC SQL COMMIT WORK;
+
+EXEC SQL DELETE FROM EE;
+EXEC SQL INSERT INTO EE VALUES(0);
+EXEC SQL DELETE FROM FF;
+EXEC SQL DELETE FROM GG;
+EXEC SQL INSERT INTO GG VALUES(1);
+EXEC SQL DELETE FROM HH;
+EXEC SQL INSERT INTO HH VALUES(2);
+
+EXEC SQL SELECT COUNT(*) INTO :i   FROM EE;
+EXEC SQL SELECT COUNT(*) INTO :iv  FROM FF;
+EXEC SQL SELECT COUNT(*) INTO :ii  FROM GG;
+EXEC SQL SELECT COUNT(*) INTO :iii FROM HH;
+
+if (i == 1 && ii == 1 && iii==1 && iv==0)
+  {
+  printf("EE, FF, GG, and HH were created successfully!\n");
+  }
+else
+  {
+    printf("*****************************************\n");
+    printf("*            EE, FF, GG, HH ERROR !!!   *\n");
+    printf("*****************************************\n");
+    errcnt = errcnt + 1;
+  }
+EXEC SQL COMMIT WORK;
+
+EXEC SQL DELETE FROM SRCH1;
+EXEC SQL INSERT INTO SRCH1 VALUES (0);
+EXEC SQL INSERT INTO SRCH1 VALUES (1);
+EXEC SQL DELETE FROM BADG1;
+EXEC SQL INSERT INTO BADG1 VALUES (2);
+EXEC SQL DELETE FROM BADG2;
+EXEC SQL INSERT INTO BADG2 VALUES (2);
+
+EXEC SQL SELECT COUNT(*) INTO :i   FROM SRCH1;
+EXEC SQL SELECT COUNT(*) INTO :ii  FROM BADG1;
+EXEC SQL SELECT COUNT(*) INTO :iii FROM BADG2;
+
+if (i == 2 && ii == 1 && iii == 1)
+  {
+  printf("SRCH1, BADG1, and BADG2 were created successfully!\n");
+  }
+else
+  {
+    printf("*****************************************\n");
+    printf("*       SRCH1, BADG1, BADG2 ERROR !!!   *\n");
+    printf("*****************************************\n");
+    errcnt = errcnt + 1;
+  }
+EXEC SQL COMMIT WORK;
+
+exit(errcnt);
+
+}

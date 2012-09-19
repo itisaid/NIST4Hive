@@ -1,0 +1,924 @@
+/*  EMBEDDED C (file "REPORTA.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                 COMMENT SECTION                               */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*                                                               */
+/*  WRITTEN BY:  J. Sullivan                                     */
+/*                                                               */
+/*  This routine populates the tables R_STRUCTURE and T_REQ      */
+/*  and lists programs to be executed for each BINDING_CLAIMED.  */
+/*  This list is not needed for testing a common profile such    */
+/*  as Entry FIPS 127-2, Transitional FIPS 127-2, FIPS Sizing,   */
+/*  X/Open with IEF, or X/Open without IEF, because a canned     */
+/*  list is provided for each common profile.                    */
+/*                                                               */
+/*                                                               */
+/*  BACKGROUND:                                                  */
+/*  The test numbers to be run are derived from the              */
+/*  FEATURE_CLAIMED table.                                       */
+/*  The derivation is recursive, based on links in table         */
+/*  IMPLICATION.  Profiles contain subprofiles (recursively)     */
+/*  which contain features (eventually).                         */
+/*  The derived features are joined with table TESTFEATRUE (which*/
+/*  links tests to features) to populate table R_STRUCTURE       */
+/*  (report structure), a list of tests for each FEATURE_CLAIMED.*/
+/*  T_REQ contains the product of R_STRUCTURE and BINDING_CLAIMED*/
+/*  Each row represents a test required for a binding claimed.   */
+/*  The status column REQOPTNA of T_REQ is updated through       */
+/*  program logic (SQL "rules") to values REQ, OPT, or NA        */
+/*                                                               */
+/*  A TEd file is generated to specify delete of extraneous      */
+/*  tests (from the list of programs to be executed).            */
+/*  This list is not needed for testing common profiles.         */
+/*                                                               */
+/*  Debugging is turned on by setting debug1 = 1                 */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+PFREQ();
+void
+PFTEMP();
+void
+PRSTR();
+void
+PTREQ();
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char  prog[7];
+  char  tpnote[11];
+  char  testno[5];
+  char  feat1[5];
+  char  feat2[5];
+  char  feat3[5];
+  char  featur[33];
+  char  bind1[4];
+  char  reqopt[4];
+  char  result[5];
+  long  iii;
+  long  lvl;
+  short indic1;
+  char  uid[19];
+  char  uidx[19];
+  char  SQLSTATE[6];
+  long  SQLCODE;
+EXEC SQL END DECLARE SECTION;
+  long  indivt;
+  char  bindlc[4];
+  char  bind0[4];
+  int  errcnt;
+  long  loopct;
+  long  debug1;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+  strcpy(uid,"HU                ");
+  AUTHID(uid);
+  strcpy(uidx,"not logged in, not");
+  EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+  if (strncmp(uid,uidx,2) != 0)
+     {
+      printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+      exit(99);
+     }
+printf("SQL Test Suite, V6.0, Embedded C, reporta.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+   errcnt = 0;
+
+/* to debug program, set debug1 = 1 */
+   debug1 = 0;
+
+/* Profile P998 will set indivt = 1 */
+   indivt = 0;
+
+/*****************************************************************/
+
+   EXEC SQL DECLARE SHOW_CLAIM CURSOR FOR
+     SELECT REPORTFEATURE.FEATURE1, FEATURENAME, BINDING1
+      FROM FEATURE_CLAIMED, REPORTFEATURE, BINDING_CLAIMED
+         WHERE REPORTFEATURE.FEATURE1
+             = FEATURE_CLAIMED.FEATURE1
+         ORDER BY 1, 2, 3;
+   EXEC SQL OPEN SHOW_CLAIM;
+   printf("These are the profiles and bindings to be tested:\n");
+   SQLCODE = 0;
+   iii = 0;
+P250:
+   EXEC SQL FETCH SHOW_CLAIM INTO :feat1, :featur, :bind1;
+   if (SQLCODE < 0 || SQLCODE == 100)
+      goto P252;
+   /* X/Open profiles do not exist for bindings other than PC and PCO */
+   if (strncmp(bind1,"PC ",2) == 0 || strcmp(bind1,"PCO") == 0 )
+      goto P251;
+   if (strcmp(feat1,"P210") == 0 )
+      goto P250;
+   if (strcmp(feat1,"P230") == 0 )
+      goto P250;
+
+P251:
+   if (strcmp(bind1,"P998") == 0)
+      indivt = 1;
+   iii = iii + 1;
+   printf("%s %s %s\n",feat1,bind1,featur);
+   goto P250;
+
+P252:
+   EXEC SQL CLOSE SHOW_CLAIM;
+   EXEC SQL COMMIT WORK;
+   printf("%ld claim(s) selected\n",iii);
+   if (iii == 0)
+     {
+       printf("Either BINDING_CLAIMED or FEATURE_CLAIMED is empty!\n");
+       printf("You must INSERT at least one row into each table.\n");
+       printf("See instructions in file other/report_l.doc\n");
+       goto P411;
+     }
+
+
+/*****************************************************************/
+
+   printf("\n");
+   printf("REPORTA step 1:  Check to make sure that each test number\n");
+   printf("                 is linked to the reporting structure;\n");
+   printf("                 i.e., that each TESTCASE row has at\n");
+   printf("                 least one TESTFEATURE row.\n");
+   EXEC SQL DECLARE ERROR1 CURSOR FOR
+             SELECT TESTNO
+                FROM TESTCASE
+                WHERE TESTNO NOT IN
+                  (SELECT TESTNO FROM TESTFEATURE)
+             ORDER BY TESTNO;
+   EXEC SQL OPEN ERROR1;
+   iii = 0;
+P120:
+   EXEC SQL FETCH ERROR1 INTO :testno;
+   if (SQLCODE < 0)
+     printf("FETCH ERROR1 SQLCODE = %ld \n", SQLCODE);
+   if (SQLCODE < 0 || SQLCODE == 100)
+     goto P121;
+   iii = iii + 1;
+   printf("TESTCASE without TESTFEATURE row: %s\n",testno);
+   goto P120;
+P121:
+   EXEC SQL CLOSE ERROR1;
+   if (iii > 0)
+     {
+       errcnt = errcnt + 1;
+       printf("#ERR1 reference-coding error. TESTFEATURE rows missing!\n");
+       PFTEMP();
+       /* Suicide note #1 */
+     }
+
+/*========================================================= */
+/* Recursive derivation of features to be tested */
+/*========================================================= */
+/* The goal is for table F_REQ to contain a row for each    */
+/* feature implied by a row in table FEATURE_CLAIMED.       */
+/* In general, each FEATURE_CLAIMED is a profile            */
+/* (begins with the letter P) as opposed to an individual   */
+/* feature (begins with a digit).                           */
+
+/* Each profile in FEATURE_CLAIMED will generate 3 reports. */
+
+/* This reporting structure allows individual features to   */
+/* be claimed; although, it is not expected that this       */
+/* form of reporting will be commonly used in validations.  */
+/* All the individual features in FEATURE_CLAIMED will      */
+/* be grouped together in a pseudo profile, P998, under the */
+/* heading "Individual Features," for ease in reporting.    */
+
+/* After the recursive process below, each individual       */
+/* feature required for testing will be represented in      */
+/* F_REQ column F1.  The C1 column ("claim") will contain   */
+/* the value from the table FEATURE_CLAIMED (except for     */
+/* individual features claimed, which will have C1 value    */
+/* 'P998').  The P1 column is the immediate profile of      */
+/* the F1 column.  For example, if FEATURE_CLAIMED has      */
+/* a row with value 'P135' for Transitional SQL, then       */
+/* many features will be derived, among them '0IEF', and    */
+/* there will be a F_REQ row with (C1, P1, F1) values:      */
+/*   C1 = 'P135'   "claimed" Transitional SQL               */
+/*   P1 = 'P120'   "immediate profile" Entry SQL            */
+/*   F1 = '0IEF'   "feature" IEF                            */
+/* In the rare case that '0IEF' is claimed as an individual */
+/* feature to be tested, by inserting value '0IEF' in table */
+/* FEATURE_CLAIMED, then F_REQ would have a row with        */
+/* (C1, P1, F1) values  ('P998','0IEF','0IEF').             */
+
+printf("\n");
+printf("REPORTA step 2:  Derive all features to be tested.\n");
+
+/*setup */
+   EXEC SQL DELETE FROM F_REQ;
+   EXEC SQL DELETE FROM F_TEMP;
+   EXEC SQL COMMIT WORK;
+
+/*#step 1# */
+/* Begin work on the features claimed. */
+/* FEATURE1 is either an individual feature or (most likely) a profile. */
+/* Individual features claimed will be inserted into table F_REQ, */
+/* and they need no more processing. */
+/* P998 is the report category "Individual Features". */
+
+/* Everything else (profiles) needs more processing (recursion), */
+/* and they will be inserted into table F_TEMP. */
+   iii = 0;
+
+   EXEC SQL INSERT INTO F_REQ
+     SELECT 'P998',FEATURE1,FEATURE1,0
+            FROM FEATURE_CLAIMED
+            WHERE FEATURE1 NOT LIKE 'P%';
+
+   if (SQLCODE < 0)
+      printf("Problem #1 INSERT INTO F_REQ, SQLCODE = %ld\n",SQLCODE);
+   if (SQLCODE == 100)
+      iii = iii +1;
+
+   EXEC SQL COMMIT WORK;
+
+if (debug1 == 1)
+   {
+     printf("Table F_REQ with individual features claimed:\n");
+     PFREQ();
+   }
+
+/*#step 2# */
+/* set up initial C1, P1 values for profiles. */
+
+/* If F_REQ.F1 is a profile (begins with "P"), */
+/* move the FEATURE_CLAIMED value to all columns */
+/* and prepare to recurse. */
+
+   EXEC SQL INSERT INTO F_TEMP
+     SELECT FEATURE1,FEATURE1,FEATURE1,1
+            FROM FEATURE_CLAIMED
+            WHERE FEATURE1 LIKE 'P%'
+              AND FEATURE1 <> 'P998';
+
+   if (SQLCODE < 0)
+      printf("Problem #2 INSERT INTO F_TEMP, SQLCODE = %ld\n",SQLCODE);
+   if (SQLCODE == 100)
+      iii = iii + 1;
+
+   EXEC SQL COMMIT WORK;
+
+/* We now have individual features table in F_REQ and */
+/* profiles in table F_TEMP. */
+
+if (debug1 == 1)
+   {
+     printf("Table F_TEMP with profiles claimed:\n");
+     PFTEMP();
+   }
+
+   if (iii == 2)
+     {
+        printf("Table FEATURE_CLAIMED is empty!\n");
+        printf("User MUST specify profiles to test by\n");
+        printf(" inserting value(s) into table FEATURE_CLAIMED.\n");
+      }
+
+   loopct = 0;
+
+P100:
+
+   loopct = loopct + 1;
+
+/*#step 3# */
+/* recurse here, until done. */
+
+/*#step 3a# */
+/* Generate the next level in the hierarchy, */
+/* keeping the first two columns and replacing the link. */
+/* Rows are optimistically sent back to F_REQ, assuming that */
+/* the recursion is complete.  If it isn't, we'll move the */
+/* rows with profiles out again to recurse another level. */
+
+
+   EXEC SQL INSERT INTO F_REQ
+     SELECT C1,P1,CHILD_F,LVL
+     FROM F_TEMP, IMPLICATION
+     WHERE F1 = PARENT_F;
+
+   if (SQLCODE < 0)
+      printf("Problem #4 INSERT INTO F_REQ, SQLCODE = %ld\n",SQLCODE);
+
+   EXEC SQL DELETE FROM F_TEMP WHERE F1 IN
+     (SELECT PARENT_F FROM IMPLICATION);
+
+   if (SQLCODE < 0)
+      printf("Problem #5 DELETE FROM F_TEMP, SQLCODE = %ld\n",SQLCODE);
+
+   EXEC SQL COMMIT WORK;
+
+/* We have now moved every F_TEMP row back into F_REQ, */
+/* after replacing the F1 profile value with its "child." */
+/* The "child" is either a profile or a feature. */
+
+   if (debug1 == 1)
+   {
+     printf("Table F_REQ after %ld recursion(s)\n",loopct);
+     PFREQ();
+     printf("Table F_TEMP after %ld recursion(s)\n",loopct);
+     printf("Table F_TEMP should be empty\n");
+     PFTEMP();
+   }
+
+   iii = 1;
+   EXEC SQL SELECT COUNT(*) INTO :iii FROM F_TEMP;
+   if (iii > 0 || SQLCODE < 0 || SQLCODE == 100)
+     {
+       errcnt = errcnt + 1;
+       printf("#ERR2 reference-coding error. F_TEMP not empty!\n");
+       PFTEMP();
+       /* Suicide note #2 */
+     }
+   EXEC SQL COMMIT WORK;
+
+/* It's a reference-coding error if F_TEMP has any rows at all. */
+/* F_TEMP contains only profiles without features. */
+/* so, F_TEMP should be empty. */
+
+
+/*#step 3b# */
+/* If F_REQ.F1 is a profile (begins with "P"), */
+/* move the profile values from F_REQ to F_TEMP*/
+/* and prepare to recurse. */
+/* The child feature from the next level of recursion will belong */
+/* to both the grandparent feature and the parent feature. */
+/* Column LVL is the level of recursion for column F1. */
+
+   EXEC SQL INSERT INTO F_TEMP
+     SELECT C1,F1,F1,LVL+1
+     FROM F_REQ
+          WHERE F1 LIKE 'P%';
+
+   if (SQLCODE < 0)
+      printf("Problem #7a INSERT INTO F_TEMP, SQLCODE = %ld\n",SQLCODE);
+
+   EXEC SQL INSERT INTO F_TEMP
+     SELECT C1,P1,F1,LVL
+     FROM F_REQ
+          WHERE F1 LIKE 'P%';
+
+   if (SQLCODE < 0)
+      printf("Problem #7b INSERT INTO F_TEMP, SQLCODE = %ld\n",SQLCODE);
+
+   EXEC SQL DELETE FROM F_REQ
+            WHERE F1 LIKE 'P%';
+
+   if (SQLCODE < 0)
+      printf("Problem #8 DELETE FROM F_REQ, SQLCODE = %ld\n",SQLCODE);
+
+   EXEC SQL COMMIT WORK;
+
+/* We now have individual features in F_REQ and */
+/* profiles in table F_TEMP. */
+
+   if (debug1 == 1)
+   {
+    printf("Table F_REQ with features derived at this point:\n");
+    PFREQ();
+    printf("Table F_TEMP with profiles for next recursion:\n");
+    PFTEMP();
+   }
+
+
+   iii = 0;
+   EXEC SQL SELECT COUNT(*) INTO :iii FROM F_TEMP;
+   EXEC SQL COMMIT WORK;
+
+/* It's time to quit if F_TEMP is empty; */
+/* otherwise, continue the recursion. */
+
+   if (iii > 0)
+      goto P100;
+   if (loopct == 1)
+     printf("Recursion exhausted after 1 pass.\n");
+   else
+     printf("Recursion exhausted after %ld passes.\n",loopct);
+
+
+/*========================================================= */
+/* Determine which tests are required for the derived features */
+/*========================================================= */
+
+printf("\n");
+printf("REPORTA step 3:  Determine which tests are required.\n");
+
+/*set up */
+   EXEC SQL DELETE FROM R_STRUCTURE;
+   EXEC SQL COMMIT WORK;
+
+/* Find all related tests */
+/* Replace feature with TESTNO: */
+   EXEC SQL INSERT INTO R_STRUCTURE
+     SELECT DISTINCT C1, P1, TESTNO, LVL
+       FROM F_REQ, TESTFEATURE
+       WHERE FEATURE1 = F1;
+   if (SQLCODE < 0)
+      printf("Problem #9 INSERT INTO R_STRUCTURE, SQLCODE = %ld\n",SQLCODE);
+   EXEC SQL COMMIT WORK;
+
+   if (debug1 == 1)
+     {
+       printf("Table R_STRUCTURE with all related tests:\n");
+       PRSTR();
+     }
+
+/* Drop related tests not fully supported by combined claims: */
+   EXEC SQL DELETE FROM R_STRUCTURE
+    WHERE TESTNO IN
+      (SELECT TESTNO FROM TESTFEATURE
+         WHERE FEATURE1 NOT IN
+           (SELECT F1 FROM F_REQ));
+
+   if (SQLCODE < 0)
+      printf("Problem #10 DELETE FROM R_STRUCTURE, SQLCODE = %ld\n",SQLCODE);
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      printf("Partially supported tests WERE DELETED.\n");
+
+   EXEC SQL COMMIT WORK;
+
+   if (debug1 == 1)
+     {
+       printf("Table R_STRUCTURE with all fully supported tests:\n");
+       PRSTR();
+     }
+
+/* One big happy profile when indivt = 1. */
+/* Every test will print under every profile */
+/*   for which it has at least one feature, */
+/*   provided the entire test is supported by the entire profile. */
+   if (indivt == 1)
+     goto P150;
+
+/* Drop tests not fully supported in each subprofile. */
+/* This will give stable counts to each subprofile (except P998). */
+
+    EXEC SQL DELETE FROM R_STRUCTURE
+         WHERE C1 <> 'P998'
+           AND TESTNO IN
+          (SELECT TESTNO FROM TESTFEATURE
+             WHERE FEATURE1 NOT IN
+               (SELECT F1 FROM F_REQ
+                  WHERE F_REQ.C1 = R_STRUCTURE.C1
+                    AND F_REQ.P1 = R_STRUCTURE.P1));
+
+   if (SQLCODE < 0)
+      printf("Problem #11a UPDATE R_STRUCTURE, SQLCODE = %ld\n",SQLCODE);
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      printf("Some tests were not fully contained in a subprofile.\n");
+
+/* Identify each tests's highest level within its profile. */
+/* F_TEMP column P1 is holding TESTNO values. */
+
+   EXEC SQL INSERT INTO F_TEMP (C1, P1, LVL)
+        SELECT C1, TESTNO, MAX (LVL)
+        FROM R_STRUCTURE
+        GROUP BY C1, TESTNO;
+
+/* For duplicate testno within a profile, drop lowest subprofile. */
+/* F_TEMP column P1 is holding TESTNO values. */
+
+   EXEC SQL DELETE FROM R_STRUCTURE
+        WHERE C1 <> 'P998'
+        AND NOT EXISTS (SELECT * FROM F_TEMP
+                        WHERE F_TEMP.C1 = R_STRUCTURE.C1
+                          AND F_TEMP.P1 = R_STRUCTURE.TESTNO
+                          AND F_TEMP.LVL = R_STRUCTURE.LVL);
+
+   if (SQLCODE < 0)
+      printf("Problem #11b DELETE FROM R_STRUCTURE, SQLCODE = %ld\n",SQLCODE);
+
+P150:
+
+   EXEC SQL COMMIT WORK;
+
+   if (debug1 == 1)
+     {
+       printf("Table R_STRUCTURE with P998 resolved:\n");
+       PRSTR();
+     }
+
+/*Note that R_STRUCTURE now has the full reporting structure. */
+/*Some tests will be reported in more than one profile. */
+
+/*========================================================= */
+/* Multiply tests required by bindings claimed. */
+/* And pick up TESTNO's program name. */
+/*========================================================= */
+
+printf("\n");
+printf("REPORTA step 4:  Multiply tests required by bindings claimed.\n");
+/*set up */
+   EXEC SQL DELETE FROM T_REQ;
+   EXEC SQL COMMIT WORK;
+
+   EXEC SQL INSERT INTO T_REQ
+     SELECT DISTINCT TESTCASE.TESTNO, TESTCASE.PROG,
+          BINDING1, 'REQ', '    '
+       FROM TESTCASE, R_STRUCTURE, BINDING_CLAIMED
+       WHERE TESTCASE.TESTNO = R_STRUCTURE.TESTNO;
+
+   if (SQLCODE < 0)
+      printf("Problem #12 INSERT INTO T_REQ, SQLCODE = %ld\n",SQLCODE);
+   if (SQLCODE == 100)
+     {
+        printf("Table FEATURE_CLAIMED or BINDING_CLAIMED is empty!\n");
+        printf("User MUST specify bindings to test by\n");
+        printf(" inserting value(s) into table BINDING_CLAIMED.\n");
+      }
+
+   EXEC SQL COMMIT WORK;
+
+   if (debug1 == 1)
+      {
+         printf("Before setting value of column REQOPTNA\n");
+         PTREQ();
+      }
+
+/*========================================================= */
+/* Mark 'NA' each test not required for certain bindings */
+/* Mark 'DL','UR','WD' tests deleted, under review, withdrawn */
+/*========================================================= */
+
+printf("\n");
+printf("REPORTA step 5:  Mark 'NA' tests which do not exist for a particular\n");
+printf("                 language.\n");
+
+/* For Version 5.1, which does not yet contain translations for */
+/*  Transitional SQL tests in the interfaces for */
+/*  Module FORTRAN, Embedded Pascal, and Module Pascal: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 IN ('PPA','MFO','MPA')
+       AND TESTNO > '0555'
+       AND TESTNO <> '0564'
+       AND PROG NOT BETWEEN 'flg010' AND 'flg013';
+
+
+/*  For X/Open Testing, which has only PC and PCO bindings: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 <> 'PC' AND BINDING1 <> 'PCO'
+       AND PROG LIKE 'xop%';
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'PC' 
+       AND TESTNO IN ('0712','0724','0725');
+
+/*  For the language-specific programs: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE PROG LIKE 'cob%' AND BINDING1 <> 'PCO'
+                            AND BINDING1 <> 'MCO'
+        OR PROG LIKE 'for%' AND BINDING1 <> 'PFO'
+                            AND BINDING1 <> 'MFO'
+        OR PROG LIKE 'ccc%' AND BINDING1 <> 'PC'
+                            AND BINDING1 <> 'MC'
+        OR PROG LIKE 'pas%' AND BINDING1 <> 'PPA'
+                            AND BINDING1 <> 'MPA'
+        OR PROG LIKE 'ada%' AND BINDING1 <> 'PAD'
+                            AND BINDING1 <> 'MAD'
+        OR PROG LIKE 'sql%' AND BINDING1 <> 'SQL';
+
+/* If we have MUMPS or PLI tests, we will add the following:       */
+/* OR PROG LIKE 'pli%' AND BINDING1 <> 'PPL' AND BINDING1 <> 'MPL' */
+/* OR PROG LIKE 'mum%' AND BINDING1 <> 'PMU' AND BINDING1 <> 'MMU' */
+
+/*  For the NON-module language interfaces: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 NOT LIKE 'M%'
+       AND PROG     IN ('dml074','dml088','yts814');
+
+/*  For the NON-embedded interfaces: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 NOT LIKE 'P%'
+       AND PROG IN ('dml017','dml063','dml067',
+                    'dml071','flg010','flg013');
+
+/*  For the NON-interactive SQL interfaces: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 <> 'SQL' AND PROG = 'mpquic';
+
+/*  For Interactive SQL: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'SQL' AND 0 =
+        (SELECT ISQL_CT FROM TESTCASE
+           WHERE TESTCASE.TESTNO = T_REQ.TESTNO);
+
+/*  For C, MUMPS, PLI - varchar host language declaration: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 <> 'PC' AND BINDING1 <> 'MC'
+       AND PROG IN
+        ('dml092','dml093','dml129','dml146','dml155','isi008','ist008');
+
+/*  For C only: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'MC'
+       AND TESTNO IN ('0183','0192','0193','0398','0399');
+
+/*  For COBOL only: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'PCO' AND TESTNO = '0288';
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'MCO'
+       AND TESTNO IN ('0185','0206','0207');
+/*  For COBOL only - OPTIONAL due to floating point data type: */
+   EXEC SQL UPDATE T_REQ
+     SET REQOPTNA = 'OPT'
+       WHERE (BINDING1 = 'MCO' OR BINDING1 = 'PCO')
+         AND TESTNO = '0157';
+
+/*  For FORTRAN only: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'MFO'
+       AND TESTNO IN ('0217','0223','0392');
+
+/*  For PASCAL only: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'MPA'
+       AND TESTNO IN ('0238','0239');
+
+/*  For Ada only: */
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'PAD'
+       AND TESTNO IN ('0445','0456');
+   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'
+     WHERE BINDING1 = 'MAD'
+       AND TESTNO IN ('0424','0445');
+
+/*  Placeholder for deleted tests (permanently removed): */
+/*  TEd maintenance changes will provide any appropriate test numbers. */
+   EXEC SQL UPDATE T_REQ
+     SET REQOPTNA = 'DL' WHERE REQOPTNA <> 'NA'
+           AND TESTNO IN ('DL#1','DL#2');
+
+/*  Placeholder for tests under review (to be run, but not judged now): */
+/*  TEd maintenance changes will provide any appropriate test numbers. */
+   EXEC SQL UPDATE T_REQ
+     SET REQOPTNA = 'UR' WHERE REQOPTNA <> 'NA'
+           AND TESTNO IN ('UR#1','UR#2');
+
+/*  Placeholder for withdrawn tests (removed until Version 6.0): */
+/*  TEd maintenance changes will provide any appropriate test numbers. */
+   EXEC SQL UPDATE T_REQ
+     SET REQOPTNA = 'WD' WHERE REQOPTNA <> 'NA'
+           AND TESTNO IN ('WD#1','WD#2');
+
+
+/*  For the few MUMPS programs:                        */
+/*   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'         */
+/*     WHERE (BINDING1 = 'PMU' OR BINDING1 = 'MMU')    */
+/*       AND PROG NOT LIKE 'mum%'                      */
+/*       AND PROG NOT IN ('XXXXXX','YYYYYY');          */
+
+/*  For the few PL/I programs:                         */
+/*   EXEC SQL UPDATE T_REQ SET REQOPTNA = 'NA'         */
+/*     WHERE (BINDING1 = 'PPL' OR BINDING1 = 'MPL')    */
+/*       AND PROG NOT LIKE 'pli%'                      */
+/*       AND PROG NOT IN ('AAAAAA','BBBBBB');          */
+
+
+   EXEC SQL COMMIT WORK;
+
+   if (debug1 == 1)
+      {
+         printf("After setting value of column REQOPTNA\n");
+         PTREQ();
+      }
+
+/*========================================================= */
+
+/*========================================================= */
+/* Print programs to be EXECuted for each binding.          */
+/* This is equivalent to RUNPC.BAS, RUNSQL.BAS, etc.        */
+/*========================================================= */
+
+printf("\n");
+printf("REPORTA step 6:  List programs for each binding.\n");
+
+   EXEC SQL DECLARE RUNALL_BAS CURSOR FOR
+     SELECT DISTINCT BINDING1, AUTHID, TESTPROG.PROG, P_NOTE
+     FROM T_REQ, TESTPROG
+       WHERE T_REQ.PROG = TESTPROG.PROG
+         AND REQOPTNA IN ('OPT','REQ','UR')
+       ORDER BY 1, 2, 3;
+
+   EXEC SQL OPEN RUNALL_BAS;
+   if (SQLCODE < 0)
+      printf("Problem #13 OPEN RUNALL_BAS, SQLCODE = %ld\n",SQLCODE);
+   SQLCODE = 0;
+   strcpy(bind0,"   ");
+   printf("\nRun the following programs to test the interfaces specified:\n");
+P310:
+   if (SQLCODE == 100)
+      goto P311;
+   EXEC SQL FETCH RUNALL_BAS INTO :bind1, :uidx, :prog, :tpnote :indic1;
+   if (indic1 < 0)
+      strcpy(tpnote,"          ");
+   if (strncmp(bind0,bind1,3) != 0)
+     {
+       strcpy(bind0,bind1);
+       printf("\n");
+       printf("PROGRAMS TO EXECUTE FOR INTERFACE %s\n",bind1);
+     }
+
+   /* language-independent lower casing for value of bind1 */
+   if (strcmp(bind1,"PC ") == 0)
+      strcpy(bindlc,"pc ");
+   if (strcmp(bind1,"PCO") == 0)
+      strcpy(bindlc,"pco");
+   if (strcmp(bind1,"PFO") == 0)
+      strcpy(bindlc,"pfo");
+   if (strcmp(bind1,"PPA") == 0)
+      strcpy(bindlc,"ppa");
+   if (strcmp(bind1,"PAD") == 0)
+      strcpy(bindlc,"pad");
+   if (strcmp(bind1,"MC ") == 0)
+      strcpy(bindlc,"mc ");
+   if (strcmp(bind1,"MCO") == 0)
+      strcpy(bindlc,"mco");
+   if (strcmp(bind1,"MFO") == 0)
+      strcpy(bindlc,"mfo");
+   if (strcmp(bind1,"MPA") == 0)
+      strcpy(bindlc,"mpa");
+   if (strcmp(bind1,"MAD") == 0)
+      strcpy(bindlc,"mad");
+   if (strcmp(bind1,"SQL") == 0)
+      strcpy(bindlc,"sql");
+
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      printf("RUN%s    %s.%s  AS  %s %s\n",bind1,prog,bindlc,uidx,tpnote);
+   goto P310;
+P311:
+   printf("\n\n\n");
+   EXEC SQL CLOSE RUNALL_BAS;
+/*========================================================= */
+
+/*========================================================= */
+/* Print tests to delete from required programs.              */
+/* Testing individual features (outside of profiles) is       */
+/*  tricky, because the programs were not structured for this.*/
+/* TEd format may be input to TEd after cut and paste.        */
+/*========================================================= */
+
+   EXEC SQL DECLARE DELETE_TESTNO CURSOR FOR
+      SELECT DISTINCT TESTCASE.TESTNO, TESTCASE.PROG
+          FROM TESTCASE, TESTPROG
+          WHERE TESTCASE.PROG = TESTPROG.PROG
+            AND TESTCASE.PROG IN
+                   (SELECT PROG FROM T_REQ)
+            AND TESTCASE.TESTNO NOT IN
+                   (SELECT TESTNO FROM T_REQ)
+           ORDER BY TESTNO;
+   EXEC SQL OPEN DELETE_TESTNO;
+   if (SQLCODE < 0)
+      printf("Problem #14 OPEN DELETE_TESTNO, SQLCODE = %ld\n",SQLCODE);
+   iii = 0;
+P410:
+   EXEC SQL FETCH DELETE_TESTNO INTO :testno, :prog;
+   if (SQLCODE == 100)
+      goto P411;
+
+
+
+   if (iii == 0)
+      printf("\nDELETE the following tests from these programs:\n");
+   iii = iii + 1;
+   printf("del %s.* /BEGIN TEST%s/END TEST%s/\n",prog,testno,testno);
+   goto P410;
+P411:
+
+   EXEC SQL CLOSE DELETE_TESTNO;
+   EXEC SQL COMMIT WORK;
+/*========================================================= */
+
+   /* Did we get any suicide notes? */
+   if (errcnt > 0)
+      {
+       for (iii = 0; iii < 10; iii++)
+          {
+           printf(" ***************************************\n");
+           printf(" **** Do not run the REPORT program. ***\n");
+           printf(" **** Correct %ld errors and rerun! ****\n",errcnt);
+           printf(" ***************************************\n");
+          }
+      }
+
+   printf("\n\n");
+exit(errcnt);
+}
+
+/* The following routines list entire table contents for debugging */
+
+void PFREQ()
+{
+   EXEC SQL DECLARE F_REQ_CURSOR CURSOR FOR
+     SELECT * FROM F_REQ ORDER BY C1, P1, F1;
+   EXEC SQL OPEN F_REQ_CURSOR;
+   printf("\n\n");
+   printf("F_REQ Listing\n");
+   SQLCODE = 0;
+   iii = 0;
+P210:
+   EXEC SQL FETCH F_REQ_CURSOR INTO :feat1, :feat2, :feat3, :lvl;
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      {
+        iii = iii + 1;
+        printf("C1=%s, P1=%s, F1=%s, LVL=%ld\n",feat1,feat2,feat3,lvl);
+        goto P210;
+      }
+   EXEC SQL CLOSE F_REQ_CURSOR;
+   EXEC SQL COMMIT WORK;
+   printf("%ld rows selected\n",iii);
+   printf("\n\n");
+}
+
+void PFTEMP()
+{
+   EXEC SQL DECLARE F_TEMP_CURSOR CURSOR FOR
+     SELECT * FROM F_TEMP ORDER BY C1, P1, F1;
+   EXEC SQL OPEN F_TEMP_CURSOR;
+   printf("\n\n");
+   printf("F_TEMP Listing\n");
+   SQLCODE = 0;
+   iii = 0;
+P220:
+   EXEC SQL FETCH F_TEMP_CURSOR INTO :feat1, :feat2, :feat3, :lvl;
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      {
+         iii = iii + 1;
+         printf("C1=%s, P1=%s, F1=%s, LVL=%ld\n",feat1,feat2,feat3,lvl);
+         goto P220;
+      }
+   EXEC SQL CLOSE F_TEMP_CURSOR;
+   EXEC SQL COMMIT WORK;
+   printf("%ld rows selected\n",iii);
+   printf("\n\n");
+}
+
+void PRSTR()
+{
+   EXEC SQL DECLARE R_STRUCTURE_CURSOR CURSOR FOR
+     SELECT * FROM R_STRUCTURE ORDER BY C1, P1, TESTNO;
+   EXEC SQL OPEN R_STRUCTURE_CURSOR;
+   printf("\n\n");
+   printf("R_STRUCTURE Listing\n");
+   SQLCODE = 0;
+   iii = 0;
+P230:
+   EXEC SQL FETCH R_STRUCTURE_CURSOR INTO :feat1, :feat2, :feat3, :lvl;
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      {
+         iii = iii + 1;
+         printf("C1=%s, P1=%s, TESTNO=%s, LVL=%ld\n",feat1,feat2,feat3,lvl);
+         goto P230;
+      }
+   EXEC SQL CLOSE R_STRUCTURE_CURSOR;
+   EXEC SQL COMMIT WORK;
+   printf("%ld rows selected\n",iii);
+   printf("\n\n");
+}
+
+void PTREQ()
+{
+   EXEC SQL DECLARE T_REQ_CURSOR CURSOR FOR
+     SELECT * FROM T_REQ ORDER BY BINDING1, PROG, TESTNO;
+   EXEC SQL OPEN T_REQ_CURSOR;
+   printf("\n\n");
+   printf("T_REQ Listing\n");
+   SQLCODE = 0;
+   iii = 0;
+P240:
+   EXEC SQL FETCH T_REQ_CURSOR INTO :testno, :prog, :bind1, :reqopt, :result;
+   if (SQLCODE >= 0 && SQLCODE != 100)
+      {
+         iii = iii + 1;
+         printf("TESTNO=%s,PROG=%s %s %s %s\n",testno,prog,bind1,reqopt,result);
+         goto P240;
+      }
+   EXEC SQL CLOSE T_REQ_CURSOR;
+   EXEC SQL COMMIT WORK;
+   printf("%ld rows selected\n",iii);
+   printf("\n\n");
+}

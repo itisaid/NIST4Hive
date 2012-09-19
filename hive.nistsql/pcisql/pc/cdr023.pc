@@ -1,0 +1,272 @@
+/*  EMBEDDED C (file "CDR023.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR023.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENTIAL INTEGRITY CONSTRAINT FOR*/
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+long count2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+long code1;
+long code2;
+
+main()
+
+{
+        strcpy(uid,"SCHANZLE");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr023.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0382 ********************/
+
+/* This test  inserts  rows  in FOREIGN KEY            */
+/* TABLE -- ACR_SCH_F,  check references across        */
+/* schemas.                                           */ 
+
+printf("\n                     TEST0382             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("  SQL with Integrity Enhancement section 6.6,6.7,6.10\n");
+printf("        GRANT with GRANT OPTION\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("         INSERT INTO ACR_SCH_F\n");
+printf("         VALUES(1,'DOG');\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count1 FROM ACR_SCH_F;\n");
+printf("\n");
+printf("         INSERT INTO ACR_SCH_F\n");
+printf("         VALUES(2,'PIG');\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count2 FROM ACR_SCH_F;\n");
+printf("\n");
+count1 = -1;
+count2 = -1;
+EXEC SQL INSERT INTO ACR_SCH_F
+         VALUES(1,'DOG');
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM ACR_SCH_F;
+
+EXEC SQL INSERT INTO ACR_SCH_F
+         VALUES(2,'PIG');
+code2 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count2 FROM ACR_SCH_F;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 = 0.\n");
+ printf("           code2 < 0.\n");
+ printf("           count1 is 1\n");
+ printf("           count2 is 1\n");
+ printf(" Your answer is :\n");
+ printf("           code1 = %ld\n",code1);
+ printf("           code2 = %ld\n",code2);
+ printf("           count1 is %ld\n",count1);
+ printf("           count2 is %ld\n",count2);
+ if (code1 == 0 && count1 == 1 && code2 < 0 && count2 == 1)
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0382','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0382','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr023.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0382 *************************/
+
+
+
+/******************** BEGIN TEST0383 ********************/
+
+/* This test  inserts  rows  in FOREIGN KEY            */
+/* TABLE -- TAB5,  test privilege violation.          */
+
+printf("\n                     TEST0383             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("  SQL with Integrity Enhancement section 6.6,6.7,6.10\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("      GRANT without GRANT OPTION\n");
+printf("         INSERT INTO TAB5\n");
+printf("         VALUES('E1','DOG');\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count1 FROM TAB5;\n");
+printf("\n");
+printf("         INSERT INTO TAB5\n");
+printf("         VALUES('E9','PIG');\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count2 FROM TAB5;\n");
+printf("\n");
+count1 = -1;
+count2 = -1;
+EXEC SQL INSERT INTO TAB5
+         VALUES('E1','DOG');
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM TAB5;
+
+EXEC SQL INSERT INTO TAB5
+         VALUES('E9','PIG');
+code2 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count2 FROM TAB5;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 < 0.\n");
+ printf("      and  code2 < 0.\n");
+ printf("           or count2 is 2\n");
+ printf(" Your answer is :\n");
+ printf("           code1 = %ld\n",code1);
+ printf("      and  code2 = %ld\n",code2);
+ printf("        count2 is %ld\n  \n",count2);
+  if (count2 == 2 || code1 < 0 && code2 < 0)
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0383','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0383','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr023.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0383 *************************/
+
+
+
+/******************** BEGIN TEST0384 *******************/
+
+/* This test  inserts  rows  in FOREIGN KEY            */
+/* TABLE -- TAB6,  test privilege violation.          */
+
+printf("\n                     TEST0384             \n");
+printf("              PRIMARY KEY & FOREIGN KEY    \n");
+printf("  SQL with Integrity Enhancement section 6.6,6.7,6.10\n");
+printf("  - - - - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("     GRANT SELECT but not REFERENCE \n");
+printf("         INSERT INTO TAB6\n");
+printf("         VALUES(1,'DOG');\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count1 FROM TAB6;\n");
+printf("\n");
+printf("         INSERT INTO TAB6\n");
+printf("         VALUES(2,'PIG');\n");
+printf("\n");
+printf("         SELECT COUNT(*) INTO :count2 FROM TAB6;\n");
+printf("\n");
+count1 = -1;
+count2 = -1;
+EXEC SQL INSERT INTO TAB6
+         VALUES(1,'DOG');
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM TAB6;
+
+EXEC SQL INSERT INTO TAB6
+         VALUES(2,'PIG');
+code2 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count2 FROM TAB6;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 < 0.\n");
+ printf("       and code2 < 0.\n");
+ printf("           or count2 is 2\n");
+ printf(" Your answer is :\n");
+ printf("           code1 = %ld\n",code1);
+ printf("       and code2 = %ld\n",code2);
+ printf("        count2 is %ld\n",count2);
+  if (count2 == 2 || code1 < 0 && code2 < 0)
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0384','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0384','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr023.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0384 *************************/
+
+
+
+
+     exit(errcnt);
+
+}
+

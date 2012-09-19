@@ -1,0 +1,18 @@
+                      ***** Table of Contents *****
+                 *****  for Directory SQLV60.OTHER *****
+
+ATERM.C          C program to change continuation style in Interactive SQL files
+CHGALL.TED       Sample TEd change file for all schemas and test suite types
+DOCUCTS5.TXT     Cross reference to SQL standard for CTS5-developed test cases
+DOCUNIST.TXT     Short description of test developed by NIST for Versions 5&6
+DOCU_V4.TXT      Cross reference to SQL standard for old (V 4.0) test programs
+DOCU_V5.TXT      Cross reference to SQL standard for new V 5.0 test programs
+README.1ST       Differences between Versions 4.0 and 5.0
+README.2ND       This file - table of contents for directory OTHER
+SHOWHUD.SQL      SQL statements to show HU tables which should have initial data
+SHOWHUE.SQL      SQL statements to show HU tables which should be empty
+SQLMAN60.TXT     User's Guide for Version 6.0 of the SQL Test Suite
+TED.C            C program for the test suite editor TEd      
+TEDMAN51.PS      PostScript version of TEDMAN51.TXT
+TEDMAN51.TXT     User's Guide for Version 5.1 of the test suite editor TEd
+VERSION.TXT      Text file documenting the version number of the test suite

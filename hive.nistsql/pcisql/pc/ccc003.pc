@@ -1,0 +1,161 @@
+/*  EMBEDDED C (file "CCC003.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/08/17 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC003.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS PROGRAM TESTS THE RULES FOR THE CONTINUATION OF LINES   */
+/*  AND TOKENS FROM ONE LINE TO THE NEXT AND FOR THE PLACEMENT   */
+/*  OF COMMENTS.                                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char str132[133];
+     char str240[241];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long i;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc003.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0192 ********************/
+
+printf("\n                  TEST0192     \n");
+printf("     Reference: Annexes A. Syntax Rules 3).         \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf(" ANSI X3.159-1989 Programming Language C, 2.1.1.2 #1 and #2\n");
+
+EXEC SQL DELETE FROM TEXT132;
+
+EXEC SQL INSERT INTO TEXT132 VALUES  ('TEST 192 IS THE TEST FOR THE RULES OF T\
+HE CONTINUATION OF LINES AND TOKENS FROM ONE LINE TO THE NEXT LINE.');
+
+i = SQLCODE;
+
+EXEC SQL SELECT *
+         INTO  :str132
+         FROM TEXT132;
+
+printf(" The string is : %s \n", str132);
+
+EXEC SQL ROLLBACK WORK;
+
+if (i==0 && strncmp(str132,
+   "TEST 192 IS THE TEST FOR THE RULES OF THE CONTINUATION",54)==0)
+     {
+     printf("\n\n                     *** pass ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0192','pass','PC');
+     }
+else
+     {
+     printf("\n\n           ccc003.pc  *** fail ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0192','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0192 ********************/
+
+/******************** BEGIN TEST0193 ********************/
+
+printf("\n                 TEST0193     \n");
+printf("     Reference: Annexes A. Syntax Rules 3).         \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+EXEC SQL DELETE FROM TEXT240;
+
+EXEC SQL INSERT INTO TEXT240    /* This is the test for the rules*/
+     VALUES('TEST 193 IS THE TEST FOR THE PLACEMENT OF COMMENTS.')
+     /* of comments */ ; /* between tokens. */
+
+printf(" After insert the sqlcode = %ld \n", SQLCODE);
+i = SQLCODE;
+
+EXEC SQL SELECT *
+         INTO  :str240
+         FROM TEXT240;
+
+printf(" The string is : %s \n", str240); 
+
+EXEC SQL ROLLBACK WORK;
+
+if (i==0 && strlen(str240) > 140 && strncmp(str240,
+"TEST 193 IS THE TEST FOR THE PLACEMENT OF COMMENTS.",51)==0)
+     {
+     printf("\n\n                     *** pass ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0193','pass','PC');
+     }
+else
+     {
+     printf("\n\n           ccc003.pc  *** fail ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0193','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0193 ********************/
+
+exit(errcnt);
+}

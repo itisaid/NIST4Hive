@@ -1,0 +1,763 @@
+/*  EMBEDDED C (file "DML126.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/7/1 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML126.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests Dynamic SQL SQLSTATEs and F# 12.          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+     char dstmt[51];
+char ch1[11];
+char ch2[11];
+char cmd[22];
+char cmd2[22];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml126.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0660 ********************/
+flag = 1;
+
+     printf("                  TEST0660 \n");
+     printf("            Dynamic SQL SQLSTATEs\n");
+     printf("References:\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("    22.1 -- SQLSTATE\n");
+     printf("    17.6 GR.9.b\n");
+     printf("    17.9 GR.5.a GR.6.a\n");
+     printf("    17.10 GR.4\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* 07003 cursor specification cannot be executed */
+
+/* This one cannot be generated in TSQL because first you have to */
+/* violate the syntactical leveling rule against specifying INTO  */
+/* with an EXECUTE.                                               */
+
+/* 07005 prepared statement not a cursor specification */
+/* Before correction:  17.6 GR.9.b.ii */
+/* After correction:   17.6 GR.9.b.i  */
+
+/* 4.22 <dynamic declare cursor> is declarative - not executable */
+printf("DECLARE C12611 CURSOR FOR S12611;\n");
+EXEC SQL DECLARE C12611 CURSOR FOR S12611;
+printf("\n");
+
+printf("dstmt=\"INSERT INTO CONCATBUF VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO CONCATBUF VALUES (?)                  ");
+
+/* 07005 cannot be pushed back to the open (see above citation) */
+
+printf("PREPARE S12611 FROM :dstmt;\n");
+EXEC SQL PREPARE S12611 FROM :dstmt;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07005; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07005", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+printf("OPEN C12611;\n");
+EXEC SQL OPEN C12611;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf ("SQLSTATE should be 26000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "26000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "26000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C12611;\n\n");
+EXEC SQL CLOSE C12611;
+
+printf("PREPARE S12613 FROM :dstmt;\n");
+EXEC SQL PREPARE S12613 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+/* 07006 restricted data type attribute violation */
+/* See test 0658 */
+
+/* 07001 using clause does not match dynamic parameter specifications */
+/* 17.9 GR.5.a */
+
+strcpy (ch1,"xxxxxxxxxx");
+strcpy (ch2,"xxxxxxxxxx");
+
+printf("EXECUTE S12613 USING :ch1, :ch2;\n");
+EXEC SQL EXECUTE S12613 USING :ch1, :ch2;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 07001; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07001", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 07002 using clause does not match target specifications */
+/* 17.9 GR.6.a */
+
+printf("dstmt=\"SELECT * FROM HU.WORKS WHERE HOURS = ?\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM HU.WORKS WHERE HOURS = ?            ");
+
+printf("PREPARE S12612 FROM :dstmt;\n");
+EXEC SQL PREPARE S12612 FROM :dstmt;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C12612 CURSOR FOR S12612;\n");
+EXEC SQL DECLARE C12612 CURSOR FOR S12612;
+printf("\n");
+
+int1 = 12;
+printf("OPEN C12612 USING :int1;\n");
+EXEC SQL OPEN C12612 USING :int1;
+CHCKOK ();
+printf("\n");
+
+printf("FETCH C12612 INTO :ch1;\n");
+EXEC SQL FETCH C12612 INTO :ch1;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 07002; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07002", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+printf("CLOSE C12612;\n\n");
+EXEC SQL CLOSE C12612;
+
+/* 07001 using clause does not match dynamic parameter specifications */
+/* 17.9 GR.5.a */
+
+int1 = 12;
+strcpy (ch1,"xxxxxxxxxx");
+printf("OPEN C12612 USING :int1, :ch1;\n");
+EXEC SQL OPEN C12612 USING :int1, :ch1;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 07001; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07001", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+printf("CLOSE C12612;\n\n");
+EXEC SQL CLOSE C12612;
+
+/* 07004 using clause required for dynamic parameters */
+/* 17.14 GR.3 */
+
+printf("OPEN C12612;\n");
+EXEC SQL OPEN C12612;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 07004; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07004", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+printf("CLOSE C12612;\n\n");
+EXEC SQL CLOSE C12612;
+
+/* 07004 using clause required for dynamic parameters */
+/* 17.10 GR.4 */
+
+printf("EXECUTE S12613;\n");
+EXEC SQL EXECUTE S12613;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 07004; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "07004", 5) != 0 || SQLCODE >= 0)
+  flag = 0;
+
+/* 07007 using clause required for result fields */
+
+/* This one cannot be generated in TSQL because first you have to */
+/* violate the syntactical leveling rule against specifying INTO  */
+/* with an EXECUTE.                                               */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0660','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml126.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0660','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0660 *********************/
+/******************** BEGIN TEST0670 ********************/
+flag = 1;
+
+     printf("                  TEST0670\n");
+     printf("   Diagnostics:  COMMAND_FUNCTION (dynamic)\n");
+     printf("References:\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    18.1 -- <get diagnostics statement>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* ALLOCATE DESCRIPTOR */
+
+printf("ALLOCATE DESCRIPTOR 'YAWL';\n");
+EXEC SQL ALLOCATE DESCRIPTOR 'YAWL';
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'ALLOCATE DESCRIPTOR  '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "ALLOCATE DESCRIPTOR  ") != 0)
+  flag = 0;
+
+/* SET DESCRIPTOR */
+
+printf("SET DESCRIPTOR 'YAWL' COUNT = 1;\n");
+EXEC SQL SET DESCRIPTOR 'YAWL' COUNT = 1;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'SET DESCRIPTOR       '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "SET DESCRIPTOR       ") != 0)
+  flag = 0;
+
+/* PREPARE */
+
+printf("dstmt=\"SELECT HOURS FROM HU.WORKS\"\n");
+     strcpy (dstmt,
+     "SELECT HOURS FROM HU.WORKS                        ");
+
+printf("PREPARE S12621 FROM :dstmt;\n");
+EXEC SQL PREPARE S12621 FROM :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'PREPARE              '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "PREPARE              ") != 0)
+  flag = 0;
+
+/* DESCRIBE */
+
+printf("DESCRIBE S12621 USING SQL DESCRIPTOR 'YAWL';\n");
+EXEC SQL DESCRIBE S12621 USING SQL DESCRIPTOR 'YAWL';
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DESCRIBE             '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DESCRIBE             ") != 0)
+  flag = 0;
+
+/* GET DESCRIPTOR */
+
+printf("GET DESCRIPTOR 'YAWL' :int1 = COUNT;\n");
+EXEC SQL GET DESCRIPTOR 'YAWL' :int1 = COUNT;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'GET DESCRIPTOR       '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "GET DESCRIPTOR       ") != 0)
+  flag = 0;
+
+/* DEALLOCATE DESCRIPTOR */
+
+printf("DEALLOCATE DESCRIPTOR 'YAWL';\n");
+EXEC SQL DEALLOCATE DESCRIPTOR 'YAWL';
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DEALLOCATE DESCRIPTOR'; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DEALLOCATE DESCRIPTOR") != 0)
+  flag = 0;
+
+/* DYNAMIC OPEN */
+
+printf("DECLARE C12621 CURSOR FOR S12621;\n");
+EXEC SQL DECLARE C12621 CURSOR FOR S12621;
+
+printf("OPEN C12621;\n");
+EXEC SQL OPEN C12621;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DYNAMIC OPEN         '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DYNAMIC OPEN         ") != 0)
+  flag = 0;
+
+/* DYNAMIC FETCH */
+
+printf("FETCH C12621 INTO :int1;\n");
+EXEC SQL FETCH C12621 INTO :int1;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DYNAMIC FETCH        '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DYNAMIC FETCH        ") != 0)
+  flag = 0;
+
+/* DYNAMIC UPDATE CURSOR */
+
+printf("UPDATE HU.WORKS SET HOURS = 10\n");
+printf("  WHERE CURRENT OF C12621;\n");
+EXEC SQL UPDATE HU.WORKS SET HOURS = 10
+  WHERE CURRENT OF C12621;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DYNAMIC UPDATE CURSOR'; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DYNAMIC UPDATE CURSOR") != 0)
+  flag = 0;
+
+/* DYNAMIC DELETE CURSOR (<dynamic delete statement: positioned>) */
+
+printf("DELETE FROM HU.WORKS WHERE CURRENT OF C12621;\n");
+EXEC SQL DELETE FROM HU.WORKS WHERE CURRENT OF C12621;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DYNAMIC DELETE CURSOR'; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DYNAMIC DELETE CURSOR") != 0)
+  flag = 0;
+
+/* DYNAMIC CLOSE */
+
+printf("CLOSE C12621;\n");
+EXEC SQL CLOSE C12621;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DYNAMIC CLOSE        '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DYNAMIC CLOSE        ") != 0)
+  flag = 0;
+
+/* EXECUTE */
+
+printf("dstmt=\"INSERT INTO CONCATBUF VALUES ('SPAM')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO CONCATBUF VALUES ('SPAM')             ");
+
+printf("PREPARE S12622 FROM :dstmt;\n");
+EXEC SQL PREPARE S12622 FROM :dstmt;
+
+printf("EXECUTE S12622;\n");
+EXEC SQL EXECUTE S12622;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'EXECUTE              '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "EXECUTE              ") != 0)
+  flag = 0;
+
+/* EXECUTE IMMEDIATE */
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'EXECUTE IMMEDIATE    '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "EXECUTE IMMEDIATE    ") != 0)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0670','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml126.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0670','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0670 *********************/
+/******************** BEGIN TEST0671 ********************/
+flag = 1;
+
+     printf("                  TEST0671\n");
+     printf("       Diagnostics:  DYNAMIC_FUNCTION\n");
+     printf("References:\n");
+     printf("    F# 12 -- Get diagnostics\n");
+     printf("    18.1 -- <get diagnostics statement>\n");
+     printf("    TC #2 18.1 -- info from <prepare statement>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* SELECT */
+
+printf("dstmt=\"SELECT COUNT(*) FROM USIG\"\n");
+     strcpy (dstmt,
+     "SELECT COUNT(*) FROM USIG                         ");
+
+printf("PREPARE S12631 FROM :dstmt;\n");
+EXEC SQL PREPARE S12631 FROM :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'SELECT               '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "SELECT               ") != 0)
+  flag = 0;
+
+/* Intentional repetition -- GET DIAGNOSTICS should not set diagnostics */
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'SELECT               '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "SELECT               ") != 0)
+  flag = 0;
+
+/* DELETE WHERE */
+
+printf("dstmt=\"DELETE FROM CONCATBUF\"\n");
+     strcpy (dstmt,
+     "DELETE FROM CONCATBUF                             ");
+
+printf("PREPARE S12632 FROM :dstmt;\n");
+EXEC SQL PREPARE S12632 FROM :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DELETE WHERE         '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DELETE WHERE         ") != 0)
+  flag = 0;
+
+/* INSERT */
+
+printf("dstmt=\"INSERT INTO CONCATBUF VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO CONCATBUF VALUES (?)                  ");
+
+printf("PREPARE S12633 FROM :dstmt;\n");
+EXEC SQL PREPARE S12633 FROM :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'INSERT               '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "INSERT               ") != 0)
+  flag = 0;
+
+/* UPDATE WHERE */
+
+printf("dstmt=\"UPDATE CONCATBUF SET ZZ = ?\"\n");
+     strcpy (dstmt,
+     "UPDATE CONCATBUF SET ZZ = ?                       ");
+
+printf("PREPARE S12634 FROM :dstmt;\n");
+EXEC SQL PREPARE S12634 FROM :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'UPDATE WHERE         '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "UPDATE WHERE         ") != 0)
+  flag = 0;
+
+/* Unrecognized statement:  TC #2 18.1 */
+/* If your database recognizes FROB, change it to a command   */
+/* that it doesn't recognize.  This should not be rejected at */
+/* compile time because it's Dynamic SQL.                     */
+
+printf("dstmt=\"FROB\"\n");
+     strcpy (dstmt,
+     "FROB                                              ");
+
+printf("PREPARE S12635 FROM :dstmt;\n");
+EXEC SQL PREPARE S12635 FROM :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+strcpy (cmd2, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION,\n");
+printf("  :cmd2 = COMMAND_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION,
+  :cmd2 = COMMAND_FUNCTION;
+CHCKOK ();
+printf ("cmd should be '                     '; its value is '%s'\n", cmd);
+if (strcmp (cmd, "                     ") != 0)
+  flag = 0;
+printf ("cmd2 should be 'PREPARE              '; its value is '%s'\n\n", cmd2);
+if (strcmp (cmd2, "PREPARE              ") != 0)
+  flag = 0;
+
+/* Execute UPDATE WHERE */
+
+strcpy (cmd, "If an SQL-transaction");
+printf ("cmd = %s\n", cmd);
+
+printf("EXECUTE S12634 USING :cmd;\n");
+EXEC SQL EXECUTE S12634 USING :cmd;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'UPDATE WHERE         '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "UPDATE WHERE         ") != 0)
+  flag = 0;
+
+/* Frob even faster */
+/* If your database recognizes FROB, change it to a command   */
+/* that it doesn't recognize.  This should not be rejected at */
+/* compile time because it's Dynamic SQL.                     */
+
+printf("dstmt=\"FROB\"\n");
+     strcpy (dstmt,
+     "FROB                                              ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be '                     '; its value is '%s'\n\n", cmd);
+if (strcmp (cmd, "                     ") != 0)
+  flag = 0;
+
+/* Execute immediate INSERT */
+
+printf("dstmt=\"INSERT INTO CONCATBUF VALUES ('FNORD')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO CONCATBUF VALUES ('FNORD')            ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'INSERT               '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "INSERT               ") != 0)
+  flag = 0;
+
+/* Executed DELETE WHERE */
+
+printf("EXECUTE S12632;\n");
+EXEC SQL EXECUTE S12632;
+
+strcpy (cmd, "xxxxxxxxxxxxxxxxxxxxx");
+printf("GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;\n");
+EXEC SQL GET DIAGNOSTICS :cmd = DYNAMIC_FUNCTION;
+CHCKOK ();
+printf ("cmd should be 'DELETE WHERE         '; its value is %s\n\n", cmd);
+if (strcmp (cmd, "DELETE WHERE         ") != 0)
+  flag = 0;
+
+printf ("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0671','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml126.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0671','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0671 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

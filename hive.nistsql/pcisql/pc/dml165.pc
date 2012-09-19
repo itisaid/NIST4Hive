@@ -1,0 +1,320 @@
+/*  EMBEDDED C (file "DML165.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-04-22 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML165.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char naam[16];
+float fkey;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml165.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0870 ********************/
+flag = 1;
+
+     printf("                  TEST0870\n");
+     printf("      Non-identical descriptors in UNION\n");
+     printf("References:\n");
+     printf("    F#30 -- Table operations\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE APPLES (\n");
+printf("  KEY1 INT,\n");
+printf("  APPLE_NAME CHAR (15));\n");
+EXEC SQL CREATE TABLE APPLES (
+  KEY1 INT,
+  APPLE_NAME CHAR (15));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE ORANGES (\n");
+printf("  KEY2 FLOAT,\n");
+printf("  ORANGE_NAME VARCHAR (10));\n");
+EXEC SQL CREATE TABLE ORANGES (
+  KEY2 FLOAT,
+  ORANGE_NAME VARCHAR (10));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO APPLES VALUES (\n");
+printf("  1, 'Granny Smith');\n");
+EXEC SQL INSERT INTO APPLES VALUES (
+  1, 'Granny Smith');
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO APPLES VALUES (\n");
+printf("  2, 'Red Delicious');\n");
+EXEC SQL INSERT INTO APPLES VALUES (
+  2, 'Red Delicious');
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORANGES VALUES (\n");
+printf("  1.5E0, 'Navel');\n");
+EXEC SQL INSERT INTO ORANGES VALUES (
+  1.5E0, 'Navel');
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO ORANGES VALUES (\n");
+printf("  2.5E0, 'Florida');\n");
+EXEC SQL INSERT INTO ORANGES VALUES (
+  2.5E0, 'Florida');
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE C0870 CURSOR FOR\n");
+printf("  SELECT * FROM APPLES UNION ALL SELECT * FROM ORANGES\n");
+printf("  ORDER BY 1;\n\n");
+EXEC SQL DECLARE C0870 CURSOR FOR
+  SELECT * FROM APPLES UNION ALL SELECT * FROM ORANGES
+  ORDER BY 1;
+
+printf("OPEN C0870;\n");
+EXEC SQL OPEN C0870;
+CHCKOK ();
+printf ("\n");
+
+strcpy (naam, "xxxxxxxxxxxxxxx");
+fkey = -10.0;
+printf("FETCH C0870 INTO :fkey, :naam;\n");
+EXEC SQL FETCH C0870 INTO :fkey, :naam;
+CHCKOK ();
+printf ("fkey should be 1.0 +- 0.01; its value is %f\n", fkey);
+if (fkey < 0.99 || fkey > 1.01)
+  flag = 0;
+printf ("naam should be 'Granny Smith   '; its value is '%s'\n\n", naam);
+if (strcmp (naam, "Granny Smith   ") != 0)
+  flag = 0;
+
+strcpy (naam, "xxxxxxxxxxxxxxx");
+fkey = -10.0;
+printf("FETCH C0870 INTO :fkey, :naam;\n");
+EXEC SQL FETCH C0870 INTO :fkey, :naam;
+CHCKOK ();
+printf ("fkey should be 1.5 +- 0.01; its value is %f\n", fkey);
+if (fkey < 1.49 || fkey > 1.51)
+  flag = 0;
+printf ("naam should be 'Navel          '; its value is '%s'\n\n", naam);
+if (strcmp (naam, "Navel          ") != 0)
+  flag = 0;
+
+strcpy (naam, "xxxxxxxxxxxxxxx");
+fkey = -10.0;
+printf("FETCH C0870 INTO :fkey, :naam;\n");
+EXEC SQL FETCH C0870 INTO :fkey, :naam;
+CHCKOK ();
+printf ("fkey should be 2.0 +- 0.01; its value is %f\n", fkey);
+if (fkey < 1.99 || fkey > 2.01)
+  flag = 0;
+printf ("naam should be 'Red Delicious  '; its value is '%s'\n\n", naam);
+if (strcmp (naam, "Red Delicious  ") != 0)
+  flag = 0;
+
+strcpy (naam, "xxxxxxxxxxxxxxx");
+fkey = -10.0;
+printf("FETCH C0870 INTO :fkey, :naam;\n");
+EXEC SQL FETCH C0870 INTO :fkey, :naam;
+CHCKOK ();
+printf ("fkey should be 2.5 +- 0.01; its value is %f\n", fkey);
+if (fkey < 2.49 || fkey > 2.51)
+  flag = 0;
+printf ("naam should be 'Florida        '; its value is '%s'\n\n", naam);
+if (strcmp (naam, "Florida        ") != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE APPLES CASCADE;\n");
+EXEC SQL DROP TABLE APPLES CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE ORANGES CASCADE;\n");
+EXEC SQL DROP TABLE ORANGES CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0870','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml165.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0870','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0870 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,662 @@
+/*  EMBEDDED C (file "DML144.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/1/25 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML144.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests several string-related features that were */
+/*  hiding under VARCHAR.                                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+short indic1;
+char ch1[11];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml144.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0834 ********************/
+flag = 1;
+
+     printf("                  TEST0834 \n");
+     printf("        <length expression> (static)\n");
+     printf("References:\n");
+     printf("    F# 6 -- VARCHAR data type\n");
+     printf("    6.6 LR.2.a -- Leveling rule relaxed by F# 6\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE GRUB (C1 VARCHAR (10));\n");
+EXEC SQL CREATE TABLE GRUB (C1 VARCHAR (10));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT CHAR_LENGTH (EMPNAME) INTO :int1\n");
+printf("  FROM HU.STAFF WHERE GRADE = 10;\n");
+EXEC SQL SELECT CHAR_LENGTH (EMPNAME) INTO :int1
+  FROM HU.STAFF WHERE GRADE = 10;
+CHCKOK ();
+printf ("int1 should be 20; its value is %ld\n\n", int1);
+if (int1 != 20)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT CHARACTER_LENGTH ('HI' || 'THERE')\n");
+printf("  INTO :int1 FROM HU.ECCO;\n");
+EXEC SQL SELECT CHARACTER_LENGTH ('HI' || 'THERE')
+  INTO :int1 FROM HU.ECCO;
+CHCKOK ();
+printf ("int1 should be 7; its value is %ld\n\n", int1);
+if (int1 != 7)
+  flag = 0;
+
+printf("INSERT INTO GRUB VALUES ('Hi  ');\n");
+EXEC SQL INSERT INTO GRUB VALUES ('Hi  ');
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT CHARACTER_LENGTH (C1)\n");
+printf("  INTO :int1 FROM GRUB;\n");
+EXEC SQL SELECT CHARACTER_LENGTH (C1)
+  INTO :int1 FROM GRUB;
+CHCKOK ();
+printf ("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT OCTET_LENGTH (C1)\n");
+printf("  INTO :int1 FROM GRUB;\n");
+EXEC SQL SELECT OCTET_LENGTH (C1)
+  INTO :int1 FROM GRUB;
+CHCKOK ();
+printf ("int1 should be > 2; its value is %ld\n\n", int1);
+if (int1 <= 2)
+  flag = 0;
+
+printf("UPDATE GRUB SET C1 = NULL;\n");
+EXEC SQL UPDATE GRUB SET C1 = NULL;
+CHCKOK ();
+printf("\n");
+
+indic1 = 50;
+printf("SELECT CHARACTER_LENGTH (C1)\n");
+printf("  INTO :int1:indic1 FROM GRUB;\n");
+EXEC SQL SELECT CHARACTER_LENGTH (C1)
+  INTO :int1:indic1 FROM GRUB;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+indic1 = 50;
+printf("SELECT OCTET_LENGTH (C1)\n");
+printf("  INTO :int1:indic1 FROM GRUB;\n");
+EXEC SQL SELECT OCTET_LENGTH (C1)
+  INTO :int1:indic1 FROM GRUB;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE GRUB CASCADE;\n");
+EXEC SQL DROP TABLE GRUB CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0834','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml144.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0834','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0834 *********************/
+/******************** BEGIN TEST0835 ********************/
+flag = 1;
+
+     printf("                  TEST0835 \n");
+     printf("  <character substring function> (static)\n");
+     printf("References:\n");
+     printf("    F# 6 -- VARCHAR data type\n");
+     printf("    6.7 LR.2.a -- Leveling rule relaxed by F# 6\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE MOREGRUB (C1 VARCHAR (10), ID INT);\n");
+EXEC SQL CREATE TABLE MOREGRUB (C1 VARCHAR (10), ID INT);
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW X4 (S1, S2, ID) AS\n");
+printf("  SELECT SUBSTRING (C1 FROM 6),\n");
+printf("         SUBSTRING (C1 FROM 2 FOR 4), ID\n");
+printf("  FROM MOREGRUB;\n");
+EXEC SQL CREATE VIEW X4 (S1, S2, ID) AS
+  SELECT SUBSTRING (C1 FROM 6),
+         SUBSTRING (C1 FROM 2 FOR 4), ID
+  FROM MOREGRUB;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM 4 FOR 10)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 4 FOR 10)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("ch1 should be 'on        '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "on        ") != 0)
+  flag = 0;
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM 4)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 4)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 01004; its value is %s\n", SQLSTATE);
+if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+printf("ch1 should be 'on        '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "on        ") != 0)
+  flag = 0;
+
+/* 6.7 GR.1.d */
+
+printf("SELECT SUBSTRING (CITY FROM 4 FOR -1)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 4 FOR -1)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 22011; its value is %s\n\n", SQLSTATE);
+if (SQLCODE >= 0 || strncmp (SQLSTATE, "22011", 5) != 0)
+  flag = 0;
+
+/* 6.7 GR.1.e.ii.1 (let S1 be the larger of S and 1) */
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM 0 FOR 10)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 0 FOR 10)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("ch1 should be 'Akron     '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "Akron     ") != 0)
+  flag = 0;
+
+/* 6.7 GR.1.e.ii */
+
+int1 = 4;
+printf("int1 is %ld\n",int1);
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM :int1 FOR 100)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM :int1 FOR 100)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 01004; its value is %s\n", SQLSTATE);
+if (SQLCODE < 0 || strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+printf("ch1 should be 'on        '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "on        ") != 0)
+  flag = 0;
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM 1 FOR 1)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 1 FOR 1)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("ch1 should be 'A         '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "A         ") != 0)
+  flag = 0;
+
+/* 6.7 GR.1.e.i */
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM 1 FOR 0)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 1 FOR 0)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("ch1 should be '          '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "          ") != 0)
+  flag = 0;
+
+/* 6.7 GR.1.e.i */
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (CITY FROM 12 FOR 1)\n");
+printf("  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT SUBSTRING (CITY FROM 12 FOR 1)
+  INTO :ch1 FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("ch1 should be '          '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "          ") != 0)
+  flag = 0;
+
+printf("INSERT INTO MOREGRUB VALUES ('Pretzels', 1);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES ('Pretzels', 1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES (NULL, 2);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES (NULL, 2);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES ('Chips', 3);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES ('Chips', 3);
+CHCKOK ();
+printf("\n");
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT S1 INTO :ch1\n");
+printf("  FROM X4 WHERE ID = 1;\n");
+EXEC SQL SELECT S1 INTO :ch1
+  FROM X4 WHERE ID = 1;
+CHCKOK ();
+printf("ch1 should be 'els       '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "els       ") != 0)
+  flag = 0;
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT S1 INTO :ch1\n");
+printf("  FROM X4 WHERE ID = 3;\n");
+EXEC SQL SELECT S1 INTO :ch1
+  FROM X4 WHERE ID = 3;
+CHCKOK ();
+printf("ch1 should be '          '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "          ") != 0)
+  flag = 0;
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT S2 INTO :ch1\n");
+printf("  FROM X4 WHERE ID = 1;\n");
+EXEC SQL SELECT S2 INTO :ch1
+  FROM X4 WHERE ID = 1;
+CHCKOK ();
+printf("ch1 should be 'retz      '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "retz      ") != 0)
+  flag = 0;
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT S2 INTO :ch1\n");
+printf("  FROM X4 WHERE ID = 3;\n");
+EXEC SQL SELECT S2 INTO :ch1
+  FROM X4 WHERE ID = 3;
+CHCKOK ();
+printf("ch1 should be 'hips      '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "hips      ") != 0)
+  flag = 0;
+
+/* Column references */
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (C1 FROM ID)\n");
+printf("  INTO :ch1 FROM MOREGRUB\n");
+printf("  WHERE C1 LIKE 'Ch%%';\n");
+EXEC SQL SELECT SUBSTRING (C1 FROM ID)
+  INTO :ch1 FROM MOREGRUB
+  WHERE C1 LIKE 'Ch%';
+CHCKOK ();
+printf("ch1 should be 'ips       '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "ips       ") != 0)
+  flag = 0;
+
+strcpy (ch1, "qqqqqqqqqq");
+printf("SELECT SUBSTRING (C1 FROM 1 FOR ID)\n");
+printf("  INTO :ch1 FROM MOREGRUB\n");
+printf("  WHERE C1 LIKE 'Ch%%';\n");
+EXEC SQL SELECT SUBSTRING (C1 FROM 1 FOR ID)
+  INTO :ch1 FROM MOREGRUB
+  WHERE C1 LIKE 'Ch%';
+CHCKOK ();
+printf("ch1 should be 'Chi       '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "Chi       ") != 0)
+  flag = 0;
+
+strcpy (ch1, "salsa     ");
+int1 = 8;
+printf("int1 is %ld and ch1 is %s\n",int1,ch1);
+printf("SELECT SUBSTRING (C1 || ' with ' || :ch1\n");
+printf("                   FROM 4 FOR :int1 + 1)\n");
+printf("  INTO :ch1 FROM MOREGRUB\n");
+printf("  WHERE C1 LIKE 'Ch%%';\n");
+EXEC SQL SELECT SUBSTRING (C1 || ' with ' || :ch1
+                  FROM 4 FOR :int1 + 1)
+  INTO :ch1 FROM MOREGRUB
+  WHERE C1 LIKE 'Ch%';
+CHCKOK ();
+printf("ch1 should be 'ps with s '; its value is '%s'\n\n", ch1);
+if (strcmp (ch1, "ps with s ") != 0)
+  flag = 0;
+
+/* 6.7 GR.1.c (brutal null column references) */
+
+indic1 = 19;
+printf("SELECT S1 INTO :ch1:indic1\n");
+printf("  FROM X4 WHERE ID = 2;\n");
+EXEC SQL SELECT S1 INTO :ch1:indic1
+  FROM X4 WHERE ID = 2;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("DELETE FROM MOREGRUB;\n");
+EXEC SQL DELETE FROM MOREGRUB;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO MOREGRUB VALUES ('Tacos', NULL);\n");
+EXEC SQL INSERT INTO MOREGRUB VALUES ('Tacos', NULL);
+CHCKOK ();
+printf("\n");
+
+/* Future work:  test the following cases in a view too */
+
+indic1 = 19;
+printf("SELECT SUBSTRING (C1 FROM 1 FOR ID)\n");
+printf("  INTO :ch1:indic1 FROM MOREGRUB;\n");
+EXEC SQL SELECT SUBSTRING (C1 FROM 1 FOR ID)
+  INTO :ch1:indic1 FROM MOREGRUB;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+indic1 = 19;
+printf("SELECT SUBSTRING (C1 FROM ID FOR 1)\n");
+printf("  INTO :ch1:indic1 FROM MOREGRUB;\n");
+EXEC SQL SELECT SUBSTRING (C1 FROM ID FOR 1)
+  INTO :ch1:indic1 FROM MOREGRUB;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("UPDATE MOREGRUB SET C1 = NULL;\n");
+EXEC SQL UPDATE MOREGRUB SET C1 = NULL;
+CHCKOK ();
+printf("\n");
+
+indic1 = 19;
+printf("SELECT SUBSTRING (C1 FROM ID FOR ID)\n");
+printf("  INTO :ch1:indic1 FROM MOREGRUB;\n");
+EXEC SQL SELECT SUBSTRING (C1 FROM ID FOR ID)
+  INTO :ch1:indic1 FROM MOREGRUB;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE MOREGRUB CASCADE;\n");
+EXEC SQL DROP TABLE MOREGRUB CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0835','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml144.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0835','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0835 *********************/
+/******************** BEGIN TEST0839 ********************/
+flag = 1;
+
+     printf("                  TEST0839 \n");
+     printf("  Composed <length expression> and SUBSTRING\n");
+     printf("References:\n");
+     printf("    F# 6 -- VARCHAR data type\n");
+     printf("    6.6 LR.2.a -- Leveling rule relaxed by F# 6\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+int1 = -1;
+printf("SELECT CHAR_LENGTH (SUBSTRING\n");
+printf("  (CITY FROM 4 FOR 4)) INTO :int1\n");
+printf("  FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT CHAR_LENGTH (SUBSTRING
+  (CITY FROM 4 FOR 4)) INTO :int1
+  FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("int1 should be 4; its value is %ld\n\n", int1);
+if (int1 != 4)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT CHARACTER_LENGTH (SUBSTRING\n");
+printf("  (EMPNUM FROM 1)) INTO :int1\n");
+printf("  FROM HU.STAFF WHERE EMPNAME = 'Ed';\n");
+EXEC SQL SELECT CHARACTER_LENGTH (SUBSTRING
+  (EMPNUM FROM 1)) INTO :int1
+  FROM HU.STAFF WHERE EMPNAME = 'Ed';
+CHCKOK ();
+printf("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0839','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml144.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0839','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0839 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

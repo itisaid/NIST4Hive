@@ -1,0 +1,800 @@
+/*  EMBEDDED C (file "CTS5TAB.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/01/26 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION ALPHA TEST SUITE V6.0                         */
+/*                                                               */
+/*  CTS5TAB.PC                                                   */
+/*  WRITTEN BY: Susan Watters                                    */
+/*                                                               */
+/*  This routine may be run at any time to re-initialize tables. */
+/*                                                               */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   1/11/95                          */
+/*  Program updated to address NIST comments re TABLATIN1        */
+/*  Programs changed to address all other comments from DWF      */
+/*                                                               */
+/*  Revised by DWF 1996-02-21                                    */
+/*****************************************************************/
+
+/* This program is used for the CTS5 Standalone Test Suite only */
+/* Updated on 5/6/95 to include table inserts needed for programs xts* */
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+errcnt = 0;
+printf("SQL VALIDATION TEST SUITE V6.0, cts5tab.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+printf("\n");
+printf("National character literals may need to be Ted-changed to\n");
+printf("use characters from the correct repertoire.\n");
+printf("\n");
+
+EXEC SQL ROLLBACK WORK;
+EXEC SQL DELETE FROM CTS1.ECCO;
+EXEC SQL INSERT INTO CTS1.ECCO VALUES ('NL');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+/* tables taken from the NIST test suite */
+
+printf("STAFF\n");
+EXEC SQL DELETE FROM STAFF;
+EXEC SQL INSERT INTO STAFF VALUES ('E1','Alice',12,'Deale');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF VALUES ('E2','Betty',10,'Vienna');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF VALUES ('E3','Carmen',13,'Vienna');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF VALUES ('E4','Don',12,'Deale');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF VALUES ('E5','Ed',13,'Akron');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("WORKS\n");
+EXEC SQL DELETE FROM WORKS;
+EXEC SQL INSERT INTO WORKS VALUES  ('E1','P1',40);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E1','P2',20);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E1','P3',80);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E1','P4',20);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E1','P5',12);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E1','P6',12);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E2','P1',40);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E2','P2',80);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E3','P2',20);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E4','P2',20);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E4','P4',40);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO WORKS VALUES  ('E4','P5',80);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("VTABLE\n");
+EXEC SQL DELETE FROM VTABLE;
+EXEC SQL INSERT INTO VTABLE VALUES(10,+20,30,40,10.50);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO VTABLE VALUES(0,1,2,3,4.25);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO VTABLE VALUES(100,200,300,400,500.01);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO VTABLE VALUES(1000,-2000,3000,NULL,4000.00);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+/* tables unique to CTS development */
+printf("CTS1.STAFFb\n");
+EXEC SQL DELETE FROM CTS1.STAFFb;
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (10000,'Fred',40,'P2','Vienna','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (10000,'Fred',40,'P2','Vienna','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (10000,'Fred',40,'P2','Vienna','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (15000,'Carmen',35,'P2','Vienna','F');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (15000,'Carmen',35,'P2','Vienna','F');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (10000,'Alice',40,'P3','Prague','F');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (20000,'Betty',30,'P1','Deale','F');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (20000,'Betty',30,'P1','Deale','F');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (40000,'Don',70,'P3','Prague','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (40000,'Don',70,'P3','Prague','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (40000,'Don',70,'P3','Prague','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFb VALUES (10000,'Ed',40,'P1','Deale','M');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("CTS1.STAFFa\n");
+EXEC SQL DELETE FROM CTS1.STAFFa;
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (40,10000,'E6',2,'Fred');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (40,10000,'E6',2,'Fred');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (40,10000,'E1',3,'Alice');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (40,10000,'E1',3,'Alice');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (70,40000,'E4',3,'Don');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (70,40000,'E4',3,'Don');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (70,40000,'E4',3,'Don');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (30,20000,'E2',1,'Betty');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (60,45000,'E7',4,'Grace');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (60,45000,'E7',4,'Grace');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (30,8000,'E8',2,'Henry');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.STAFFa VALUES (15,7000,'E9',1,'Imogen');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("CTS1.STAFFc\n");
+EXEC SQL DELETE FROM STAFFc;
+EXEC SQL INSERT INTO STAFFc VALUES ('E1','Alice',12,'Deale',NULL);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFFc VALUES ('E2','Betty',10,'Vienna','E1');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFFc VALUES ('E3','Carmen',13,'Vienna','E2');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFFc VALUES ('E4','Don',12,'Deale','E2');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFFc VALUES ('E5','Don',12,'Deale','E1');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFFc VALUES ('E6','Tom',14,'Gettysburg','E5');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFFc VALUES ('E7','Kingdom',18,'Gettysburg','E7');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("CTS1.STAFF_CTS2\n");
+EXEC SQL DELETE FROM STAFF_CTS2;
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E1','Alice',12,'Deale');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E1','Alice',12,'Deale');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E2','Betty',10,'Vienna');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E3','Carmen',13,'Vienna');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E3','Carmen',13,'Vienna');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E3','Carmen',13,'Vienna');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E4','Don',12,'Deale');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS2 VALUES ('E6','Don',12,'Deale');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("STAFF_CTS\n");
+EXEC SQL DELETE FROM STAFF_CTS;
+EXEC SQL INSERT INTO STAFF_CTS VALUES ('P1','Deale',12,'Don');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS VALUES ('P3','Vienna',10,'Betty');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS VALUES ('P3','Vienna',10,'Betty');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS VALUES ('P4','Vienna',13,'Carmen');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO STAFF_CTS VALUES ('P5','Prague',15,'Ed');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("EMPLOYEES2\n");
+EXEC SQL DELETE FROM EMPLOYEES2;
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Atherton',1);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Botham',2);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Cowdrey',3);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Dev',4);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Edmunds',5);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Fields',6);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO EMPLOYEES2 VALUES ('Gower',7);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("A\n");
+EXEC SQL DELETE FROM A;
+EXEC SQL INSERT INTO A VALUES (1, 15);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (3, 17);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (7, 11);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (5, 9);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (13, 13);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (9, 5);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (11, 7);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (17, 3);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (15, 1);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (13, 5);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (13, 15);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (11, 1);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (5, 5);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (5, 3);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO A VALUES (1, 1);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TT\n");
+EXEC SQL DELETE FROM TT;
+EXEC SQL INSERT INTO TT (TTA, TTC) VALUES (1, 99);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT (TTA, TTB) VALUES (2, 98);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT VALUES (3, 97, 96);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT (TTA) VALUES (4);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT VALUES (5, 42, 26);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TU\n");
+EXEC SQL DELETE FROM TU;
+EXEC SQL INSERT INTO TU VALUES ('ab', 3);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TU (TUE) VALUES (5);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TU VALUES ('cd', 4);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TU (TUE) VALUES (11);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TU VALUES ('ef', 12);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TU VALUES ('gh', 11);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TT2\n");
+EXEC SQL DELETE FROM TT2;
+EXEC SQL INSERT INTO TT2 VALUES (1,INTERVAL '17-3' YEAR TO MONTH,13);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT2 (TTA,TTB) VALUES (2,INTERVAL '5-6' YEAR TO MONTH);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT2 (TTA) VALUES (3);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT2 (TTA,TTC) VALUES (4,20);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TT2 VALUES (5,INTERVAL '60-2' YEAR TO MONTH,19);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TV\n");
+EXEC SQL DELETE FROM TV;
+EXEC SQL INSERT INTO TV VALUES (1,'a');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TV VALUES (2,'b');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TV VALUES (3,'c');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TV VALUES (4,'d');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TV VALUES (5,'e');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TW\n");
+EXEC SQL DELETE FROM TW;
+EXEC SQL INSERT INTO TW VALUES ('b',2);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TW VALUES ('g',1);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TW VALUES ('f',2);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TW VALUES ('h',4);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TW VALUES ('i',5);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TX\n");
+EXEC SQL DELETE FROM TX;
+EXEC SQL INSERT INTO TX (TX1, TX3) VALUES (1, 'Susan');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TX (TX1, TX2) VALUES (2, 'lemon');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TX VALUES (3, 'apple', '');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TX VALUES (4, 'melon', 'Peter');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TX VALUES (5, 'peach', 'Matthew');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+/* printf("CL_EMPLOYEE\n"); */
+/* EXEC SQL DELETE FROM CL_EMPLOYEE; */
+/* EXEC SQL INSERT INTO CL_EMPLOYEE (EMPNUM)  */
+/* VALUES (7000); */
+/* EXEC SQL INSERT INTO CL_EMPLOYEE (EMPNUM, LOC) */
+/* VALUES (20002,'CRETA'); */
+/* EXEC SQL INSERT INTO CL_EMPLOYEE (EMPNUM, DEPTNO, LOC) VALUES */
+/* (8000,'P2','HALKIDA'); */
+/* EXEC SQL INSERT INTO CL_EMPLOYEE (EMPNUM, EMPNAME, SALARY, GRADE, HOURS) */
+/* VALUES (9000, 'ANDREWS', 15000, 5,125); */
+
+printf("TEST12849B\n");
+EXEC SQL DELETE FROM TEST12849B;
+EXEC SQL INSERT INTO TEST12849B VALUES (1); 
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TEST12849B VALUES (2); 
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TEST12849B VALUES (3); 
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO TEST12849B VALUES (4); 
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TABX760\n");
+EXEC SQL DELETE FROM TABX760;
+EXEC SQL INSERT INTO CTS1.TABX760 VALUES (10,'SPYROS',25000);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABX760 VALUES (11,'ALEXIS',18000);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABX760 VALUES (12,'LAMBIS',9000);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABX760 VALUES (13,'ELENI',4000);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABX760 VALUES (14,'MARIOS',47000);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABX760 VALUES (15,'NICKOLAS',78000);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TABCS\n");
+EXEC SQL DELETE FROM TABCS;
+EXEC SQL INSERT INTO CTS1.TABCS VALUES (1, _CS 'NICKOS', _CS 'MARIA');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABCS VALUES (2, _CS 'BILL', _CS 'TAKIS');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABCS VALUES (3, _CS 'NICKOS', _CS 'TAKIS');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABCS VALUES (4, _CS 'MARIA', _CS 'TAKIS');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TTIME3\n");
+EXEC SQL DELETE FROM TTIME3;
+EXEC SQL INSERT INTO CTS1.TTIME3 VALUES (
+1,TIME '23:05:00',TIME '12:15:00-11:45',
+TIMESTAMP '1995-07-07 08:15:00+03:05');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TTIME3 VALUES(
+2,TIME '05:10:00',TIME '00:07:00+08:39', 
+TIMESTAMP '2000-10-09 03:03:00+04:05');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TTIME3 VALUES (
+3,TIME '12:11:00',TIME '23:19:00+10:32', 
+TIMESTAMP '1997-01-16 12:17:00-12:16');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TTIME3 VALUES (
+4,TIME '05:10:00',TIME '00:07:00+08:39', 
+TIMESTAMP '2000-10-09 03:03:00+04:05');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TTIME3 VALUES (
+5,TIME '17:39:00',TIME '08:28:00-11:45', 
+TIMESTAMP '1994-12-31 20:00:00+04:05');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TTIME3 VALUES (
+6,TIME '17:39:00',TIME '08:28:00-11:45', 
+TIMESTAMP '1994-12-31 20:00:00+04:05');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("CL_STANDARD\n");
+EXEC SQL DELETE FROM CL_STANDARD;
+EXEC SQL INSERT INTO CTS1.CL_STANDARD VALUES (1000,'NICKOS',4000,'ATHENS');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_STANDARD VALUES (1001,'MARIA',4001,'RHODES');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_STANDARD VALUES (1002,'MAKIS',4002,'HANIA');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_STANDARD VALUES (1003,'GEORGE',4003,'ARTA');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_STANDARD VALUES (1004,'MORRIS',4004,'PARGA');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TABLE728a\n");
+EXEC SQL DELETE FROM TABLE728a;
+EXEC SQL INSERT INTO CTS1.TABLE728a VALUES ('NICKOS','GEORGE');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABLE728a VALUES ('HARRY','TANIA');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABLE728a VALUES ('KILLER',NULL);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TABLE728a VALUES (NULL,NULL);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("TAB734\n");
+EXEC SQL DELETE FROM TAB734;
+EXEC SQL INSERT INTO CTS1.TAB734 VALUES (N'   !',N'*  *');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TAB734 VALUES (N' * ',N'+ +');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TAB734 VALUES (N'+ +',N'+ +');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.TAB734 VALUES (NULL,N' + ');
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("CTS1.CL_DATA_TYPE\n");
+EXEC SQL DELETE FROM CL_DATA_TYPE;
+EXEC SQL INSERT INTO CTS1.CL_DATA_TYPE VALUES ('GEORGE',1,10,100);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_DATA_TYPE VALUES ('NICK',2,20,200);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_DATA_TYPE VALUES ('PAUL',3,30,300);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_DATA_TYPE VALUES ('PETER',4,40,400);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_DATA_TYPE VALUES ('KEVIN',5,50,500);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+EXEC SQL INSERT INTO CTS1.CL_DATA_TYPE VALUES ('JASON',6,60,600);
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+
+printf("COMMIT WORK\n");
+EXEC SQL COMMIT WORK;
+if (SQLCODE != 0) {
+  printf ("*********** SQLCODE %ld   SQLSTATE %s\n", SQLCODE, SQLSTATE);
+}
+ 
+exit(errcnt);
+
+}
+

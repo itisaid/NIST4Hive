@@ -1,0 +1,551 @@
+/*  EMBEDDED C (file "DML061.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/07/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML061.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS BETWEEN, SET FUNCTIONS, AND INTEGRITY.  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.12 <between predicate>              */
+/*                 SECTION 5.8  <set specification>              */
+/*                 SECTION 7.3  <procedure> GR 3b                */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        char EMPNO1[4];
+        long HOURS1;
+        long count1;
+        long count2;
+        long count3;
+        long count4;
+        long max1;
+        long min1;
+        long sum1;
+        float ff1;
+        short indic1;
+        short indic2;
+        short indic3;
+        char EMPNA1[21];
+        char EMPNA2[21];
+        char EMPNA3[21];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+        long i;
+        long flag;
+        long cnt;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml061.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0269 ********************/
+
+/* BETWEEN value expressions in wrong order             */
+
+
+    printf("BETWEEN value expressions in wrong order \n");
+    printf("Reference X3.135-1989 section 5.12 GR 2 \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0269     \n");
+    printf("    Reference 5.12 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("            SELECT COUNT(*) INTO :count1\n");
+printf("            FROM WORKS\n");
+printf("            WHERE HOURS BETWEEN 80 AND 40;\n");
+printf("            INSERT INTO WORKS\n");
+printf("            VALUES('E6','P6',-60);\n");
+printf("\n");
+printf("            SELECT COUNT(*) INTO :count2\n");
+printf("            FROM WORKS\n");
+printf("            WHERE HOURS BETWEEN :max1 AND :min1;\n");
+printf("\n");
+printf("            SELECT COUNT(*) INTO :count3\n");
+printf("            FROM WORKS\n");
+printf("            WHERE HOURS BETWEEN :min1 AND :max1;\n");
+printf("\n");
+count1 = -1;
+count2 = -1;
+count3 = -1;
+    EXEC SQL SELECT COUNT(*) INTO :count1
+            FROM WORKS
+            WHERE HOURS BETWEEN 80 AND 40;
+    EXEC SQL INSERT INTO WORKS
+            VALUES('E6','P6',-60);
+    max1 = -40;
+    min1 = -80;
+    EXEC SQL SELECT COUNT(*) INTO :count2
+            FROM WORKS
+            WHERE HOURS BETWEEN :max1 AND :min1;
+    EXEC SQL SELECT COUNT(*) INTO :count3
+            FROM WORKS
+            WHERE HOURS BETWEEN :min1 AND :max1;
+    EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               count1 = 0\n");
+printf("               count2 = 0\n");
+printf("               count3 = 1\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+printf("               count2 = %ld\n",count2);
+printf("               count3 = %ld\n",count3);
+
+
+
+    if (count1 == 0 && count2 == 0 && count3 == 1)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0269','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0269','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0269 ********************/
+
+
+
+
+/******************** BEGIN TEST0270 ********************/
+/* BETWEEN approximate and exact numeric values         */
+
+    printf("BETWEEN value with comparable data types  \n");
+    printf("Reference X3.135-1989 section 5.12 SR 1 \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0270     \n");
+    printf("    Reference 5.12 Syntax Rules \n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("            SELECT COUNT(*) INTO :count1\n");
+printf("            FROM WORKS\n");
+printf("            WHERE HOURS BETWEEN :ff1 AND :HOURS1 OR \n");
+printf("                  HOURS BETWEEN 19.999 AND 2.001E1;\n");
+printf("\n");
+count1 = -1;
+ff1 = 11.999;
+HOURS1 = 12;
+    EXEC SQL SELECT COUNT(*) INTO :count1
+            FROM WORKS
+            WHERE HOURS BETWEEN :ff1 AND :HOURS1 OR
+                  HOURS BETWEEN 19.999 AND 2.001E1;
+printf(" The correct answer is :\n");
+printf("               count1 = 6\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+
+
+
+    if (count1 == 6)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0270','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0270','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0270 ********************/
+
+
+
+
+/******************** BEGIN TEST0271 ********************/
+/* COUNT(*) with Cartesian product subset               */
+
+    printf("COUNT (*) with Cartesian product subset\n");
+    printf("Reference X3.135-1989 section:\n");
+    printf("                   section 5.8 GR 4b\n");
+    printf("                   section 5.20 GR 2b\n");
+    printf("                   section 5.21 1,2\n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0271     \n");
+    printf("    Reference 5.8 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("            SELECT COUNT(*) INTO :count1\n");
+printf("            FROM WORKS,STAFF\n");
+printf("            WHERE WORKS.EMPNUM = 'E1';\n");
+printf("\n");
+
+count1 = 0;
+    EXEC SQL SELECT COUNT(*) INTO :count1
+            FROM WORKS,STAFF
+            WHERE WORKS.EMPNUM = 'E1';
+
+printf(" The correct answer is :\n");
+printf("               count1 = 30\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+
+
+
+    if (count1 == 30)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0271','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0271','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0271 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0272 ********************/
+/* Statement rollback for integrity violation.          */
+
+    printf("    Statement rollback for integrity violation \n");
+    printf("Reference X3.135-1989 section 7.3 General Rules 3b\n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0272     \n");
+    printf("    Reference 7.3 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("        UPDATE WORKS\n");
+printf("        SET EMPNUM = 'E7'\n");
+printf("        WHERE EMPNUM = 'E1' OR EMPNUM = 'E4';\n");
+printf("\n");
+printf("        INSERT INTO WORKS \n");
+printf("        SELECT 'E3',PNUM,17 FROM PROJ;\n");
+printf("\n");
+printf("        UPDATE V_WORKS1\n");
+printf("        SET HOURS = HOURS - 9;\n");
+printf("\n");
+printf("        SELECT COUNT(*) INTO :count4 FROM WORKS\n");
+printf("        WHERE EMPNUM = 'E7' OR HOURS = 31 OR HOURS = 17;\n");
+printf("\n");
+count1 = 0;
+count2 = 0;
+count3 = 0;
+count4 = -1;
+EXEC SQL UPDATE WORKS
+        SET EMPNUM = 'E7'
+        WHERE EMPNUM = 'E1' OR EMPNUM = 'E4';
+count1 = SQLCODE;
+EXEC SQL INSERT INTO WORKS 
+        SELECT 'E3',PNUM,17 FROM PROJ;
+count2 = SQLCODE;
+EXEC SQL UPDATE V_WORKS1
+        SET HOURS = HOURS - 9;
+count3 = SQLCODE;
+EXEC SQL SELECT COUNT(*) INTO :count4 FROM WORKS
+        WHERE EMPNUM = 'E7' OR HOURS = 31 OR HOURS = 17;
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               count1 < 0\n");
+printf("               count2 < 0\n");
+printf("               count3 < 0\n");
+printf("               count4 = 0\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+printf("               count2 = %ld\n",count2);
+printf("               count3 = %ld\n",count3);
+printf("               count4 = %ld\n",count4);
+
+
+
+ if (count1 < 0 && count2 < 0 && count3 < 0 && count4 == 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0272','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0272','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0272 ********************/
+
+
+
+
+
+
+/******************** BEGIN TEST0273 ********************/
+/* SUM, MAX, MIN = NULL for empty arguments             */
+
+    printf("         SUM, MAX, MIN = NULL   \n");
+    printf("Reference X3.135-1989 section 5.8 GR 4c \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0273     \n");
+    printf("    Reference 5.8 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("            UPDATE WORKS\n");
+printf("            SET HOURS = NULL;\n");
+printf("\n");
+printf("            SELECT SUM(HOURS),MAX(HOURS),MIN(HOURS)\n");
+printf("                INTO :sum1:indic1,:max1:indic2,:min1:indic3\n");
+printf("                FROM WORKS;\n");
+printf("\n");
+    indic1 = 0;
+    indic2 = 0;
+    indic3 = 0;
+    EXEC SQL UPDATE WORKS
+            SET HOURS = NULL;
+    EXEC SQL SELECT SUM(HOURS),MAX(HOURS),MIN(HOURS)
+                INTO :sum1:indic1,:max1:indic2,:min1:indic3
+                FROM WORKS;
+    EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               indic1 < 0\n");
+printf("               indic2 < 0\n");
+printf("               indic3 < 0\n");
+printf(" Your answer is :\n");
+printf("               indic1 = %d\n",indic1);
+printf("               indic2 = %d\n",indic2);
+printf("               indic3 = %d\n",indic3);
+
+
+
+    if (indic1 < 0 && indic2 < 0 && indic3 < 0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0273','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0273','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0273 ********************/
+
+
+
+
+
+
+
+
+/******************** BEGIN TEST0277 ********************/
+/* Computation with NULL value specification            */
+
+    printf("         Computation with NULL value spec.   \n");
+    printf("Reference X3.135-1989 section 5.6 GR \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0277     \n");
+    printf("    Reference 5.6 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf(" UPDATE WORKS\n");
+printf(" SET HOURS = NULL  WHERE EMPNUM = 'E1';\n");
+printf("\n");
+printf(" UPDATE WORKS\n");
+printf(" SET HOURS = :count1:indic1 - \n");
+printf("             (:count2:indic2 + :count3:indic3)\n");
+printf(" WHERE EMPNUM = 'E2';\n");
+printf("\n");
+printf(" UPDATE WORKS\n");
+printf(" SET HOURS = :count2:indic2 / :count3:indic3 * \n");
+printf("              :count1:indic1\n");
+printf(" WHERE EMPNUM = 'E3';\n");
+printf("\n");
+printf(" UPDATE WORKS\n");
+printf(" SET HOURS = HOURS + 5;\n");
+printf("\n");
+printf(" SELECT COUNT(*) INTO :count4\n");
+printf(" FROM WORKS\n");
+printf(" WHERE HOURS IS NULL; \n");
+printf("\n");
+    indic1 = -1;
+    indic2 = 0;
+    indic3 = 0;
+    count1 = 11;
+    count2 = 3;
+    count3 = -17;
+    count4 = -1;
+  EXEC SQL UPDATE WORKS
+          SET HOURS = NULL  WHERE EMPNUM = 'E1';
+  EXEC SQL UPDATE WORKS
+          SET HOURS = :count1:indic1 - (:count2:indic2 + :count3:indic3)
+          WHERE EMPNUM = 'E2';
+  EXEC SQL UPDATE WORKS
+          SET HOURS = :count2:indic2 / :count3:indic3 * :count1:indic1
+          WHERE EMPNUM = 'E3';
+  EXEC SQL UPDATE WORKS
+          SET HOURS = HOURS + 5;
+  EXEC SQL SELECT COUNT(*) INTO :count4
+          FROM WORKS
+          WHERE HOURS IS NULL; 
+  EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               count4 = 9\n");
+printf(" Your answer is :\n");
+printf("               count4 = %ld\n",count4);
+
+
+
+    if (count4 == 9)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0277','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0277','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0277 ********************/
+
+
+
+
+/******************** BEGIN TEST0278 ********************/
+/* IN value list with USER, literal, variable spec.     */
+
+    printf("IN value list with USER, literal, variable\n");
+    printf("Reference X3.135-1989 section 5.6 GR \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0278     \n");
+    printf("    Reference 5.6 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("\n");
+printf("   UPDATE STAFF\n");
+printf("   SET EMPNAME = 'HU'\n");
+printf("   WHERE EMPNAME = 'Ed';\n");
+printf("\n");
+printf("   SELECT COUNT(*) INTO :count1\n");
+printf("   FROM STAFF\n");
+printf("   WHERE EMPNAME IN \n");
+printf("         (USER,:EMPNA1:indic1,:EMPNA2:indic2,:EMPNA3); \n");
+printf("\n");
+    indic1 = -1;
+    indic2 = 0;
+    count1 = -1;
+    strcpy(EMPNA1,"Alice");
+    strcpy(EMPNA2,"Betty");
+    strcpy(EMPNA3,"Carmen");
+  EXEC SQL UPDATE STAFF
+          SET EMPNAME = 'HU'
+          WHERE EMPNAME = 'Ed';
+  EXEC SQL SELECT COUNT(*) INTO :count1
+          FROM STAFF
+          WHERE EMPNAME IN (USER,:EMPNA1:indic1,:EMPNA2:indic2,:EMPNA3); 
+printf("SQLCODE = %ld\n",SQLCODE);
+  EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("               count1 = 3\n");
+printf(" Your answer is :\n");
+printf("               count1 = %ld\n",count1);
+
+
+
+    if (count1 == 3)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0278','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml061.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0278','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0278 ********************/
+
+
+
+
+
+
+exit(errcnt);
+
+}

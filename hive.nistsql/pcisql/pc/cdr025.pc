@@ -1,0 +1,317 @@
+/*  EMBEDDED C (file "CDR025.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1990/09/14 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR025.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SCHEMA DEFINITION LANGUAGE FOR SQL. */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                  SECTION 6.9 View Definition                  */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long  PERCNT;
+long  FROMDT;
+long  TODATE;
+long  UNITZ;
+float MYBID1;
+float MYBID2;
+long  count1;
+char  COMMOD[8];
+char MEASUR[9];
+char CURREN[11];
+float PRICE1;
+float PRICE2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long     flag;
+     long     iii;
+
+
+main()
+{
+     strcpy(uid,"SUN");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr025.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+     EXEC SQL DELETE FROM C_TRANSACTION;
+
+     EXEC SQL DELETE FROM COMMODITY;
+
+     EXEC SQL DELETE FROM CURRENCY_TABLE;
+
+     EXEC SQL DELETE FROM MEASURE_TABLE;
+
+     EXEC SQL INSERT INTO COMMODITY
+              VALUES (17, 'Wheat');
+
+     EXEC SQL INSERT INTO COMMODITY
+              VALUES (14, 'Saffron');
+
+     EXEC SQL INSERT INTO COMMODITY
+              VALUES (23, 'Alfalfa');
+
+     EXEC SQL INSERT INTO CURRENCY_TABLE
+              VALUES ('DOLLAR', 1.00);
+
+     EXEC SQL INSERT INTO CURRENCY_TABLE
+              VALUES ('POUND', 1.91);
+
+     EXEC SQL INSERT INTO CURRENCY_TABLE
+              VALUES ('DM', .45);
+
+     EXEC SQL INSERT INTO MEASURE_TABLE
+              VALUES ('POUND', 1.00);
+
+     EXEC SQL INSERT INTO MEASURE_TABLE
+              VALUES ('OUNCE', .06);
+
+     EXEC SQL INSERT INTO MEASURE_TABLE
+              VALUES ('KILO', 2.20);
+
+     EXEC SQL INSERT INTO MEASURE_TABLE
+              VALUES ('TON', 2000.00);
+
+     EXEC SQL INSERT INTO C_TRANSACTION
+              VALUES (17, 1411.5, 'DM', 4000, 'KILO', 871212);
+
+     EXEC SQL INSERT INTO C_TRANSACTION
+              VALUES (17, 7000.0, 'POUND', 100, 'TON', 871012);
+
+     EXEC SQL INSERT INTO C_TRANSACTION
+              VALUES (23, 20000.0, 'DOLLAR', 40000, 'POUND', 880707);
+
+     EXEC SQL INSERT INTO C_TRANSACTION
+              VALUES (14, 10000.0, 'DM', 900, 'OUNCE', 880606);
+
+     EXEC SQL INSERT INTO C_TRANSACTION
+              VALUES (14, 10000.0, 'DM', 900, 'OUNCE', 880707);
+
+     EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0402 ********************/
+     printf("                  TEST0402 \n");
+     printf(" Computed GROUP BY view over referencing tables\n");
+     printf(" Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf(" ***\n");
+printf("  CREATE VIEW DOLLARS_PER_POUND\n");
+printf("             (COMMODITY, UNIT_PRICE, FROM_DATE, TO_DATE)\n");
+printf("     AS SELECT COMMODITY.C_NAME, \n");
+printf("        SUM(TOT_PRICE * DOLLAR_EQUIV) / SUM(UNITS * POUND_EQUIV),\n");
+printf("             MIN(T_DATE), MAX(T_DATE)\n");
+printf("      FROM C_TRANSACTION, COMMODITY, CURRENCY_TABLE, MEASURE_TABLE\n");
+printf("      WHERE C_TRANSACTION.COMMOD_NO = COMMODITY.C_NUM\n");
+printf("          AND C_TRANSACTION.CURRENCY = CURRENCY_TABLE.CURRENCY\n");
+printf("          AND C_TRANSACTION.MEASURE  = MEASURE_TABLE.MEASURE\n");
+printf("      GROUP BY COMMODITY.C_NAME\n");
+printf("      HAVING SUM(TOT_PRICE * DOLLAR_EQUIV) > 10000;\n");
+printf(" \n");
+     count1 = 0;
+     EXEC SQL SELECT COUNT(*) INTO :count1
+              FROM C_TRANSACTION WHERE COMMOD_NO = 17;
+
+     flag = 1;
+     
+     PRICE1 = .0;
+     FROMDT = 0;
+     TODATE = 0;
+     EXEC SQL DECLARE CCC CURSOR FOR
+           SELECT UNIT_PRICE, FROM_DATE, TO_DATE, COMMODITY 
+              FROM DOLLARS_PER_POUND
+              ORDER BY COMMODITY DESC;
+     EXEC SQL OPEN CCC;
+     EXEC SQL FETCH CCC
+              INTO  :PRICE1, :FROMDT, :TODATE, :COMMOD;
+     EXEC SQL CLOSE CCC;
+     if (FROMDT != 871012 || PRICE1 < 0.06 || PRICE1 > 0.07)
+          flag = 0;
+     if (TODATE != 871212)
+          flag = 0;
+
+     printf(" The correct answer is approximately:\n");
+     printf("        count1 = 2   PRICE1 = .067\n");
+     printf("        FROMDT = 871012, TODATE = 871212\n");
+
+     printf(" Your answer is:\n");
+     printf("        count1 = %ld PRICE1 = %f\n", count1, PRICE1);
+     printf("        FROMDT = %ld TODATE = %ld\n", FROMDT, TODATE);
+
+
+     if ( count1 == 2 && flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0402','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr025.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0402','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /******************** END TEST0402 *********************/
+
+
+
+/******************** BEGIN TEST0403 ********************/
+     printf("         OPTIONAL TEST0403 \n");
+     printf("   View on computed GROUP BY view with join\n");
+     printf(" Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf(" ***\n");
+printf("   CREATE VIEW COST_PER_UNIT\n");
+printf("     (COMMODITY, UNIT_PRICE, CURRENCY, MEASURE\n");
+printf("      AS SELECT COMMODITY, UNIT_PRICE * POUND_EQUIV / DOLLAR_EQUIV\n");
+printf("            FROM DOLLARS_PER_POUND, CURRENCY_TABLE,\n");
+printf("                 MEASURE_TABLE;\n");
+printf(" \n");
+     count1 = 0;
+     EXEC SQL SELECT COUNT(*) INTO :count1
+              FROM COST_PER_UNIT;
+
+     EXEC SQL DECLARE DDD CURSOR FOR 
+          SELECT CURRENCY, MEASURE, UNIT_PRICE, COMMODITY
+              FROM COST_PER_UNIT;
+     EXEC SQL OPEN DDD;
+     /* Find the unit price for Alfalfa in DM per KILO */
+     for (iii = 1; iii < 25; iii++)
+       {
+           flag = 1;
+           EXEC SQL FETCH DDD
+                    INTO :CURREN, :MEASUR, :PRICE2, :COMMOD;
+           if (strncmp(CURREN,"DM",2) != 0)
+              flag = 0;
+           if (strncmp(MEASUR,"KILO",4) != 0)
+              flag = 0;
+           if (strncmp(COMMOD,"Alfalfa",7) != 0)
+              flag = 0;
+           if (flag == 1)
+              PRICE1 = PRICE2;
+       }
+     printf(" The correct answer is approximately:\n");
+     printf("        count1 = 24   PRICE1 = 2.444\n");
+
+     printf(" Your answer is:\n");
+     printf("        count1 = %ld PRICE1 = %f\n", count1, PRICE1);
+     
+     if ( count1 == 24 && PRICE1 > 2.42 && PRICE1 < 2.47)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0403','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr025.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0403','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /******************** END TEST0403 *********************/
+
+
+
+/******************** BEGIN TEST0413 ********************/
+     printf("                  TEST0413 \n");
+     printf("   Computed SELECT from computed VIEW\n");
+     printf(" Reference X3.135-89 section 6.9 <view def.>\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf("\n");
+     flag = 1;
+     
+/* Bid dollars to buy 700 pounds of alfalfa at 7% over average */
+     PERCNT = 7;
+     UNITZ = 700;
+     strcpy(COMMOD, "XXXXXXX");
+     EXEC SQL DECLARE EEE CURSOR FOR
+           SELECT (100 + :PERCNT) * UNIT_PRICE * :UNITZ / 100, COMMODITY
+              FROM DOLLARS_PER_POUND
+              ORDER BY COMMODITY;
+     EXEC SQL OPEN EEE;
+     EXEC SQL FETCH EEE INTO :MYBID1, :COMMOD;
+     EXEC SQL CLOSE EEE;
+     printf(" The correct answer is approximately:\n");
+     printf("        MYBID1 = 374.5\n");
+
+     printf(" Your answer is:\n");
+     printf("        MYBID1 = %f\n", MYBID1);
+
+     if (MYBID1 < 374.4 || MYBID1 > 374.6 || strncmp(COMMOD,"Alfalfa",7) != 0)
+           flag = 0;
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0413','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr025.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0413','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /******************** END TEST0413 *********************/
+
+
+
+
+     exit(errcnt);
+}

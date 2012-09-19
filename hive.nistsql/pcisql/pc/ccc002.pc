@@ -1,0 +1,131 @@
+/*  EMBEDDED C (file "CCC002.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/07/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC002.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS ROUTINE TESTS THE '\0' TERMINATOR IN C HOST LANGUAGE.   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+            char EMPNAM[21];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  i;
+            long  ii;
+            long  yes_no;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc002.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0184 ********************/
+
+     printf("\n                     TEST0184             \n");
+     printf("     This test tests the C null terminator.\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf(" Here uid = %s \n",uid);
+
+     for (i=0;i<19;i++)
+        {
+         if (uid[i] == '\0')
+           break;
+        }
+
+     printf("After the for loop i = %ld \n",i);
+
+     for (ii=0;ii<21;ii++)
+        EMPNAM[ii] = 'a';
+     printf(" EMPNAM = %s \n",EMPNAM);
+
+     EXEC SQL SELECT EMPNAME
+              INTO   :EMPNAM
+              FROM   STAFF
+              WHERE  EMPNUM = 'E3';
+
+     printf(" EMPNAM = %s \n",EMPNAM);
+
+     yes_no = 0;
+
+     for (ii=0;ii<21;ii++)
+        { 
+         if (EMPNAM[ii] == '\0')
+          {
+           yes_no = 1;
+           break;
+          }
+        }
+
+     printf("After the for loop ii = %ld, yes_no = %ld \n",ii,yes_no);
+
+     printf("The correct answer should be sqlcode=0, i=2, yes_no=1\n");
+
+     if (i == 2 && SQLCODE == 0 && yes_no == 1)
+       {
+         printf("              *** pass ***   \n");
+         EXEC SQL INSERT INTO TESTREPORT VALUES('0184','pass','PC');
+       }
+     else
+       {
+         printf("    ccc002.pc  *** fail ***   \n");
+         EXEC SQL INSERT INTO TESTREPORT VALUES('0184','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("\n\n=================================================\n");
+
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0184 ********************/
+
+     exit(errcnt);
+
+}
+

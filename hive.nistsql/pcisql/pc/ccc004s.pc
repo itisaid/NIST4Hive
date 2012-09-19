@@ -1,0 +1,81 @@
+/*  EMBEDDED C (file "CCC004S.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/08/18 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC004S.PC                                                   */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS SUBROUTINE IS CALLED BY CCC004.PC WHICH TESTS THE C     */
+/*  EXTERN STORAGE CLASS.                                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language           */
+/*        Embedded SQL --   X3.168-1989                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*****************************************************************/
+
+long SQLCODE;
+
+lookup(uiddx)
+char uiddx[19];
+{
+EXEC SQL BEGIN DECLARE SECTION;
+ char uidx[19];
+EXEC SQL END DECLARE SECTION;
+
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+strcpy(uiddx, uidx);
+
+}
+
+totalup()
+
+{
+     /* EMP is local */
+     /* H1, p1 and total are external */    
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char EMP[4];
+     extern long H1;
+     extern char p1[4];
+EXEC SQL END DECLARE SECTION;
+     extern long  total;
+printf("SQL Test Suite, V6.0, Embedded C, ccc004s.pc\n");
+printf("59-byte ID\n");
+
+     EXEC SQL SELECT EMPNUM, HOURS, PNUM
+              INTO  :EMP,  :H1,  :p1
+              FROM   WORKS
+              WHERE EMPNUM = 'E1' AND PNUM = 'P2';
+     total = total + H1;
+     printf("Subroutine values (local):  EMP=%s\n",EMP); 
+     printf("Subroutine(extern): H1=%ld and p1=%s and total=%ld\n",H1,p1,total);
+
+}
+
+pass0194()
+{
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0194','pass','PC');
+       EXEC SQL COMMIT WORK;
+}
+
+fail0194()
+{
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0194','fail','PC');
+       EXEC SQL COMMIT WORK;
+}

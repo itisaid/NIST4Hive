@@ -1,0 +1,429 @@
+/*  EMBEDDED C (file "DML170.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-09 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML170.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml170.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0880 ********************/
+flag = 1;
+
+     printf("                  TEST0880\n");
+     printf("    Long constraint names, cursor names\n");
+     printf("References:\n");
+     printf("    F#39 -- Long identifiers\n");
+     printf("    F#49 -- Constraint management\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE T0880 (\n");
+printf("  C1 INT, C2 INT,\n");
+printf("  CONSTRAINT\n");
+printf("\"It was the best of times; it was the worst of times.  THE END\"\n");
+printf("    PRIMARY KEY (C1, C2));\n");
+EXEC SQL CREATE TABLE T0880 (
+  C1 INT, C2 INT,
+  CONSTRAINT
+"It was the best of times; it was the worst of times.  THE END"
+    PRIMARY KEY (C1, C2));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0880 VALUES (0, 1);\n");
+EXEC SQL INSERT INTO T0880 VALUES (0, 1);
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0880 VALUES (1, 2);\n");
+EXEC SQL INSERT INTO T0880 VALUES (1, 2);
+CHCKOK ();
+printf ("\n");
+
+printf("DECLARE\n");
+printf("\"This change notice modifies Section 10 of FIPS PUB 127-2.\"\n");
+printf("CURSOR FOR\n");
+printf("SELECT C1 FROM T0880 ORDER BY C1;\n\n");
+EXEC SQL DECLARE
+"This change notice modifies Section 10 of FIPS PUB 127-2."
+CURSOR FOR
+SELECT C1 FROM T0880 ORDER BY C1;
+
+printf("OPEN\n");
+printf("\"This change notice modifies Section 10 of FIPS PUB 127-2.\";\n");
+EXEC SQL OPEN
+"This change notice modifies Section 10 of FIPS PUB 127-2.";
+CHCKOK ();
+printf ("\n");
+
+int1 = 666;
+printf("FETCH\n");
+printf("\"This change notice modifies Section 10 of FIPS PUB 127-2.\"\n");
+printf("INTO :int1;\n");
+EXEC SQL FETCH
+"This change notice modifies Section 10 of FIPS PUB 127-2."
+INTO :int1;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = 666;
+printf("FETCH\n");
+printf("\"This change notice modifies Section 10 of FIPS PUB 127-2.\"\n");
+printf("INTO :int1;\n");
+EXEC SQL FETCH
+"This change notice modifies Section 10 of FIPS PUB 127-2."
+INTO :int1;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("CLOSE\n");
+printf("\"This change notice modifies Section 10 of FIPS PUB 127-2.\";\n");
+EXEC SQL CLOSE
+"This change notice modifies Section 10 of FIPS PUB 127-2.";
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("ALTER TABLE T0880\n");
+printf("  DROP CONSTRAINT\n");
+printf("\"It was the best of times; it was the worst of times.  THE END\"\n");
+printf("CASCADE;\n");
+EXEC SQL ALTER TABLE T0880
+  DROP CONSTRAINT
+"It was the best of times; it was the worst of times.  THE END"
+CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0880 VALUES (0, 1);\n");
+EXEC SQL INSERT INTO T0880 VALUES (0, 1);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0880 CASCADE;\n");
+EXEC SQL DROP TABLE T0880 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0880','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml170.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0880','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0880 *********************/
+/******************** BEGIN TEST0881 ********************/
+flag = 1;
+
+     printf("                  TEST0881\n");
+     printf("    Long character set names, domain names\n");
+     printf("References:\n");
+     printf("    F#25 -- Domain definition\n");
+     printf("    F#39 -- Long identifiers\n");
+     printf("    F#45 -- Character set definition\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE CHARACTER SET\n");
+printf("\"Little boxes on the hillside, Little boxes made of ticky-tacky\"\n");
+printf("GET SQL_TEXT;\n");
+EXEC SQL CREATE CHARACTER SET
+"Little boxes on the hillside, Little boxes made of ticky-tacky"
+GET SQL_TEXT;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE DOMAIN\n");
+printf("\"Little boxes on the hillside, Little boxes all the same.\"\n");
+printf("CHAR (4) CHARACTER SET\n");
+printf("\"Little boxes on the hillside, Little boxes made of ticky-tacky\";\n");
+EXEC SQL CREATE DOMAIN
+"Little boxes on the hillside, Little boxes all the same."
+CHAR (4) CHARACTER SET
+"Little boxes on the hillside, Little boxes made of ticky-tacky";
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("CREATE TABLE T0881 ( C1\n");
+printf("\"Little boxes on the hillside, Little boxes all the same.\"\n");
+printf(");\n");
+EXEC SQL CREATE TABLE T0881 ( C1
+"Little boxes on the hillside, Little boxes all the same."
+);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO T0881 VALUES ('ABCD');\n");
+EXEC SQL INSERT INTO T0881 VALUES ('ABCD');
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+printf("SELECT COUNT(*) INTO :int1 FROM T0881\n");
+printf("  WHERE C1 = 'ABCD';\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM T0881
+  WHERE C1 = 'ABCD';
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0881 CASCADE;\n");
+EXEC SQL DROP TABLE T0881 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP DOMAIN\n");
+printf("\"Little boxes on the hillside, Little boxes all the same.\"\n");
+printf("CASCADE;\n");
+EXEC SQL DROP DOMAIN
+"Little boxes on the hillside, Little boxes all the same."
+CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP CHARACTER SET\n");
+printf("\"Little boxes on the hillside, Little boxes made of ticky-tacky\"\n");
+printf(";\n");
+EXEC SQL DROP CHARACTER SET
+"Little boxes on the hillside, Little boxes made of ticky-tacky"
+;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0881','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml170.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0881','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0881 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

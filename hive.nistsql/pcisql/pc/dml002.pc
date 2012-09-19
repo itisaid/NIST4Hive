@@ -1,0 +1,134 @@
+/*  EMBEDDED C (file "DML002.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML002.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE OPEN STATEMENT IN THE LANGUAGE OF   */
+/*  SQL.  THE FORMAT:                                            */
+/*                   OPEN <cursor name>                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char PNO1[4];
+          char EMPNO1[4];
+          long HOURS1;
+long SQLCODE;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long  i;
+          long  ii;
+          long  iii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml002.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0006 ********************/
+
+     printf("\n                     TEST0006             \n");
+     printf("                OPEN <cursor name>         \n");
+     printf("reference X3.135-1989 section 8.8 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+     printf("   *** EXEC SQL DECLARE X CURSOR \n");
+     printf("   ***      FOR SELECT EMPNUM,HOURS \n");
+     printf("   ***          FROM   WORKS \n");
+     printf("   ***          WHERE  PNUM='P2' \n");
+     printf("   ***          ORDER  BY EMPNUM DESC \n");
+     printf("   *** EXEC SQL OPEN X \n");
+     printf("   *** EXEC SQL OPEN X \n\n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P2'
+              ORDER  BY EMPNUM DESC;
+     EXEC SQL OPEN X;
+     ii = SQLCODE;
+
+     EXEC SQL OPEN X;
+     
+     iii = SQLCODE;
+
+     
+     for (i=0;i<10;i++)
+     {
+     EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+     if (SQLCODE == 0)
+     printf("              EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+     }
+
+     printf("The correct answer should be ii = 0, iii < 0 and ");
+     printf("\n           order by EMPNO1 DESC.\n");
+
+     printf("   ii = %ld, iii = %ld \n",ii,iii);
+
+     if (ii == 0 && iii < 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0006','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0006','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml002.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0006 ********************/
+
+     exit(errcnt);
+
+}
+

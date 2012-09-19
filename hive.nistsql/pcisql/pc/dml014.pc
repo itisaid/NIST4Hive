@@ -1,0 +1,724 @@
+/*  EMBEDDED C (file "DML014.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML014.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE PREDICATES IN COMMON ELEMENT OF THE */
+/*  SQL LANGUAGE.                                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.10 --- 5.17                         */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char PNO1[4];
+    char PNO2[4];
+    char EMPNA1[21];
+    char EMPNA2[21];
+    char CITY1[16];
+    char CITY2[16];
+    long HOURS1;
+    long HOURS2;
+    long i;
+    long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml014.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0045 ********************/
+
+  printf("\n               TEST0045      \n");
+  printf("             between predicate     \n");
+  printf("reference X3.135-1989 section 5.12 General Rules 2) \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT PNUM
+     INTO   :PNO1
+     FROM   PROJ
+     WHERE  BUDGET BETWEEN 40000 AND 60000;
+
+  EXEC SQL SELECT PNUM
+     INTO   :PNO2
+     FROM   PROJ
+     WHERE BUDGET >= 40000 AND BUDGET <= 60000;
+
+  printf("  PNO1 = %s; PNO2 = %s \n\n", PNO1, PNO2);
+  printf("The correct answer should be PNO1=PNO2=P6 \n");
+  
+  if (strncmp(PNO1,"P6",2) == 0 && strncmp(PNO2,"P6",2) == 0)
+    {
+    printf("\n\n                 *** pass ***   \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0045','pass','PC');
+    }
+  else
+    {
+    printf("\n\n       dml014.pc  *** fail ***   \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0045','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("==================================================");
+
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0045 ********************/
+
+/******************** BEGIN TEST0046 ********************/
+
+
+  printf("                 TEST0046      \n");
+  printf("             between predicate     \n");
+  printf("reference X3.135-1989 section 5.12 General Rules 3) \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY1
+     FROM   STAFF
+     WHERE  GRADE NOT BETWEEN 12 AND 13;
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY2
+     FROM   STAFF
+     WHERE  NOT( GRADE BETWEEN 12 AND 13 );
+
+  printf("  CITY1 = %s,  CITY2 = %s \n\n", CITY1, CITY2 );
+  printf("The correct answer should be CITY1=CITY2=Vienna \n");
+
+  if (strncmp(CITY1,"Vienna",6)==0 && strncmp(CITY2,"Vienna",6)==0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0046','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml014.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0046','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("====================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0046 ********************/
+
+/******************** BEGIN TEST0047 ********************/
+
+
+  printf("                TEST0047      \n");
+  printf("              in predicate     \n");
+  printf("reference X3.135-1989 section 5.13 GR 2) x IN S   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT STAFF.EMPNAME
+     INTO   :EMPNA1
+     FROM   STAFF
+     WHERE  STAFF.EMPNUM IN
+          (  SELECT WORKS.EMPNUM
+      FROM   WORKS
+      WHERE  WORKS.PNUM IN
+           (  SELECT PROJ.PNUM
+        FROM   PROJ
+        WHERE  PROJ.CITY='Tampa' ));
+
+  EXEC SQL SELECT STAFF.EMPNAME
+     INTO   :EMPNA2
+     FROM   STAFF
+     WHERE  STAFF.EMPNUM = ANY
+          (  SELECT WORKS.EMPNUM
+      FROM   WORKS
+      WHERE  WORKS.PNUM IN
+           (  SELECT PROJ.PNUM
+        FROM   PROJ
+        WHERE  PROJ.CITY='Tampa' ));
+
+  printf("  EMPNA1 = %s,  EMPNA2 = %s \n\n", EMPNA1, EMPNA2);
+  printf("The correct answer should be EMPNA1=EMPNA2=Alice \n");
+
+  if (strncmp(EMPNA1,"Alice",5)==0 && strncmp(EMPNA2,"Alice",5)==0)
+    {
+     printf("\n\n                 *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0047','pass','PC');
+    }
+  else
+    {
+     printf("\n\n       dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0047','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0047 ********************/
+
+/******************** BEGIN TEST0048 ********************/
+
+
+  printf("                 TEST0048      \n");
+  printf("               in predicate     \n");
+  printf("reference X3.135-1989 section 5.13 GR 2) x NOT IN S\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT WORKS.HOURS
+     INTO   :HOURS1
+     FROM   WORKS
+     WHERE  WORKS.PNUM NOT IN 
+          (  SELECT PROJ.PNUM
+      FROM   PROJ
+      WHERE  PROJ.BUDGET  BETWEEN 5000 AND 40000 );
+
+  EXEC SQL SELECT WORKS.HOURS
+     INTO   :HOURS2
+     FROM   WORKS
+     WHERE  NOT ( WORKS.PNUM IN 
+          (  SELECT PROJ.PNUM
+      FROM   PROJ
+      WHERE  PROJ.BUDGET  BETWEEN 5000 AND 40000 ));
+
+  printf("  HOURS1 = %ld,  HOURS2 = %ld \n\n", HOURS1, HOURS2);
+  printf("The correct answer should be HOURS1=HOURS2=12 \n");
+
+  if (HOURS1 == 12 && HOURS2 == 12)
+    {
+     printf("\n\n                 *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+  VALUES('0048','pass','PC');
+    }
+  else
+    {
+     printf("\n\n       dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+  VALUES('0048','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0048 ********************/
+
+/******************** BEGIN TEST0049 ********************/
+
+  printf("                   TEST0049      \n");
+  printf("                 in predicate     \n");
+  printf("reference X3.135-1989 section 5.13 GR 1) <in value list>\n");
+  printf("     - - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT HOURS
+     INTO   :HOURS1
+     FROM   WORKS
+     WHERE  PNUM NOT IN 
+          ( SELECT PNUM
+      FROM   WORKS
+      WHERE PNUM IN ('P1','P2','P4','P5','P6'));
+
+  EXEC SQL SELECT HOURS
+     INTO   :HOURS2
+     FROM   WORKS
+     WHERE  NOT ( PNUM IN 
+          ( SELECT PNUM
+      FROM   WORKS
+      WHERE PNUM IN ('P1','P2','P4','P5','P6')));
+
+  printf("  HOURS1 = %ld,  HOURS2 = %ld \n\n", HOURS1, HOURS2);
+  printf("The correct answer should be HOURS1=HOURS2=80 \n");
+
+  if ( HOURS1 == 80 && HOURS2 == 80 )
+    {
+     printf("\n\n                 *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+  VALUES('0049','pass','PC');
+    }
+  else
+    {
+     printf("\n\n       dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+  VALUES('0049','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0049 ********************/
+
+/******************** BEGIN TEST0050 ********************/
+
+
+  printf("                   TEST0050      \n");
+  printf("                like predicate     \n");
+  printf("reference X3.135-1989 section 5.14 GR 2) Case b)   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  strcpy(PNO1,"Al%");
+  strcpy(EMPNA1,"xx");
+
+  EXEC SQL SELECT EMPNAME
+     INTO   :EMPNA1
+     FROM   STAFF
+     WHERE  EMPNAME LIKE :PNO1;
+
+  printf("  EMPNA1 = %s, sqlcode = %ld \n\n", EMPNA1,SQLCODE);
+  printf("The correct answer should be EMPNA1=Alice, sqlcode=0 \n");
+
+  if (strncmp(EMPNA1,"Alice",5) == 0 && SQLCODE == 0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0050','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0050','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0050 ********************/
+
+/******************** BEGIN TEST0051 ********************/
+
+
+  printf("                  TEST0051      \n");
+  printf("               like predicate     \n");
+  printf("reference X3.135-1989 section 5.14 GR 2) Case b)    \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT CITY
+      INTO   :CITY1
+     FROM   STAFF
+     WHERE  EMPNAME LIKE 'B__t%';
+
+  printf("  CITY1 = %s \n\n", CITY1);
+  printf("The correct answer should be CITY1=Vienna \n");
+
+  if (strncmp(CITY1,"Vienna",6) == 0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0051','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0051','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0051 ********************/
+
+/******************** BEGIN TEST0052 ********************/
+
+  printf("\n               TEST0052      \n");
+  printf("              like predicate     \n");
+  printf("reference X3.135-1989 section 5.14 GR 2) Case a)   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO STAFF
+    VALUES('E36','Huyan',36,'Xi_an%');
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY2
+     FROM   STAFF
+     WHERE  CITY LIKE 'XiS___S%%'
+     ESCAPE 'S';
+
+  printf(" CITY2 = %s, sqlcode = %ld \n\n", CITY2, SQLCODE);
+  printf("The correct answer should be CITY2=Xi_an%%, sqlcode=0\n");
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (strncmp(CITY2,"Xi_an%",6) == 0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0052','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0052','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0052 ********************/
+
+/******************** BEGIN TEST0053 ********************/
+
+
+
+  printf("                TEST0053      \n");
+  printf("             like predicate     \n");
+  printf("reference X3.135-1989 section 5.14 GR 6)   \n");
+  printf("     - - - - - - - - - - - - - - - - - - \n\n");
+
+  EXEC SQL INSERT INTO STAFF
+    VALUES('E36','Huyan',36,'Xi_an%');
+
+  EXEC SQL SELECT COUNT(*)
+     INTO :i
+     FROM   STAFF
+     WHERE  EMPNUM  NOT LIKE '_36';
+
+  EXEC SQL SELECT COUNT(*)
+     INTO :ii
+     FROM   STAFF
+     WHERE  NOT(EMPNUM  LIKE '_36');
+
+  printf(" i = %ld, ii = %ld \n\n", i, ii);
+  printf("The correct answer should be i = ii = 5 \n");
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (i == 5 && ii == 5)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0053','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0053','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0053 ********************/
+
+/******************** BEGIN TEST0054 ********************/
+
+  printf("                   TEST0054      \n");
+  printf("                null predicate     \n");
+  printf("reference X3.135-1989 section 5.15 General rules 3)   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  EXEC SQL INSERT INTO STAFF
+    VALUES('E36','Huyan',36,NULL);
+
+  EXEC SQL SELECT EMPNAME
+     INTO :EMPNA1
+     FROM STAFF
+     WHERE CITY IS NULL;
+
+  printf("  EMPNA1 = %s \n\n", EMPNA1);
+  printf("The correct answer should be EMPNA1 = Huyan \n");
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (strncmp(EMPNA1,"Huyan",5) == 0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0054','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0054','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0054 ********************/
+
+/******************** BEGIN TEST0055 ********************/
+
+
+  printf("                   TEST0055      \n");
+  printf("               null predicate     \n");
+  printf("reference X3.135-1989 section 5.15 General rules 4)   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  EXEC SQL INSERT INTO STAFF
+    VALUES('E36','Huyan',36,NULL);
+
+  EXEC SQL SELECT COUNT(*)
+     INTO :i
+     FROM STAFF;
+
+  EXEC SQL SELECT COUNT(*)
+     INTO :HOURS1
+     FROM STAFF
+     WHERE CITY IS NOT NULL;
+
+  EXEC SQL SELECT COUNT(*)
+     INTO :HOURS2
+     FROM STAFF
+     WHERE NOT (CITY IS NULL);
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf("HOURS1=%ld,  HOURS2=%ld,  i=%ld \n\n",HOURS1,HOURS2,i);
+  printf("The correct anwser should be HOURS1=HOURS2 & HOURS1=i-1.\n");
+
+  if (i == 6 && HOURS1 == HOURS2 && HOURS1 == (i - 1))
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0055','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0055','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0055 ********************/
+
+/******************** BEGIN TEST0056 ********************/
+
+
+  printf("                   TEST0056      \n");
+  printf("               exist predicate     \n");
+  printf("reference X3.135-1989 section 5.17 General Rules   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT STAFF.EMPNAME
+     INTO   :EMPNA1
+     FROM   STAFF
+     WHERE  NOT EXISTS
+     (  SELECT *
+      FROM   PROJ
+      WHERE  NOT EXISTS
+        ( SELECT *
+          FROM   WORKS
+          WHERE  STAFF.EMPNUM=WORKS.EMPNUM
+          AND    WORKS.PNUM=PROJ.PNUM ));
+
+  printf("  EMPNA1 = %s \n\n", EMPNA1);
+  printf("The correct answer should be EMPNA1 = Alice \n");
+
+  if (strncmp(EMPNA1,"Alice",5) == 0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0056','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml014.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0056','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================\0");
+
+  printf("\n\n\n\n");
+  
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0056 ********************/
+
+/******************** BEGIN TEST0057 ********************/
+
+
+  printf("                   TEST0057      \n");
+  printf("                quantifier ALL     \n");
+  printf("reference X3.135-1989 section 5.16 General Rules   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY1
+     FROM   PROJ
+     WHERE  BUDGET > ALL
+          (  SELECT BUDGET
+      FROM   PROJ
+      WHERE  CITY='Vienna' );
+
+  printf(" CITY1 = %s, sqlcode = %ld \n\n", CITY1, SQLCODE);
+  printf("The correct answer should be CITY1=Deale, sqlcode=0 \n");
+
+  if ( SQLCODE == 0 && strncmp("Deale",CITY1,5) == 0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0057','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml014.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0057','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("====================================================");
+  printf("\n\n\n\n");
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0057 ********************/
+/******************** BEGIN TEST0058 ********************/
+
+  printf("                 TEST0058      \n");
+  printf("                quantifier SOME     \n");
+  printf("reference X3.135-1989 section 5.16 General Rules   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  EXEC SQL SELECT EMPNAME
+     INTO   :EMPNA1
+     FROM   STAFF
+     WHERE  GRADE < SOME
+          (  SELECT BUDGET/1000 - 39 
+      FROM   PROJ
+      WHERE  CITY='Deale' );
+
+  printf(" EMPNA1 = %s, sqlcode = %ld \n\n", EMPNA1, SQLCODE);
+  printf("The correct answer should be EMPNA1=Betty, sqlcode=0\n");
+
+  if (strncmp(EMPNA1,"Betty",5) == 0 && SQLCODE == 0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0058','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml014.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0058','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("====================================================");
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0058 ********************/
+/******************** BEGIN TEST0059 ********************/
+
+  printf("                TEST0059      \n");
+  printf("               quantifier ANY     \n");
+  printf("reference X3.135-1989 section 5.16 General Rules   \n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+  EXEC SQL SELECT EMPNAME
+     INTO   :EMPNA1
+     FROM   STAFF
+     WHERE  GRADE < ANY
+          (  SELECT BUDGET/1000 - 39 
+      FROM   PROJ
+      WHERE  CITY='Deale' );
+
+  printf(" EMPNA1 = %s, sqlcode = %ld \n\n", EMPNA1, SQLCODE);
+  printf("The correct answer should be EMPNA1=Betty, sqlcode=0\n");
+
+  if (strncmp(EMPNA1,"Betty",5) == 0 && SQLCODE == 0)
+    {
+    printf("\n\n                *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0059','pass','PC');
+    }
+  else
+    {
+    printf("\n\n      dml014.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0059','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("====================================================");
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0059 ********************/
+
+  exit(errcnt);
+}
+

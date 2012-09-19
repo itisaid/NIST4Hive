@@ -1,0 +1,347 @@
+/*  EMBEDDED C (file "DML056.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/5/21 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML056.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT ON THE NUMBER OF COLUMNS IN A */
+/*  TABLE(100) AND THE NUMBER OF SET CLAUSES (20) IN AN UPDATE   */
+/*  STATEMENT.                                                   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char t1[3];
+     char t2[3];
+     char t3[3];
+     char t4[3];
+     char t5[3];
+     char t6[3];
+     char t7[3];
+     char t8[3];
+     char t9[3];
+     char t0[3];
+     char s1[3];
+     char s2[3];
+     char s3[3];
+     char s4[3];
+     char s5[3];
+     char s6[3];
+     char s7[3];
+     char s8[3];
+     char s9[3];
+     char s0[3];
+     char r1[3];
+     char r2[3];
+     char r3[3];
+     char r4[3];
+     char r5[3];
+     char r6[3];
+     char r7[3];
+     char r8[3];
+     char r9[3];
+     char r0[3];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  long  code1;
+  long iferr;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml056.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0246 ********************/
+
+  printf("\n          FIPS sizing TEST0246      \n");
+printf("This routine tests the number of values (100) in an INSERT\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  strcpy(s1,"AA");
+  strcpy(s2,"AB");
+  strcpy(s3,"AC");
+  strcpy(s4,"AD");
+  strcpy(s5,"AE");
+  strcpy(s6,"AF");
+  strcpy(s7,"AG");
+  strcpy(s8,"AH");
+  strcpy(s9,"AI");
+  strcpy(s0,"AJ");
+  strcpy(t1,"BA");
+  strcpy(t2,"BB");
+  strcpy(t3,"BC");
+  strcpy(t4,"BD");
+  strcpy(t5,"BE");
+  strcpy(t6,"BF");
+  strcpy(t7,"BG");
+  strcpy(t8,"BH");
+  strcpy(t9,"BI");
+  strcpy(t0,"BJ");
+  strcpy(r1,"CA");
+  strcpy(r2,"CB");
+  strcpy(r3,"CC");
+  strcpy(r4,"CD");
+  strcpy(r5,"CE");
+  strcpy(r6,"CF");
+  strcpy(r7,"CG");
+  strcpy(r8,"CH");
+  strcpy(r9,"CI");
+  strcpy(r0,"CJ");
+  EXEC SQL DELETE FROM T100;
+  EXEC SQL INSERT INTO T100
+    VALUES('ZA','ZB',:r1,'ZC','ZD',:s1,'ZE','ZF',:t1,'ZG',
+           'YA','YB',:r2,'YC','YD',:s2,'YE','YF',:t2,'YG',
+           'XA','XB',:r3,'XC','XD',:s3,'XE','XF',:t3,'XG',
+           'UA','UB',:r4,'UC','UD',:s4,'UE','UF',:t4,'UG',
+           'VA','VB',:r5,'VC','VD',:s5,'VE','VF',:t5,'VG',
+           'WA','WB',:r6,'WC','WD',:s6,'WE','WF',:t6,'WG',
+           'LA','LB',:r7,'LC','LD',:s7,'LE','LF',:t7,'LG',
+           'MA','MB',:r8,'MC','MD',:s8,'ME','MF',:t8,'MG',
+           'NA','NB',:r9,'NC','ND',:s9,'NE','NF',:t9,'NG',
+           'OA','OB',:r0,'OC','OD',:s0,'OE','OF',:t0,'OG');
+
+  code1 = SQLCODE;
+
+  EXEC SQL SELECT C6,C16,C26,C36,C46,C56,
+                  C66,C76,C86,C96,C100
+           INTO :t1,:t2,:t3,:t4,:t5,:t6,:t7,:t8,:t9,
+                 :t0,:s1
+           FROM T100
+           WHERE C1 = 'ZA' AND C2 = 'ZB';
+printf("The correct answer should be:\n");
+printf("                code1 = 0 \n");
+printf("                t1 = AA, t2=AB\n");
+printf("                t3 = AC, t4=AD\n");
+printf("                t5 = AE, t6=AF\n");
+printf("                t7 = AG, t8=AH\n");
+printf("                t9 = AI, t0=AJ\n");
+printf("                s1 = OG \n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld\n",code1);
+printf("                t1 =%s,t2 =%s\n",t1,t2);
+printf("                t3 =%s,t4 =%s\n",t3,t4);
+printf("                t5 =%s,t6 =%s\n",t5,t6);
+printf("                t7 =%s,t8 =%s\n",t7,t8);
+printf("                t9 =%s,t0 =%s\n",t9,t0);
+printf("                s1 =%s\n",s1);
+iferr = 0;
+if (strncmp(t1,"AA",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t2,"AB",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t3,"AC",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t4,"AD",2) != 0) 
+    iferr = iferr + 1;
+if (strncmp(t5,"AE",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t6,"AF",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t7,"AG",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t8,"AH",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t9,"AI",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(t0,"AJ",2) != 0)
+    iferr = iferr + 1;
+if (strncmp(s1,"OG",2) != 0)
+    iferr = iferr + 1;
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && iferr == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0246','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0246','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml056.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0246 ********************/
+
+
+/******************** BEGIN TEST0247 ********************/
+
+  printf("\n          FIPS sizing TEST0247      \n");
+printf("  This routine tests the number of set clauses in an update\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  strcpy(s1,"AA");
+  strcpy(s2,"AB");
+  strcpy(s3,"AC");
+  strcpy(s4,"AD");
+  strcpy(s5,"AE");
+  strcpy(s6,"AF");
+  strcpy(s7,"AG");
+  strcpy(s8,"AH");
+  strcpy(s9,"AI");
+  strcpy(s0,"AJ");
+  strcpy(t1,"BA");
+  strcpy(t2,"BB");
+  strcpy(t3,"BC");
+  strcpy(t4,"BD");
+  strcpy(t5,"BE");
+  strcpy(t6,"BF");
+  strcpy(t7,"BG");
+  strcpy(t8,"BH");
+  strcpy(t9,"BI");
+  strcpy(t0,"BJ");
+  EXEC SQL DELETE FROM T100;
+  EXEC SQL INSERT INTO T100
+    VALUES('ZA','ZB','CA','ZC','ZD',:s1,'ZE','ZF',:t1,'ZG',
+           'YA','YB','CB','YC','YD',:s2,'YE','YF',:t2,'YG',
+           'XA','XB','CC','XC','XD',:s3,'XE','XF',:t3,'XG',
+           'UA','UB','CD','UC','UD',:s4,'UE','UF',:t4,'UG',
+           'VA','VB','CE','VC','VD',:s5,'VE','VF',:t5,'VG',
+           'WA','WB','CF','WC','WD',:s6,'WE','WF',:t6,'WG',
+           'LA','LB','CG','LC','LD',:s7,'LE','LF',:t7,'LG',
+           'MA','MB','CH','MC','MD',:s8,'ME','MF',:t8,'MG',
+           'NA','NB','CJ','NC','ND',:s9,'NE','NF',:t9,'NG',
+           'OA','OB','CK','OC','OD',:s0,'OE','OF',:t0,'OG');
+  EXEC SQL UPDATE T100
+           SET C5 =  :t1,
+               C10 = 'ZP',
+               C15 = :t2,
+               C20 = 'YP',
+               C25 = :t3,
+               C30 = 'XP',
+               C35 = :t4,
+               C40 = 'UP',
+               C45 = :t5,
+               C50 = 'VP',
+               C55 = :t6,
+               C60 = 'WP',
+               C65 = :t7,
+               C70 = 'LP',
+               C75 = :t8,
+               C80 = 'MP',
+               C85 = :t9,
+               C90 = 'NP',
+               C95 = :t0,
+               C100 = 'OP';
+
+  code1 = SQLCODE;
+  EXEC SQL SELECT C5,C20,C35,C40,C55,C60,
+                  C75,C80,C90,C95,C100
+           INTO :s1,:s2,:s3,:s4,:s5,:s6,:s7,:s8,:s9,
+                 :s0,:t1
+           FROM T100
+           WHERE C1 = 'ZA' AND C2 = 'ZB';
+printf("The correct answer should be:\n");
+printf("                code1 = 0 \n");
+printf("                s1 = BA, s2=YP\n");
+printf("                s3 = BD, s4=UP\n");
+printf("                s5 = BF, s6=WP\n");
+printf("                s7 = BH, s8=MP\n");
+printf("                s9 = NP, s0=BJ\n");
+printf("                t1 = OP \n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld\n",code1);
+printf("                s1 =%s,s2 =%s\n",s1,s2);
+printf("                s3 =%s,s4 =%s\n",s3,s4);
+printf("                s5 =%s,s6 =%s\n",s5,s6);
+printf("                s7 =%s,s8 =%s\n",s7,s8);
+printf("                s9 =%s,s0 =%s\n",s9,s0);
+printf("                t1 =%s\n",t1);
+iferr = 0;
+if (strncmp(s1,"BA",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s2,"YP",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s3,"BD",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s4,"UP",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s5,"BF",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s6,"WP",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s7,"BH",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s8,"MP",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s9,"NP",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(s0,"BJ",2) != 0)
+     iferr = iferr + 1;
+if (strncmp(t1,"OP",2) != 0)
+     iferr = iferr + 1;
+EXEC SQL ROLLBACK WORK;
+     if (code1 == 0 && iferr == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0247','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0247','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml056.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0247 ********************/
+
+exit(errcnt);
+}

@@ -1,0 +1,244 @@
+/*  EMBEDDED C (file "DML029.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/04/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML029.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LITERAL IN THE LANGUAGE OF SQL.     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                    SECTION 5.2 <literal>                      */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char PNO1[4];
+          char EMPNO1[4];
+          char SCITY[16];
+          char PCITY[16];
+          long III;
+          long GRADE1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long i;
+          long ii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml029.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0129 ********************/
+
+     printf("\n               TEST0129             \n");
+     printf("reference X3.135-1989 section 5.2 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     EXEC SQL INSERT INTO STAFF
+              VALUES('E8','Yang Ling',15,'Xi''an');
+
+     EXEC SQL SELECT GRADE,CITY
+              INTO   :GRADE1,:SCITY
+              FROM   STAFF
+              WHERE  EMPNUM='E8';
+
+     EXEC SQL ROLLBACK WORK;
+
+
+     printf(" GRADE = %ld,  CITY = %s \n",GRADE1,SCITY);
+     
+     if (strncmp(SCITY,"Xi'an",5) == 0 && GRADE1 == 15)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0129','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0129','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml029.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0129 ********************/
+/******************** BEGIN TEST0130 ********************/
+ 
+     printf("\n               TEST0130             \n");
+     printf("reference X3.135-1989 section 5.2 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/*  CREATE TABLE JJ (FLOATTEST  FLOAT)       */
+
+ 
+     EXEC SQL INSERT INTO JJ
+              VALUES(123.456E3);
+
+     III = 0;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :III
+              FROM   JJ
+              WHERE FLOATTEST > 123455 AND FLOATTEST < 123457;
+
+     i = SQLCODE;
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf(" ### III = %ld (should be 1), sqlcode = %ld \n",III,i);
+
+     if ( i == 0 && III == 1 )
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0130','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0130','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml029.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0130 ********************/
+/******************** BEGIN TEST0131 ********************/
+
+     printf("\n               TEST0131             \n");
+     printf("reference X3.135-1989 section 5.2 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     /*  CREATE TABLE JJ (FLOATTEST  FLOAT)       */
+
+ 
+     EXEC SQL INSERT INTO JJ
+              VALUES(123456E-3);
+
+     III = 0;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :III
+              FROM   JJ
+              WHERE FLOATTEST > 122 AND FLOATTEST < 124;
+
+     ii = SQLCODE;
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf("### III = %ld (should be 1), sqlcode = %ld \n",III,ii);
+
+     if ( ii == 0 && III == 1 )
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0131','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0131','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml029.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0131 ********************/
+
+/******************** BEGIN TEST0182 ********************/
+
+     printf("\n               TEST0182             \n");
+     printf("reference X3.135-1989 section 5.2 General Rules\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+    
+     /*  CREATE TABLE JJ (FLOATTEST  FLOAT)       */
+
+ 
+     EXEC SQL INSERT INTO JJ
+              VALUES(-123456E-3);
+
+     III = 0;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :III
+              FROM   JJ
+              WHERE FLOATTEST > -124 AND FLOATTEST < -122;
+
+     ii = SQLCODE;
+
+     EXEC SQL ROLLBACK WORK;
+
+     printf("### III = %ld (should be 1), ii = %ld \n",III,ii);
+
+     if ( ii == 0 && III == 1 )
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0182','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0182','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml029.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0182 ********************/
+
+     exit(errcnt);
+
+}
+

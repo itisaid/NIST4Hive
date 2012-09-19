@@ -1,0 +1,795 @@
+/*  EMBEDDED C (file "DML093.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/07/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML093.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests the functionality of the VARCHAR (or      */
+/*  CHARACTER VARYING) data type for Transitional SQL.  This     */
+/*  is the Dynamic SQL version of DML092.  To run this test,     */
+/*  you must support features 1, 3, and 6 for TSQL as listed in  */
+/*  FIPS PUB 127-2.                                              */
+/*                                                               */
+/*  VARCHAR is only applicable to C, PLI, and MUMPS.             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char fx1[11];
+char fx2[11];
+char fx3[11];
+VARCHAR x1[11];
+varchar x2[11];
+Varchar x3[11];
+VarChar x4[16];
+VARchaR   x5[5];
+  char part1[61];
+  char part2[61];
+  char part3[61];
+  char part4[61];
+  char part5[15];
+  varchar str254[255];
+  varchar str255[255];
+short indic1;
+short indic2;
+short indic3;
+     char dstmt[51];
+     char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml093.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0566 ********************/
+flag = 1;
+
+     printf("                  TEST0566 \n");
+     printf("    VARCHAR for TSQL:  dynamic version\n");
+     printf("(VARCHAR is only applicable to C, PLI, and MUMPS.)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 3, 6\n");
+     printf("    ANSI SQL-1992 6.1 <data type>\n");
+     printf("                  12.4 Calls to a <procedure>\n");
+     printf("                  9  Data assignment rules\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+     /* This is here to avoid language-dependent problems. */
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'CREATE TABLE VCH1 ('                  ||
+       '  VCH1A CHARACTER VARYING (10),'      ||
+       '  VCH1B CHAR VARYING (10),'           ||
+       '  VCH1C VARCHAR (10))'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+/* See 5.3 SR.9 Note on zero-length strings */
+
+printf("dstmt=\"INSERT INTO VCH1 VALUES ('FOO', '', '0123456789')\"\n");
+     strcpy (dstmt,
+     "INSERT INTO VCH1 VALUES ('FOO', '', '0123456789') ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT VCH1A, VCH1B, VCH1C FROM VCH1\"\n");
+     strcpy (dstmt,
+     "SELECT VCH1A, VCH1B, VCH1C FROM VCH1              ");
+
+printf("PREPARE BLAT1 FROM :dstmt;\n");
+EXEC SQL PREPARE BLAT1 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE BLAT2 CURSOR FOR BLAT1;\n");
+EXEC SQL DECLARE BLAT2 CURSOR FOR BLAT1;
+
+printf("\n");
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x3, "xxxxxxxxxx");
+
+printf("FETCH BLAT2 INTO :x1, :x2, :x3;\n");
+EXEC SQL FETCH BLAT2 INTO :x1, :x2, :x3;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be ''; its value is '%s'\n", x2);
+printf ("x3 should be '0123456789'; its value is '%s'\n\n", x3);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "") != 0)
+  flag = 0;
+if (strcmp (x3, "0123456789") != 0)
+  flag = 0;
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy (fx1, "xxxxxxxxxx");
+strcpy (fx2, "xxxxxxxxxx");
+strcpy (fx3, "xxxxxxxxxx");
+
+printf("FETCH BLAT2 INTO :fx1, :fx2, :fx3;\n");
+EXEC SQL FETCH BLAT2 INTO :fx1, :fx2, :fx3;
+
+fx1[10] = '\0';
+fx2[10] = '\0';
+fx3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+printf ("fx1 should be 'FOO       '; its value is '%s'\n", fx1);
+printf ("fx2 should be '          '; its value is '%s'\n", fx2);
+printf ("fx3 should be '0123456789'; its value is '%s'\n\n", fx3);
+
+if (strcmp (fx1, "FOO       ") != 0)
+  flag = 0;
+if (strcmp (fx2, "          ") != 0)
+  flag = 0;
+if (strcmp (fx3, "0123456789") != 0)
+  flag = 0;
+
+/* 9.1 GR.3.e */
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x5, "xxxx");
+
+printf("x5 is too short.\n");
+printf("FETCH BLAT2 INTO :x1, :x2, :x5;\n");
+EXEC SQL FETCH BLAT2 INTO :x1, :x2, :x5;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x5[4] = '\0';
+
+printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 01004; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be ''; its value is '%s'\n", x2);
+printf ("x5 should be '0123'; its value is '%s'\n\n", x5);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "") != 0)
+  flag = 0;
+if (strcmp (x5, "0123") != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.ii */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO VCH1 VALUES (''FOO'', '   ||
+       '  ''FOO'', ''LITTLETOOLONG'')'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+/* The subclass is significant! */
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.i */
+
+printf("dstmt=\"DELETE FROM VCH1\"\n");
+     strcpy (dstmt,
+     "DELETE FROM VCH1                                  ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'INSERT INTO VCH1 VALUES (''FOO'', '   ||
+       '  ''BAR   '', ''BLANKS       '')'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     longst[240] = '\0';
+
+     printf("longst=\"%s\"\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+
+CHCKOK ();
+printf("\n");
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x5, "xxxx");
+strcpy (x3, "xxxxxxxxxx");
+indic1 = 5;
+indic2 = 5;
+indic3 = 5;
+
+printf("FETCH BLAT2 INTO :x1:indic1, :x5:indic2, :x3:indic3;\n");
+EXEC SQL FETCH BLAT2 INTO :x1:indic1, :x5:indic2, :x3:indic3;
+
+x1[10] = '\0';
+x5[4] = '\0';
+x3[10] = '\0';
+
+printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf("SQLSTATE should be 01004; its value is %s\n\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01004", 5) != 0)
+  flag = 0;
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("indic2 should be 6; its value is %d\n", indic2);
+printf ("indic3 should be 0; its value is %d\n", indic3);
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x5 should be 'BAR '; its value is '%s'\n", x5);
+printf ("x3 should be 'BLANKS    '; its value is '%s'\n\n", x3);
+
+if (indic1 != 0 || indic2 != 6 || indic3 != 0)
+  flag = 0;
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x5, "BAR ") != 0)
+  flag = 0;
+if (strcmp (x3, "BLANKS    ") != 0)
+  flag = 0;
+
+printf("dstmt=\"DELETE FROM VCH1\"\n");
+     strcpy (dstmt,
+     "DELETE FROM VCH1                                  ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+printf("strcpy (x1, \"FOO\");\n");
+printf("strcpy (x2, \"\");\n");
+printf("strcpy (x3, \"0123456789\");\n");
+
+strcpy (x1, "FOO");
+strcpy (x2, "");
+strcpy (x3, "0123456789");
+
+printf("dstmt=\"INSERT INTO VCH1 VALUES (?, ?, ?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO VCH1 VALUES (?, ?, ?)                 ");
+
+printf("PREPARE BLAT3 FROM :dstmt;\n");
+EXEC SQL PREPARE BLAT3 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE BLAT3 USING :x1, :x2, :x3;\n");
+EXEC SQL EXECUTE BLAT3 USING :x1, :x2, :x3;
+
+CHCKOK ();
+printf("\n");
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x3, "xxxxxxxxxx");
+
+printf("FETCH BLAT2 INTO :x1, :x2, :x3;\n");
+EXEC SQL FETCH BLAT2 INTO :x1, :x2, :x3;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be ''; its value is '%s'\n", x2);
+printf ("x3 should be '0123456789'; its value is '%s'\n\n", x3);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "") != 0)
+  flag = 0;
+if (strcmp (x3, "0123456789") != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.ii */
+
+printf("strcpy (x2, \"BAR\");\n");
+strcpy (x2, "BAR");
+printf("strcpy (x4, \"LITTLETOOLONG\");\n");
+strcpy (x4, "LITTLETOOLONG");
+
+printf("dstmt=\"INSERT INTO VCH1 VALUES ('FOO', ?, ?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO VCH1 VALUES ('FOO', ?, ?)             ");
+
+printf("PREPARE BLAT4 FROM :dstmt;\n");
+EXEC SQL PREPARE BLAT4 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE BLAT4 USING :x2, :x4;\n");
+EXEC SQL EXECUTE BLAT4 USING :x2, :x4;
+
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 22001; its value is %s\n\n", SQLSTATE);
+/* The subclass is significant! */
+if (strncmp (SQLSTATE, "22001", 5) != 0)
+  flag = 0;
+
+/* 9.2 GR.3.e.i */
+
+printf("dstmt=\"DELETE FROM VCH1\"\n");
+     strcpy (dstmt,
+     "DELETE FROM VCH1                                  ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+printf("strcpy (x2, \"BAR   \");\n");
+strcpy (x2, "BAR   ");
+printf("strcpy (x4, \"BLANKS       \");\n");
+strcpy (x4, "BLANKS       ");
+
+printf("EXECUTE BLAT4 USING :x2, :x4;\n");
+EXEC SQL EXECUTE BLAT4 USING :x2, :x4;
+
+CHCKOK ();
+printf("\n");
+
+printf("OPEN BLAT2;\n");
+EXEC SQL OPEN BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+strcpy (x1, "xxxxxxxxxx");
+strcpy (x2, "xxxxxxxxxx");
+strcpy (x3, "xxxxxxxxxx");
+
+printf("FETCH BLAT2 INTO :x1, :x2, :x3;\n");
+EXEC SQL FETCH BLAT2 INTO :x1, :x2, :x3;
+
+x1[10] = '\0';
+x2[10] = '\0';
+x3[10] = '\0';
+
+CHCKOK ();
+printf("\n");
+
+printf("CLOSE BLAT2;\n");
+EXEC SQL CLOSE BLAT2;
+
+CHCKOK ();
+printf("\n");
+
+printf ("x1 should be 'FOO'; its value is '%s'\n", x1);
+printf ("x2 should be 'BAR   '; its value is '%s'\n", x2);
+printf ("x3 should be 'BLANKS    '; its value is '%s'\n\n", x3);
+
+if (strcmp (x1, "FOO") != 0)
+  flag = 0;
+if (strcmp (x2, "BAR   ") != 0)
+  flag = 0;
+if (strcmp (x3, "BLANKS    ") != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"DROP TABLE VCH1 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE VCH1 CASCADE                           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0566','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml093.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0566','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0566 *********************/
+/******************** BEGIN TEST0585 ********************/
+flag = 1;
+
+     printf("                  TEST0585 \n");
+     printf("FIPS sizing, VARCHAR (254) strings (dynamic)\n");
+     printf("References:\n");
+     printf("    FIPS PUB 127-2 14.1 Transitional SQL features 1, 3, 6\n");
+     printf("                   16.6 Sizing for database constructs\n");
+     printf("    Test 0222 (DML047)\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("dstmt=\"CREATE TABLE T254 (STR254 CHAR (254))\"\n");
+     strcpy (dstmt,
+     "CREATE TABLE T254 (STR254 CHAR (254))             ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+strcpy(part1,"Two guys were playing golf.  The first guy, who was losing b");
+strcpy(part2,"y one stroke, had the audacity to make a hole-in-one.  Inste");
+strcpy(part3,"ad of having a nervous breakdown, the second guy reached int");
+strcpy(part4,"o his pocket and brought out a bright green golfball.  He sa");
+strcpy(part5,"id, I'll bet y");
+strcpy(str254,part1);
+strcat(str254,part2);
+strcat(str254,part3);
+strcat(str254,part4);
+strcat(str254,part5);
+
+  printf("str254=%s \n\n",str254);
+
+printf("dstmt=\"INSERT INTO T254 VALUES (?)\"\n");
+     strcpy (dstmt,
+     "INSERT INTO T254 VALUES (?)                       ");
+
+printf("PREPARE PT254 FROM :dstmt;\n");
+EXEC SQL PREPARE PT254 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("EXECUTE PT254 USING :str254;\n");
+EXEC SQL EXECUTE PT254 USING :str254;
+
+CHCKOK ();
+printf("\n");
+
+printf("dstmt=\"SELECT * FROM T254\"\n");
+     strcpy (dstmt,
+     "SELECT * FROM T254                                ");
+
+printf("PREPARE UT254 FROM :dstmt;\n");
+EXEC SQL PREPARE UT254 FROM :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE CT254 CURSOR FOR UT254;\n");
+EXEC SQL DECLARE CT254 CURSOR FOR UT254;
+
+printf("\n");
+
+strcpy (str255, "xxxxxx");
+
+printf("OPEN CT254;\n");
+EXEC SQL OPEN CT254;
+
+CHCKOK ();
+printf("\n");
+
+printf("FETCH CT254 INTO :str255;\n");
+EXEC SQL FETCH CT254 INTO :str255;
+str255[254] = '\0';
+
+CHCKOK ();
+printf(" str255=%s \n",str255);
+printf("Should be identical to str254 above.\n\n");
+
+if (strncmp (str254, str255, 254) != 0)
+  flag = 0;
+
+/* FINIS */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+printf("dstmt=\"DROP TABLE T254 CASCADE\"\n");
+     strcpy (dstmt,
+     "DROP TABLE T254 CASCADE                           ");
+
+printf("EXECUTE IMMEDIATE :dstmt;\n");
+EXEC SQL EXECUTE IMMEDIATE :dstmt;
+
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0585','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml093.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0585','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0585 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

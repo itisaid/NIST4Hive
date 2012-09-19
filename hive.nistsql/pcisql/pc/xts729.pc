@@ -1,0 +1,868 @@
+/*  Embedded C (file " XTS729.PC ")                                         */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS729.PC                                                   */
+/*  WRITTEN BY: Manolis Megaloikonomou                           */
+/*                                                               */
+/*  Column name with 19 and 128 characters - regular.            */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.4 -- <column definition>                                */
+/*     5.4 -- <Names and identifiers>                            */
+/*     5.4 GR.4                                                  */
+/*     5.4 SR.3                                                  */
+/*     5.2 -- <token> and <separator>                            */
+/*     5.2 SR.8                                                  */
+/*     5.2 SR.10                                                 */
+/*     5.2 SR.11                                                 */
+/*     5.2 LR.2a -- Raised. Entry SQL restriction which          */
+/*               restricted the length of a <regular identifier> */
+/*               up to 18 <character representation>s.           */
+/*    21.2.9 -- COLUMNS view.                                    */
+/*    F#1    -- Dynamic SQL.                                     */
+/*    F#2    -- Basic information schema.                        */
+/*    F#3    -- Basic schema manipulation.                       */
+/*    F#39   -- Long identifiers.                                */
+/*                                                               */
+/*  DATE LAST ALTERED  14/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 05/12/95:                   */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*         Define cal variable                                   */
+/*         Fix Syntax errors                                     */
+/*         Add ROLLBACK after AUTHID                             */
+/*         print timestamp                                       */
+/*         delete multiple SQLCODE and SQLSTATE initialisation   */
+/*         change string initialisation                          */
+/*         Clean-up database at the end of the test              */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-02-01                                    */
+/*    Fixed SDL transactions                                     */
+/*    Removed untranslatable field widths in printfs             */
+/*    Fixed char string lengths                                  */
+/*    Fixed opening & closing of wrong cursor                    */
+/*    Added whitespace where required in table definition        */
+/*    Make variable names 6 chars                                */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ char aa[150];
+ char bb[11];
+ long cc;
+ long dd;
+ char ee[10];
+ char sqlstm[191];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+short int1;
+short int3;
+char part1[41];
+char part2[41];
+char part3[49];
+char part4[41];
+char part5[41];
+char part6[49];
+char part7[41];
+char part8[41];
+char part9[49];
+char part10[41];
+char part11[41];
+char part12[49];
+char part13[23];
+char str1[129];
+char str2[129];
+char str3[129];
+char str4[129];
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if(strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts729.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf( "\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7029 ********************/
+flag = 1;
+printf("                  TEST7029 \n");
+printf("    Column name with 19 and 128 characters - regular.\n");
+printf("References:\n");
+printf("    11.4    -- <column definition>\n");
+printf("     5.4    -- <Names and identifiers >\n");
+printf("     5.4 GR.4\n");
+printf("     5.4 SR.3\n");
+printf("     5.2    -- <token> and <separator>\n");
+printf("     5.2 SR.8\n");
+printf("     5.2 SR.10\n");
+printf("     5.2 SR.11\n");
+printf("     5.2 LR.2a -- Raised. Entry SQL restriction which\n");
+printf("              restricted the length of a <regular identifier>\n");
+printf("              up to 18 <character representation>s.\n");
+printf("  21.2.9 -- COLUMNS view.\n");
+printf("    F#1  -- Dynamic SQL.\n");
+printf("    F#2  -- Basic information schema.\n");
+printf("    F#3  -- Basic schema manipulation.\n");
+printf("    F#39 -- Long identifiers.\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* Set up long strings for comparison statements */
+strcpy(part1,"COLUMNOFCHARACTERDATATYPE123456789012345");
+strcpy(part2,"6789012345678901234567890123456789012345");
+strcpy(part3,"678901234567890123456789012345678901234567890123");
+strcpy(str1,part1);
+strcat(str1,part2);
+strcat(str1,part3);
+
+strcpy(part4,"columnofcharacterdatatype123456789012345");
+strcpy(part5,"6789012345678901234567890123456789012345");
+strcpy(part6,"67890123456789012345678901234567890123456789012b");
+strcpy(str2,part4);
+strcat(str2,part5);
+strcat(str2,part6);
+
+strcpy(part7,"cOlUmNoFNUMERIC1234567890123456789012345");
+strcpy(part8,"6789012345678901234567890123456789012345");
+strcpy(part9,"6789012345678901234567890123456789012345678901_0");
+strcpy(str3,part7);
+strcat(str3,part8);
+strcat(str3,part9);
+
+strcpy(part10,"CoLuMnOfNUMERIC1234567890123456789012345");
+strcpy(part11,"6789012345678901234567890123456789012345");
+strcpy(part12,"6789012345678901234567890123456789012345678901_1");
+strcpy(str4,part10);
+strcat(str4,part11);
+strcat(str4,part12);
+
+/* Create table */
+/* ensure all columns names are of length 19 */
+/* the first column is to upper case */
+/* the second column is to be lower case */
+/* the third and fourth cols are to combine upper & lower cases & digits */
+printf("CREATE TABLE TESTA6439\n");
+printf("(COLUMNOFCHARACTERSA CHARACTER(10),\n");
+printf(" columnofcharactersb CHARACTER(10),\n");
+printf(" cOlUmNoFNUMERICss_0 NUMERIC(5),\n");
+printf(" cOlUmNoFNUMERICss_1 NUMERIC(5));\n");
+EXEC SQL CREATE TABLE TESTA6439
+        (COLUMNOFCHARACTERSA CHARACTER(10),
+         columnofcharactersb CHARACTER(10),
+         cOlUmNoFNUMERICss_0 NUMERIC(5),
+         cOlUmNoFNUMERICss_1 NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* The NIST programming requirement for a maximum line length cannot */
+/* be met in this test which checks for a column identifier of 128   */
+
+/* Create second table */
+/* Ensure col names are a maximum width of 128 characters */
+printf("CREATE TABLE TESTB6439\n");
+printf("(COLUMNOFCHARACTERDATATYPE12345678901234567890123456789012\n");
+printf("3456789012345678901234567890123456789012345678901234567890\n");
+printf("1234567890123 CHARACTER(3),\n");
+printf("columnofcharacterdatatype123456789012345678901234567890123\n");
+printf("4567890123456789012345678901234567890123456789012345678901\n");
+printf("23456789012b CHARACTER(3),\n");
+printf("cOlUmNoFNUMERIC1234567890123456789012345678901234567890123\n");
+printf("4567890123456789012345678901234567890123456789012345678901\n");
+printf("2345678901_0 NUMERIC(5),\n");
+printf("CoLuMnOfNUMERIC1234567890123456789012345678901234567890123\n");
+printf("4567890123456789012345678901234567890123456789012345678901\n");
+printf("2345678901_1 NUMERIC(5));\n");
+EXEC SQL CREATE TABLE TESTB6439
+(COLUMNOFCHARACTERDATATYPE1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123 CHARACTER(3),
+columnofcharacterdatatype123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012b CHARACTER(3),
+cOlUmNoFNUMERIC123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901_0 NUMERIC(5),
+CoLuMnOfNUMERIC123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901_1 NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTA6439\n");
+printf("VALUES('ABCD','DCBA',1,9999);\n");
+EXEC SQL INSERT INTO CTS1.TESTA6439
+         VALUES('ABCD','DCBA',1,9999);
+CHCKOK();
+printf("\n");
+
+/* Initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+
+printf("SELECT COLUMNOFCHARACTERSA, columnofcharactersb, ");
+printf("cOlUmNoFNUMERICss_0,\n");
+printf("cOlUmNoFNUMERICss_1 INTO :aa, :bb, :cc, :dd FROM CTS1.TESTA6439;\n");
+EXEC SQL SELECT COLUMNOFCHARACTERSA, columnofcharactersb,
+                cOlUmNoFNUMERICss_0, cOlUmNoFNUMERICss_1
+                INTO :aa, :bb, :cc, :dd FROM CTS1.TESTA6439;
+CHCKOK();
+printf("COLUMNOFCHARACTERSA should be ABCD; its value is %s\n", aa);
+printf("columnofcharactersb should be DCBA; its value is %s\n", bb);
+printf("cOlUmNoFNUMERICss_0 should be    1; its value is %ld\n", cc);
+printf("cOlUmNoFNUMERICss_1 should be 9999; its value is %ld\n", dd);
+if(strncmp(aa,"ABCD",4) != 0 || strncmp(bb,"DCBA",4) != 0 )
+   flag = 0;
+if(cc != 1 || dd != 9999)
+   flag = 0;
+printf("\n");
+
+/* Ensure columns in the second table can be referenced correctly */
+printf("INSERT INTO CTS1.TESTB6439\n");
+printf("VALUES('AA','BB',1,2);\n");
+EXEC SQL INSERT INTO CTS1.TESTB6439
+         VALUES('AA','BB',1,2);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTB6439\n");
+printf("VALUES('CC','DD',3,4);\n");
+EXEC SQL INSERT INTO CTS1.TESTB6439
+         VALUES('CC','DD',3,4);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTB6439\n");
+printf("VALUES('EE','FF',5,6);\n");
+EXEC SQL INSERT INTO CTS1.TESTB6439
+         VALUES('EE','FF',5,6);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTB6439\n");
+printf("VALUES('GG','HH',7,8);\n");
+EXEC SQL INSERT INTO CTS1.TESTB6439
+         VALUES('GG','HH',7,8);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTB6439\n");
+printf("VALUES('II','KK',9,0);\n");
+EXEC SQL INSERT INTO CTS1.TESTB6439
+         VALUES('II','KK',9,0);
+CHCKOK();
+printf("\n");
+
+/* Ensure the values stored in the second table can be retrieved correctly */
+
+printf("DECLARE a CURSOR\n");
+printf("FOR SELECT * FROM CTS1.TESTB6439 ORDER BY cOlUmNoFNUMERIC12345\n");
+printf("6789012345678901234567890123456789012345678901234567890123\n");
+printf("456789012345678901234567890123456789012345678901_0;\n\n");
+EXEC SQL DECLARE a CURSOR
+          FOR SELECT * FROM CTS1.TESTB6439
+          ORDER BY cOlUmNoFNUMERIC123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901_0;
+
+printf("OPEN a;\n");
+EXEC SQL OPEN a;
+CHCKOK();
+printf("\n");
+
+/* Re-initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+
+/* Check first value fetched */
+printf("FETCH a INTO :aa, :bb, :cc, :dd;\n");
+EXEC SQL FETCH a INTO :aa, :bb, :cc, :dd;
+CHCKOK();
+printf("COLUMNOFCHARACTERSA should be AA; its value is %s\n", aa);
+printf("columnofcharactersb should be BB; its value is %s\n", bb);
+printf("cOlUmNoFNUMERICss_0 should be  1; its value is %ld\n", cc);
+printf("cOlUmNoFNUMERICss_1 should be  2; its value is %ld\n", dd);
+if(strncmp(aa,"AA",2) != 0 || strncmp(bb,"BB",2) != 0 )
+   flag = 0;
+if(cc != 1 || dd != 2)
+   flag = 0;
+printf("\n");
+
+/* Re-initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+
+/* Check second value fetched */
+printf("FETCH a INTO :aa, :bb, :cc, :dd;\n");
+EXEC SQL FETCH a INTO :aa, :bb, :cc, :dd;
+CHCKOK();
+printf("COLUMNOFCHARACTERSA should be CC; its value is %s\n", aa);
+printf("columnofcharactersb should be DD; its value is %s\n", bb);
+printf("cOlUmNoFNUMERICss_0 should be  3; its value is %ld\n", cc);
+printf("cOlUmNoFNUMERICss_1 should be  4; its value is %ld\n", dd);
+if(strncmp(aa,"CC",2) != 0 || strncmp(bb,"DD",2) != 0 )
+   flag = 0;
+if(cc != 3 || dd != 4)
+   flag = 0;
+printf("\n");
+
+/* Re-initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+
+/* Check third value fetched */
+printf("FETCH a INTO :aa, :bb, :cc, :dd;\n");
+EXEC SQL FETCH a INTO :aa, :bb, :cc, :dd;
+CHCKOK();
+printf("COLUMNOFCHARACTERSA should be EE; its value is %s\n", aa);
+printf("columnofcharactersb should be FF; its value is %s\n", bb);
+printf("cOlUmNoFNUMERICss_0 should be  5; its value is %ld\n", cc);
+printf("cOlUmNoFNUMERICss_1 should be  6; its value is %ld\n", dd);
+if(strncmp(aa,"EE",2) != 0 || strncmp(bb,"FF",2) != 0 )
+   flag = 0;
+if(cc != 5 || dd != 6)
+   flag = 0;
+printf("\n");
+
+/* Re-initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+
+/* Check fourth value fetched */
+printf("FETCH a INTO :aa, :bb, :cc, :dd;\n");
+EXEC SQL FETCH a INTO :aa, :bb, :cc, :dd;
+CHCKOK();
+printf("COLUMNOFCHARACTERSA should be GG; its value is %s\n", aa);
+printf("columnofcharactersb should be HH; its value is %s\n", bb);
+printf("cOlUmNoFNUMERICss_0 should be  7; its value is %ld\n", cc);
+printf("cOlUmNoFNUMERICss_1 should be  8; its value is %ld\n", dd);
+if(strncmp(aa,"GG",2) != 0 || strncmp(bb,"HH",2) != 0 )
+   flag = 0;
+if(cc != 7 || dd != 8)
+   flag = 0;
+printf("\n");
+
+/* Re-initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+
+/* Check fifth value fetched */
+printf("FETCH a INTO :aa, :bb, :cc, :dd;\n");
+EXEC SQL FETCH a INTO :aa, :bb, :cc, :dd;
+CHCKOK();
+printf("COLUMNOFCHARACTERSA should be II; its value is %s\n", aa);
+printf("columnofcharactersb should be KK; its value is %s\n", bb);
+printf("cOlUmNoFNUMERICss_0 should be  9; its value is %ld\n", cc);
+printf("cOlUmNoFNUMERICss_1 should be  0; its value is %ld\n", dd);
+if(strncmp(aa,"II",2) != 0 || strncmp(bb,"KK",2) != 0 )
+   flag = 0;
+if(cc != 9 || dd != 0)
+   flag = 0;
+printf("\n");
+
+printf("CLOSE a;\n");
+EXEC SQL CLOSE a;
+CHCKOK();
+printf("\n");
+
+/* check columns are referenced correctly in the information schema */
+printf("DECLARE b CURSOR\n");
+printf("FOR SELECT COLUMN_NAME, ORDINAL_POSITION FROM \n");
+printf("INFORMATION_SCHEMA.COLUMNS\n");
+printf("WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TESTB6439';\n\n");
+EXEC SQL DECLARE b CURSOR
+         FOR SELECT  COLUMN_NAME, ORDINAL_POSITION
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = 'CTS1' AND TABLE_NAME = 'TESTB6439'
+         ORDER BY ORDINAL_POSITION;
+
+printf("OPEN b;\n");
+EXEC SQL OPEN b;
+CHCKOK();
+printf("\n");
+
+/* Re-initialise host variables */
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+cc = 99;
+
+printf("FETCH b INTO :aa, :cc;\n");
+EXEC SQL FETCH b INTO :aa, :cc;
+CHCKOK();
+printf("aa should be:\n");
+printf("COLUMNOFCHARACTERDATATYPE123456789012345678901234567890123456789\n");
+printf("0123456789012345678901234567890123456789012345678901234567890123\n");
+printf("its value is:\n");
+for(int1 = 0; int1 < 64; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+for(int1 = 64; int1 < 128; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+printf("cc should be 1; its value is %ld\n",cc);
+if(strncmp(aa,str1,128) != 0 || cc != 1)
+   flag = 0;
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+cc = 99;
+
+printf("FETCH b INTO :aa, :cc;\n");
+EXEC SQL FETCH b INTO :aa, :cc;
+CHCKOK();
+printf("aa should be:\n");
+printf("COLUMNOFCHARACTERDATATYPE123456789012345678901234567890123456789\n");
+printf("012345678901234567890123456789012345678901234567890123456789012B\n");
+printf("its value is:\n");
+for(int1 = 0; int1 < 64; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+for(int1 = 64; int1 < 128; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+printf("cc should be 2; its value is %ld\n",cc);
+if(strncmp(aa,str2,128) != 0 || cc != 2)
+   flag = 0;
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+cc = 99;
+
+printf("FETCH b INTO :aa, :cc;\n");
+EXEC SQL FETCH b INTO :aa, :cc;
+CHCKOK();
+printf("aa should be:\n");
+printf("COLUMNOFNUMERIC1234567890123456789012345678901234567890123456789\n");
+printf("01234567890123456789012345678901234567890123456789012345678901_0\n");
+printf("its value is:\n");
+for(int1 = 0; int1 < 64; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+for(int1 = 64; int1 < 128; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+printf("cc should be 3; its value is %ld\n",cc);
+if(strncmp(aa,str3,128) != 0 || cc != 3)
+   flag = 0;
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+cc = 99;
+
+printf("FETCH b INTO :aa, :cc;\n");
+EXEC SQL FETCH b INTO :aa, :cc;
+CHCKOK();
+printf("aa should be:\n");
+printf("COLUMNOFNUMERIC1234567890123456789012345678901234567890123456789\n");
+printf("01234567890123456789012345678901234567890123456789012345678901_1\n");
+printf("its value is:\n");
+for(int1 = 0; int1 < 64; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+for(int1 = 64; int1 < 128; int1++)
+    printf("%c",aa[int1]);
+printf("\n");
+printf("cc should be 4; its value is %ld\n",cc);
+if(strncmp(aa,str4,128) != 0 || cc != 4)
+   flag = 0;
+printf("\n");
+
+printf("CLOSE b;\n");
+EXEC SQL CLOSE b;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Create third table */
+/* dynamically create a table containing columns of length 19 and 128 chars */
+
+/* set up the long string for the host variable :sqlstm */
+strcpy(part1,"CREATE TABLE TESTC6439 (COLUMNOFCHARACTE");
+strcpy(part2,"RSA CHAR(3), COLUMNOFCHARACTERDATATYPE12");
+strcpy(part3,"345678901234567890123456789012345678901234567890");
+strcpy(part4,"1234567890123456789012345678901234567890");
+strcpy(part13,"1234567890123 CHAR(3))");
+strcpy(sqlstm,part1);
+strcat(sqlstm,part2);
+strcat(sqlstm,part3);
+strcat(sqlstm,part4);
+strcat(sqlstm,part13);
+
+printf("sqlstm = CREATE TABLE TESTC6439 (COLUMNOFCHARACTERSA CHAR(3),\n");
+printf("COLUMNOFCHARACTERDATATYPE123456789012345678901234567890123456789\n");
+printf("0123456789012345678901234567890123456789012345678901234567890123");
+printf(" CHAR(3))\n");
+printf("EXECUTE IMMEDIATE :sqlstm;\n");
+EXEC SQL EXECUTE IMMEDIATE :sqlstm;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTC6439\n");
+printf("VALUES('aaa','bbb');\n");
+EXEC SQL INSERT INTO CTS1.TESTC6439
+         VALUES('aaa','bbb');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTC6439\n");
+printf("VALUES('ccc','ddd);\n");
+EXEC SQL INSERT INTO CTS1.TESTC6439
+         VALUES  ('ccc','ddd');
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO CTS1.TESTC6439\n");
+printf("VALUES('eee','fff');\n");
+EXEC SQL INSERT INTO CTS1.TESTC6439
+         VALUES('eee','fff');
+CHCKOK();
+printf("\n");
+
+/* select values from dynamically created table */
+
+printf("DECLARE c CURSOR\n");
+printf("FOR SELECT * FROM CTS1.TESTC6439 ORDER BY COLUMNOFCHARACTERSA;\n\n");
+EXEC SQL DECLARE c CURSOR
+         FOR SELECT * FROM CTS1.TESTC6439
+         ORDER BY COLUMNOFCHARACTERSA;
+
+printf("OPEN c;\n");
+EXEC SQL OPEN c;
+CHCKOK();
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+
+printf("FETCH c INTO :aa, :bb;\n");
+EXEC SQL FETCH c INTO :aa, :bb;
+CHCKOK();
+printf("aa should be aaa; its value is %s\n", aa);
+printf("bb should be bbb; its value is %s\n", bb);
+if(strncmp(aa,"aaa",3) != 0 || strncmp(bb,"bbb",3) != 0)
+   flag = 0;
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+
+printf("FETCH c INTO :aa, :bb;\n");
+EXEC SQL FETCH c INTO :aa, :bb;
+CHCKOK();
+printf("aa should be ccc; its value is %s\n", aa);
+printf("bb should be ddd; its value is %s\n", bb);
+if(strncmp(aa,"ccc",3) != 0 || strncmp(bb,"ddd",3) != 0)
+   flag = 0;
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+
+printf("FETCH c INTO :aa, :bb;\n");
+EXEC SQL FETCH c INTO :aa, :bb;
+CHCKOK();
+printf("aa should be eee; its value is %s\n", aa);
+printf("bb should be fff; its value is %s\n", bb);
+if(strncmp(aa,"eee",3) != 0 || strncmp(bb,"fff",3) != 0)
+   flag = 0;
+printf("\n");
+
+printf("CLOSE c;\n");
+EXEC SQL CLOSE c;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* ADD column to table TESTB6439*/
+printf("ALTER TABLE CTS1.TESTB6439 ADD COLUMN COLUMNOFCHARACTERDATATYPE\n");
+printf("1234567890123456789012345678901234567890123456789012345678\n");
+printf("90123456789012345678901234567890123456789012C CHAR(3);\n");
+EXEC SQL ALTER TABLE CTS1.TESTB6439
+         ADD COLUMN 
+COLUMNOFCHARACTERDATATYPE123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012C CHAR(3);
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* check values can be inserted into new column */
+
+printf("INSERT INTO CTS1.TESTB6439\n");
+printf("VALUES('TTT','TTT',100,100,'ADD');\n");
+EXEC SQL INSERT INTO CTS1.TESTB6439
+         VALUES('TTT','TTT',100,100,'ADD');
+CHCKOK();
+printf("\n");
+
+strcpy(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcat(aa,"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy(bb,"xxxxxxxxxx");
+cc = 99;
+dd = 99;
+strcpy(ee,"xxxxxxxxx");
+
+/* check values inserted correctly */
+printf("SELECT * INTO :aa, :bb, :cc, :dd, :ee FROM CTS1.TESTB6439\n");
+printf("WHERE COLUMNOFCHARACTERDATATYPE123456789012345678901234567\n");
+printf("8901234567890123456789012345678901234567890123456789012345\n");
+printf("67890123456789012C = 'ADD';\n");
+EXEC SQL SELECT * INTO :aa, :bb, :cc, :dd, :ee FROM CTS1.TESTB6439
+         WHERE COLUMNOFCHARACTERDATATYPE123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012C = 'ADD';
+CHCKOK();
+printf("aa should be TTT; its value is %s\n", aa);
+printf("bb should be TTT; its value is %s\n", bb);
+printf("cc should be 100; its value is %ld\n",  cc);
+printf("dd should be 100; its value is %ld\n",  dd);
+printf("ee should be ADD; its value is %s\n", ee);
+if(strncmp(aa,"TTT",3) != 0 || strncmp(bb,"TTT",3) != 0 )
+   flag = 0;
+if(cc != 100 || dd != 100 || strncmp(ee,"ADD",3) != 0)
+   flag = 0;
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* Now clean-up database */
+
+printf("DROP TABLE TESTA6439 CASCADE;\n");
+EXEC SQL DROP TABLE TESTA6439 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE TESTB6439 CASCADE;\n");
+EXEC SQL DROP TABLE TESTB6439 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE TESTC6439 CASCADE;\n");
+EXEC SQL DROP TABLE TESTC6439 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now record results */
+
+     if( flag == 1 )
+       {
+          printf("\n\n       xts729.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7029','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts729.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7029','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST7029 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

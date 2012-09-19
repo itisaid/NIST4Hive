@@ -1,0 +1,408 @@
+/*  EMBEDDED C (file " XTS769.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS769.PC                    TEST 7069                      */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  <Character set specification> of LATIN1 in <literal>         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    10.4    -- <Character set specification>                   */
+/*     5.3    -- <Literal>                                       */
+/*     5.3 SR.6a                                                 */ 
+/*     5.3 SR.6b                                                 */
+/*     5.3 SR.7                                                  */
+/*     F#6  -- VARCHAR data type                                 */
+/*     F#46 -- Named character sets                              */
+/*                                                               */
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 18/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA STATUS : QA CHECK                                         */
+/*                                                               */
+/*  Revised by DWF 1996-02-26                                    */
+/*    Added FIPS notice                                          */
+/*    Removed field widths from printfs                          */
+/*    Moved LATIN1 from CTS1 to this test                        */
+/*    Removed status checks after cursor definition              */
+/*    Fixed variable declarations                                */
+/*    Fixed string lengths                                       */
+/*    Removed coding rule violations                             */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long  SQLCODE;
+char  SQLSTATE[6];
+char  uid[19];
+char  uidx[19];
+char CHARACTER SET LATIN1 c1[11];
+char CHARACTER SET LATIN1 c2[13];
+char CHARACTER SET LATIN1 c3[16];
+long  c4;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS3              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts769.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7069 ********************/
+flag = 1;
+printf("         FIPS TEST7069\n");
+printf("    <Character set specification> of LATIN1 in <literal> \n");    
+printf(" References \n");
+printf("    10.4 -- <Character set specification> \n");
+printf("    5.3  -- <Literal>   \n");
+printf("    5.3  SR.6a      \n");
+printf("    5.3  SR.6b      \n");
+printf("    5.3  SR.7       \n");
+printf("    F#6  -- VARCHAR data type \n");
+printf("    F#46 -- Named character sets\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("Support for LATIN1 is only required by FIPS 127-2,\n");
+printf("not by SQL-92.\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE TABLATIN1\n");
+printf("  ( COL1 CHARACTER(10) CHARACTER SET LATIN1,\n");
+printf("    COL2 CHAR(12)      CHARACTER SET LATIN1,\n");
+printf("    COL3 VARCHAR(15)   CHARACTER SET LATIN1,\n");
+printf("    COL4 NUMERIC(5));\n");
+EXEC SQL CREATE TABLE TABLATIN1
+  ( COL1 CHARACTER(10) CHARACTER SET LATIN1,
+    COL2 CHAR(12)      CHARACTER SET LATIN1,
+    COL3 CHAR(15)   CHARACTER SET LATIN1,
+    COL4 NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO TABLATIN1 VALUES\n");
+printf("(_LATIN1 'NICKOS', _LATIN1 'VASO', _LATIN1 'BILL',2);\n");
+EXEC SQL INSERT INTO TABLATIN1 VALUES
+(_LATIN1 'NICKOS', _LATIN1 'VASO', _LATIN1 'BILL',2);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO TABLATIN1 VALUES\n");
+printf("(_LATIN1 'HELEN', _LATIN1 'JIM', _LATIN1 'ALLOS',5);\n");
+EXEC SQL INSERT INTO TABLATIN1 VALUES
+(_LATIN1 'HELEN', _LATIN1 'JIM', _LATIN1 'ALLOS',5);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO TABLATIN1 VALUES\n");
+printf("(_LATIN1 'LAMIA', _LATIN1 'ISOS', _LATIN1 'ALLOS',3);\n");
+EXEC SQL INSERT INTO TABLATIN1 VALUES
+(_LATIN1 'LAMIA', _LATIN1 'ISOS', _LATIN1 'ALLOS',3);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO TABLATIN1 VALUES\n");
+printf("(_LATIN1 'PAROS', _LATIN1 'MYKONOS', _LATIN1 'ALLOS',4);\n");
+EXEC SQL INSERT INTO TABLATIN1 VALUES
+(_LATIN1 'PAROS', _LATIN1 'MYKONOS', _LATIN1 'ALLOS',4);
+CHCKOK();
+printf("\n");
+
+printf("INSERT INTO TABLATIN1 VALUES\n");
+printf("(_LATIN1 'HULL', _LATIN1 'MYKONOS', _LATIN1 'OFFERTON',6);\n");
+EXEC SQL INSERT INTO TABLATIN1 VALUES
+(_LATIN1 'HULL', _LATIN1 'MYKONOS', _LATIN1 'OFFERTON',6);
+CHCKOK();
+printf("\n");
+
+/* Initialise host variables */
+strcpy(c1,"xxxxxxxxxx");
+strcpy(c2,"xxxxxxxxxxxx");
+strcpy(c3,"xxxxxxxxxxxxxxx");
+c4 = 0;
+
+/* use table CTS3.TABLATIN1 from the standard schema */
+printf("SELECT COL1, COL2, COL3, COL4\n");
+printf("INTO :c1, :c2, :c3, :c4\n");
+printf("FROM TABLATIN1\n");
+printf("WHERE COL1 = _LATIN1'NICKOS';\n");
+EXEC SQL SELECT COL1, COL2, COL3, COL4
+         INTO :c1, :c2, :c3, :c4
+         FROM TABLATIN1
+         WHERE COL1 = _LATIN1'NICKOS';
+CHCKOK(); 
+printf("COL1 should be NICKOS; its value is %s\n",c1);
+printf("COL2 should be   VASO; its value is %s\n",c2);
+printf("COL3 should be   BILL; its value is %s\n",c3);
+printf("COL4 should be      2; its value is %ld\n",c4);
+if (strncmp(c1,"NICKOS",6)!=0 || strncmp(c2,"VASO",4)!=0)
+   flag = 0;
+if (strncmp(c3,"BILL",4)!=0 || c4 != 2)
+   flag = 0;
+printf("\n");
+
+c4 = 0;
+printf("SELECT COUNT(COL2) INTO :c4\n");
+printf("FROM TABLATIN1\n");
+printf("WHERE COL2 = _LATIN1'MYKONOS';\n");
+EXEC SQL SELECT COUNT(COL2) INTO :c4
+         FROM TABLATIN1
+         WHERE COL2 = _LATIN1'MYKONOS';
+CHCKOK(); 
+printf("COUNT(COL2) should be 2; its value is %ld\n",c4);
+if (c4 != 2)
+  flag = 0;
+printf("\n");
+
+/* Initialise host variables */
+strcpy(c1,"xxxxxxxxxx");
+strcpy(c2,"xxxxxxxxxxxx");
+strcpy(c3,"xxxxxxxxxxxxxxx");
+c4 = 0;
+
+printf("DECLARE F CURSOR FOR SELECT COL1,COL2,COL3,COL4\n");
+printf("FROM TABLATIN1 WHERE COL3 = _LATIN1'ALLOS'\n");
+printf("ORDER BY COL4\n\n");
+EXEC SQL DECLARE F CURSOR FOR SELECT COL1, COL2, COL3, COL4
+         FROM TABLATIN1 WHERE COL3 = _LATIN1'ALLOS'
+         ORDER BY COL4;
+
+printf("OPEN F;\n");
+EXEC SQL OPEN F;
+CHCKOK(); 
+printf("\n");
+
+/* fetch the rows that satisfy the <search condition>*/
+/* three in total */
+/* fetch first row */
+printf("FETCH F INTO :c1,:c2,:c3,:c4;\n");
+EXEC SQL FETCH F INTO :c1,:c2,:c3,:c4;
+CHCKOK();
+printf("COL1 should be LAMIA; its value is %s\n",c1);
+printf("COL2 should be  ISOS; its value is %s\n",c2);
+printf("COL3 should be ALLOS; its value is %s\n",c3);
+printf("COL4 should be     3; its value is %ld\n",c4);
+if (strncmp(c1,"LAMIA",5)!=0 || strncmp(c2,"ISOS",4)!=0) 
+   flag = 0;
+if (strncmp(c3,"ALLOS",5)!=0 || c4 != 3)
+   flag = 0;
+printf("\n");
+ 
+/* Initialise host variables */
+strcpy(c1,"xxxxxxxxxx");
+strcpy(c2,"xxxxxxxxxxxx");
+strcpy(c3,"xxxxxxxxxxxxxxx");
+c4 = 0;
+
+printf("FETCH F INTO :c1,:c2,:c3,:c4;\n");
+EXEC SQL FETCH F INTO :c1,:c2,:c3,:c4;
+CHCKOK();
+printf("COL1 should be   PAROS; its value is %s\n",c1);
+printf("COL2 should be MYKONOS; its value is %s\n",c2);
+printf("COL3 should be   ALLOS; its value is %s\n",c3);
+printf("COL4 should be       4; its value is %ld\n",c4);
+if (strncmp(c1,"PAROS",5)!=0 || strncmp(c2,"MYKONOS",7)!=0) 
+   flag = 0;
+if (strncmp(c3,"ALLOS",5)!=0 || c4 != 4)
+   flag = 0;
+printf("\n");
+ 
+/* Initialise host variables */
+strcpy(c1,"xxxxxxxxxx");
+strcpy(c2,"xxxxxxxxxxxx");
+strcpy(c3,"xxxxxxxxxxxxxxx");
+c4 = 0;
+
+printf("FETCH F INTO :c1,:c2,:c3,:c4;\n");
+EXEC SQL FETCH F INTO :c1,:c2,:c3,:c4;
+CHCKOK();
+printf("COL1 should be HELEN; its value is %s\n",c1);
+printf("COL2 should be   JIM; its value is %s\n",c2);
+printf("COL3 should be ALLOS; its value is %s\n",c3);
+printf("COL4 should be     5; its value is %ld\n",c4);
+if (strncmp(c1,"HELEN",5)!=0 || strncmp(c2,"JIM",3)!=0) 
+   flag = 0;
+if (strncmp(c3,"ALLOS",5)!=0 || c4 != 5)
+   flag = 0;
+printf("\n");
+ 
+/* close the cursor */
+printf("CLOSE F;\n");
+EXEC SQL CLOSE F;
+CHCKOK();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+printf("DROP TABLE TABLATIN1 CASCADE;\n");
+EXEC SQL DROP TABLE TABLATIN1 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+ /* record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts769.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7069','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts769.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7069','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7069 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

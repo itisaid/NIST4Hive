@@ -1,0 +1,17 @@
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\cts5sch1.sql
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\cts5sch2.sql
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\cts5sch3.sql
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\cts5sch4.sql
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\cts5sch5.sql
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schem10.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schem11.std
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schem12.std
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema1.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema2.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema3.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema4.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema5.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema6.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema7.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema8.smi
+@ C:\work\shengsheng\src\hive.nistsql\nist\schema\schema9.smi

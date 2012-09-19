@@ -1,0 +1,340 @@
+This file lists test cases developed by NIST for both Version 5 and 6 of
+the SQL Test Suite.  Tests developed by National Computing Centre and
+Computer Logic are documented in file docucts5.txt.
+
+
+=============================================================================
+                         SQL Test Suite Version 5.0
+=============================================================================
+
+
+                            ENTRY TESTS
+                            -----------
+
+The following TESTNOs were assigned to tests that have been retired.
+They are now being left vacant with the intention of assigning them
+to any additional Entry SQL tests that are written in order to keep
+the test numbers for different levels somewhat contiguous:
+
+0541-0553
+0555
+
+ TESTNO   PROGRAM  DESCRIPT                                           AUTHID
+ ----     ------   ================================================== --------
+ 0514     DML141   SQLSTATE 23000: integrity constraint violation     FLATER
+ 0515     DML132   FIPS sizing:  NUMERIC (15) decimal precision       FLATER
+ 0524     DML132   FIPS sizing:  100 Items in a SELECT list           FLATER
+ 0525     DML132   FIPS sizing:  15 Table references in SQL statement FLATER
+ 0526     CDR031   FIPS sizing:  Length FOREIGN KEY column list = 120 FLATER
+ 0527     DML142   Priv. violation:  HU                               HU
+ 0528     DML142   Tables are multi-sets:  cursor operations          HU
+ 0529     DML143   Priv. violation:  SELECT in <insert statement>     FLATER
+-- These three tests are in MPQUICK.TXT and are special, interactive-only.
+ 0530     MPQUIC   Interactive SQL serializability:  dirty read       SULLIVAN1
+ 0531     MPQUIC   Interactive serializability:  non-repeatable read  SULLIVAN1
+ 0539     MPQUIC   Interactive SQL serializability:  phantom read     SULLIVAN1
+
+
+                         TRANSITIONAL TESTS
+                         ------------------
+
+All of these tests are run with AUTHID = FLATER except where noted.  The AUTHID
+column has been removed from the following table to make room for the FIPS
+column, which lists which of the features of FIPS SQL are needed to run a test.
+
+Many of the Transitional tests use <concatenation operator> in an INSERT
+expression, which is F# 21.  We could not keep the line length within the
+necessary constraints without using this feature. TEd can be used to 
+concatenate the lines in most cases.
+
+DML092, DML093, DML129, DML146, DML155, and ISI/IST008 are only
+applicable to C, PL/I, and MUMPS since they test VARCHAR.
+
+      * in FIPS column indicates Integrity Enhancement Feature for X/Open.
+
+ TESTNO   PROGRAM   DESCRIPT                                           FIPS
+ ----     ------    ================================================== --------
+ 0556     DML123    Static insert, dynamic fetch, static commit        1,3
+ 0557     DML123    Static insert, dynamic commit, static rollback     1,3
+ 0558     DML123    Dynamic insert, static delete, dynamic count       1,3
+ 0559     DML123    Static insert, dynamic rollback, static fetch      1,3
+-- MPA010 must be run as FLATER.  MPB010 must be run as HU.
+ 0560     MP?010    Table privileges vs. column privileges             3
+ 0561     DML149    Double SET TRANSACTION                             11
+-- This is the MPQUICK released after V4.0, with authid SULLIVAN1
+ 0562     MPQUIC    Interactive serializability:  ISOLATION MODE       11
+ 0565     DML092    VARCHAR for Transitional SQL                       3,6,10
+ 0566     DML093    VARCHAR for TSQL:  dynamic version               1,3,6,10
+ 0567     DML094    CHAR type in Dynamic SQL                           1,3,10
+ 0576     DML095    NUMERIC type in Dynamic SQL                        1,3,21
+ 0577     DML096    DECIMAL type in Dynamic SQL                        1,3,21
+ 0578     DML097    INTEGER and SMALLINT types in Dynamic SQL          1,3,21
+ 0579     DML098    FIPS sizing, Dynamic SQL exact numerics            1,3
+ 0580     DML098    FIPS sizing, Dynamic SQL approximate numerics      1,3
+ 0581     DML099    Implicit numeric casting (feature 9) dynamic       1,3,9
+ 0582     DML099    Implicit numeric casting (feature 9) static        3,9
+ 0583     DML099    FIPS sizing, Dynamic SQL character strings         1,3
+ 0584     DML092    FIPS sizing, VARCHAR (254) strings (static)        3,6
+ 0585     DML093    FIPS sizing, VARCHAR (254) strings (dynamic)       1,3,6
+ 0586     DML098    Sizing of FLOAT in a descriptor (dynamic)          1,3
+ 0587     DML100    SET TR READ ONLY / READ WRITE (static)             3,11
+ 0588     DML101    SET TR READ ONLY / READ WRITE (dynamic)            1,11
+-- MPA013 and MPB013 must be run by SULLIVAN1.
+ 0589     MPA013    SET TR ISOLATION LEVEL (static)                    3,11,19*
+-- MPA012 and MPB012 must be run by SULLIVAN1.
+ 0590     MPA012    SET TR ISOLATION LEVEL (dynamic)                 1,3,11,19*
+-- DML102 and DML103 are alternative ("old") code for MP?013 and MP?012.
+-- You have to run two copies of DML102 and DML103; they are concurrency tests.
+-- 0589 is only partly static because it is a CTS program and the CTS is
+-- dynamic.
+ 0589     DML102    SET TR ISOLATION LEVEL (partly static)           1,3,11,19*
+ 0590     DML103    SET TR ISOLATION LEVEL (dynamic)                 1,3,11,19*
+ 0591     DML104    NATURAL JOIN (feature 4) (static)                  3,4
+ 0592     DML104    INNER JOIN (feature 4) (static)                    3,4
+ 0593     DML104    LEFT OUTER JOIN (feature 4) (static)               3,4
+ 0594     DML104    RIGHT OUTER JOIN (feature 4) (static)              3,4
+ 0595     DML105    NATURAL JOIN (feature 4) (dynamic)                 1,3,4
+ 0596     DML105    INNER JOIN (feature 4) (dynamic)                   1,3,4
+ 0597     DML105    LEFT OUTER JOIN (feature 4) (dynamic)              1,3,4
+ 0598     DML105    RIGHT OUTER JOIN (feature 4) (dynamic)             1,3,4
+ 0599     DML106    UNION in views (feature 8) (static)                3,8
+ 0600     DML107    UNION in views (feature 8) (dynamic)               1,3,8
+ 0601     DML106    DATETIME data types (feature 5) (static)           3,5
+ 0602     DML107    DATETIME data types (feature 5) (dynamic)          1,3,5
+ 0603     IST001    INFO_SCHEM.TABLES definition                       2,17,23
+ 0604     IST002    INFO_SCHEM.VIEWS definition                        2
+ 0605     IST003    INFO_SCHEM.COLUMNS definition                      2,3*
+ 0606     IST004    INFO_SCHEM.SCHEMATA definition                     2,17
+ 0607     IST005    INFO_SCHEM.TABLE_PRIVILEGES definition             2,23
+ 0608     IST006    INFO_SCHEM.COLUMN_PRIVILEGES definition            2,23
+ 0609     IST007    Orphaned IS data structures, Transitional SQL      2,17,23
+ 0610     IST008    VARCHAR in INFO_SCHEM                              2,6
+ 0611     DML106    FIPS sizing, DATETIME data types (static)          3,5
+ 0612     DML107    FIPS sizing, DATETIME data types (dynamic)         1,3,5
+ 0613     DML106    <datetime value function> (static)                 3,5,20
+ 0614     DML107    <datetime value function> (dynamic)                1,3,5,20
+ 0615     DML106    DATETIME-related SQLSTATE codes (static)           3,5,20
+ 0616     DML107    DATETIME-related SQLSTATE codes (dynamic)          1,3,5,20
+ 0617     DML108    DATETIME with predicates, set fns (static)         3,5,20
+ 0618     DML109    DATETIME with predicates, set fns (dynamic)        1,3,5,20
+ 0619     DML110    DATETIME cursor operations (static)                3,5,20
+ 0620     DML111    DATETIME cursor operations (dynamic)               1,3,5,20
+ 0621     DML112    DATETIME NULLs (static)                            3,5,8,20
+ 0622     DML113    DATETIME NULLs (dynamic)                         1,3,5,8,20
+ 0623     DML112    OUTER JOINs with NULLs and empty tables (static)   3,4
+ 0624     DML113    OUTER JOINs with NULLs and empty tables (dynamic)  1,3,4
+ 0625     DML112    ADD COLUMN and DROP COLUMN (static)                3*
+ 0626     DML113    ADD COLUMN and DROP COLUMN (dynamic)               1,3*
+-- MPA010 must be run as FLATER.  MPB010 must be run as HU.
+ 0627     MP?010    <grant statement> (static)                         3
+ 0628     MP?010    <revoke statement> (static)                        3
+-- MPA011 must be run as FLATER.  MPB011 must be run as HU.
+ 0629     MP?011    <grant statement> (dynamic)                        1,3
+ 0630     MP?011    <revoke statement> (dynamic)                       1,3
+ 0631     DML112    Datetimes in a <default clause> (static)         3,5,21,22*
+ 0632     DML113    Datetimes in a <default clause> (dynamic)      1,3,5,21,22*
+ 0633     DML112    TRIM function (static)                             3,7
+ 0634     DML113    TRIM function (dynamic)                            1,3,7
+ 0635     DML114    Feature 13, grouped operations (static)            3,13
+ 0636     DML115    Feature 13, grouped operations (dynamic)           1,3,13
+ 0637     DML114    Feature 14, Qualified * in select list (static)    3,14
+ 0638     DML115    Feature 14, Qualified * in select list (dynamic)   1,3,14
+ 0639     DML114    Feature 15, Lowercase Identifiers (static)         3,15
+ 0640     DML115    Feature 15, Lowercase Identifiers (dynamic)        1,3,15
+ 0641     DML114    Feature 16, PRIMARY KEY enhancement (static)       3,16*
+ 0642     DML115    Feature 16, PRIMARY KEY enhancement (dynamic)      1,3,16*
+ 0643     DML133    Feature 17, Multiple schemas per user              17
+-- This test will require special compilation.  DMA116 and DMB116 are
+-- effectively separate modules from DML116.  DML116 invokes procedures that
+-- are in DMA116 and DMB116.  There are language-dependent declarations in
+-- each module.
+ 0644     DML116    Feature 18, Multiple module support                3,18
+          DMA116
+          DMB116
+ 0645     DML117    Feature 19, Referential delete actions (static)    3,16,19*
+ 0646     DML118    Feature 19, Referential delete actions (dynamic) 1,3,16,19*
+ 0647     DML119    Feature 20, CAST functions (static)                3,20,21
+ 0648     DML120    Feature 20, CAST functions (dynamic)            1,3,9,20,21
+ 0649     DML121    Feature 22, Explicit defaults (static)             3,22*
+ 0650     DML122    Feature 22, Explicit defaults (dynamic)            1,3,22*
+ 0651     DML121    Feature 24, Keyword relaxations (static)           3,24
+ 0652     DML122    Feature 24, Keyword relaxations (dynamic)          1,3,24
+-- DML124 must be run as HU.
+ 0653     DML124    Descriptors:  DESCRIBE OUTPUT                      1,3
+ 0654     DML124    Descriptors:  INTO SQL DESCRIPTOR                  1,3
+ 0655     DML124    Descriptors:  USING SQL DESCRIPTOR                 1,3
+ 0656     DML124    Descriptors:  datetimes                            1,3,5
+ 0657     DML125    Descriptors:  VARCHAR                              1,3,6
+ 0658     DML125    Descriptors:  SQLSTATE codes                       1
+ 0659     DML125    Descriptors:  TSQL orphaned features               1
+ 0660     DML126    Dynamic SQL SQLSTATEs                              1
+ 0661     DML121    Errata:  datetime casting (static)                 3,5,20
+ 0662     DML122    Errata:  datetime casting (dynamic)                1,3,5,20
+ 0663     DML121    Errata:  datetime SQLSTATEs (static)               3,5
+ 0664     DML122    Errata:  datetime SQLSTATEs (dynamic)              1,3,5
+ 0665     DML127    Diagnostics:  statement information                12
+ 0666     DML127    Diagnostics:  condition information                12,21
+ 0667     DML152    Diagnostics:  access violations                    12
+ 0668     DML152    Diagnostics:  COMMAND_FUNCTION (static)            12
+ 0669     DML152    Diagnostics:  COMMAND_FUNCTION F# 3, 11            3,11,12
+ 0670     DML126    Diagnostics:  COMMAND_FUNCTION (dynamic)           1,12
+ 0671     DML126    Diagnostics:  DYNAMIC_FUNCTION                     1,12
+ 0672     DML152    Diagnostics:  Multiple conditions                  3,11,12
+ 0673     DML152    Diagnostics SQLSTATE:  inv. cond. number           12
+ 0674     DML128    Diagnostics:  TSQL orphaned features               12
+ 0675     DML128    Diagnostics:  MORE                                 3,11,12
+ 0676     DML129    Diagnostics:  VARCHAR                              6,12,21
+ 0677     DML129    VARCHAR with <like predicate>                      3,6
+ 0678     DML130    Data type semantics with NULL / NOT NULL           3,10
+ 0679     DML130    INFO_SCHEM:  Table data types                      2,3*
+ 0680     DML130    INFO_SCHEM:  View data types                       2,3
+ 0681     DML129    INFO_SCHEM:  Varchar data types                    2,3,6
+ 0682     DML130    INFO_SCHEM:  Datetime data types                   2,3,5*
+ 0683     DML131    INFO_SCHEM:  Changes are visible                   2,3
+ 0684     DML131    INFO_SCHEM:  Visibility to other users             2
+ 0685     DML131    INFO_SCHEM:  Privileges and privilege views        2,3,23
+ 0686     DML131    INFO_SCHEM:  Primary key enh. is not null          2,3,16*
+ 0687     DML131    INFO_SCHEM:  Multiple schemas per user             2,17
+ 0688     DML134    INFO_SCHEM:  Dynamic changes are visible           1,2,3
+ 0689     DML134    Many Trans SQL features #1:  inventory system
+                                                          1,3,4,6,7,8,16,21,24*
+ 0690     DML134    Many Trans SQL features #2:  talk show schedule
+                                                             3,5,6,16,20,21,24*
+ 0691     DML134    INFO_SCHEM:  SQLSTATEs for length overruns         2,3*
+ 0692     DML135    Many TSQL features #3:  enhanced proj/works
+                                                         1,3,13,15,16,19,22,24*
+ 0693     DML135    Many TSQL features #4:  enhanced INFO_SCHEM
+                                                            2,3,4,5,11,15,22,24
+ 0694     DML135    Interval Arithmetic and Casts                      3,5,20
+ 0695     DML135    <updatability clause> in <declare cursor>          11
+ 0696     DML136    Many TSQL features #5:  Video Game Scores
+                                                         1,3,4,5,11,12,14,20,24
+ 0697     DML137    Erratum:  drop behavior, constraints (static)      3*
+ 0698     DML138    Erratum:  drop behavior, constraints (dynamic)     1,3*
+-- 0699 must be run as HU.
+ 0699     DML139    <drop behavior> on a REVOKE (static)               3
+
+0700-0727  X/Open V5 Entry / Transitional extensions
+0728-0828  NCC Intermediate tests
+
+-- 0829 must be run as HU.
+ 0829     DML140    <drop behavior> on a REVOKE (dynamic)              1,3
+ 0834     DML144    <length expression> (static)                       3,6
+ 0835     DML144    <character substring function> (static)            3,6
+ 0836     DML145    <length expression> (dynamic)                      1,3,6
+ 0837     DML145    <character substring function> (dynamic)           1,3,6
+ 0838     DML146    <character substring function> varchar             3,6
+ 0839     DML144    Composed <length expression> and SUBSTRING         3,6
+ 0840     DML147    Roll back schema manipulation                      3
+ 0841     DML147    Multiple-join and default order of joins           4
+ 0842     DML147    Multi-column joins                                 3,4
+ 0843     DML148    Ordering of column names in joins                  4
+ 0844     DML148    Outer join predicates                              3,4
+ 0845     DML150    Parameters and indicators in dynamic SQL statement 1,20
+ 0846     DML149    Feature 20, CAST functions (static) nits           3,20,21
+-- MPA009 and MPB009 must be run by SULLIVAN1.
+ 0847     MP?009    Dynamic SQL:  serializability                      1
+ 0848     DML153    Query spec with subquery is now updatable          3,11
+
+
+                                FLAGGING TESTS
+                                --------------
+
+ TESTNO   PROGRAM   DESCRIPT                                           AUTHID
+ ----     ------    ================================================== --------
+-- FLG010 is not applicable in module language.
+ 0830     FLG010    FIPS Flagger - WHENEVER SQLWARNING                 FLATER
+ 0831     FLG011    FIPS Flagger - ADD (column, ...)                   FLATER
+ 0832     FLG012    FIPS Flagger - CREATE INDEX                        FLATER
+-- FLG013 is not applicable in module language.
+ 0833     FLG013    FIPS Flagger - INCLUDE SQLCA                       FLATER
+
+
+
+=============================================================================
+                         SQL Test Suite Version 6.0
+=============================================================================
+
+
+                            ENTRY TESTS
+                            -----------
+
+ 0851     ADA010    Errata:  SQL_STANDARD changed to Interfaces.SQL    HU
+ 0853     DML151    Exceptions not affecting position of cursor        FLATER
+-- ADA011 tests optional claims of conformance
+ 0871     ADA011    Errata:  Interfaces.SQL.Numerics                   HU
+
+
+                         TRANSITIONAL TESTS
+                         ------------------
+
+ 0849     DML154  Descriptors:  datetime length in positions         1,3,5
+--  0850 is C/PLI/MUMPS.
+ 0850     DML155  Comparing fixed vs. variable length char strings   3,6
+ 0852     DML154  Transitive grant in COLUMN_PRIV, TABLE_PRIV        2,3,23
+ 0854     DML154  Informational:  mixing SDL and DML                 3
+ 0855     DML156  Dynamic SQL syntax errors                          1,5,6,7
+ 0856     DML157  Transitional Schema Definition                     5,6,17,20*
+-- DML158 must be run as HU.
+ 0857     DML158  <join condition> set function, outer reference     4
+ 0858     DML159  ? (dyn parm spec) in <having clause>               1
+ 0863     DML162  <joined table> directly contained in cursor, view  3,4
+-- ADA012 tests optional claims of conformance
+ 0872     ADA012  Errata:  Interfaces.SQL.Varying                    3,6
+ 0898     DML185  COLUMN_DEFAULT interpretation                      2,3,5,20
+
+
+                         INTERMEDIATE TESTS
+                         ------------------
+
+ 0568     ISI001  INFORMATION_SCHEMA.TABLES definition               2,39
+ 0569     ISI002  INFORMATION_SCHEMA.VIEWS definition                2,39
+ 0570     ISI003  INFORMATION_SCHEMA.COLUMNS definition              2,25,39
+ 0571     ISI004  INFORMATION_SCHEMA.SCHEMATA definition             2,17,39
+ 0572     ISI005  INFORMATION_SCHEMA.TABLE_PRIVILEGES definition     2,23,39
+ 0573     ISI006  INFORMATION_SCHEMA.COLUMN_PRIVILEGES definition    2,23,39
+ 0574     ISI007  Orphaned IS data structures, Intermediate SQL   2,17,23,25,39
+ 0575     ISI008  VARCHAR in INFORMATION_SCHEMA                      2,6,39
+ 0859     DML160  <joined table> contained in <select list>          4,47
+ 0860     DML160  Domains over various data types             5,6,8,17,20,25,41
+ 0861     DML161  CURRENT_USER, SESSION_USER, SYSTEM_USER                32
+ 0862     DML161  CURRENT_USER etc. with set session authid              32
+ 0864     DML163  Intermediate Dynamic SQL syntax errors              1,26,27
+ 0865     DML163  Result data types for case expressions                 26
+ 0866     DML163  Case expressions in other than SELECT                26,48
+ 0867     DML164  LIKE enhancements:  keyword search                   27,28
+ 0868     DML164  More <unique predicate>                                29
+ 0869     DML164  More table operations                                  30
+ 0870     DML165  Non-identical descriptors in UNION                     30
+ 0873     DML166  Dynamic schema creation                                31
+ 0874     DML167  INFORMATION_SCHEMA catalog columns                     35
+ 0875     DML167  INFORMATION_SCHEMA column coverage                     35
+ 0876     DML168  SQL_IDENTIFIER and CHARACTER_DATA domains             25,35
+ 0877     DML169  Intermediate DB, Flag at Entry level                   37
+ 0878     DML168  Keyword COLUMN in ALTER TABLE is optional              38
+ 0879     DML168  <drop table constraint definition>                    38,49
+ 0880     DML170  Long constraint names, cursor names                   39,49
+ 0881     DML170  Long character set names, domain names              25,39,45
+ 0882     DML171  More full outer join                                   40
+-- ADA013 tests optional claims of conformance
+ 0883     ADA013  Errata:  Interfaces.SQL.Varying.NCHAR                  42
+ 0884     DML172  ASCII_FULL and SQL_TEXT in column definition           46
+ 0897     DML184  Constraint usage redux                              32,34,49
+
+Intermediate Sizing
+ 0885     DML173  FIPS sizing, CHAR (1000)                               27
+ 0886     DML174  FIPS sizing, VARCHAR (1000)	                         27
+ 0887     DML175  FIPS sizing, NCHAR (500)                              27,42
+ 0888     DML176  FIPS sizing, NCHAR VARYING (500)                      27.42
+ 0889     DML177  FIPS sizing, INTEGER binary prec >= 31
+ 0890     DML177  FIPS sizing, SMALLINT binary prec >= 15
+ 0891     DML178  FIPS sizing, 250 columns, 4000 char data statement
+ 0892     DML179  FIPS sizing, rowlen >= 8000, statement var >= 4000     27
+ 0893     DML180  FIPS sizing, descriptor occurrences >= 100
+ 0894     DML181  FIPS sizing, length of column lists >= 750             27
+ 0895     DML182  FIPS sizing, columns in list >= 15
+ 0896     DML183  FIPS sizing, 50 WHEN clauses in a CASE expression      26
+ 0899     DML186  FIPS sizing, INTERVAL decimal leading field precision
+
+********************************************************************
+

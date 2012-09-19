@@ -1,0 +1,189 @@
+/*  EMBEDDED C (file "MPB008.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/31 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPB008.PC                                                    */
+/*  WRITTEN BY: David W. Flater                                  */
+/*                                                               */
+/*  THIS PROGRAM IS PART B OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      4.28  SQL-transactions                                   */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   char uid[19];
+   long knum;
+   char uidx[19];
+EXEC SQL END DECLARE SECTION;
+   long i;
+   long j;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+   long code1;
+   long pauze;
+   long pauze2;
+   long loops;
+   long flcnt;
+   long mxfail;
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpb008.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+  pauze = 1;
+  loops = 1;
+  flcnt = 0;
+  mxfail = 50;
+
+/******************** BEGIN TEST0517 ********************/
+
+     printf("\n                TEST0517 \n");
+     printf("  Transactions serializable:  Twins Problem\n");
+printf("Reference ANSI SQL-1992 section 4.28  SQL-transactions\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** This program is part B of a two-part\n");
+printf ("*** program (A & B).\n");
+
+printf ("\n\n This is Program B which starts after Program A... \n\n");
+
+/*                       -----Synchronization----- */
+P105:
+   knum = 0;
+   EXEC SQL SELECT COUNT(*)
+        INTO :knum
+        FROM MP8_NEXTKEY WHERE AUTHOR = 'A';
+
+   EXEC SQL COMMIT WORK;
+
+/* are we in sync? */
+
+   if (knum == 0)
+      {      
+        printf("   PLEASE start program MPA008!!!   \n\n");
+        goto P105;
+      }  
+
+P106:  
+   code1 = 0;
+   EXEC SQL INSERT INTO MP8_NEXTKEY (KEYNUM,AUTHOR)
+            VALUES(2, 'B');
+   if (SQLCODE != 0)
+        code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0)
+        code1 = 1;
+   if (code1 != 0)
+     {
+        EXEC SQL ROLLBACK WORK;
+        printf("Retrying synchronization logic.\n");
+        goto P106;
+     }
+   
+/* YES, we are in sync! */
+    
+    printf("Transaction B Starts!!  \n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("\n");
+    printf("IF this test lasts too long, DEADLOCK\n");
+    printf("has taken place, STOP this test!\n");
+
+    printf("\n");
+    printf("This part of the test loops continuously trying to\n");
+    printf("insert a duplicate row into MP8_AA.  If it succeeds,\n");
+    printf("there has been a serializability or unique constraint\n");
+    printf("failure.\n");
+    printf("\n");
+
+P101:
+    printf("INSERT INTO MP8_AA VALUES (3,'B');\n");
+    EXEC SQL INSERT INTO MP8_AA VALUES (3,'B');
+    if (SQLCODE < 0)
+      goto P120;
+
+    printf("COMMIT WORK;\n");
+    EXEC SQL COMMIT WORK;
+    if (SQLCODE >= 0)
+      goto P166;
+
+P120:
+    flcnt = flcnt + 1;
+    if (flcnt > mxfail)
+      goto P180;
+    printf("*** Negative SQLCODE (Deadlock or UNIQUE violation?) ***\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("Restarting transaction\n");
+    EXEC SQL ROLLBACK WORK;
+    goto P101;
+
+P180:
+    printf("\n");
+    printf("Maximum number of negative SQLCODEs exceeded\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("THIS IS CORRECT BEHAVIOR FOR THIS TEST.\n");
+    EXEC SQL ROLLBACK WORK;
+    goto P198;
+
+P166:
+    printf("\n");
+    /* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+    printf("TRANSACTION COMPLETED--THIS SHOULD NOT HAVE HAPPENED!!\n");
+          printf("\n\n       mpb008.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0517','fail','PC');
+          errcnt = errcnt + 1;
+    EXEC SQL COMMIT WORK;
+
+P198:
+    printf("\n\n");
+    printf("====================================================\n\n");
+
+/******************** END TEST0517 ********************/
+    
+    exit(errcnt);
+}

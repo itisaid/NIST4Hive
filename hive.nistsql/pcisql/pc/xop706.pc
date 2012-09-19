@@ -1,0 +1,250 @@
+/*  EMBEDDED C (file "XOP706.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/05/05 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP706.PC                                                    */
+/*  WRITTEN BY: Colin O'Driscoll                                 */
+/*                                                               */
+/*  CREATE INDEX on at least 6 columns. This tests that CREATE   */
+/*  INDEX can reference at least 6 table columns.                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open CAE SQL Specification                           */
+/*        Section 7.1.2b Limits                                  */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   02/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+
+/* nosubclass variables */
+char NORMSQ[6];
+char ALPNUM[37];
+long norm1;
+long norm2;
+
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation defined    */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+
+norm1 = 2;
+/* subclass begins in position 3 of char array NORMSQ    */
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+    NORMSQ[norm1] = '0';
+    }
+
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+goto P213;
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+   {
+      if (NORMSQ[norm1] == ALPNUM[norm2])
+              NORMSQ[norm1] = '0';
+                  }
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-z */
+   {
+      if (NORMSQ[norm1] == ALPNUM[norm2])
+     NORMSQ[norm1] = '0';
+   }
+
+   /* implementation-defined subclasses are allowed for warnings */
+   /* (class = 01). These equate to successful completion */
+   /* SQLSTATE values of 00000. */
+   /* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+
+   if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+       NORMSQ[1] = '0';
+P213:
+     return;
+
+}
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) == 0 &&
+strncmp (NORMSQ, SQLSTATE, 5) != 0)
+printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+
+
+main()
+{
+
+
+     strcpy(uid,"XOPEN1");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop706.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* initialise NOSUBCLASS comparison variable */
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0706 ********************/
+
+     printf("\n                     TEST 0706             \n");
+     printf("\nX/O,CREATE INDEX on at least 6 columns\n");
+     printf(" X/Open CAE SQL Specification Sec. 7.1.2b\n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("### CREATE INDEX ALPHA ON INDEXLIMIT(COL4 DESC, COL5,\n");
+     printf("###    COL1, COL2, COL3, COL6);\n");
+     printf("### CREATE INDEX ALPHA ON INDEXLIMIT(COL4 DESC, COL5,\n");
+     printf("###    COL1, COL2, COL3, COL6);\n");
+     printf("\n\n=================================================\n");
+
+     EXEC SQL DELETE FROM INDEXLIMIT;
+     EXEC SQL COMMIT WORK;
+
+     errflg = 0;
+/*  CREATE TABLE INDEXLIMIT(COL1 CHAR(2), COL2 CHAR(2),                 */
+/*                         COL3 CHAR(2), COL4 CHAR(2),       */
+/*                         COL5 CHAR(2), COL6 CHAR(2),       */
+/*                         COL7 CHAR(2));                    */
+
+     EXEC SQL INSERT INTO INDEXLIMIT
+           VALUES('AA', 'BB', 'CC', 'DD', 'EE', 'FF', 'GG');
+
+     EXEC SQL INSERT INTO INDEXLIMIT
+           VALUES('BB', 'CC', 'DD', 'EE', 'FF', 'GG', 'HH');
+
+     EXEC SQL INSERT INTO INDEXLIMIT
+           VALUES('CC', 'DD', 'EE', 'FF', 'GG', 'HH', 'II');
+     
+     EXEC SQL COMMIT WORK;
+
+     strcpy(SQLSTATE,"x");
+
+     EXEC SQL CREATE INDEX ALPHA ON INDEXLIMIT(COL4 DESC, COL5,COL1, COL2,
+      COL3,COL6);
+
+     CHCKOK();
+     if (strncmp(NORMSQ,"00000",5) != 0) 
+     {
+     printf ("*** Problem found (TEST STEP NUMBER 1) ! *** \n");
+        errflg = errflg + 1;
+        }
+
+     EXEC SQL COMMIT WORK;
+     printf("\n\n=================================================\n");
+
+     strcpy(SQLSTATE,"x");
+
+     EXEC SQL CREATE INDEX ALPHA ON INDEXLIMIT(COL4 DESC, COL5,COL1, COL2,
+      COL3,COL6);
+
+     SQLSTATE[5] = '\0';
+
+     printf("SQLSTATE should be 'S0011', it is %s\n",SQLSTATE);
+        if (strncmp(SQLSTATE, "S0011", 5) != 0)
+        {
+        printf ("*** Problem found (TEST STEP NUMBER 2) ! *** \n");
+        errflg = errflg + 1;
+        }
+     EXEC SQL COMMIT WORK;
+
+
+     printf("\n\n=================================================\n");
+
+     EXEC SQL DROP INDEX ALPHA;
+     EXEC SQL COMMIT WORK;
+
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 2 ###\n");
+
+ if (errflg == 0)
+ {
+   EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0706','pass','PC');
+ printf("\n\n       xop706.pc   *** pass ***     ");
+ }
+   else
+ {
+   EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0706','fail','PC');
+ errcnt = errcnt + 1;
+ printf("\n\n       xop706.pc  *** fail ***     ");
+ }
+
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0706 ********************/
+
+     exit(errcnt);
+
+}
+

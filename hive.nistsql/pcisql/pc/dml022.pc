@@ -1,0 +1,506 @@
+/*  EMBEDDED C (file "DML022.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML022.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SUBQUERY OF THE SQL LANGUAGE.       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.24 <subquery>                       */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char     EMPNO1[4];
+     char     EMPNA1[21];
+     short    GRADE1;
+     char     SCITY[16];
+     char     WEMP[4];
+     char     WPNUM[4];
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+     long    i;
+     long    ii;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml022.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0096 ********************/
+
+printf("                    TEST0096 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 1) \n"); 
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** Use of function in subquery. \n"); 
+printf ("          *** SELECT EMPNUM \n");
+printf ("          *** FROM STAFF \n");
+printf ("          *** WHERE GRADE < \n");
+printf ("          ***    (SELECT MAX(GRADE) \n");
+printf ("          ***     FROM STAFF) \n");
+EXEC SQL DECLARE S5 CURSOR FOR
+          SELECT EMPNUM
+          FROM STAFF
+          WHERE GRADE <
+             (SELECT MAX(GRADE)
+              FROM STAFF);
+EXEC SQL OPEN S5;
+i=0;
+if (SQLCODE == 0)
+     printf ("          EMPNUM \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S5 INTO
+               :EMPNO1;
+     if (SQLCODE == 0)
+       {
+          printf ("          %s\n",EMPNO1);
+          i = i + 1;
+       }
+     }
+EXEC SQL CLOSE S5;
+
+printf("     Here i should be 3; i=%ld \n",i);
+if (i==3)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0096','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0096','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0096 ********************/
+/******************** BEGIN TEST0097 ********************/
+ 
+
+printf("                    TEST0097 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 1) \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** SELECT * \n");
+printf ("          *** FROM STAFF \n");
+printf ("          *** WHERE GRADE <= \n");
+printf ("          ***    (SELECT AVG(GRADE)-1 \n");
+printf ("          ***     FROM STAFF) \n");
+EXEC SQL DECLARE S6 CURSOR FOR
+          SELECT *
+          FROM STAFF
+          WHERE GRADE <=
+             (SELECT AVG(GRADE)-1
+              FROM STAFF);
+EXEC SQL OPEN S6;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     SNAME          GRADE     CITY \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S6 INTO
+               :EMPNO1,:EMPNA1,:GRADE1,:SCITY;
+     if (SQLCODE == 0)
+       {
+          printf ("%s     %s     %d     %s\n",EMPNO1,EMPNA1,GRADE1,SCITY);
+          i = i + 1;
+       }
+     }
+EXEC SQL CLOSE S6;
+
+printf("     Here i should be 1; i=%ld \n",i);
+if (i==1)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0097','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0097','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0097 ********************/
+/******************** BEGIN TEST0098 ********************/
+ 
+printf("                    TEST0098 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 2) \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** Simple subquery. \n"); 
+printf ("          *** SELECT EMPNAME \n");
+printf ("          *** FROM STAFF \n");
+printf ("          *** WHERE EMPNUM IN \n");
+printf ("          ***    (SELECT EMPNUM \n");
+printf ("          ***     FROM WORKS \n");
+printf ("          ***     WHERE PNUM = 'P2') \n");
+EXEC SQL DECLARE S1 CURSOR FOR
+          SELECT EMPNAME
+          FROM STAFF
+          WHERE EMPNUM IN
+             (SELECT EMPNUM
+              FROM WORKS
+              WHERE PNUM = 'P2');
+EXEC SQL OPEN S1;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNAME \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S1 INTO
+               :EMPNA1;
+     if (SQLCODE == 0)
+       {
+          printf ("%s\n",EMPNA1);
+          i = i + 1;
+       }
+     }
+EXEC SQL CLOSE S1;
+
+printf("     Here i should be 4; i=%ld \n",i);
+if (i==4)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0098','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0098','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0098 ********************/   
+/******************** BEGIN TEST0099 ********************/
+ 
+printf("                    TEST0099 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 2) \n"); 
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("          ***Subquery with multiple levels of nesting. \n"); 
+printf ("          *** SELECT EMPNAME \n");
+printf ("          *** FROM STAFF \n");
+printf ("          *** WHERE EMPNUM IN \n");
+printf ("          ***    (SELECT EMPNUM \n");
+printf ("          ***     FROM WORKS \n");
+printf ("          ***     WHERE PNUM IN \n");
+printf ("          ***        (SELECT PNUM \n");
+printf ("          ***         FROM PROJ \n");
+printf ("          ***         WHERE PTYPE = 'Design')) \n");
+EXEC SQL DECLARE S2 CURSOR FOR
+          SELECT EMPNAME
+          FROM STAFF
+          WHERE EMPNUM IN
+             (SELECT EMPNUM
+              FROM WORKS
+              WHERE PNUM IN
+                 (SELECT PNUM
+                  FROM PROJ
+                  WHERE PTYPE = 'Design'));
+EXEC SQL OPEN S2;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNAME \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S2 INTO
+               :EMPNA1;
+     if (SQLCODE == 0)
+       {
+          printf ("%s\n",EMPNA1);
+          i = i + 1;
+       }
+     }
+EXEC SQL CLOSE S2;
+
+printf("     Here i should be 3; i=%ld \n",i);
+if (i==3)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0099','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0099','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0099 ********************/   
+/******************** BEGIN TEST0100 ********************/
+ 
+
+printf("                    TEST0100 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 2) \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("*** SELECT EMPNUM, EMPNAME \n");
+printf ("*** FROM STAFF \n");
+printf ("*** WHERE EMPNUM IN \n");
+printf ("***    (SELECT EMPNUM \n");
+printf ("***     FROM WORKS \n");
+printf ("***     WHERE PNUM IN \n");
+printf ("***        (SELECT PNUM \n");
+printf ("***         FROM PROJ \n");
+printf ("***         WHERE PTYPE IN \n");
+printf ("***            (SELECT PTYPE \n");
+printf ("***             FROM PROJ \n");
+printf ("***             WHERE PNUM IN \n");
+printf ("***                (SELECT PNUM \n");
+printf ("***                 FROM WORKS \n");
+printf ("***                 WHERE EMPNUM IN \n");
+printf ("***                    (SELECT EMPNUM \n");
+printf ("***                     FROM WORKS \n");
+printf ("***                     WHERE PNUM IN \n");
+printf ("***                        (SELECT PNUM \n");
+printf ("***                         FROM PROJ \n");
+printf ("***                         WHERE PTYPE = 'Design')))))) \n");
+EXEC SQL DECLARE S3 CURSOR FOR
+          SELECT EMPNUM, EMPNAME 
+          FROM STAFF 
+          WHERE EMPNUM IN 
+             (SELECT EMPNUM 
+              FROM WORKS 
+              WHERE PNUM IN 
+                 (SELECT PNUM 
+                  FROM PROJ 
+                  WHERE PTYPE IN 
+                     (SELECT PTYPE 
+                      FROM PROJ 
+                      WHERE PNUM IN 
+                         (SELECT PNUM 
+                          FROM WORKS 
+                          WHERE EMPNUM IN 
+                             (SELECT EMPNUM 
+                              FROM WORKS 
+                              WHERE PNUM IN 
+                                 (SELECT PNUM 
+                                  FROM PROJ 
+                                  WHERE PTYPE = 'Design'))))));
+EXEC SQL OPEN S3;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM     EMPNAME          \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S3 INTO
+               :EMPNO1,:EMPNA1;
+     if (SQLCODE == 0)
+       {
+          printf ("%s     %s\n",EMPNO1,EMPNA1);
+          i = i + 1;
+       }
+     }
+EXEC SQL CLOSE S3;
+
+printf("     Here i should be 4; i=%ld \n",i);
+if (i==4)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0100','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0100','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0100 ********************/
+/******************** BEGIN TEST0101 ********************/
+ 
+
+printf("                    TEST0101 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 3) \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("     *** use of GROUP BY in subquery. \n");
+printf ("     *** SELECT EMPNUM,PNUM \n");
+printf ("     *** FROM   WORKS \n");
+printf ("     *** WHERE  HOURS <= ALL \n");
+printf ("     ***     (SELECT  AVG(HOURS) \n");
+printf ("     ***      FROM    WORKS \n");
+printf ("     ***      GROUP BY PNUM) \n");
+
+EXEC SQL DECLARE S22 CURSOR FOR
+          SELECT EMPNUM,PNUM
+          FROM   WORKS
+          WHERE  HOURS <= ALL
+               (SELECT AVG(HOURS)
+                FROM   WORKS
+                GROUP BY PNUM);
+EXEC SQL OPEN S22;
+i=0;
+if (SQLCODE == 0)
+     printf ("               EMPNUM     PNUM \n");
+for (ii=1;ii<20;ii++)
+     {
+       EXEC SQL FETCH S22 INTO :WEMP,:WPNUM;
+       if (SQLCODE == 0)
+          {
+            printf("          %s     %s\n",WEMP,WPNUM);
+            i = i + 1;
+          }
+     }
+EXEC SQL CLOSE S22;
+
+printf("     Here i should be 2; i=%ld \n",i);
+if (i==2)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0101','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0101','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0101 ********************/
+/******************** BEGIN TEST0102 ********************/
+ 
+
+printf("                    TEST0102 \n");
+printf("  Reference ANSI X3.135-1989 5.24 <subquery> GR 3) \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** SELECT DISTINCT EMPNUM \n");
+printf ("          *** FROM WORKS WORKSX \n");
+printf ("          *** WHERE NOT EXISTS \n");
+printf ("          ***    (SELECT * \n");
+printf ("          ***     FROM WORKS WORKSY \n");
+printf ("          ***     WHERE EMPNUM = 'E2' \n");
+printf ("          ***     AND NOT EXISTS \n");
+printf ("          ***         (SELECT * \n");
+printf ("          ***          FROM WORKS WORKSZ \n");
+printf ("          ***          WHERE WORKSZ.EMPNUM = WORKSX.EMPNUM \n");
+printf ("          ***          AND WORKSZ.PNUM = WORKSY.PNUM)) \n");
+EXEC SQL DECLARE S11 CURSOR FOR
+          SELECT DISTINCT EMPNUM
+          FROM WORKS WORKSX
+          WHERE NOT EXISTS
+             (SELECT *
+              FROM WORKS WORKSY
+              WHERE EMPNUM = 'E2'
+              AND NOT EXISTS
+                  (SELECT *
+                   FROM WORKS WORKSZ
+                   WHERE WORKSZ.EMPNUM = WORKSX.EMPNUM
+                   AND WORKSZ.PNUM = WORKSY.PNUM));
+EXEC SQL OPEN S11;
+i=0;
+if (SQLCODE == 0)
+     printf ("EMPNUM \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH S11 INTO
+               :EMPNO1;
+     if (SQLCODE == 0)
+       {
+          printf ("%s\n",EMPNO1);
+          i = i + 1;
+       }
+     }
+EXEC SQL CLOSE S11;
+
+printf("     Here i should be 2; i=%ld \n",i);
+if (i==2)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0102','pass','PC');
+     }
+else
+     {
+       printf("\n\n     dml022.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0102','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("====================================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0102 ********************/
+
+exit(errcnt);
+
+}

@@ -1,0 +1,139 @@
+/*  EMBEDDED C (file "CCC008.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC008.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*  THIS ROUTINE TESTS ALLOWABLE PLACEMENT OF SQL STATEMENTS     */
+/*  IN FUNCTIONS, INCLUDING RECURSIVE FUNCTIONS                  */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.168-1989                          */
+/*                                                               */
+/*                 SECTION 9.4  <embedded SQL C program>         */
+/*                                                               */
+/*****************************************************************/
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+    long SQLCODE;
+    int errcnt;
+/* date_time declaration */
+time_t cal;
+
+main()
+{
+    long count1,get_num();
+    long cnt6;
+EXEC SQL BEGIN DECLARE SECTION;
+        char uid[19];
+        char uidx[19];
+EXEC SQL END DECLARE SECTION;
+
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, ccc008.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0291 ********************/
+
+    printf("   Allowable placement of SQL statement\n");
+    printf("Reference X3.168-1989 section 4.2 GR \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0291     \n");
+    printf("    Reference 4.2 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+EXEC SQL DELETE FROM FF;
+printf(" Start recursive function\n");
+cnt6 = fac(3);
+printf(" Get number of rows in Table FF via a function\n");
+count1 = get_num();
+printf(" Function finished\n");
+printf("\n");
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("          count1 = 2\n");
+printf("          cnt6 = 6\n");
+printf(" Your answer is :\n");
+
+printf("        count1 = %ld\n",count1);
+printf("        cnt6 = %ld\n",cnt6);
+if (count1 == 2 && cnt6 == 6)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0291','pass','PC');
+      }
+    else
+      {
+      printf("\n     ccc008.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0291','fail','PC');
+      errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0291 ********************/
+
+
+
+exit(errcnt);
+}
+
+
+long get_num()
+{
+      EXEC SQL BEGIN DECLARE SECTION;
+      long cnt;
+      EXEC SQL END DECLARE SECTION;
+      EXEC SQL SELECT COUNT(*) INTO :cnt FROM FF;
+      return(cnt);
+}
+
+int fac(nn)
+int nn;
+{
+      int mid;
+      EXEC SQL BEGIN DECLARE SECTION;
+      long tmp;
+      EXEC SQL END DECLARE SECTION;
+     if (nn == 1)
+         return(1);
+     else
+         {
+             tmp = nn;
+             EXEC SQL INSERT INTO FF
+                      VALUES(:tmp);
+             mid = nn * fac(nn-1);
+             return(mid);
+         }
+}

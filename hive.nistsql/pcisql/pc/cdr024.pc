@@ -1,0 +1,384 @@
+/*  EMBEDDED C (file "CDR024.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR024.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE <DEFAULT CLAUSE> IN COLUMN DEFINI-  */
+/*  TION.                                                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.3                                       */
+/*                <column definition>::=                         */
+/*                          <column name><data type>             */
+/*                          [<default clause>]                   */
+/*                          [<column constrait>...]              */
+/*             SECTION 6.4                                       */
+/*                <default clause>::=                            */
+/*                          DEFAULT {<literal>|USER|NULL}        */ 
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+char SEX1[2];
+char NICK1[21];
+char INSUR1[6];
+long BODY1;
+long MAX1;
+long MIN1;
+long CNT;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+long flag;
+
+main()
+
+{
+     strcpy(uid,"SUN");
+     AUTHID(uid); 
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr024.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0385 ********************/
+/* This program tests if character string default       */
+/* values of columns can be properly set.               */
+
+printf("\n                     TEST0385             \n");
+printf("           Char. column default value    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("        DELETE FROM CHAR_DEFAULT;\n");
+printf("\n");
+printf("        INSERT INTO CHAR_DEFAULT(SEX_CODE)\n");
+printf("        VALUES ('M');\n");
+printf("                \n");
+printf("        \n");
+printf("        SELECT NICKNAME, INSURANCE1 INTO :NICK1, :INSUR1 \n");
+printf("        FROM CHAR_DEFAULT\n");
+printf("        WHERE SEX_CODE = 'M';\n");
+printf("\n");
+printf("        INSERT INTO CHAR_DEFAULT(NICKNAME, INSURANCE1)\n");
+printf("        VALUES ('Piggy', 'Kaise');\n");
+printf("                \n");
+printf("        \n");
+printf("        SELECT SEX_CODE INTO :SEX1 \n");
+printf("        FROM CHAR_DEFAULT\n");
+printf("        WHERE INSURANCE1 = 'Kaise';\n");
+
+strcpy(INSUR1, "NV");
+strcpy(NICK1, "NV");
+strcpy(SEX1," ");
+EXEC SQL DELETE FROM CHAR_DEFAULT;
+
+EXEC SQL INSERT INTO CHAR_DEFAULT(SEX_CODE)
+        VALUES ('M');
+                
+        
+EXEC SQL SELECT NICKNAME, INSURANCE1 INTO :NICK1, :INSUR1 
+        FROM CHAR_DEFAULT
+        WHERE SEX_CODE = 'M';
+
+EXEC SQL INSERT INTO CHAR_DEFAULT(NICKNAME, INSURANCE1)
+        VALUES ('Piggy', 'Kaise');
+                
+        
+EXEC SQL SELECT SEX_CODE INTO :SEX1 
+        FROM CHAR_DEFAULT
+        WHERE INSURANCE1 = 'Kaise';
+
+printf("The correct result is :\n");
+printf("           SEX1 = F, NICK1 = No nickname given\n");
+printf("           INSUR1 = basic\n");
+printf("Your answer is :\n");
+printf("           SEX1 = %s, NICK1 = %s\n",SEX1, NICK1);
+printf("           INSUR1 = %s\n",INSUR1);
+if (strncmp(SEX1,"F",1) == 0 && strncmp(NICK1,"No nickname given",17) == 0)
+   {
+      flag = 1; 
+   }
+else  
+   {
+      flag = 0;
+   }
+if (flag == 1 && strncmp(INSUR1,"basic",5) == 0)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0385','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0385','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr024.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /****************** END TEST0385 ************************/
+
+
+/******************** BEGIN TEST0386 ********************/
+/* This program tests if exact numeric default values   */
+/* of columns can be properly set.                      */
+
+printf("\n                     TEST0386             \n");
+printf("          Exact numeric column default value    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE FROM EXACT_DEF;\n");
+printf("\n");
+printf("        INSERT INTO EXACT_DEF\n");
+printf("        VALUES (98.3, -55556, .000001);\n");
+printf("\n");
+printf("        INSERT INTO EXACT_DEF(BODY_TEMP)\n");
+printf("        VALUES (99.0);\n");
+printf("                \n");
+printf("        \n");
+printf("        INSERT INTO EXACT_DEF(MAX_NUM, MIN_NUM)\n");
+printf("        VALUES (100, .2);\n");
+printf("                \n");
+printf("        \n");
+printf("        SELECT COUNT(*) INTO :CNT \n");
+printf("        FROM EXACT_DEF\n");
+printf("        WHERE BODY_TEMP = 99.0 AND \n");
+printf("        MAX_NUM = -55555 AND MIN_NUM = .000001\n");
+printf("        OR BODY_TEMP = 98.6 AND MAX_NUM = 100 AND MIN_NUM = .2;\n");
+
+CNT = 0;
+EXEC SQL DELETE FROM EXACT_DEF;
+
+EXEC SQL INSERT INTO EXACT_DEF
+        VALUES (98.3, -55556, .000001);
+
+EXEC SQL INSERT INTO EXACT_DEF(BODY_TEMP)
+        VALUES (99.0);
+                
+        
+EXEC SQL INSERT INTO EXACT_DEF(MAX_NUM, MIN_NUM)
+        VALUES (100, .2);
+                
+        
+EXEC SQL SELECT COUNT(*) INTO :CNT 
+        FROM EXACT_DEF
+        WHERE BODY_TEMP = 99.0 AND 
+        MAX_NUM = -55555 AND MIN_NUM = .000001
+        OR BODY_TEMP = 98.6 AND MAX_NUM = 100 AND MIN_NUM = .2;
+
+printf("The correct result is :\n");
+printf("       CNT = 2\n");
+printf("Your answer is :\n");
+printf("       CNT = %ld\n",CNT);
+
+if (CNT == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0386','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0386','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr024.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /********************* END TEST0386 ********************/
+
+
+
+/******************** BEGIN TEST0387 ********************/
+/* This program tests if approximate numeric default    */
+/* values of columns can be properly set.               */
+
+printf("\n                     TEST0387             \n");
+printf("          Approximate numeric column default value \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+
+printf("\n");
+printf("        DELETE FROM APPROX_DEF;\n");
+printf("\n");
+printf("        INSERT INTO APPROX_DEF(X_COUNT)\n");
+printf("        VALUES (5.0E5);\n");
+printf("                \n");
+printf("        INSERT INTO APPROX_DEF\n");
+printf("        VALUES (1.78E11, -9.9E10, 3.45E-10, 7.6777E-7);\n");
+printf("        \n");
+printf("        INSERT INTO APPROX_DEF(Y_COUNT, Z_COUNT, ZZ_COUNT)\n");
+printf("        VALUES (1.0E3, 2.0E4, 3.8E6);\n");
+printf("        \n");
+printf("        SELECT COUNT(*) INTO :CNT\n");
+printf("        FROM APPROX_DEF\n");
+printf("        WHERE (Y_COUNT BETWEEN -9.991E10 AND -9.989E10) AND\n");
+printf("              (Z_COUNT BETWEEN 3.44E-11 AND 3.46E-11) AND\n");
+printf("              (ZZ_COUNT BETWEEN -7.6778E-7 AND -7.6776E-7) OR\n");
+printf("              (X_COUNT BETWEEN 1.77E12 AND 1.79E12);\n");
+printf("\n");
+CNT = 0;
+EXEC SQL DELETE FROM APPROX_DEF;
+
+EXEC SQL INSERT INTO APPROX_DEF(X_COUNT)
+        VALUES (5.0E5);
+                
+EXEC SQL INSERT INTO APPROX_DEF
+        VALUES (1.78E11, -9.9E10, 3.45E-10, 7.6777E-7);
+        
+EXEC SQL INSERT INTO APPROX_DEF(Y_COUNT, Z_COUNT, ZZ_COUNT)
+        VALUES (1.0E3, 2.0E4, 3.8E6);
+                
+        
+EXEC SQL SELECT COUNT(*) INTO :CNT
+        FROM APPROX_DEF
+        WHERE (Y_COUNT BETWEEN -9.991E10 AND -9.989E10) AND
+              (Z_COUNT BETWEEN 3.44E-11 AND 3.46E-11) AND
+              (ZZ_COUNT BETWEEN -7.6778E-7 AND -7.6776E-7) OR
+              (X_COUNT BETWEEN 1.77E12 AND 1.79E12);
+
+printf("The correct result is :\n");
+printf("       CNT = 2\n");
+printf("Your answer is :\n");
+printf("       CNT = %ld\n",CNT);
+
+if (CNT == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0387','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0387','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr024.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /****************** END TEST0387 **********************/
+
+
+
+/******************** BEGIN TEST0388 ********************/
+/* This program tests if the FIPS sizing default values */
+/* of columns can be properly set.                      */
+
+printf("\n                     TEST0388             \n");
+printf("          Default value sizing test\n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("        DELETE FROM SIZE_TAB;\n");
+printf("\n");
+printf("        INSERT INTO SIZE_TAB(COL1) VALUES(\n");
+printf("         'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnop\n");
+printf("          qrstuvwxyz0123456789012');\n");
+printf("                \n");
+printf("        INSERT INTO SIZE_TAB(COL2, COL3, COL4)\n");
+printf("        VALUES (-999888777, 987654321.123456, -1.45E22);\n");
+printf("\n");
+printf("        INSERT INTO SIZE_TAB\n");
+printf("        VALUES('ABCDEFG', 7,7,-1.49E22);\n");
+printf("        \n");
+printf("        DECLARE MOON CURSOR FOR \n");
+printf("        SELECT COUNT(*)  FROM SIZE_TAB\n");
+printf("        WHERE COL4 BETWEEN -1.46E22 AND -1.048575E22\n");
+printf("        GROUP BY COL1, COL2, COL3;\n");
+printf("\n");
+CNT = 0;
+EXEC SQL DELETE FROM SIZE_TAB;
+
+EXEC SQL INSERT INTO SIZE_TAB(COL1) VALUES(
+'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz0123456789012');
+                
+EXEC SQL INSERT INTO SIZE_TAB(COL2, COL3, COL4)
+        VALUES (-999888777, 987654321.123456, -1.45E22);
+        
+EXEC SQL DECLARE MOON CURSOR FOR 
+        SELECT COUNT(*)  FROM SIZE_TAB
+        WHERE COL4 BETWEEN -1.46E22 AND -1.048575E22
+        GROUP BY COL1, COL2, COL3;
+
+EXEC SQL INSERT INTO SIZE_TAB
+        VALUES('ABCDEFG', 7,7,-1.49E22);
+
+EXEC SQL OPEN MOON;
+EXEC SQL FETCH MOON INTO :CNT;
+EXEC SQL CLOSE MOON;
+
+printf("The correct result is :\n");
+printf("     CNT = 2 \n");
+printf("Your answer is :\n");
+printf("     CNT = %ld\n", CNT);
+
+if (CNT == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0388','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0388','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr024.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /******************** END TEST0388 *********************/
+
+
+     exit(errcnt);
+
+}
+

@@ -1,0 +1,724 @@
+/*  EMBEDDED C (file "DML132.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/08/17 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML132.PC                                                    */
+/*  WRITTEN BY: David Flater                                     */
+/*                                                               */
+/*  This routine tests FIPS sizing.                              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+char cv00[3];
+char cv01[3];
+char cv02[3];
+char cv03[3];
+char cv04[3];
+char cv05[3];
+char cv06[3];
+char cv07[3];
+char cv08[3];
+char cv09[3];
+char cv10[3];
+char cv11[3];
+char cv12[3];
+char cv13[3];
+char cv14[3];
+char cv15[3];
+char cv16[3];
+char cv17[3];
+char cv18[3];
+char cv19[3];
+char cv20[3];
+char cv21[3];
+char cv22[3];
+char cv23[3];
+char cv24[3];
+char cv25[3];
+char cv26[3];
+char cv27[3];
+char cv28[3];
+char cv29[3];
+char cv30[3];
+char cv31[3];
+char cv32[3];
+char cv33[3];
+char cv34[3];
+char cv35[3];
+char cv36[3];
+char cv37[3];
+char cv38[3];
+char cv39[3];
+char cv40[3];
+char cv41[3];
+char cv42[3];
+char cv43[3];
+char cv44[3];
+char cv45[3];
+char cv46[3];
+char cv47[3];
+char cv48[3];
+char cv49[3];
+char cv50[3];
+char cv51[3];
+char cv52[3];
+char cv53[3];
+char cv54[3];
+char cv55[3];
+char cv56[3];
+char cv57[3];
+char cv58[3];
+char cv59[3];
+char cv60[3];
+char cv61[3];
+char cv62[3];
+char cv63[3];
+char cv64[3];
+char cv65[3];
+char cv66[3];
+char cv67[3];
+char cv68[3];
+char cv69[3];
+char cv70[3];
+char cv71[3];
+char cv72[3];
+char cv73[3];
+char cv74[3];
+char cv75[3];
+char cv76[3];
+char cv77[3];
+char cv78[3];
+char cv79[3];
+char cv80[3];
+char cv81[3];
+char cv82[3];
+char cv83[3];
+char cv84[3];
+char cv85[3];
+char cv86[3];
+char cv87[3];
+char cv88[3];
+char cv89[3];
+char cv90[3];
+char cv91[3];
+char cv92[3];
+char cv93[3];
+char cv94[3];
+char cv95[3];
+char cv96[3];
+char cv97[3];
+char cv98[3];
+char cv99[3];
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+long int1;
+long int2;
+short indic1;
+short indic2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml132.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0515 ********************/
+flag = 1;
+
+/* This test is based on dml098 TEST0579 */
+
+     printf("                  TEST0515 \n");
+     printf("FIPS sizing:  NUMERIC (15) decimal precision\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 -- Sizing for database constructs\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("INSERT INTO HU.P15 VALUES (999999999999999);\n");
+EXEC SQL INSERT INTO HU.P15 VALUES (999999999999999);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO HU.P15 VALUES (-999999999999999);\n");
+EXEC SQL INSERT INTO HU.P15 VALUES (-999999999999999);
+CHCKOK ();
+printf("\n");
+
+/* Since these are exact numerics, there should be no problems */
+/* with the precision of + and -.                              */
+
+int1 = -1;
+printf("SELECT NUMTEST - 999999999999990,\n");
+printf("  NUMTEST / 9999999 INTO :int1, :int2\n");
+printf("  FROM HU.P15 WHERE NUMTEST > 0;\n");
+EXEC SQL SELECT NUMTEST - 999999999999990,
+  NUMTEST / 9999999 INTO :int1, :int2
+  FROM HU.P15 WHERE NUMTEST > 0;
+CHCKOK ();
+printf("int1 should be 9; its value is %ld\n", int1);
+printf("int2 should be 100000010; its value is %ld\n\n", int2);
+if (int1 != 9 || int2 != 100000010)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT NUMTEST + 999999999999990,\n");
+printf("  NUMTEST / 9999999 INTO :int1, :int2\n");
+printf("  FROM HU.P15 WHERE NUMTEST < 0;\n");
+EXEC SQL SELECT NUMTEST + 999999999999990,
+  NUMTEST / 9999999 INTO :int1, :int2
+  FROM HU.P15 WHERE NUMTEST < 0;
+CHCKOK ();
+printf("int1 should be -9; its value is %ld\n", int1);
+printf("int2 should be -100000010; its value is %ld\n\n", int2);
+if (int1 != -9 || int2 != -100000010)
+  flag = 0;
+
+printf("DELETE FROM HU.P15;\n");
+EXEC SQL DELETE FROM HU.P15;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO HU.P15 VALUES (562949953421313);\n");
+EXEC SQL INSERT INTO HU.P15 VALUES (562949953421313);
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM HU.P15 WHERE NUMTEST = 562949953421312;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM HU.P15 WHERE NUMTEST = 562949953421312;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM HU.P15 WHERE NUMTEST = 562949953421313;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM HU.P15 WHERE NUMTEST = 562949953421313;
+CHCKOK ();
+printf("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM HU.P15 WHERE NUMTEST = 562949953421314;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM HU.P15 WHERE NUMTEST = 562949953421314;
+CHCKOK ();
+printf("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0515','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml132.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0515','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0515 *********************/
+/******************** BEGIN TEST0524 ********************/
+flag = 1;
+
+/* This test is based on dml056 TEST0246 */
+
+     printf("                  TEST0524 \n");
+     printf("  FIPS sizing:  100 Items in a SELECT list\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 -- Sizing for database constructs\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("DELETE FROM HU.T100;\n\n");
+EXEC SQL DELETE FROM HU.T100;
+
+printf("INSERT INTO HU.T100 VALUES ('00', '01', '02',\n");
+printf("  '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c',\n");
+printf("  '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16',\n");
+printf("  '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20',\n");
+printf("  '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a',\n");
+printf("  '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34',\n");
+printf("  '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e',\n");
+printf("  '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48',\n");
+printf("  '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52',\n");
+printf("  '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c',\n");
+printf("  '5d', '5e', '5f', '60', '61', '62', '63');\n");
+EXEC SQL INSERT INTO HU.T100 VALUES ('00', '01', '02',
+  '03', '04', '05', '06', '07', '08', '09', '0a', '0b', '0c',
+  '0d', '0e', '0f', '10', '11', '12', '13', '14', '15', '16',
+  '17', '18', '19', '1a', '1b', '1c', '1d', '1e', '1f', '20',
+  '21', '22', '23', '24', '25', '26', '27', '28', '29', '2a',
+  '2b', '2c', '2d', '2e', '2f', '30', '31', '32', '33', '34',
+  '35', '36', '37', '38', '39', '3a', '3b', '3c', '3d', '3e',
+  '3f', '40', '41', '42', '43', '44', '45', '46', '47', '48',
+  '49', '4a', '4b', '4c', '4d', '4e', '4f', '50', '51', '52',
+  '53', '54', '55', '56', '57', '58', '59', '5a', '5b', '5c',
+  '5d', '5e', '5f', '60', '61', '62', '63');
+CHCKOK ();
+printf("\n");
+
+strcpy (cv00, "xx");
+strcpy (cv01, "xx");
+strcpy (cv02, "xx");
+strcpy (cv03, "xx");
+strcpy (cv04, "xx");
+strcpy (cv05, "xx");
+strcpy (cv06, "xx");
+strcpy (cv07, "xx");
+strcpy (cv08, "xx");
+strcpy (cv09, "xx");
+strcpy (cv10, "xx");
+strcpy (cv11, "xx");
+strcpy (cv12, "xx");
+strcpy (cv13, "xx");
+strcpy (cv14, "xx");
+strcpy (cv15, "xx");
+strcpy (cv16, "xx");
+strcpy (cv17, "xx");
+strcpy (cv18, "xx");
+strcpy (cv19, "xx");
+strcpy (cv20, "xx");
+strcpy (cv21, "xx");
+strcpy (cv22, "xx");
+strcpy (cv23, "xx");
+strcpy (cv24, "xx");
+strcpy (cv25, "xx");
+strcpy (cv26, "xx");
+strcpy (cv27, "xx");
+strcpy (cv28, "xx");
+strcpy (cv29, "xx");
+strcpy (cv30, "xx");
+strcpy (cv31, "xx");
+strcpy (cv32, "xx");
+strcpy (cv33, "xx");
+strcpy (cv34, "xx");
+strcpy (cv35, "xx");
+strcpy (cv36, "xx");
+strcpy (cv37, "xx");
+strcpy (cv38, "xx");
+strcpy (cv39, "xx");
+strcpy (cv40, "xx");
+strcpy (cv41, "xx");
+strcpy (cv42, "xx");
+strcpy (cv43, "xx");
+strcpy (cv44, "xx");
+strcpy (cv45, "xx");
+strcpy (cv46, "xx");
+strcpy (cv47, "xx");
+strcpy (cv48, "xx");
+strcpy (cv49, "xx");
+strcpy (cv50, "xx");
+strcpy (cv51, "xx");
+strcpy (cv52, "xx");
+strcpy (cv53, "xx");
+strcpy (cv54, "xx");
+strcpy (cv55, "xx");
+strcpy (cv56, "xx");
+strcpy (cv57, "xx");
+strcpy (cv58, "xx");
+strcpy (cv59, "xx");
+strcpy (cv60, "xx");
+strcpy (cv61, "xx");
+strcpy (cv62, "xx");
+strcpy (cv63, "xx");
+strcpy (cv64, "xx");
+strcpy (cv65, "xx");
+strcpy (cv66, "xx");
+strcpy (cv67, "xx");
+strcpy (cv68, "xx");
+strcpy (cv69, "xx");
+strcpy (cv70, "xx");
+strcpy (cv71, "xx");
+strcpy (cv72, "xx");
+strcpy (cv73, "xx");
+strcpy (cv74, "xx");
+strcpy (cv75, "xx");
+strcpy (cv76, "xx");
+strcpy (cv77, "xx");
+strcpy (cv78, "xx");
+strcpy (cv79, "xx");
+strcpy (cv80, "xx");
+strcpy (cv81, "xx");
+strcpy (cv82, "xx");
+strcpy (cv83, "xx");
+strcpy (cv84, "xx");
+strcpy (cv85, "xx");
+strcpy (cv86, "xx");
+strcpy (cv87, "xx");
+strcpy (cv88, "xx");
+strcpy (cv89, "xx");
+strcpy (cv90, "xx");
+strcpy (cv91, "xx");
+strcpy (cv92, "xx");
+strcpy (cv93, "xx");
+strcpy (cv94, "xx");
+strcpy (cv95, "xx");
+strcpy (cv96, "xx");
+strcpy (cv97, "xx");
+strcpy (cv98, "xx");
+strcpy (cv99, "xx");
+
+indic1 = -1;
+indic2 = -1;
+
+printf("SELECT\n");
+printf("  C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C14,\n");
+printf("  C15, C16, C17, C18, C19, C20, C21, C22, C23, C24, C25, C26,\n");
+printf("  C27, C28, C29, C30, C31, C32, C33, C34, C35, C36, C37, C38,\n");
+printf("  C39, C40, C41, C42, C43, C44, C45, C46, C47, C48, C49, C50,\n");
+printf("  C51, C52, C53, C54, C55, C56, C57, C58, C59, C60, C61, C62,\n");
+printf("  C63, C64, C65, C66, C67, C68, C69, C70, C71, C72, C73, C74,\n");
+printf("  C75, C76, C77, C78, C79, C80, C81, C82, C83, C84, C85, C86,\n");
+printf("  C87, C88, C89, C90, C91, C92, C93, C94, C95, C96, C97, C98,\n");
+printf("  C99, C100\n");
+printf("\n");
+printf(" INTO\n");
+printf("  :cv00, :cv01, :cv02, :cv03, :cv04:indic1,\n");
+printf(" :cv05, :cv06, :cv07, :cv08, :cv09,\n");
+printf("  :cv10, :cv11, :cv12, :cv13, :cv14,\n");
+printf(" :cv15, :cv16, :cv17, :cv18, :cv19,\n");
+printf("  :cv20, :cv21, :cv22, :cv23, :cv24,\n");
+printf(" :cv25, :cv26, :cv27, :cv28, :cv29,\n");
+printf("  :cv30, :cv31, :cv32, :cv33, :cv34,\n");
+printf(" :cv35, :cv36, :cv37, :cv38, :cv39,\n");
+printf("  :cv40, :cv41, :cv42, :cv43, :cv44,\n");
+printf(" :cv45, :cv46, :cv47, :cv48, :cv49,\n");
+printf("  :cv50, :cv51, :cv52, :cv53, :cv54,\n");
+printf(" :cv55, :cv56, :cv57, :cv58, :cv59,\n");
+printf("  :cv60, :cv61, :cv62, :cv63, :cv64,\n");
+printf(" :cv65, :cv66, :cv67, :cv68, :cv69,\n");
+printf("  :cv70, :cv71, :cv72, :cv73, :cv74,\n");
+printf(" :cv75, :cv76, :cv77, :cv78, :cv79,\n");
+printf("  :cv80, :cv81, :cv82, :cv83, :cv84,\n");
+printf(" :cv85, :cv86, :cv87, :cv88, :cv89,\n");
+printf("  :cv90, :cv91, :cv92, :cv93, :cv94,\n");
+printf(" :cv95, :cv96, :cv97, :cv98, :cv99:indic2\n");
+printf("\n");
+printf("  FROM HU.T100;\n\n");
+
+EXEC SQL SELECT
+  C1, C2, C3, C4, C5, C6, C7, C8, C9, C10, C11, C12, C13, C14,
+  C15, C16, C17, C18, C19, C20, C21, C22, C23, C24, C25, C26,
+  C27, C28, C29, C30, C31, C32, C33, C34, C35, C36, C37, C38,
+  C39, C40, C41, C42, C43, C44, C45, C46, C47, C48, C49, C50,
+  C51, C52, C53, C54, C55, C56, C57, C58, C59, C60, C61, C62,
+  C63, C64, C65, C66, C67, C68, C69, C70, C71, C72, C73, C74,
+  C75, C76, C77, C78, C79, C80, C81, C82, C83, C84, C85, C86,
+  C87, C88, C89, C90, C91, C92, C93, C94, C95, C96, C97, C98,
+  C99, C100
+
+ INTO
+  :cv00, :cv01, :cv02, :cv03, :cv04:indic1,
+ :cv05, :cv06, :cv07, :cv08, :cv09,
+  :cv10, :cv11, :cv12, :cv13, :cv14,
+ :cv15, :cv16, :cv17, :cv18, :cv19,
+  :cv20, :cv21, :cv22, :cv23, :cv24,
+ :cv25, :cv26, :cv27, :cv28, :cv29,
+  :cv30, :cv31, :cv32, :cv33, :cv34,
+ :cv35, :cv36, :cv37, :cv38, :cv39,
+  :cv40, :cv41, :cv42, :cv43, :cv44,
+ :cv45, :cv46, :cv47, :cv48, :cv49,
+  :cv50, :cv51, :cv52, :cv53, :cv54,
+ :cv55, :cv56, :cv57, :cv58, :cv59,
+  :cv60, :cv61, :cv62, :cv63, :cv64,
+ :cv65, :cv66, :cv67, :cv68, :cv69,
+  :cv70, :cv71, :cv72, :cv73, :cv74,
+ :cv75, :cv76, :cv77, :cv78, :cv79,
+  :cv80, :cv81, :cv82, :cv83, :cv84,
+ :cv85, :cv86, :cv87, :cv88, :cv89,
+  :cv90, :cv91, :cv92, :cv93, :cv94,
+ :cv95, :cv96, :cv97, :cv98, :cv99:indic2
+
+  FROM HU.T100;
+
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+if (indic1 != 0)
+  flag = 0;
+printf ("indic2 should be 0; its value is %d\n", indic2);
+if (indic2 != 0)
+  flag = 0;
+cv00[2] = '\0';
+printf ("cv00 should be '00'; its value is '%s'\n", cv00);
+if (strcmp (cv00, "00") != 0)
+  flag = 0;
+cv49[2] = '\0';
+printf ("cv49 should be '31'; its value is '%s'\n", cv49);
+if (strcmp (cv49, "31") != 0)
+  flag = 0;
+cv66[2] = '\0';
+printf ("cv66 should be '42'; its value is '%s'\n", cv66);
+if (strcmp (cv66, "42") != 0)
+  flag = 0;
+cv99[2] = '\0';
+printf ("cv99 should be '63'; its value is '%s'\n\n", cv99);
+if (strcmp (cv99, "63") != 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0524','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml132.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0524','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0524 *********************/
+/******************** BEGIN TEST0525 ********************/
+flag = 1;
+
+     printf("                  TEST0525 \n");
+     printf("FIPS sizing:  15 Table references in SQL statement\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 -- Sizing for database constructs\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* VS2 counts 3 */
+/* VS1 and VSTAFF3 count 2 */
+/* All others count 1 */
+
+printf("DECLARE SILLY CURSOR FOR\n");
+printf("  SELECT COUNT(*) FROM\n");
+printf("  HU.WORKS T01, HU.PROJ T02, HU.STAFF T03,\n");
+printf("  USIG T04, U_SIG T05, BASE_VS1 T06, VS1 T07,\n");
+printf("  VS2 T08, HU.VSTAFF3 T09, BASE_WCOV T10\n");
+printf("  WHERE T03.EMPNUM > 'E1';\n\n");
+
+EXEC SQL DECLARE SILLY CURSOR FOR
+  SELECT COUNT(*) FROM
+  HU.WORKS T01, HU.PROJ T02, HU.STAFF T03,
+  USIG T04, U_SIG T05, BASE_VS1 T06, VS1 T07,
+  VS2 T08, HU.VSTAFF3 T09, BASE_WCOV T10
+  WHERE T03.EMPNUM > 'E1';
+
+/* Put 1 row in BASE_WCOV */
+
+printf("DELETE FROM BASE_WCOV;\n\n");
+EXEC SQL DELETE FROM BASE_WCOV;
+
+printf("INSERT INTO BASE_WCOV VALUES (1);\n");
+EXEC SQL INSERT INTO BASE_WCOV VALUES (1);
+CHCKOK ();
+printf("\n");
+
+/* Speed up the query.  Only E2 survives. */
+
+printf("DELETE FROM HU.STAFF WHERE EMPNUM > 'E2';\n");
+EXEC SQL DELETE FROM HU.STAFF WHERE EMPNUM > 'E2';
+CHCKOK ();
+printf("\n");
+
+/* Rows: */
+/* T01  12  */
+/* T02   6  */
+/* T03   1  */
+/* T04   2  */
+/* T05   2  */
+/* T06   4  */
+/* T07   2  */
+/* T08   4  */
+/* T09   5  */
+/* T10   1  */
+/* -------- */
+/*  46080   */
+
+printf("OPEN SILLY;\n");
+EXEC SQL OPEN SILLY;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH SILLY INTO :int1;\n");
+EXEC SQL FETCH SILLY INTO :int1;
+CHCKOK ();
+printf("int1 should be 46080; its value is %ld\n\n", int1);
+if (int1 != 46080)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0525','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml132.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0525','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0525 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

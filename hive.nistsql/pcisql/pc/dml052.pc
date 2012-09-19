@@ -1,0 +1,123 @@
+/*  EMBEDDED C (file "DML052.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/15 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML052.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIKE PREDICATES IN COMMON ELEMENT   */
+/*  OF THE SQL LANGUAGE.                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.14                                  */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char EMPNA1[21];
+    char EMPNA2[21];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long i;
+    long ii;
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml052.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0229 ********************/
+
+  printf("\n                   TEST0229      \n");
+  printf("         like predicate (Case sensitive)    \n");
+  printf("reference X3.135-1989 section 5.14 GR 2) Case b)   \n");    
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO STAFF
+       VALUES('E6','ALICE',11,'Gaithersburg');
+
+  EXEC SQL SELECT EMPNAME
+     INTO   :EMPNA1
+     FROM   STAFF
+     WHERE  EMPNAME LIKE 'Ali%';
+
+  i = SQLCODE;
+
+  EXEC SQL SELECT EMPNAME
+     INTO   :EMPNA2
+     FROM   STAFF
+     WHERE  EMPNAME LIKE 'ALI%';
+
+  ii = SQLCODE;
+
+  EXEC SQL ROLLBACK WORK;
+ 
+  printf("EMPNA1=%s,i=%ld \n\n", EMPNA1,i);
+  printf("EMPNA2=%s,ii=%ld \n\n",EMPNA2,ii);
+
+  printf("The correct answer should be EMPNA1=Alice,EMPNA2=ALICE\n");
+  printf("                         and i = 0, ii = 0 \n");
+  if (strncmp(EMPNA1,"Alice",5)==0 && strncmp(EMPNA2,"ALICE",5)==0 && i+ii==0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0229','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml052.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0229','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0229 ********************/
+
+  exit(errcnt);
+}
+

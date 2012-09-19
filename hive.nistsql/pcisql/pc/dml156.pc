@@ -1,0 +1,550 @@
+/*  EMBEDDED C (file "DML156.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/09/12 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML156.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Dynamic SQL.                              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char   dstmt[51];
+char longst[241];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml156.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0855 ********************/
+flag = 1;
+
+     printf("                  TEST0855\n");
+     printf("        Dynamic SQL syntax errors\n");
+     printf("References:\n");
+     printf("    17.6 GR.4 -- Syntax errors on <prepare statement>\n");
+     printf("    COR2 17.6 GR.4 -- Many rules were changed\n");
+     printf("    F# 1 -- Dynamic SQL\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf ("It is possible that some of these statements will be accepted\n");
+printf ("as vendor extensions.\n\n");
+
+/* This is a SYNVIO test; however, the exception is specified in */
+/* General Rules!  Technically we are supposed to enforce these */
+/* exceptions, but it's clearly not the Right Thing.... */
+
+/* 4.a:  generic garbage */
+
+printf("dstmt=\"SELECT SELECT SELECT FETCH FETCH FETCH\"\n");
+strcpy(dstmt,
+     "SELECT SELECT SELECT FETCH FETCH FETCH            ");
+
+printf("PREPARE S15611 FROM :dstmt;\n");
+EXEC SQL PREPARE S15611 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.b:  ? as <value expression> simply contained in <select list> */
+
+printf("dstmt=\"SELECT GRADE, ? FROM HU.STAFF\"\n");
+strcpy(dstmt,
+     "SELECT GRADE, ? FROM HU.STAFF                     ");
+
+printf("PREPARE S15612 FROM :dstmt;\n");
+EXEC SQL PREPARE S15612 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.c:  dyadic operator on ? and ? */
+/* Parens should not matter */
+
+printf("dstmt=\"SELECT GRADE, ((?)+?) FROM HU.STAFF\"\n");
+strcpy(dstmt,
+     "SELECT GRADE, ((?)+?) FROM HU.STAFF               ");
+
+printf("PREPARE S15613 FROM :dstmt;\n");
+EXEC SQL PREPARE S15613 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("dstmt=\"SELECT GRADE FROM HU.STAFF WHERE GRADE = ? * ?\"\n");
+strcpy(dstmt,
+     "SELECT GRADE FROM HU.STAFF WHERE GRADE = ? * ?    ");
+
+printf("PREPARE S15613A FROM :dstmt;\n");
+EXEC SQL PREPARE S15613A FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.d:  +?, -?, EXTRACT (HOUR FROM ?) */
+
+printf("dstmt=\"SELECT +? FROM HU.ECCO\"\n");
+strcpy(dstmt,
+     "SELECT +? FROM HU.ECCO                            ");
+
+printf("PREPARE S15614 FROM :dstmt;\n");
+EXEC SQL PREPARE S15614 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("dstmt=\"SELECT (-?), C1 FROM USIG\"\n");
+strcpy(dstmt,
+     "SELECT (-?), C1 FROM USIG                         ");
+
+printf("PREPARE S15615 FROM :dstmt;\n");
+EXEC SQL PREPARE S15615 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Even though I don't have a host language data type for datetime, */
+/* I can still try to prepare this! */
+
+printf("dstmt=\"SELECT EXTRACT (HOUR FROM ?) FROM HU.ECCO\"\n");
+strcpy(dstmt,
+     "SELECT EXTRACT (HOUR FROM ?) FROM HU.ECCO         ");
+
+printf("PREPARE S15616 FROM :dstmt;\n");
+EXEC SQL PREPARE S15616 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.e  ? as argument to a <set function specification> */
+
+printf("dstmt=\"SELECT MAX (?), GRADE FROM HU.STAFF\"\n");
+strcpy(dstmt,
+     "SELECT MAX (?), GRADE FROM HU.STAFF               ");
+
+printf("PREPARE S15617 FROM :dstmt;\n");
+EXEC SQL PREPARE S15617 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.f  ? IS NULL */
+
+printf("dstmt=\"SELECT COUNT(*) FROM HU.STAFF WHERE ? IS NULL\"\n");
+strcpy(dstmt,
+     "SELECT COUNT(*) FROM HU.STAFF WHERE ? IS NULL     ");
+
+printf("PREPARE S15618 FROM :dstmt;\n");
+EXEC SQL PREPARE S15618 FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.g  OVERLAPS (sometime, ?) */
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT COUNT(*) FROM HU.STAFF' ||
+       '  WHERE (TIME ''07:04:07'', ' ||
+       '  INTERVAL ''5'' HOUR) OVERLAPS' ||
+       '  (TIME ''08:00:00'', ?)'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S15619 FROM :longst;\n");
+EXEC SQL PREPARE S15619 FROM :longst;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.h  CASE statement -- possible Intermediate test */
+
+/* 4.i  comparison and between predicates */
+
+printf("dstmt=\"SELECT COUNT(*) FROM HU.STAFF WHERE ? = ?\"\n");
+strcpy(dstmt,
+     "SELECT COUNT(*) FROM HU.STAFF WHERE ? = ?         ");
+
+printf("PREPARE S1561A FROM :dstmt;\n");
+EXEC SQL PREPARE S1561A FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("dstmt=\"SELECT COUNT(*) FROM HU.STAFF WHERE (? >= ?)\"\n");
+strcpy(dstmt,
+     "SELECT COUNT(*) FROM HU.STAFF WHERE (? >= ?)      ");
+
+printf("PREPARE S1561B FROM :dstmt;\n");
+EXEC SQL PREPARE S1561B FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+     EXEC SQL DELETE FROM CONCATBUF;
+     EXEC SQL INSERT INTO CONCATBUF VALUES (
+       'SELECT GRADE FROM HU.STAFF' ||
+       '  WHERE ? NOT BETWEEN (?) AND (?) OR' ||
+       '  GRADE < 12'
+     );
+     EXEC SQL SELECT ZZ INTO :longst FROM CONCATBUF;
+     printf("longst=\"%s\"\n", longst);
+
+printf("PREPARE S1561C FROM :longst;\n");
+EXEC SQL PREPARE S1561C FROM :longst;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.j  Table value constructors -- possible Full test */
+
+/* 4.k  ? IN (?, ?) */
+
+printf("dstmt=\"SELECT COUNT(*) FROM HU.STAFF WHERE ? IN (?, ?)\"\n");
+strcpy(dstmt,
+     "SELECT COUNT(*) FROM HU.STAFF WHERE ? IN (?, ?)   ");
+
+printf("PREPARE S1561D FROM :dstmt;\n");
+EXEC SQL PREPARE S1561D FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.l  Position expression -- possible Full test */
+
+/* 4.m  Form of use, character translation -- Full */
+
+/* 4.n  Fold -- Full */
+
+/* 4.o  TRIM (? FROM X)   TRIM (X FROM ?) */
+
+printf("dstmt=\"SELECT TRIM (? FROM EMPNAME) FROM HU.STAFF\"\n");
+strcpy(dstmt,
+     "SELECT TRIM (? FROM EMPNAME) FROM HU.STAFF        ");
+
+printf("PREPARE S1561E FROM :dstmt;\n");
+EXEC SQL PREPARE S1561E FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("dstmt=\"SELECT * FROM HU.STAFF WHERE CITY = TRIM (?)\"\n");
+strcpy(dstmt,
+     "SELECT * FROM HU.STAFF WHERE CITY = TRIM (?)      ");
+
+printf("PREPARE S1561F FROM :dstmt;\n");
+EXEC SQL PREPARE S1561F FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.p  SUBSTRING (? FROM A FOR B) */
+
+printf("dstmt=\"SELECT SUBSTRING (? FROM 2 FOR 2) FROM HU.ECCO\"\n");
+strcpy(dstmt,
+     "SELECT SUBSTRING (? FROM 2 FOR 2) FROM HU.ECCO    ");
+
+printf("PREPARE S1561G FROM :dstmt;\n");
+EXEC SQL PREPARE S1561G FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.q  P contains a <comment> */
+
+printf("dstmt=\"SELECT * FROM HU.ECCO  -- Output one asterisk\"\n");
+strcpy(dstmt,
+     "SELECT * FROM HU.ECCO  -- Output one asterisk     ");
+
+printf("PREPARE S1561H FROM :dstmt;\n");
+EXEC SQL PREPARE S1561H FROM :dstmt;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* 4.r  CASE statement -- possible Intermediate test */
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0855','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml156.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0855','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0855 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

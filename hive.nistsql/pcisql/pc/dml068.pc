@@ -1,0 +1,260 @@
+/*  EMBEDDED C (file "DML068.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1990/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML068.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE COLLATING SEQUENCE OF THE           */
+/*  95-CHARACTER GRAPHIC SUBSET OF ASCII SPECIFIED IN            */
+/*  FIPS PUB 1-2.                                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*                                                               */
+/*         FIPS PUB 1-2     page 9                               */
+/*               Code for Information Interchange showing        */
+/*            95-character graphic subset.                       */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+char MID1[5];
+char MID[5];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+long flag;
+long ascflg;
+long cnt;
+long temp;
+long indexx;
+char ASCIIX[40][5];
+char TXTBUF[40][5];
+/* Note TXTBUF[0] is not used */
+main()
+
+{
+     strcpy(uid,"HU");
+     AUTHID(uid); 
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml068.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0389 ********************/
+/* This program tests if the collating sequence for the */
+/* programming language and SQL are consistent.         */
+
+printf("\n            OPTIONAL TEST0389             \n");
+printf("                Sorting Consistency    \n");
+printf("      SQL with Integrity Enhancement section 8.3\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+
+printf("  Check if the programming language sorting result is \n");
+printf("  consistent with SQL sorting result!\n");
+printf("\n");
+strcpy(TXTBUF[1], "@ at");
+strcpy(TXTBUF[2], "`-qt");
+strcpy(TXTBUF[3], "!exc");
+strcpy(TXTBUF[4], "\"dqt");
+strcpy(TXTBUF[5], "#pou");
+strcpy(TXTBUF[6], "$dol");
+strcpy(TXTBUF[7], "%pct");
+strcpy(TXTBUF[8], "&amp");
+strcpy(TXTBUF[9], "'+qt");
+strcpy(TXTBUF[10],"(lpr");
+strcpy(TXTBUF[11],")rpr");
+strcpy(TXTBUF[12], "*ast");
+strcpy(TXTBUF[13], "aaaa");
+strcpy(TXTBUF[14], ":col");
+strcpy(TXTBUF[15], "+plu");
+strcpy(TXTBUF[16], ";sem");
+strcpy(TXTBUF[17], "[lbk");
+strcpy(TXTBUF[18], "{lbc");
+strcpy(TXTBUF[19], ",com");
+strcpy(TXTBUF[20], "< lt");
+strcpy(TXTBUF[21], "/ sl");
+strcpy(TXTBUF[22], "|dvt");
+strcpy(TXTBUF[23], "-hyp");
+strcpy(TXTBUF[24], "=equ");
+strcpy(TXTBUF[25], "]rbk");
+strcpy(TXTBUF[26], "}rbc");
+strcpy(TXTBUF[27], ".per");
+strcpy(TXTBUF[28], "> gt");
+strcpy(TXTBUF[29], "^hat");
+strcpy(TXTBUF[30], "~til");
+strcpy(TXTBUF[31], "\\bsl");
+strcpy(TXTBUF[32], "?que");
+strcpy(TXTBUF[33], "_und");
+strcpy(TXTBUF[34], "AAAA");
+strcpy(TXTBUF[35], "0000");
+strcpy(TXTBUF[36], "9999");
+strcpy(TXTBUF[37], "zzzz");
+strcpy(TXTBUF[38], "  sp");
+strcpy(TXTBUF[39], "ZZZZ");
+
+
+strcpy(ASCIIX[25], "@ at");
+strcpy(ASCIIX[33], "`-qt");
+strcpy(ASCIIX[2], "!exc");
+strcpy(ASCIIX[3], "\"dqt");
+strcpy(ASCIIX[4], "#pou");
+strcpy(ASCIIX[5], "$dol");
+strcpy(ASCIIX[6], "%pct");
+strcpy(ASCIIX[7], "&amp");
+strcpy(ASCIIX[8], "'+qt");
+strcpy(ASCIIX[9],"(lpr");
+strcpy(ASCIIX[10],")rpr");
+strcpy(ASCIIX[11], "*ast");
+strcpy(ASCIIX[34], "aaaa");
+strcpy(ASCIIX[19], ":col");
+strcpy(ASCIIX[12], "+plu");
+strcpy(ASCIIX[20], ";sem");
+strcpy(ASCIIX[28], "[lbk");
+strcpy(ASCIIX[36], "{lbc");
+strcpy(ASCIIX[13], ",com");
+strcpy(ASCIIX[21], "< lt");
+strcpy(ASCIIX[16], "/ sl");
+strcpy(ASCIIX[37], "|dvt");
+strcpy(ASCIIX[14], "-hyp");
+strcpy(ASCIIX[22], "=equ");
+strcpy(ASCIIX[30], "]rbk");
+strcpy(ASCIIX[38], "}rbc");
+strcpy(ASCIIX[15], ".per");
+strcpy(ASCIIX[23], "> gt");
+strcpy(ASCIIX[31], "^hat");
+strcpy(ASCIIX[39], "~til");
+strcpy(ASCIIX[29], "\\bsl");
+strcpy(ASCIIX[24], "?que");
+strcpy(ASCIIX[32], "_und");
+strcpy(ASCIIX[26], "AAAA");
+strcpy(ASCIIX[17], "0000");
+strcpy(ASCIIX[18], "9999");
+strcpy(ASCIIX[35], "zzzz");
+strcpy(ASCIIX[1], "  sp");
+strcpy(ASCIIX[27], "ZZZZ");
+
+
+EXEC SQL DELETE FROM AA;
+
+ascflg = 1;
+flag = 1;
+for (cnt = 1; cnt < 40; cnt++)
+   {
+       strcpy(MID, TXTBUF[cnt]);
+       EXEC SQL INSERT INTO AA
+       VALUES (:MID);
+   }
+/* Bubble sorting the TXTBUF  */
+for (indexx = 1; indexx < 40; indexx++)
+   {
+       temp = 40 - indexx;
+       for (cnt = 1; cnt < temp; cnt++)
+           {
+               if (strncmp(TXTBUF[cnt], TXTBUF[cnt + 1], 4) > 0)
+                   {
+                       strcpy(MID, TXTBUF[cnt]);
+                       strcpy(TXTBUF[cnt], TXTBUF[cnt + 1]);
+                       strcpy(TXTBUF[cnt + 1], MID);
+                    }
+               if (strncmp(TXTBUF[cnt], TXTBUF[cnt + 1], 1) == 0)
+                    {
+                       printf(" Duplicate values for %s  %s\n",
+                                TXTBUF[cnt], TXTBUF[cnt + 1]);
+                       flag = 0;
+                    }
+            }
+   }
+
+EXEC SQL DECLARE ROCK CURSOR FOR SELECT * FROM AA
+         ORDER BY CHARTEST;
+                
+        
+EXEC SQL OPEN ROCK; 
+for (cnt = 1; cnt < 40; cnt++)
+   {
+       strcpy(MID1, TXTBUF[cnt]);
+       EXEC SQL FETCH ROCK INTO :MID;
+       if (strncmp(MID1, MID,4) != 0)
+          flag = 0;
+       printf(" %ld C language: %s     SQL: %s\n", cnt, MID1,MID);
+       if (strncmp(MID, ASCIIX[cnt], 4) != 0)
+          ascflg = 0;
+   }
+
+EXEC SQL CLOSE ROCK;
+EXEC SQL ROLLBACK WORK;
+printf("The correct result is :\n");
+printf("           flag = 1\n");
+printf("Your answer is :\n");
+printf("           flag = %ld\n",flag);
+if (ascflg == 1)
+       {
+       printf("*********************************** \n");
+       printf("*    ASCII sequence verified      * \n");
+       printf("*********************************** \n");
+       }
+     else
+       {
+       printf("*********************************** \n");
+       printf("*    Sequence is not ASCII        * \n");
+       printf("*********************************** \n");
+       }
+printf("\n\n");
+
+if (flag == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0389','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0389','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml068.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /****************** END TEST0389 ************************/
+
+
+
+     exit(errcnt);
+
+}
+

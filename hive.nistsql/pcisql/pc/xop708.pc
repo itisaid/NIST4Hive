@@ -1,0 +1,382 @@
+/*  EMBEDDED C (file "XOP708.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/05/12 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP708.PC                                                    */
+/*  WRITTEN BY: Colin O'Driscoll                                 */
+/*                                                               */
+/*  Length of Index Key at least 118                             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/Open SQL CAE                                         */
+/*        Section 7.1.3                                          */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   03/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+int i;
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char wide[119];
+char wide1[39];
+char wide2[39];
+char wide3[39];
+long ii;
+long j;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+
+extern int AUTHID();
+int errcnt;
+long flagerr;
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+
+/* Test SQLSTATE for normal completion */
+
+CHCKOK ()
+{
+printf ("SQLCODE should be 0; its value is %ld\n",SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+NOSUBCLASS();
+if (strncmp (NORMSQ, "00000", 5) == 0 &&
+strncmp (NORMSQ, SQLSTATE, 5) != 0)
+printf ("Valid implementation defined SQLSTATE accepted.\n");
+}
+
+main()
+{
+
+
+     strcpy(uid,"XOPEN1");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+     EXEC SQL COMMIT WORK;
+errcnt = 0;
+flagerr = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop708.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* initialise NOSUBCLASS comparison variable */
+strcpy(ALPNUM, "01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+/******************** BEGIN TEST0708 ********************/
+
+     printf("\n                     TEST0708             \n");
+     printf(" X/O,Limit on the total length of an Index Key\n");
+     printf(" X/OPEN CAE SQL Sec. 7.1.3  \n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("### CREATE INDEX WIDEINDEX ON WIDETABLE(WIDE);\n");
+     printf("### DROP INDEX WIDEINDEX;\n");
+     printf("### CREATE INDEX WIDEINDEX ON WIDETAB(WIDE1, \n");
+     printf("###   WIDE2, WIDE3);\n");
+     printf("\n\n=================================================\n");
+
+/* Set up database */
+EXEC SQL DROP INDEX WIDEINDEX;
+EXEC SQL COMMIT WORK;
+
+     SQLCODE = 9999999;
+     errflg = 0;
+/*   CREATE TABLE WIDETABLE (WIDE CHAR(118));                          */
+/*  CREATE TABLE WIDETAB (WIDE1 CHAR(38), WIDE2 CHAR(38), WIDE3(38)); */
+     EXEC SQL DELETE FROM WIDETABLE;
+     EXEC SQL DELETE FROM WIDETAB;
+
+/* Set up first long row */
+     ii = 0;
+     for (i = 0; i < 29; i++)
+     {
+     wide[ii] = 'B';
+     j = ii + 1;
+     wide[j] = 'L';
+     j = ii + 2;
+     wide[j] = 'A';
+     j = ii + 3;
+     wide[j] = 'H';
+     ii = ii + 4;
+     }
+     wide[ii] = 'B';
+     j = ii + 1;
+     wide[j] = 'L';
+     wide[118] = '\0';
+
+     EXEC SQL INSERT INTO WIDETABLE
+           VALUES (:wide);
+
+    if(SQLCODE != 0)
+       flagerr =  flagerr + 1;
+
+/* Set up second long row */
+     ii = 0;
+     for (i = 0; i < 59; i++)
+     {
+     wide[ii] = 'O';
+     j = ii + 1;
+     wide[j] = 'H';
+     ii = ii + 2;
+     }
+     wide[118] = '\0';
+
+     EXEC SQL INSERT INTO WIDETABLE
+           VALUES (:wide);
+
+    if(SQLCODE != 0)
+       flagerr =  flagerr + 1;
+
+/* Set up third long row */
+     ii = 0;
+     for (i = 0; i < 59; i++)
+         {
+         wide[ii] = 'A';
+      j = ii + 1;
+      wide[j] = 'H';
+      ii = ii + 2;
+         }
+      wide[118] = '\0';
+
+     EXEC SQL INSERT INTO WIDETABLE
+           VALUES (:wide);
+
+     if(SQLCODE != 0)
+         flagerr =  flagerr + 1;
+
+     if(flagerr != 0)
+       {
+       printf ("*** INSERT FAILED (TEST STEP NUMBER 1a) ! *** \n");
+       errflg = errflg + 1;
+       }
+     EXEC SQL COMMIT WORK;
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE INDEX WIDEINDEX
+           ON WIDETABLE(WIDE);
+     CHCKOK(); 
+     if (strncmp(NORMSQ, "00000", 5) != 0 && SQLCODE != 0)
+     {
+     printf ("*** CREATE INDEX FAILED (TEST STEP NUMBER 1b) ! *** \n");
+        errflg = errflg + 1;
+     }
+     EXEC SQL COMMIT WORK;
+     EXEC SQL DROP INDEX WIDEINDEX;
+     EXEC SQL COMMIT WORK;
+
+     printf("\n\n=================================================\n");
+
+     flagerr = 0;
+     SQLCODE = 9999999;
+/* Load values into wide1,wide2 and wide3 */
+/* wide1 */
+     ii = 0;
+     for (i = 0; i < 9; i++)
+         {
+         wide1[ii] = 'B';
+      j = ii + 1;
+      wide1[j] = 'L';
+      j = ii + 2;
+      wide1[j] = 'A';
+      j = ii + 3;
+      wide1[j] = 'H';
+      ii = ii + 4;
+         }
+      wide1[ii] = 'B';
+      j = ii + 1;
+      wide1[j] = 'L';
+      wide1[38] = '\0';
+
+/* wide2 */
+     ii = 0;
+     for (i = 0; i < 19; i++)
+         {
+      wide2[ii] = 'O';
+      j = ii + 1;
+      wide2[j] = 'H';
+      ii = ii + 2;
+         }
+      wide2[38] = '\0';
+
+/* wide3 */
+     ii = 0;
+     for (i = 0; i < 19; i++)
+         {
+         wide3[ii] = 'A';
+      j = ii + 1;
+      wide3[j] = 'H';
+      ii = ii + 2;
+         }
+      wide3[38] = '\0';
+     EXEC SQL INSERT INTO WIDETAB(WIDE1, WIDE2, WIDE3)
+           VALUES (:wide1, :wide2, :wide3);
+
+     flagerr = 0;
+     if(SQLCODE != 0)
+        flagerr =  flagerr + 1;
+
+/* wide3 again */
+     ii = 0;
+     for (i = 0; i < 19; i++)
+         {
+         wide3[ii] = 'E';
+         j = ii + 1;
+         wide3[j] = 'H';
+         ii = ii + 2;
+         }
+     wide3[38] = '\0';
+     EXEC SQL INSERT INTO WIDETAB(WIDE1, WIDE2, WIDE3)
+     VALUES (:wide1, :wide2, :wide3);
+
+     if(SQLCODE != 0)
+     flagerr =  flagerr + 1;
+     if(flagerr!= 0)
+     {
+     printf ("*** INSERT FAILED (TEST STEP NUMBER 2a) ! *** \n");
+     errflg = errflg + 1;
+     }
+
+     EXEC SQL COMMIT WORK;
+     strcpy(SQLSTATE,"x");
+     EXEC SQL CREATE UNIQUE INDEX WIDEINDEX
+           ON WIDETAB(WIDE1, WIDE3 DESC, WIDE2 ASC);
+
+     CHCKOK();
+     if (strncmp(NORMSQ, "00000", 5) != 0 && SQLCODE != 0)
+        {
+        printf ("*** Problem found (TEST STEP NUMBER 2b) ! *** \n");
+        errflg = errflg + 1;
+        }
+     EXEC SQL COMMIT WORK;
+
+
+     printf("\n\n=================================================\n");
+
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 4 ###\n");
+
+ if (errflg == 0)
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0708','pass','PC');
+ printf("\n\n       xop708.pc  *** pass ***     ");
+ }
+ else
+ {
+ EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0708','fail','PC');
+ errcnt = errcnt + 1;
+ printf("\n\n       xop708.pc  *** fail ***     ");
+ }
+
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0708 ********************/
+
+     exit(errcnt);
+
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation deifined   */
+/* subclasses with 000. This replacement equates valid   */
+/* implementation-defined subclasses with the 000 value  */
+/* expected by the test case; otherwise the test will    */
+/* fail. After calling NOSUBCLASS, NORMSQ will be tested */
+/*                              SQLSTATE will be printed */
+
+strcpy (NORMSQ, SQLSTATE);
+
+norm1 = 2;
+/* subclass begins in position 3 of char array NORMSQ    */
+for (norm2 = 13; norm2 < 37; norm2++)
+/* valid subclasses begin with 5/9, I-Z, end of ALPNUM table */
+    {
+    if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+    }
+
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+   goto P213;
+/* Quit if NORMSQ is unchanged. Subclass is not impl.def */
+/* Changed NORMSQ means implementation-defined subclass, */
+/* so proceed to zero it out, if valid (0-9, A-Z)        */
+
+norm1 = 3;
+/* examining position 4 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-Z                          */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+/* examining position 5 of char array NORMSQ             */
+for (norm2 = 0; norm2 < 37; norm2++)
+/* valid characters are 0-9 A-z */
+   {
+   if (NORMSQ[norm1] == ALPNUM[norm2])
+       NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01). These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* reference SQL-92. 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+    NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+
+
+

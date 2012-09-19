@@ -1,0 +1,1982 @@
+/*  EMBEDDED C (file "DML178.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-14 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML178.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+long int2;
+long int3;
+long int4;
+long int5;
+long int6;
+long int7;
+long int8;
+long int9;
+long int10;
+long int11;
+long int12;
+long int13;
+long int14;
+long int15;
+long int16;
+long int17;
+long int18;
+long int19;
+long int20;
+long int21;
+long int22;
+long int23;
+long int24;
+long int25;
+long int26;
+long int27;
+long int28;
+long int29;
+long int30;
+long int31;
+long int32;
+long int33;
+long int34;
+long int35;
+long int36;
+long int37;
+long int38;
+long int39;
+long int40;
+long int41;
+long int42;
+long int43;
+long int44;
+long int45;
+long int46;
+long int47;
+long int48;
+long int49;
+long int50;
+long int51;
+long int52;
+long int53;
+long int54;
+long int55;
+long int56;
+long int57;
+long int58;
+long int59;
+long int60;
+long int61;
+long int62;
+long int63;
+long int64;
+long int65;
+long int66;
+long int67;
+long int68;
+long int69;
+long int70;
+long int71;
+long int72;
+long int73;
+long int74;
+long int75;
+long int76;
+long int77;
+long int78;
+long int79;
+long int80;
+long int81;
+long int82;
+long int83;
+long int84;
+long int85;
+long int86;
+long int87;
+long int88;
+long int89;
+long int90;
+long int91;
+long int92;
+long int93;
+long int94;
+long int95;
+long int96;
+long int97;
+long int98;
+long int99;
+long int100;
+long int101;
+long int102;
+long int103;
+long int104;
+long int105;
+long int106;
+long int107;
+long int108;
+long int109;
+long int110;
+long int111;
+long int112;
+long int113;
+long int114;
+long int115;
+long int116;
+long int117;
+long int118;
+long int119;
+long int120;
+long int121;
+long int122;
+long int123;
+long int124;
+long int125;
+long int126;
+long int127;
+long int128;
+long int129;
+long int130;
+long int131;
+long int132;
+long int133;
+long int134;
+long int135;
+long int136;
+long int137;
+long int138;
+long int139;
+long int140;
+long int141;
+long int142;
+long int143;
+long int144;
+long int145;
+long int146;
+long int147;
+long int148;
+long int149;
+long int150;
+long int151;
+long int152;
+long int153;
+long int154;
+long int155;
+long int156;
+long int157;
+long int158;
+long int159;
+long int160;
+long int161;
+long int162;
+long int163;
+long int164;
+long int165;
+long int166;
+long int167;
+long int168;
+long int169;
+long int170;
+long int171;
+long int172;
+long int173;
+long int174;
+long int175;
+long int176;
+long int177;
+long int178;
+long int179;
+long int180;
+long int181;
+long int182;
+long int183;
+long int184;
+long int185;
+long int186;
+long int187;
+long int188;
+long int189;
+long int190;
+long int191;
+long int192;
+long int193;
+long int194;
+long int195;
+long int196;
+long int197;
+long int198;
+long int199;
+long int200;
+long int201;
+long int202;
+long int203;
+long int204;
+long int205;
+long int206;
+long int207;
+long int208;
+long int209;
+long int210;
+long int211;
+long int212;
+long int213;
+long int214;
+long int215;
+long int216;
+long int217;
+long int218;
+long int219;
+long int220;
+long int221;
+long int222;
+long int223;
+long int224;
+long int225;
+long int226;
+long int227;
+long int228;
+long int229;
+long int230;
+long int231;
+long int232;
+long int233;
+long int234;
+long int235;
+long int236;
+long int237;
+long int238;
+long int239;
+long int240;
+long int241;
+long int242;
+long int243;
+long int244;
+long int245;
+long int246;
+long int247;
+long int248;
+long int249;
+long int250;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml178.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0891 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0891\n");
+     printf("FIPS sizing, 250 columns, 4000 char data statement\n");
+     printf("References:\n");
+     printf("  FIPS 16.6 -- Sizing #24, Columns in a table\n");
+     printf("  FIPS 16.6 -- Sizing #25, Values in an INSERT statement\n");
+     printf("  FIPS 16.6 -- Sizing #26, Set clauses in an UPDATE statement\n");
+     printf("  FIPS 16.6 -- Sizing #41, Items in a SELECT list\n");
+     printf("  FIPS 16.6 -- Sizing #43, Length of <SQL data statement>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE L1 (\n");
+printf("C1 INT, C2 INT, C3 INT, C4 INT, C5 INT, C6 INT, \n");
+printf("C7 INT, C8 INT, C9 INT, C10 INT, C11 INT, C12 INT, \n");
+printf("C13 INT, C14 INT, C15 INT, C16 INT, C17 INT, C18 INT, \n");
+printf("C19 INT, C20 INT, C21 INT, C22 INT, C23 INT, C24 INT, \n");
+printf("C25 INT, C26 INT, C27 INT, C28 INT, C29 INT, C30 INT, \n");
+printf("C31 INT, C32 INT, C33 INT, C34 INT, C35 INT, C36 INT, \n");
+printf("C37 INT, C38 INT, C39 INT, C40 INT, C41 INT, C42 INT, \n");
+printf("C43 INT, C44 INT, C45 INT, C46 INT, C47 INT, C48 INT, \n");
+printf("C49 INT, C50 INT, C51 INT, C52 INT, C53 INT, C54 INT, \n");
+printf("C55 INT, C56 INT, C57 INT, C58 INT, C59 INT, C60 INT, \n");
+printf("C61 INT, C62 INT, C63 INT, C64 INT, C65 INT, C66 INT, \n");
+printf("C67 INT, C68 INT, C69 INT, C70 INT, C71 INT, C72 INT, \n");
+printf("C73 INT, C74 INT, C75 INT, C76 INT, C77 INT, C78 INT, \n");
+printf("C79 INT, C80 INT, C81 INT, C82 INT, C83 INT, C84 INT, \n");
+printf("C85 INT, C86 INT, C87 INT, C88 INT, C89 INT, C90 INT, \n");
+printf("C91 INT, C92 INT, C93 INT, C94 INT, C95 INT, C96 INT, \n");
+printf("C97 INT, C98 INT, C99 INT, C100 INT, C101 INT, C102 INT, \n");
+printf("C103 INT, C104 INT, C105 INT, C106 INT, C107 INT, C108 INT, \n");
+printf("C109 INT, C110 INT, C111 INT, C112 INT, C113 INT, C114 INT, \n");
+printf("C115 INT, C116 INT, C117 INT, C118 INT, C119 INT, C120 INT, \n");
+printf("C121 INT, C122 INT, C123 INT, C124 INT, C125 INT, C126 INT, \n");
+printf("C127 INT, C128 INT, C129 INT, C130 INT, C131 INT, C132 INT, \n");
+printf("C133 INT, C134 INT, C135 INT, C136 INT, C137 INT, C138 INT, \n");
+printf("C139 INT, C140 INT, C141 INT, C142 INT, C143 INT, C144 INT, \n");
+printf("C145 INT, C146 INT, C147 INT, C148 INT, C149 INT, C150 INT, \n");
+printf("C151 INT, C152 INT, C153 INT, C154 INT, C155 INT, C156 INT, \n");
+printf("C157 INT, C158 INT, C159 INT, C160 INT, C161 INT, C162 INT, \n");
+printf("C163 INT, C164 INT, C165 INT, C166 INT, C167 INT, C168 INT, \n");
+printf("C169 INT, C170 INT, C171 INT, C172 INT, C173 INT, C174 INT, \n");
+printf("C175 INT, C176 INT, C177 INT, C178 INT, C179 INT, C180 INT, \n");
+printf("C181 INT, C182 INT, C183 INT, C184 INT, C185 INT, C186 INT, \n");
+printf("C187 INT, C188 INT, C189 INT, C190 INT, C191 INT, C192 INT, \n");
+printf("C193 INT, C194 INT, C195 INT, C196 INT, C197 INT, C198 INT, \n");
+printf("C199 INT, C200 INT, C201 INT, C202 INT, C203 INT, C204 INT, \n");
+printf("C205 INT, C206 INT, C207 INT, C208 INT, C209 INT, C210 INT, \n");
+printf("C211 INT, C212 INT, C213 INT, C214 INT, C215 INT, C216 INT, \n");
+printf("C217 INT, C218 INT, C219 INT, C220 INT, C221 INT, C222 INT, \n");
+printf("C223 INT, C224 INT, C225 INT, C226 INT, C227 INT, C228 INT, \n");
+printf("C229 INT, C230 INT, C231 INT, C232 INT, C233 INT, C234 INT, \n");
+printf("C235 INT, C236 INT, C237 INT, C238 INT, C239 INT, C240 INT, \n");
+printf("C241 INT, C242 INT, C243 INT, C244 INT, C245 INT, C246 INT, \n");
+printf("C247 INT, C248 INT, C249 INT, C250 INT);\n");
+EXEC SQL CREATE TABLE L1 (
+C1 INT, C2 INT, C3 INT, C4 INT, C5 INT, C6 INT, 
+C7 INT, C8 INT, C9 INT, C10 INT, C11 INT, C12 INT, 
+C13 INT, C14 INT, C15 INT, C16 INT, C17 INT, C18 INT, 
+C19 INT, C20 INT, C21 INT, C22 INT, C23 INT, C24 INT, 
+C25 INT, C26 INT, C27 INT, C28 INT, C29 INT, C30 INT, 
+C31 INT, C32 INT, C33 INT, C34 INT, C35 INT, C36 INT, 
+C37 INT, C38 INT, C39 INT, C40 INT, C41 INT, C42 INT, 
+C43 INT, C44 INT, C45 INT, C46 INT, C47 INT, C48 INT, 
+C49 INT, C50 INT, C51 INT, C52 INT, C53 INT, C54 INT, 
+C55 INT, C56 INT, C57 INT, C58 INT, C59 INT, C60 INT, 
+C61 INT, C62 INT, C63 INT, C64 INT, C65 INT, C66 INT, 
+C67 INT, C68 INT, C69 INT, C70 INT, C71 INT, C72 INT, 
+C73 INT, C74 INT, C75 INT, C76 INT, C77 INT, C78 INT, 
+C79 INT, C80 INT, C81 INT, C82 INT, C83 INT, C84 INT, 
+C85 INT, C86 INT, C87 INT, C88 INT, C89 INT, C90 INT, 
+C91 INT, C92 INT, C93 INT, C94 INT, C95 INT, C96 INT, 
+C97 INT, C98 INT, C99 INT, C100 INT, C101 INT, C102 INT, 
+C103 INT, C104 INT, C105 INT, C106 INT, C107 INT, C108 INT, 
+C109 INT, C110 INT, C111 INT, C112 INT, C113 INT, C114 INT, 
+C115 INT, C116 INT, C117 INT, C118 INT, C119 INT, C120 INT, 
+C121 INT, C122 INT, C123 INT, C124 INT, C125 INT, C126 INT, 
+C127 INT, C128 INT, C129 INT, C130 INT, C131 INT, C132 INT, 
+C133 INT, C134 INT, C135 INT, C136 INT, C137 INT, C138 INT, 
+C139 INT, C140 INT, C141 INT, C142 INT, C143 INT, C144 INT, 
+C145 INT, C146 INT, C147 INT, C148 INT, C149 INT, C150 INT, 
+C151 INT, C152 INT, C153 INT, C154 INT, C155 INT, C156 INT, 
+C157 INT, C158 INT, C159 INT, C160 INT, C161 INT, C162 INT, 
+C163 INT, C164 INT, C165 INT, C166 INT, C167 INT, C168 INT, 
+C169 INT, C170 INT, C171 INT, C172 INT, C173 INT, C174 INT, 
+C175 INT, C176 INT, C177 INT, C178 INT, C179 INT, C180 INT, 
+C181 INT, C182 INT, C183 INT, C184 INT, C185 INT, C186 INT, 
+C187 INT, C188 INT, C189 INT, C190 INT, C191 INT, C192 INT, 
+C193 INT, C194 INT, C195 INT, C196 INT, C197 INT, C198 INT, 
+C199 INT, C200 INT, C201 INT, C202 INT, C203 INT, C204 INT, 
+C205 INT, C206 INT, C207 INT, C208 INT, C209 INT, C210 INT, 
+C211 INT, C212 INT, C213 INT, C214 INT, C215 INT, C216 INT, 
+C217 INT, C218 INT, C219 INT, C220 INT, C221 INT, C222 INT, 
+C223 INT, C224 INT, C225 INT, C226 INT, C227 INT, C228 INT, 
+C229 INT, C230 INT, C231 INT, C232 INT, C233 INT, C234 INT, 
+C235 INT, C236 INT, C237 INT, C238 INT, C239 INT, C240 INT, 
+C241 INT, C242 INT, C243 INT, C244 INT, C245 INT, C246 INT, 
+C247 INT, C248 INT, C249 INT, C250 INT);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO L1 VALUES (\n");
+printf("1, 2, 3, 4, 5, 6, \n");
+printf("7, 8, 9, 10, 11, 12, \n");
+printf("13, 14, 15, 16, 17, 18, \n");
+printf("19, 20, 21, 22, 23, 24, \n");
+printf("25, 26, 27, 28, 29, 30, \n");
+printf("31, 32, 33, 34, 35, 36, \n");
+printf("37, 38, 39, 40, 41, 42, \n");
+printf("43, 44, 45, 46, 47, 48, \n");
+printf("49, 50, 51, 52, 53, 54, \n");
+printf("55, 56, 57, 58, 59, 60, \n");
+printf("61, 62, 63, 64, 65, 66, \n");
+printf("67, 68, 69, 70, 71, 72, \n");
+printf("73, 74, 75, 76, 77, 78, \n");
+printf("79, 80, 81, 82, 83, 84, \n");
+printf("85, 86, 87, 88, 89, 90, \n");
+printf("91, 92, 93, 94, 95, 96, \n");
+printf("97, 98, 99, 100, 101, 102, \n");
+printf("103, 104, 105, 106, 107, 108, \n");
+printf("109, 110, 111, 112, 113, 114, \n");
+printf("115, 116, 117, 118, 119, 120, \n");
+printf("121, 122, 123, 124, 125, 126, \n");
+printf("127, 128, 129, 130, 131, 132, \n");
+printf("133, 134, 135, 136, 137, 138, \n");
+printf("139, 140, 141, 142, 143, 144, \n");
+printf("145, 146, 147, 148, 149, 150, \n");
+printf("151, 152, 153, 154, 155, 156, \n");
+printf("157, 158, 159, 160, 161, 162, \n");
+printf("163, 164, 165, 166, 167, 168, \n");
+printf("169, 170, 171, 172, 173, 174, \n");
+printf("175, 176, 177, 178, 179, 180, \n");
+printf("181, 182, 183, 184, 185, 186, \n");
+printf("187, 188, 189, 190, 191, 192, \n");
+printf("193, 194, 195, 196, 197, 198, \n");
+printf("199, 200, 201, 202, 203, 204, \n");
+printf("205, 206, 207, 208, 209, 210, \n");
+printf("211, 212, 213, 214, 215, 216, \n");
+printf("217, 218, 219, 220, 221, 222, \n");
+printf("223, 224, 225, 226, 227, 228, \n");
+printf("229, 230, 231, 232, 233, 234, \n");
+printf("235, 236, 237, 238, 239, 240, \n");
+printf("241, 242, 243, 244, 245, 246, \n");
+printf("247, 248, 249, 250\n");
+printf(");\n");
+EXEC SQL INSERT INTO L1 VALUES (
+1, 2, 3, 4, 5, 6, 
+7, 8, 9, 10, 11, 12, 
+13, 14, 15, 16, 17, 18, 
+19, 20, 21, 22, 23, 24, 
+25, 26, 27, 28, 29, 30, 
+31, 32, 33, 34, 35, 36, 
+37, 38, 39, 40, 41, 42, 
+43, 44, 45, 46, 47, 48, 
+49, 50, 51, 52, 53, 54, 
+55, 56, 57, 58, 59, 60, 
+61, 62, 63, 64, 65, 66, 
+67, 68, 69, 70, 71, 72, 
+73, 74, 75, 76, 77, 78, 
+79, 80, 81, 82, 83, 84, 
+85, 86, 87, 88, 89, 90, 
+91, 92, 93, 94, 95, 96, 
+97, 98, 99, 100, 101, 102, 
+103, 104, 105, 106, 107, 108, 
+109, 110, 111, 112, 113, 114, 
+115, 116, 117, 118, 119, 120, 
+121, 122, 123, 124, 125, 126, 
+127, 128, 129, 130, 131, 132, 
+133, 134, 135, 136, 137, 138, 
+139, 140, 141, 142, 143, 144, 
+145, 146, 147, 148, 149, 150, 
+151, 152, 153, 154, 155, 156, 
+157, 158, 159, 160, 161, 162, 
+163, 164, 165, 166, 167, 168, 
+169, 170, 171, 172, 173, 174, 
+175, 176, 177, 178, 179, 180, 
+181, 182, 183, 184, 185, 186, 
+187, 188, 189, 190, 191, 192, 
+193, 194, 195, 196, 197, 198, 
+199, 200, 201, 202, 203, 204, 
+205, 206, 207, 208, 209, 210, 
+211, 212, 213, 214, 215, 216, 
+217, 218, 219, 220, 221, 222, 
+223, 224, 225, 226, 227, 228, 
+229, 230, 231, 232, 233, 234, 
+235, 236, 237, 238, 239, 240, 
+241, 242, 243, 244, 245, 246, 
+247, 248, 249, 250
+);
+CHCKOK ();
+printf ("\n");
+
+printf("The next statement is 4000 characters long, including newlines.\n\n");
+printf("UPDATE L1 SET\n");
+printf("C1 = C1 + 1, C2 = C2 + 1, C3 = C3 + 1, \n");
+printf("C4 = C4 + 1, C5 = C5 + 1, C6 = C6 + 1, \n");
+printf("C7 = C7 + 1, C8 = C8 + 1, C9 = C9 + 1, \n");
+printf("C10 = C10 + 1, C11 = C11 + 1, C12 = C12 + 1, \n");
+printf("C13 = C13 + 1, C14 = C14 + 1, C15 = C15 + 1, \n");
+printf("C16 = C16 + 1, C17 = C17 + 1, C18 = C18 + 1, \n");
+printf("C19 = C19 + 1, C20 = C20 + 1, C21 = C21 + 1, \n");
+printf("C22 = C22 + 1, C23 = C23 + 1, C24 = C24 + 1, \n");
+printf("C25 = C25 + 1, C26 = C26 + 1, C27 = C27 + 1, \n");
+printf("C28 = C28 + 1, C29 = C29 + 1, C30 = C30 + 1, \n");
+printf("C31 = C31 + 1, C32 = C32 + 1, C33 = C33 + 1, \n");
+printf("C34 = C34 + 1, C35 = C35 + 1, C36 = C36 + 1, \n");
+printf("C37 = C37 + 1, C38 = C38 + 1, C39 = C39 + 1, \n");
+printf("C40 = C40 + 1, C41 = C41 + 1, C42 = C42 + 1, \n");
+printf("C43 = C43 + 1, C44 = C44 + 1, C45 = C45 + 1, \n");
+printf("C46 = C46 + 1, C47 = C47 + 1, C48 = C48 + 1, \n");
+printf("C49 = C49 + 1, C50 = C50 + 1, C51 = C51 + 1, \n");
+printf("C52 = C52 + 1, C53 = C53 + 1, C54 = C54 + 1, \n");
+printf("C55 = C55 + 1, C56 = C56 + 1, C57 = C57 + 1, \n");
+printf("C58 = C58 + 1, C59 = C59 + 1, C60 = C60 + 1, \n");
+printf("C61 = C61 + 1, C62 = C62 + 1, C63 = C63 + 1, \n");
+printf("C64 = C64 + 1, C65 = C65 + 1, C66 = C66 + 1, \n");
+printf("C67 = C67 + 1, C68 = C68 + 1, C69 = C69 + 1, \n");
+printf("C70 = C70 + 1, C71 = C71 + 1, C72 = C72 + 1, \n");
+printf("C73 = C73 + 1, C74 = C74 + 1, C75 = C75 + 1, \n");
+printf("C76 = C76 + 1, C77 = C77 + 1, C78 = C78 + 1, \n");
+printf("C79 = C79 + 1, C80 = C80 + 1, C81 = C81 + 1, \n");
+printf("C82 = C82 + 1, C83 = C83 + 1, C84 = C84 + 1, \n");
+printf("C85 = C85 + 1, C86 = C86 + 1, C87 = C87 + 1, \n");
+printf("C88 = C88 + 1, C89 = C89 + 1, C90 = C90 + 1, \n");
+printf("C91 = C91 + 1, C92 = C92 + 1, C93 = C93 + 1, \n");
+printf("C94 = C94 + 1, C95 = C95 + 1, C96 = C96 + 1, \n");
+printf("C97 = C97 + 1, C98 = C98 + 1, C99 = C99 + 1, \n");
+printf("C100 = C100 + 1, C101 = C101 + 1, C102 = C102 + 1, \n");
+printf("C103 = C103 + 1, C104 = C104 + 1, C105 = C105 + 1, \n");
+printf("C106 = C106 + 1, C107 = C107 + 1, C108 = C108 + 1, \n");
+printf("C109 = C109 + 1, C110 = C110 + 1, C111 = C111 +1, \n");
+printf("C112 = C112 +1, C113 = C113 +1, C114 = C114 +1, \n");
+printf("C115 = C115 +1, C116 = C116 +1, C117 = C117 +1, \n");
+printf("C118 = C118 +1, C119 = C119 +1, C120 = C120 +1, \n");
+printf("C121 = C121 +1, C122 = C122 +1, C123 = C123 +1, \n");
+printf("C124 = C124 +1, C125 = C125 +1, C126 = C126 +1, \n");
+printf("C127 = C127 +1, C128 = C128 +1, C129 = C129 +1, \n");
+printf("C130 = C130 +1, C131 = C131 +1, C132 = C132 +1, \n");
+printf("C133 = C133 +1, C134 = C134 +1, C135 = C135 +1, \n");
+printf("C136 = C136 +1, C137 = C137 +1, C138 = C138 +1, \n");
+printf("C139 = C139 +1, C140 = C140 +1, C141 = C141 +1, \n");
+printf("C142 = C142 +1, C143 = C143 +1, C144 = C144 +1, \n");
+printf("C145 = C145 +1, C146 = C146 +1, C147 = C147 +1, \n");
+printf("C148 = C148 +1, C149 = C149 +1, C150 = C150 +1, \n");
+printf("C151 = C151 +1, C152 = C152 +1, C153 = C153 +1, \n");
+printf("C154 = C154 +1, C155 = C155 +1, C156 = C156 +1, \n");
+printf("C157 = C157 +1, C158 = C158 +1, C159 = C159 +1, \n");
+printf("C160 = C160 +1, C161 = C161 +1, C162 = C162 +1, \n");
+printf("C163 = C163 +1, C164 = C164 +1, C165 = C165 +1, \n");
+printf("C166 = C166 +1, C167 = C167 +1, C168 = C168 +1, \n");
+printf("C169 = C169 +1, C170 = C170 +1, C171 = C171 +1, \n");
+printf("C172 = C172 +1, C173 = C173 +1, C174 = C174 +1, \n");
+printf("C175 = C175 +1, C176 = C176 +1, C177 = C177 +1, \n");
+printf("C178 = C178 +1, C179 = C179 +1, C180 = C180 +1, \n");
+printf("C181 = C181 +1, C182 = C182 +1, C183 = C183 +1, \n");
+printf("C184 = C184 +1, C185 = C185 +1, C186 = C186 +1, \n");
+printf("C187 = C187 +1, C188 = C188 +1, C189 = C189 +1, \n");
+printf("C190 = C190 +1, C191 = C191 +1, C192 = C192 +1, \n");
+printf("C193 = C193 +1, C194 = C194 +1, C195 = C195 +1, \n");
+printf("C196 = C196 +1, C197 = C197 +1, C198 = C198 +1, \n");
+printf("C199 = C199 +1, C200 = C200 +1, C201 = C201 +1, \n");
+printf("C202 = C202 +1, C203 = C203 +1, C204 = C204 +1, \n");
+printf("C205 = C205 +1, C206 = C206 +1, C207 = C207 +1, \n");
+printf("C208 = C208 +1, C209 = C209 +1, C210 = C210 +1, \n");
+printf("C211 = C211 +1, C212 = C212 +1, C213 = C213 +1, \n");
+printf("C214 = C214 +1, C215 = C215 +1, C216 = C216 +1, \n");
+printf("C217 = C217 +1, C218 = C218 +1, C219 = C219 +1, \n");
+printf("C220 = C220 +1, C221 = C221 +1, C222 = C222 +1, \n");
+printf("C223 = C223 +1, C224 = C224 +1, C225 = C225 +1, \n");
+printf("C226 = C226 +1, C227 = C227 +1, C228 = C228 +1, \n");
+printf("C229 = C229 +1, C230 = C230 +1, C231 = C231 +1, \n");
+printf("C232 = C232 +1, C233 = C233 +1, C234 = C234 +1, \n");
+printf("C235 = C235 +1, C236 = C236 +1, C237 = C237 +1, \n");
+printf("C238 = C238 +1, C239 = C239 +1, C240 = C240 +1, \n");
+printf("C241 = C241 +1, C242 = C242 +1, C243 = C243 +1, \n");
+printf("C244 = C244 +1, C245 = C245 +1, C246 = C246 +1, \n");
+printf("C247 = C247 +1, C248 = C248 +1, C249 = C249 +1, \n");
+printf("C250 = C250 +1;\n");
+EXEC SQL UPDATE L1 SET
+C1 = C1 + 1, C2 = C2 + 1, C3 = C3 + 1, 
+C4 = C4 + 1, C5 = C5 + 1, C6 = C6 + 1, 
+C7 = C7 + 1, C8 = C8 + 1, C9 = C9 + 1, 
+C10 = C10 + 1, C11 = C11 + 1, C12 = C12 + 1, 
+C13 = C13 + 1, C14 = C14 + 1, C15 = C15 + 1, 
+C16 = C16 + 1, C17 = C17 + 1, C18 = C18 + 1, 
+C19 = C19 + 1, C20 = C20 + 1, C21 = C21 + 1, 
+C22 = C22 + 1, C23 = C23 + 1, C24 = C24 + 1, 
+C25 = C25 + 1, C26 = C26 + 1, C27 = C27 + 1, 
+C28 = C28 + 1, C29 = C29 + 1, C30 = C30 + 1, 
+C31 = C31 + 1, C32 = C32 + 1, C33 = C33 + 1, 
+C34 = C34 + 1, C35 = C35 + 1, C36 = C36 + 1, 
+C37 = C37 + 1, C38 = C38 + 1, C39 = C39 + 1, 
+C40 = C40 + 1, C41 = C41 + 1, C42 = C42 + 1, 
+C43 = C43 + 1, C44 = C44 + 1, C45 = C45 + 1, 
+C46 = C46 + 1, C47 = C47 + 1, C48 = C48 + 1, 
+C49 = C49 + 1, C50 = C50 + 1, C51 = C51 + 1, 
+C52 = C52 + 1, C53 = C53 + 1, C54 = C54 + 1, 
+C55 = C55 + 1, C56 = C56 + 1, C57 = C57 + 1, 
+C58 = C58 + 1, C59 = C59 + 1, C60 = C60 + 1, 
+C61 = C61 + 1, C62 = C62 + 1, C63 = C63 + 1, 
+C64 = C64 + 1, C65 = C65 + 1, C66 = C66 + 1, 
+C67 = C67 + 1, C68 = C68 + 1, C69 = C69 + 1, 
+C70 = C70 + 1, C71 = C71 + 1, C72 = C72 + 1, 
+C73 = C73 + 1, C74 = C74 + 1, C75 = C75 + 1, 
+C76 = C76 + 1, C77 = C77 + 1, C78 = C78 + 1, 
+C79 = C79 + 1, C80 = C80 + 1, C81 = C81 + 1, 
+C82 = C82 + 1, C83 = C83 + 1, C84 = C84 + 1, 
+C85 = C85 + 1, C86 = C86 + 1, C87 = C87 + 1, 
+C88 = C88 + 1, C89 = C89 + 1, C90 = C90 + 1, 
+C91 = C91 + 1, C92 = C92 + 1, C93 = C93 + 1, 
+C94 = C94 + 1, C95 = C95 + 1, C96 = C96 + 1, 
+C97 = C97 + 1, C98 = C98 + 1, C99 = C99 + 1, 
+C100 = C100 + 1, C101 = C101 + 1, C102 = C102 + 1, 
+C103 = C103 + 1, C104 = C104 + 1, C105 = C105 + 1, 
+C106 = C106 + 1, C107 = C107 + 1, C108 = C108 + 1, 
+C109 = C109 + 1, C110 = C110 + 1, C111 = C111 +1, 
+C112 = C112 +1, C113 = C113 +1, C114 = C114 +1, 
+C115 = C115 +1, C116 = C116 +1, C117 = C117 +1, 
+C118 = C118 +1, C119 = C119 +1, C120 = C120 +1, 
+C121 = C121 +1, C122 = C122 +1, C123 = C123 +1, 
+C124 = C124 +1, C125 = C125 +1, C126 = C126 +1, 
+C127 = C127 +1, C128 = C128 +1, C129 = C129 +1, 
+C130 = C130 +1, C131 = C131 +1, C132 = C132 +1, 
+C133 = C133 +1, C134 = C134 +1, C135 = C135 +1, 
+C136 = C136 +1, C137 = C137 +1, C138 = C138 +1, 
+C139 = C139 +1, C140 = C140 +1, C141 = C141 +1, 
+C142 = C142 +1, C143 = C143 +1, C144 = C144 +1, 
+C145 = C145 +1, C146 = C146 +1, C147 = C147 +1, 
+C148 = C148 +1, C149 = C149 +1, C150 = C150 +1, 
+C151 = C151 +1, C152 = C152 +1, C153 = C153 +1, 
+C154 = C154 +1, C155 = C155 +1, C156 = C156 +1, 
+C157 = C157 +1, C158 = C158 +1, C159 = C159 +1, 
+C160 = C160 +1, C161 = C161 +1, C162 = C162 +1, 
+C163 = C163 +1, C164 = C164 +1, C165 = C165 +1, 
+C166 = C166 +1, C167 = C167 +1, C168 = C168 +1, 
+C169 = C169 +1, C170 = C170 +1, C171 = C171 +1, 
+C172 = C172 +1, C173 = C173 +1, C174 = C174 +1, 
+C175 = C175 +1, C176 = C176 +1, C177 = C177 +1, 
+C178 = C178 +1, C179 = C179 +1, C180 = C180 +1, 
+C181 = C181 +1, C182 = C182 +1, C183 = C183 +1, 
+C184 = C184 +1, C185 = C185 +1, C186 = C186 +1, 
+C187 = C187 +1, C188 = C188 +1, C189 = C189 +1, 
+C190 = C190 +1, C191 = C191 +1, C192 = C192 +1, 
+C193 = C193 +1, C194 = C194 +1, C195 = C195 +1, 
+C196 = C196 +1, C197 = C197 +1, C198 = C198 +1, 
+C199 = C199 +1, C200 = C200 +1, C201 = C201 +1, 
+C202 = C202 +1, C203 = C203 +1, C204 = C204 +1, 
+C205 = C205 +1, C206 = C206 +1, C207 = C207 +1, 
+C208 = C208 +1, C209 = C209 +1, C210 = C210 +1, 
+C211 = C211 +1, C212 = C212 +1, C213 = C213 +1, 
+C214 = C214 +1, C215 = C215 +1, C216 = C216 +1, 
+C217 = C217 +1, C218 = C218 +1, C219 = C219 +1, 
+C220 = C220 +1, C221 = C221 +1, C222 = C222 +1, 
+C223 = C223 +1, C224 = C224 +1, C225 = C225 +1, 
+C226 = C226 +1, C227 = C227 +1, C228 = C228 +1, 
+C229 = C229 +1, C230 = C230 +1, C231 = C231 +1, 
+C232 = C232 +1, C233 = C233 +1, C234 = C234 +1, 
+C235 = C235 +1, C236 = C236 +1, C237 = C237 +1, 
+C238 = C238 +1, C239 = C239 +1, C240 = C240 +1, 
+C241 = C241 +1, C242 = C242 +1, C243 = C243 +1, 
+C244 = C244 +1, C245 = C245 +1, C246 = C246 +1, 
+C247 = C247 +1, C248 = C248 +1, C249 = C249 +1, 
+C250 = C250 +1;
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+int2 = 0;
+int3 = 0;
+int4 = 0;
+int5 = 0;
+int6 = 0;
+int7 = 0;
+int8 = 0;
+int9 = 0;
+int10 = 0;
+int11 = 0;
+int12 = 0;
+int13 = 0;
+int14 = 0;
+int15 = 0;
+int16 = 0;
+int17 = 0;
+int18 = 0;
+int19 = 0;
+int20 = 0;
+int21 = 0;
+int22 = 0;
+int23 = 0;
+int24 = 0;
+int25 = 0;
+int26 = 0;
+int27 = 0;
+int28 = 0;
+int29 = 0;
+int30 = 0;
+int31 = 0;
+int32 = 0;
+int33 = 0;
+int34 = 0;
+int35 = 0;
+int36 = 0;
+int37 = 0;
+int38 = 0;
+int39 = 0;
+int40 = 0;
+int41 = 0;
+int42 = 0;
+int43 = 0;
+int44 = 0;
+int45 = 0;
+int46 = 0;
+int47 = 0;
+int48 = 0;
+int49 = 0;
+int50 = 0;
+int51 = 0;
+int52 = 0;
+int53 = 0;
+int54 = 0;
+int55 = 0;
+int56 = 0;
+int57 = 0;
+int58 = 0;
+int59 = 0;
+int60 = 0;
+int61 = 0;
+int62 = 0;
+int63 = 0;
+int64 = 0;
+int65 = 0;
+int66 = 0;
+int67 = 0;
+int68 = 0;
+int69 = 0;
+int70 = 0;
+int71 = 0;
+int72 = 0;
+int73 = 0;
+int74 = 0;
+int75 = 0;
+int76 = 0;
+int77 = 0;
+int78 = 0;
+int79 = 0;
+int80 = 0;
+int81 = 0;
+int82 = 0;
+int83 = 0;
+int84 = 0;
+int85 = 0;
+int86 = 0;
+int87 = 0;
+int88 = 0;
+int89 = 0;
+int90 = 0;
+int91 = 0;
+int92 = 0;
+int93 = 0;
+int94 = 0;
+int95 = 0;
+int96 = 0;
+int97 = 0;
+int98 = 0;
+int99 = 0;
+int100 = 0;
+int101 = 0;
+int102 = 0;
+int103 = 0;
+int104 = 0;
+int105 = 0;
+int106 = 0;
+int107 = 0;
+int108 = 0;
+int109 = 0;
+int110 = 0;
+int111 = 0;
+int112 = 0;
+int113 = 0;
+int114 = 0;
+int115 = 0;
+int116 = 0;
+int117 = 0;
+int118 = 0;
+int119 = 0;
+int120 = 0;
+int121 = 0;
+int122 = 0;
+int123 = 0;
+int124 = 0;
+int125 = 0;
+int126 = 0;
+int127 = 0;
+int128 = 0;
+int129 = 0;
+int130 = 0;
+int131 = 0;
+int132 = 0;
+int133 = 0;
+int134 = 0;
+int135 = 0;
+int136 = 0;
+int137 = 0;
+int138 = 0;
+int139 = 0;
+int140 = 0;
+int141 = 0;
+int142 = 0;
+int143 = 0;
+int144 = 0;
+int145 = 0;
+int146 = 0;
+int147 = 0;
+int148 = 0;
+int149 = 0;
+int150 = 0;
+int151 = 0;
+int152 = 0;
+int153 = 0;
+int154 = 0;
+int155 = 0;
+int156 = 0;
+int157 = 0;
+int158 = 0;
+int159 = 0;
+int160 = 0;
+int161 = 0;
+int162 = 0;
+int163 = 0;
+int164 = 0;
+int165 = 0;
+int166 = 0;
+int167 = 0;
+int168 = 0;
+int169 = 0;
+int170 = 0;
+int171 = 0;
+int172 = 0;
+int173 = 0;
+int174 = 0;
+int175 = 0;
+int176 = 0;
+int177 = 0;
+int178 = 0;
+int179 = 0;
+int180 = 0;
+int181 = 0;
+int182 = 0;
+int183 = 0;
+int184 = 0;
+int185 = 0;
+int186 = 0;
+int187 = 0;
+int188 = 0;
+int189 = 0;
+int190 = 0;
+int191 = 0;
+int192 = 0;
+int193 = 0;
+int194 = 0;
+int195 = 0;
+int196 = 0;
+int197 = 0;
+int198 = 0;
+int199 = 0;
+int200 = 0;
+int201 = 0;
+int202 = 0;
+int203 = 0;
+int204 = 0;
+int205 = 0;
+int206 = 0;
+int207 = 0;
+int208 = 0;
+int209 = 0;
+int210 = 0;
+int211 = 0;
+int212 = 0;
+int213 = 0;
+int214 = 0;
+int215 = 0;
+int216 = 0;
+int217 = 0;
+int218 = 0;
+int219 = 0;
+int220 = 0;
+int221 = 0;
+int222 = 0;
+int223 = 0;
+int224 = 0;
+int225 = 0;
+int226 = 0;
+int227 = 0;
+int228 = 0;
+int229 = 0;
+int230 = 0;
+int231 = 0;
+int232 = 0;
+int233 = 0;
+int234 = 0;
+int235 = 0;
+int236 = 0;
+int237 = 0;
+int238 = 0;
+int239 = 0;
+int240 = 0;
+int241 = 0;
+int242 = 0;
+int243 = 0;
+int244 = 0;
+int245 = 0;
+int246 = 0;
+int247 = 0;
+int248 = 0;
+int249 = 0;
+int250 = 0;
+printf("SELECT\n");
+printf("C1, C2, C3, C4, C5, C6, \n");
+printf("C7, C8, C9, C10, C11, C12, \n");
+printf("C13, C14, C15, C16, C17, C18, \n");
+printf("C19, C20, C21, C22, C23, C24, \n");
+printf("C25, C26, C27, C28, C29, C30, \n");
+printf("C31, C32, C33, C34, C35, C36, \n");
+printf("C37, C38, C39, C40, C41, C42, \n");
+printf("C43, C44, C45, C46, C47, C48, \n");
+printf("C49, C50, C51, C52, C53, C54, \n");
+printf("C55, C56, C57, C58, C59, C60, \n");
+printf("C61, C62, C63, C64, C65, C66, \n");
+printf("C67, C68, C69, C70, C71, C72, \n");
+printf("C73, C74, C75, C76, C77, C78, \n");
+printf("C79, C80, C81, C82, C83, C84, \n");
+printf("C85, C86, C87, C88, C89, C90, \n");
+printf("C91, C92, C93, C94, C95, C96, \n");
+printf("C97, C98, C99, C100, C101, C102, \n");
+printf("C103, C104, C105, C106, C107, C108, \n");
+printf("C109, C110, C111, C112, C113, C114, \n");
+printf("C115, C116, C117, C118, C119, C120, \n");
+printf("C121, C122, C123, C124, C125, C126, \n");
+printf("C127, C128, C129, C130, C131, C132, \n");
+printf("C133, C134, C135, C136, C137, C138, \n");
+printf("C139, C140, C141, C142, C143, C144, \n");
+printf("C145, C146, C147, C148, C149, C150, \n");
+printf("C151, C152, C153, C154, C155, C156, \n");
+printf("C157, C158, C159, C160, C161, C162, \n");
+printf("C163, C164, C165, C166, C167, C168, \n");
+printf("C169, C170, C171, C172, C173, C174, \n");
+printf("C175, C176, C177, C178, C179, C180, \n");
+printf("C181, C182, C183, C184, C185, C186, \n");
+printf("C187, C188, C189, C190, C191, C192, \n");
+printf("C193, C194, C195, C196, C197, C198, \n");
+printf("C199, C200, C201, C202, C203, C204, \n");
+printf("C205, C206, C207, C208, C209, C210, \n");
+printf("C211, C212, C213, C214, C215, C216, \n");
+printf("C217, C218, C219, C220, C221, C222, \n");
+printf("C223, C224, C225, C226, C227, C228, \n");
+printf("C229, C230, C231, C232, C233, C234, \n");
+printf("C235, C236, C237, C238, C239, C240, \n");
+printf("C241, C242, C243, C244, C245, C246, \n");
+printf("C247, C248, C249, C250\n");
+printf("INTO\n");
+printf(":int1, :int2, :int3, :int4, :int5, :int6, \n");
+printf(":int7, :int8, :int9, :int10, :int11, :int12, \n");
+printf(":int13, :int14, :int15, :int16, :int17, :int18, \n");
+printf(":int19, :int20, :int21, :int22, :int23, :int24, \n");
+printf(":int25, :int26, :int27, :int28, :int29, :int30, \n");
+printf(":int31, :int32, :int33, :int34, :int35, :int36, \n");
+printf(":int37, :int38, :int39, :int40, :int41, :int42, \n");
+printf(":int43, :int44, :int45, :int46, :int47, :int48, \n");
+printf(":int49, :int50, :int51, :int52, :int53, :int54, \n");
+printf(":int55, :int56, :int57, :int58, :int59, :int60, \n");
+printf(":int61, :int62, :int63, :int64, :int65, :int66, \n");
+printf(":int67, :int68, :int69, :int70, :int71, :int72, \n");
+printf(":int73, :int74, :int75, :int76, :int77, :int78, \n");
+printf(":int79, :int80, :int81, :int82, :int83, :int84, \n");
+printf(":int85, :int86, :int87, :int88, :int89, :int90, \n");
+printf(":int91, :int92, :int93, :int94, :int95, :int96, \n");
+printf(":int97, :int98, :int99, :int100, :int101, :int102, \n");
+printf(":int103, :int104, :int105, :int106, :int107, :int108, \n");
+printf(":int109, :int110, :int111, :int112, :int113, :int114, \n");
+printf(":int115, :int116, :int117, :int118, :int119, :int120, \n");
+printf(":int121, :int122, :int123, :int124, :int125, :int126, \n");
+printf(":int127, :int128, :int129, :int130, :int131, :int132, \n");
+printf(":int133, :int134, :int135, :int136, :int137, :int138, \n");
+printf(":int139, :int140, :int141, :int142, :int143, :int144, \n");
+printf(":int145, :int146, :int147, :int148, :int149, :int150, \n");
+printf(":int151, :int152, :int153, :int154, :int155, :int156, \n");
+printf(":int157, :int158, :int159, :int160, :int161, :int162, \n");
+printf(":int163, :int164, :int165, :int166, :int167, :int168, \n");
+printf(":int169, :int170, :int171, :int172, :int173, :int174, \n");
+printf(":int175, :int176, :int177, :int178, :int179, :int180, \n");
+printf(":int181, :int182, :int183, :int184, :int185, :int186, \n");
+printf(":int187, :int188, :int189, :int190, :int191, :int192, \n");
+printf(":int193, :int194, :int195, :int196, :int197, :int198, \n");
+printf(":int199, :int200, :int201, :int202, :int203, :int204, \n");
+printf(":int205, :int206, :int207, :int208, :int209, :int210, \n");
+printf(":int211, :int212, :int213, :int214, :int215, :int216, \n");
+printf(":int217, :int218, :int219, :int220, :int221, :int222, \n");
+printf(":int223, :int224, :int225, :int226, :int227, :int228, \n");
+printf(":int229, :int230, :int231, :int232, :int233, :int234, \n");
+printf(":int235, :int236, :int237, :int238, :int239, :int240, \n");
+printf(":int241, :int242, :int243, :int244, :int245, :int246, \n");
+printf(":int247, :int248, :int249, :int250\n");
+printf("FROM L1;\n");
+EXEC SQL SELECT
+C1, C2, C3, C4, C5, C6, 
+C7, C8, C9, C10, C11, C12, 
+C13, C14, C15, C16, C17, C18, 
+C19, C20, C21, C22, C23, C24, 
+C25, C26, C27, C28, C29, C30, 
+C31, C32, C33, C34, C35, C36, 
+C37, C38, C39, C40, C41, C42, 
+C43, C44, C45, C46, C47, C48, 
+C49, C50, C51, C52, C53, C54, 
+C55, C56, C57, C58, C59, C60, 
+C61, C62, C63, C64, C65, C66, 
+C67, C68, C69, C70, C71, C72, 
+C73, C74, C75, C76, C77, C78, 
+C79, C80, C81, C82, C83, C84, 
+C85, C86, C87, C88, C89, C90, 
+C91, C92, C93, C94, C95, C96, 
+C97, C98, C99, C100, C101, C102, 
+C103, C104, C105, C106, C107, C108, 
+C109, C110, C111, C112, C113, C114, 
+C115, C116, C117, C118, C119, C120, 
+C121, C122, C123, C124, C125, C126, 
+C127, C128, C129, C130, C131, C132, 
+C133, C134, C135, C136, C137, C138, 
+C139, C140, C141, C142, C143, C144, 
+C145, C146, C147, C148, C149, C150, 
+C151, C152, C153, C154, C155, C156, 
+C157, C158, C159, C160, C161, C162, 
+C163, C164, C165, C166, C167, C168, 
+C169, C170, C171, C172, C173, C174, 
+C175, C176, C177, C178, C179, C180, 
+C181, C182, C183, C184, C185, C186, 
+C187, C188, C189, C190, C191, C192, 
+C193, C194, C195, C196, C197, C198, 
+C199, C200, C201, C202, C203, C204, 
+C205, C206, C207, C208, C209, C210, 
+C211, C212, C213, C214, C215, C216, 
+C217, C218, C219, C220, C221, C222, 
+C223, C224, C225, C226, C227, C228, 
+C229, C230, C231, C232, C233, C234, 
+C235, C236, C237, C238, C239, C240, 
+C241, C242, C243, C244, C245, C246, 
+C247, C248, C249, C250
+INTO
+:int1, :int2, :int3, :int4, :int5, :int6, 
+:int7, :int8, :int9, :int10, :int11, :int12, 
+:int13, :int14, :int15, :int16, :int17, :int18, 
+:int19, :int20, :int21, :int22, :int23, :int24, 
+:int25, :int26, :int27, :int28, :int29, :int30, 
+:int31, :int32, :int33, :int34, :int35, :int36, 
+:int37, :int38, :int39, :int40, :int41, :int42, 
+:int43, :int44, :int45, :int46, :int47, :int48, 
+:int49, :int50, :int51, :int52, :int53, :int54, 
+:int55, :int56, :int57, :int58, :int59, :int60, 
+:int61, :int62, :int63, :int64, :int65, :int66, 
+:int67, :int68, :int69, :int70, :int71, :int72, 
+:int73, :int74, :int75, :int76, :int77, :int78, 
+:int79, :int80, :int81, :int82, :int83, :int84, 
+:int85, :int86, :int87, :int88, :int89, :int90, 
+:int91, :int92, :int93, :int94, :int95, :int96, 
+:int97, :int98, :int99, :int100, :int101, :int102, 
+:int103, :int104, :int105, :int106, :int107, :int108, 
+:int109, :int110, :int111, :int112, :int113, :int114, 
+:int115, :int116, :int117, :int118, :int119, :int120, 
+:int121, :int122, :int123, :int124, :int125, :int126, 
+:int127, :int128, :int129, :int130, :int131, :int132, 
+:int133, :int134, :int135, :int136, :int137, :int138, 
+:int139, :int140, :int141, :int142, :int143, :int144, 
+:int145, :int146, :int147, :int148, :int149, :int150, 
+:int151, :int152, :int153, :int154, :int155, :int156, 
+:int157, :int158, :int159, :int160, :int161, :int162, 
+:int163, :int164, :int165, :int166, :int167, :int168, 
+:int169, :int170, :int171, :int172, :int173, :int174, 
+:int175, :int176, :int177, :int178, :int179, :int180, 
+:int181, :int182, :int183, :int184, :int185, :int186, 
+:int187, :int188, :int189, :int190, :int191, :int192, 
+:int193, :int194, :int195, :int196, :int197, :int198, 
+:int199, :int200, :int201, :int202, :int203, :int204, 
+:int205, :int206, :int207, :int208, :int209, :int210, 
+:int211, :int212, :int213, :int214, :int215, :int216, 
+:int217, :int218, :int219, :int220, :int221, :int222, 
+:int223, :int224, :int225, :int226, :int227, :int228, 
+:int229, :int230, :int231, :int232, :int233, :int234, 
+:int235, :int236, :int237, :int238, :int239, :int240, 
+:int241, :int242, :int243, :int244, :int245, :int246, 
+:int247, :int248, :int249, :int250
+FROM L1;
+CHCKOK ();
+printf("int1 should be 2; its value is %ld\n", int1);
+if (int1 != 2)
+  flag = 0;
+printf("int2 should be 3; its value is %ld\n", int2);
+if (int2 != 3)
+  flag = 0;
+printf("int3 should be 4; its value is %ld\n", int3);
+if (int3 != 4)
+  flag = 0;
+printf("int4 should be 5; its value is %ld\n", int4);
+if (int4 != 5)
+  flag = 0;
+printf("int5 should be 6; its value is %ld\n", int5);
+if (int5 != 6)
+  flag = 0;
+printf("int6 should be 7; its value is %ld\n", int6);
+if (int6 != 7)
+  flag = 0;
+printf("int7 should be 8; its value is %ld\n", int7);
+if (int7 != 8)
+  flag = 0;
+printf("int8 should be 9; its value is %ld\n", int8);
+if (int8 != 9)
+  flag = 0;
+printf("int9 should be 10; its value is %ld\n", int9);
+if (int9 != 10)
+  flag = 0;
+printf("int10 should be 11; its value is %ld\n", int10);
+if (int10 != 11)
+  flag = 0;
+printf("int11 should be 12; its value is %ld\n", int11);
+if (int11 != 12)
+  flag = 0;
+printf("int12 should be 13; its value is %ld\n", int12);
+if (int12 != 13)
+  flag = 0;
+printf("int13 should be 14; its value is %ld\n", int13);
+if (int13 != 14)
+  flag = 0;
+printf("int14 should be 15; its value is %ld\n", int14);
+if (int14 != 15)
+  flag = 0;
+printf("int15 should be 16; its value is %ld\n", int15);
+if (int15 != 16)
+  flag = 0;
+printf("int16 should be 17; its value is %ld\n", int16);
+if (int16 != 17)
+  flag = 0;
+printf("int17 should be 18; its value is %ld\n", int17);
+if (int17 != 18)
+  flag = 0;
+printf("int18 should be 19; its value is %ld\n", int18);
+if (int18 != 19)
+  flag = 0;
+printf("int19 should be 20; its value is %ld\n", int19);
+if (int19 != 20)
+  flag = 0;
+printf("int20 should be 21; its value is %ld\n", int20);
+if (int20 != 21)
+  flag = 0;
+printf("int21 should be 22; its value is %ld\n", int21);
+if (int21 != 22)
+  flag = 0;
+printf("int22 should be 23; its value is %ld\n", int22);
+if (int22 != 23)
+  flag = 0;
+printf("int23 should be 24; its value is %ld\n", int23);
+if (int23 != 24)
+  flag = 0;
+printf("int24 should be 25; its value is %ld\n", int24);
+if (int24 != 25)
+  flag = 0;
+printf("int25 should be 26; its value is %ld\n", int25);
+if (int25 != 26)
+  flag = 0;
+printf("int26 should be 27; its value is %ld\n", int26);
+if (int26 != 27)
+  flag = 0;
+printf("int27 should be 28; its value is %ld\n", int27);
+if (int27 != 28)
+  flag = 0;
+printf("int28 should be 29; its value is %ld\n", int28);
+if (int28 != 29)
+  flag = 0;
+printf("int29 should be 30; its value is %ld\n", int29);
+if (int29 != 30)
+  flag = 0;
+printf("int30 should be 31; its value is %ld\n", int30);
+if (int30 != 31)
+  flag = 0;
+printf("int31 should be 32; its value is %ld\n", int31);
+if (int31 != 32)
+  flag = 0;
+printf("int32 should be 33; its value is %ld\n", int32);
+if (int32 != 33)
+  flag = 0;
+printf("int33 should be 34; its value is %ld\n", int33);
+if (int33 != 34)
+  flag = 0;
+printf("int34 should be 35; its value is %ld\n", int34);
+if (int34 != 35)
+  flag = 0;
+printf("int35 should be 36; its value is %ld\n", int35);
+if (int35 != 36)
+  flag = 0;
+printf("int36 should be 37; its value is %ld\n", int36);
+if (int36 != 37)
+  flag = 0;
+printf("int37 should be 38; its value is %ld\n", int37);
+if (int37 != 38)
+  flag = 0;
+printf("int38 should be 39; its value is %ld\n", int38);
+if (int38 != 39)
+  flag = 0;
+printf("int39 should be 40; its value is %ld\n", int39);
+if (int39 != 40)
+  flag = 0;
+printf("int40 should be 41; its value is %ld\n", int40);
+if (int40 != 41)
+  flag = 0;
+printf("int41 should be 42; its value is %ld\n", int41);
+if (int41 != 42)
+  flag = 0;
+printf("int42 should be 43; its value is %ld\n", int42);
+if (int42 != 43)
+  flag = 0;
+printf("int43 should be 44; its value is %ld\n", int43);
+if (int43 != 44)
+  flag = 0;
+printf("int44 should be 45; its value is %ld\n", int44);
+if (int44 != 45)
+  flag = 0;
+printf("int45 should be 46; its value is %ld\n", int45);
+if (int45 != 46)
+  flag = 0;
+printf("int46 should be 47; its value is %ld\n", int46);
+if (int46 != 47)
+  flag = 0;
+printf("int47 should be 48; its value is %ld\n", int47);
+if (int47 != 48)
+  flag = 0;
+printf("int48 should be 49; its value is %ld\n", int48);
+if (int48 != 49)
+  flag = 0;
+printf("int49 should be 50; its value is %ld\n", int49);
+if (int49 != 50)
+  flag = 0;
+printf("int50 should be 51; its value is %ld\n", int50);
+if (int50 != 51)
+  flag = 0;
+printf("int51 should be 52; its value is %ld\n", int51);
+if (int51 != 52)
+  flag = 0;
+printf("int52 should be 53; its value is %ld\n", int52);
+if (int52 != 53)
+  flag = 0;
+printf("int53 should be 54; its value is %ld\n", int53);
+if (int53 != 54)
+  flag = 0;
+printf("int54 should be 55; its value is %ld\n", int54);
+if (int54 != 55)
+  flag = 0;
+printf("int55 should be 56; its value is %ld\n", int55);
+if (int55 != 56)
+  flag = 0;
+printf("int56 should be 57; its value is %ld\n", int56);
+if (int56 != 57)
+  flag = 0;
+printf("int57 should be 58; its value is %ld\n", int57);
+if (int57 != 58)
+  flag = 0;
+printf("int58 should be 59; its value is %ld\n", int58);
+if (int58 != 59)
+  flag = 0;
+printf("int59 should be 60; its value is %ld\n", int59);
+if (int59 != 60)
+  flag = 0;
+printf("int60 should be 61; its value is %ld\n", int60);
+if (int60 != 61)
+  flag = 0;
+printf("int61 should be 62; its value is %ld\n", int61);
+if (int61 != 62)
+  flag = 0;
+printf("int62 should be 63; its value is %ld\n", int62);
+if (int62 != 63)
+  flag = 0;
+printf("int63 should be 64; its value is %ld\n", int63);
+if (int63 != 64)
+  flag = 0;
+printf("int64 should be 65; its value is %ld\n", int64);
+if (int64 != 65)
+  flag = 0;
+printf("int65 should be 66; its value is %ld\n", int65);
+if (int65 != 66)
+  flag = 0;
+printf("int66 should be 67; its value is %ld\n", int66);
+if (int66 != 67)
+  flag = 0;
+printf("int67 should be 68; its value is %ld\n", int67);
+if (int67 != 68)
+  flag = 0;
+printf("int68 should be 69; its value is %ld\n", int68);
+if (int68 != 69)
+  flag = 0;
+printf("int69 should be 70; its value is %ld\n", int69);
+if (int69 != 70)
+  flag = 0;
+printf("int70 should be 71; its value is %ld\n", int70);
+if (int70 != 71)
+  flag = 0;
+printf("int71 should be 72; its value is %ld\n", int71);
+if (int71 != 72)
+  flag = 0;
+printf("int72 should be 73; its value is %ld\n", int72);
+if (int72 != 73)
+  flag = 0;
+printf("int73 should be 74; its value is %ld\n", int73);
+if (int73 != 74)
+  flag = 0;
+printf("int74 should be 75; its value is %ld\n", int74);
+if (int74 != 75)
+  flag = 0;
+printf("int75 should be 76; its value is %ld\n", int75);
+if (int75 != 76)
+  flag = 0;
+printf("int76 should be 77; its value is %ld\n", int76);
+if (int76 != 77)
+  flag = 0;
+printf("int77 should be 78; its value is %ld\n", int77);
+if (int77 != 78)
+  flag = 0;
+printf("int78 should be 79; its value is %ld\n", int78);
+if (int78 != 79)
+  flag = 0;
+printf("int79 should be 80; its value is %ld\n", int79);
+if (int79 != 80)
+  flag = 0;
+printf("int80 should be 81; its value is %ld\n", int80);
+if (int80 != 81)
+  flag = 0;
+printf("int81 should be 82; its value is %ld\n", int81);
+if (int81 != 82)
+  flag = 0;
+printf("int82 should be 83; its value is %ld\n", int82);
+if (int82 != 83)
+  flag = 0;
+printf("int83 should be 84; its value is %ld\n", int83);
+if (int83 != 84)
+  flag = 0;
+printf("int84 should be 85; its value is %ld\n", int84);
+if (int84 != 85)
+  flag = 0;
+printf("int85 should be 86; its value is %ld\n", int85);
+if (int85 != 86)
+  flag = 0;
+printf("int86 should be 87; its value is %ld\n", int86);
+if (int86 != 87)
+  flag = 0;
+printf("int87 should be 88; its value is %ld\n", int87);
+if (int87 != 88)
+  flag = 0;
+printf("int88 should be 89; its value is %ld\n", int88);
+if (int88 != 89)
+  flag = 0;
+printf("int89 should be 90; its value is %ld\n", int89);
+if (int89 != 90)
+  flag = 0;
+printf("int90 should be 91; its value is %ld\n", int90);
+if (int90 != 91)
+  flag = 0;
+printf("int91 should be 92; its value is %ld\n", int91);
+if (int91 != 92)
+  flag = 0;
+printf("int92 should be 93; its value is %ld\n", int92);
+if (int92 != 93)
+  flag = 0;
+printf("int93 should be 94; its value is %ld\n", int93);
+if (int93 != 94)
+  flag = 0;
+printf("int94 should be 95; its value is %ld\n", int94);
+if (int94 != 95)
+  flag = 0;
+printf("int95 should be 96; its value is %ld\n", int95);
+if (int95 != 96)
+  flag = 0;
+printf("int96 should be 97; its value is %ld\n", int96);
+if (int96 != 97)
+  flag = 0;
+printf("int97 should be 98; its value is %ld\n", int97);
+if (int97 != 98)
+  flag = 0;
+printf("int98 should be 99; its value is %ld\n", int98);
+if (int98 != 99)
+  flag = 0;
+printf("int99 should be 100; its value is %ld\n", int99);
+if (int99 != 100)
+  flag = 0;
+printf("int100 should be 101; its value is %ld\n", int100);
+if (int100 != 101)
+  flag = 0;
+printf("int101 should be 102; its value is %ld\n", int101);
+if (int101 != 102)
+  flag = 0;
+printf("int102 should be 103; its value is %ld\n", int102);
+if (int102 != 103)
+  flag = 0;
+printf("int103 should be 104; its value is %ld\n", int103);
+if (int103 != 104)
+  flag = 0;
+printf("int104 should be 105; its value is %ld\n", int104);
+if (int104 != 105)
+  flag = 0;
+printf("int105 should be 106; its value is %ld\n", int105);
+if (int105 != 106)
+  flag = 0;
+printf("int106 should be 107; its value is %ld\n", int106);
+if (int106 != 107)
+  flag = 0;
+printf("int107 should be 108; its value is %ld\n", int107);
+if (int107 != 108)
+  flag = 0;
+printf("int108 should be 109; its value is %ld\n", int108);
+if (int108 != 109)
+  flag = 0;
+printf("int109 should be 110; its value is %ld\n", int109);
+if (int109 != 110)
+  flag = 0;
+printf("int110 should be 111; its value is %ld\n", int110);
+if (int110 != 111)
+  flag = 0;
+printf("int111 should be 112; its value is %ld\n", int111);
+if (int111 != 112)
+  flag = 0;
+printf("int112 should be 113; its value is %ld\n", int112);
+if (int112 != 113)
+  flag = 0;
+printf("int113 should be 114; its value is %ld\n", int113);
+if (int113 != 114)
+  flag = 0;
+printf("int114 should be 115; its value is %ld\n", int114);
+if (int114 != 115)
+  flag = 0;
+printf("int115 should be 116; its value is %ld\n", int115);
+if (int115 != 116)
+  flag = 0;
+printf("int116 should be 117; its value is %ld\n", int116);
+if (int116 != 117)
+  flag = 0;
+printf("int117 should be 118; its value is %ld\n", int117);
+if (int117 != 118)
+  flag = 0;
+printf("int118 should be 119; its value is %ld\n", int118);
+if (int118 != 119)
+  flag = 0;
+printf("int119 should be 120; its value is %ld\n", int119);
+if (int119 != 120)
+  flag = 0;
+printf("int120 should be 121; its value is %ld\n", int120);
+if (int120 != 121)
+  flag = 0;
+printf("int121 should be 122; its value is %ld\n", int121);
+if (int121 != 122)
+  flag = 0;
+printf("int122 should be 123; its value is %ld\n", int122);
+if (int122 != 123)
+  flag = 0;
+printf("int123 should be 124; its value is %ld\n", int123);
+if (int123 != 124)
+  flag = 0;
+printf("int124 should be 125; its value is %ld\n", int124);
+if (int124 != 125)
+  flag = 0;
+printf("int125 should be 126; its value is %ld\n", int125);
+if (int125 != 126)
+  flag = 0;
+printf("int126 should be 127; its value is %ld\n", int126);
+if (int126 != 127)
+  flag = 0;
+printf("int127 should be 128; its value is %ld\n", int127);
+if (int127 != 128)
+  flag = 0;
+printf("int128 should be 129; its value is %ld\n", int128);
+if (int128 != 129)
+  flag = 0;
+printf("int129 should be 130; its value is %ld\n", int129);
+if (int129 != 130)
+  flag = 0;
+printf("int130 should be 131; its value is %ld\n", int130);
+if (int130 != 131)
+  flag = 0;
+printf("int131 should be 132; its value is %ld\n", int131);
+if (int131 != 132)
+  flag = 0;
+printf("int132 should be 133; its value is %ld\n", int132);
+if (int132 != 133)
+  flag = 0;
+printf("int133 should be 134; its value is %ld\n", int133);
+if (int133 != 134)
+  flag = 0;
+printf("int134 should be 135; its value is %ld\n", int134);
+if (int134 != 135)
+  flag = 0;
+printf("int135 should be 136; its value is %ld\n", int135);
+if (int135 != 136)
+  flag = 0;
+printf("int136 should be 137; its value is %ld\n", int136);
+if (int136 != 137)
+  flag = 0;
+printf("int137 should be 138; its value is %ld\n", int137);
+if (int137 != 138)
+  flag = 0;
+printf("int138 should be 139; its value is %ld\n", int138);
+if (int138 != 139)
+  flag = 0;
+printf("int139 should be 140; its value is %ld\n", int139);
+if (int139 != 140)
+  flag = 0;
+printf("int140 should be 141; its value is %ld\n", int140);
+if (int140 != 141)
+  flag = 0;
+printf("int141 should be 142; its value is %ld\n", int141);
+if (int141 != 142)
+  flag = 0;
+printf("int142 should be 143; its value is %ld\n", int142);
+if (int142 != 143)
+  flag = 0;
+printf("int143 should be 144; its value is %ld\n", int143);
+if (int143 != 144)
+  flag = 0;
+printf("int144 should be 145; its value is %ld\n", int144);
+if (int144 != 145)
+  flag = 0;
+printf("int145 should be 146; its value is %ld\n", int145);
+if (int145 != 146)
+  flag = 0;
+printf("int146 should be 147; its value is %ld\n", int146);
+if (int146 != 147)
+  flag = 0;
+printf("int147 should be 148; its value is %ld\n", int147);
+if (int147 != 148)
+  flag = 0;
+printf("int148 should be 149; its value is %ld\n", int148);
+if (int148 != 149)
+  flag = 0;
+printf("int149 should be 150; its value is %ld\n", int149);
+if (int149 != 150)
+  flag = 0;
+printf("int150 should be 151; its value is %ld\n", int150);
+if (int150 != 151)
+  flag = 0;
+printf("int151 should be 152; its value is %ld\n", int151);
+if (int151 != 152)
+  flag = 0;
+printf("int152 should be 153; its value is %ld\n", int152);
+if (int152 != 153)
+  flag = 0;
+printf("int153 should be 154; its value is %ld\n", int153);
+if (int153 != 154)
+  flag = 0;
+printf("int154 should be 155; its value is %ld\n", int154);
+if (int154 != 155)
+  flag = 0;
+printf("int155 should be 156; its value is %ld\n", int155);
+if (int155 != 156)
+  flag = 0;
+printf("int156 should be 157; its value is %ld\n", int156);
+if (int156 != 157)
+  flag = 0;
+printf("int157 should be 158; its value is %ld\n", int157);
+if (int157 != 158)
+  flag = 0;
+printf("int158 should be 159; its value is %ld\n", int158);
+if (int158 != 159)
+  flag = 0;
+printf("int159 should be 160; its value is %ld\n", int159);
+if (int159 != 160)
+  flag = 0;
+printf("int160 should be 161; its value is %ld\n", int160);
+if (int160 != 161)
+  flag = 0;
+printf("int161 should be 162; its value is %ld\n", int161);
+if (int161 != 162)
+  flag = 0;
+printf("int162 should be 163; its value is %ld\n", int162);
+if (int162 != 163)
+  flag = 0;
+printf("int163 should be 164; its value is %ld\n", int163);
+if (int163 != 164)
+  flag = 0;
+printf("int164 should be 165; its value is %ld\n", int164);
+if (int164 != 165)
+  flag = 0;
+printf("int165 should be 166; its value is %ld\n", int165);
+if (int165 != 166)
+  flag = 0;
+printf("int166 should be 167; its value is %ld\n", int166);
+if (int166 != 167)
+  flag = 0;
+printf("int167 should be 168; its value is %ld\n", int167);
+if (int167 != 168)
+  flag = 0;
+printf("int168 should be 169; its value is %ld\n", int168);
+if (int168 != 169)
+  flag = 0;
+printf("int169 should be 170; its value is %ld\n", int169);
+if (int169 != 170)
+  flag = 0;
+printf("int170 should be 171; its value is %ld\n", int170);
+if (int170 != 171)
+  flag = 0;
+printf("int171 should be 172; its value is %ld\n", int171);
+if (int171 != 172)
+  flag = 0;
+printf("int172 should be 173; its value is %ld\n", int172);
+if (int172 != 173)
+  flag = 0;
+printf("int173 should be 174; its value is %ld\n", int173);
+if (int173 != 174)
+  flag = 0;
+printf("int174 should be 175; its value is %ld\n", int174);
+if (int174 != 175)
+  flag = 0;
+printf("int175 should be 176; its value is %ld\n", int175);
+if (int175 != 176)
+  flag = 0;
+printf("int176 should be 177; its value is %ld\n", int176);
+if (int176 != 177)
+  flag = 0;
+printf("int177 should be 178; its value is %ld\n", int177);
+if (int177 != 178)
+  flag = 0;
+printf("int178 should be 179; its value is %ld\n", int178);
+if (int178 != 179)
+  flag = 0;
+printf("int179 should be 180; its value is %ld\n", int179);
+if (int179 != 180)
+  flag = 0;
+printf("int180 should be 181; its value is %ld\n", int180);
+if (int180 != 181)
+  flag = 0;
+printf("int181 should be 182; its value is %ld\n", int181);
+if (int181 != 182)
+  flag = 0;
+printf("int182 should be 183; its value is %ld\n", int182);
+if (int182 != 183)
+  flag = 0;
+printf("int183 should be 184; its value is %ld\n", int183);
+if (int183 != 184)
+  flag = 0;
+printf("int184 should be 185; its value is %ld\n", int184);
+if (int184 != 185)
+  flag = 0;
+printf("int185 should be 186; its value is %ld\n", int185);
+if (int185 != 186)
+  flag = 0;
+printf("int186 should be 187; its value is %ld\n", int186);
+if (int186 != 187)
+  flag = 0;
+printf("int187 should be 188; its value is %ld\n", int187);
+if (int187 != 188)
+  flag = 0;
+printf("int188 should be 189; its value is %ld\n", int188);
+if (int188 != 189)
+  flag = 0;
+printf("int189 should be 190; its value is %ld\n", int189);
+if (int189 != 190)
+  flag = 0;
+printf("int190 should be 191; its value is %ld\n", int190);
+if (int190 != 191)
+  flag = 0;
+printf("int191 should be 192; its value is %ld\n", int191);
+if (int191 != 192)
+  flag = 0;
+printf("int192 should be 193; its value is %ld\n", int192);
+if (int192 != 193)
+  flag = 0;
+printf("int193 should be 194; its value is %ld\n", int193);
+if (int193 != 194)
+  flag = 0;
+printf("int194 should be 195; its value is %ld\n", int194);
+if (int194 != 195)
+  flag = 0;
+printf("int195 should be 196; its value is %ld\n", int195);
+if (int195 != 196)
+  flag = 0;
+printf("int196 should be 197; its value is %ld\n", int196);
+if (int196 != 197)
+  flag = 0;
+printf("int197 should be 198; its value is %ld\n", int197);
+if (int197 != 198)
+  flag = 0;
+printf("int198 should be 199; its value is %ld\n", int198);
+if (int198 != 199)
+  flag = 0;
+printf("int199 should be 200; its value is %ld\n", int199);
+if (int199 != 200)
+  flag = 0;
+printf("int200 should be 201; its value is %ld\n", int200);
+if (int200 != 201)
+  flag = 0;
+printf("int201 should be 202; its value is %ld\n", int201);
+if (int201 != 202)
+  flag = 0;
+printf("int202 should be 203; its value is %ld\n", int202);
+if (int202 != 203)
+  flag = 0;
+printf("int203 should be 204; its value is %ld\n", int203);
+if (int203 != 204)
+  flag = 0;
+printf("int204 should be 205; its value is %ld\n", int204);
+if (int204 != 205)
+  flag = 0;
+printf("int205 should be 206; its value is %ld\n", int205);
+if (int205 != 206)
+  flag = 0;
+printf("int206 should be 207; its value is %ld\n", int206);
+if (int206 != 207)
+  flag = 0;
+printf("int207 should be 208; its value is %ld\n", int207);
+if (int207 != 208)
+  flag = 0;
+printf("int208 should be 209; its value is %ld\n", int208);
+if (int208 != 209)
+  flag = 0;
+printf("int209 should be 210; its value is %ld\n", int209);
+if (int209 != 210)
+  flag = 0;
+printf("int210 should be 211; its value is %ld\n", int210);
+if (int210 != 211)
+  flag = 0;
+printf("int211 should be 212; its value is %ld\n", int211);
+if (int211 != 212)
+  flag = 0;
+printf("int212 should be 213; its value is %ld\n", int212);
+if (int212 != 213)
+  flag = 0;
+printf("int213 should be 214; its value is %ld\n", int213);
+if (int213 != 214)
+  flag = 0;
+printf("int214 should be 215; its value is %ld\n", int214);
+if (int214 != 215)
+  flag = 0;
+printf("int215 should be 216; its value is %ld\n", int215);
+if (int215 != 216)
+  flag = 0;
+printf("int216 should be 217; its value is %ld\n", int216);
+if (int216 != 217)
+  flag = 0;
+printf("int217 should be 218; its value is %ld\n", int217);
+if (int217 != 218)
+  flag = 0;
+printf("int218 should be 219; its value is %ld\n", int218);
+if (int218 != 219)
+  flag = 0;
+printf("int219 should be 220; its value is %ld\n", int219);
+if (int219 != 220)
+  flag = 0;
+printf("int220 should be 221; its value is %ld\n", int220);
+if (int220 != 221)
+  flag = 0;
+printf("int221 should be 222; its value is %ld\n", int221);
+if (int221 != 222)
+  flag = 0;
+printf("int222 should be 223; its value is %ld\n", int222);
+if (int222 != 223)
+  flag = 0;
+printf("int223 should be 224; its value is %ld\n", int223);
+if (int223 != 224)
+  flag = 0;
+printf("int224 should be 225; its value is %ld\n", int224);
+if (int224 != 225)
+  flag = 0;
+printf("int225 should be 226; its value is %ld\n", int225);
+if (int225 != 226)
+  flag = 0;
+printf("int226 should be 227; its value is %ld\n", int226);
+if (int226 != 227)
+  flag = 0;
+printf("int227 should be 228; its value is %ld\n", int227);
+if (int227 != 228)
+  flag = 0;
+printf("int228 should be 229; its value is %ld\n", int228);
+if (int228 != 229)
+  flag = 0;
+printf("int229 should be 230; its value is %ld\n", int229);
+if (int229 != 230)
+  flag = 0;
+printf("int230 should be 231; its value is %ld\n", int230);
+if (int230 != 231)
+  flag = 0;
+printf("int231 should be 232; its value is %ld\n", int231);
+if (int231 != 232)
+  flag = 0;
+printf("int232 should be 233; its value is %ld\n", int232);
+if (int232 != 233)
+  flag = 0;
+printf("int233 should be 234; its value is %ld\n", int233);
+if (int233 != 234)
+  flag = 0;
+printf("int234 should be 235; its value is %ld\n", int234);
+if (int234 != 235)
+  flag = 0;
+printf("int235 should be 236; its value is %ld\n", int235);
+if (int235 != 236)
+  flag = 0;
+printf("int236 should be 237; its value is %ld\n", int236);
+if (int236 != 237)
+  flag = 0;
+printf("int237 should be 238; its value is %ld\n", int237);
+if (int237 != 238)
+  flag = 0;
+printf("int238 should be 239; its value is %ld\n", int238);
+if (int238 != 239)
+  flag = 0;
+printf("int239 should be 240; its value is %ld\n", int239);
+if (int239 != 240)
+  flag = 0;
+printf("int240 should be 241; its value is %ld\n", int240);
+if (int240 != 241)
+  flag = 0;
+printf("int241 should be 242; its value is %ld\n", int241);
+if (int241 != 242)
+  flag = 0;
+printf("int242 should be 243; its value is %ld\n", int242);
+if (int242 != 243)
+  flag = 0;
+printf("int243 should be 244; its value is %ld\n", int243);
+if (int243 != 244)
+  flag = 0;
+printf("int244 should be 245; its value is %ld\n", int244);
+if (int244 != 245)
+  flag = 0;
+printf("int245 should be 246; its value is %ld\n", int245);
+if (int245 != 246)
+  flag = 0;
+printf("int246 should be 247; its value is %ld\n", int246);
+if (int246 != 247)
+  flag = 0;
+printf("int247 should be 248; its value is %ld\n", int247);
+if (int247 != 248)
+  flag = 0;
+printf("int248 should be 249; its value is %ld\n", int248);
+if (int248 != 249)
+  flag = 0;
+printf("int249 should be 250; its value is %ld\n", int249);
+if (int249 != 250)
+  flag = 0;
+printf("int250 should be 251; its value is %ld\n", int250);
+if (int250 != 251)
+  flag = 0;
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE L1 CASCADE;\n");
+EXEC SQL DROP TABLE L1 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0891','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml178.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0891','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0891 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,894 @@
+/*  EMBEDDED C (file " XTS765.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS765.PC                                                   */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  REVOKE USAGE on character set CASCADE                        */ 
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.37   -- <revoke statement>                              */
+/*    TC#2 -- 11.37 Errata                                       */
+/*    11.37 T.C SR.11                                            */
+/*    11.37 SR.18a                                               */
+/*    11.37 GR.1                                                 */
+/*    11.37 GR.2                                                 */
+/*    11.37 GR.7.1                                               */
+/*    11.37 T.C GR.2a                                            */
+/*    F#2  -- Basic Information Schema                           */
+/*    F#3  -- Basic schema manipulation                          */
+/*    F#32 -- User Authorization                                 */
+/*    F#45 -- Character set definition                           */
+/*                                                               */
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 18/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA STATUS : QA CHECK                                         */
+/*                                                               */
+/*  Revised by DWF 1996-02-23                                    */
+/*    Shortened variable names to 6 chars                        */
+/*    Removed field widths from printfs                          */
+/*    Fixed schema references                                    */
+/*    Fixed character set usage                                  */
+/*    Fixed SDL transactions                                     */
+/*    Fixed coding rule violations                               */
+/*    Matched up printouts with statements                       */
+/*    Fixed SQL syntax errors                                    */
+/*    Made # targets equal to # selected columns                 */
+/*    Removed unused variable                                    */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char tabnam[129];
+char colnam[129];
+char cset[129];
+long ordpos;
+char grtor[129];
+char gtee[129];
+char objnam[129];
+char objtyp[129];
+char isgr[129]; 
+long coun;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts765.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7065 ********************/
+flag = 1;
+printf("                 TEST7065\n");
+printf("    REVOKE USAGE on character set CASCADE \n");
+printf(" References:\n");                                     
+printf("    11.37 -- <revoke statement> \n");
+printf("    TC#2  -- 11.37 Errata \n");
+printf("    11.37 T.C SR.11\n");
+printf("    11.37 SR.18a \n");
+printf("    11.37 GR.1   \n");
+printf("    11.37 GR.2   \n");
+printf("    11.37 GR.7.1 \n");
+printf("    11.37 T.C GR.2a \n");
+printf("    F#2   -- Basic Information Schema\n");
+printf("    F#3   -- Basic schema manipulation\n");
+printf("    F#32  -- User Authorization \n");
+printf("    F#45  -- Character set definition\n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf("This test attempts to change session authorizations.  Because\n");
+printf("authorizations are implementation-defined, this test may need\n");
+printf("modification.  The following actions may help to pass the test:\n");
+printf("  -- Change the initial authid to an authid with DBA privileges\n");
+printf("  -- Insert code to work around implementation-defined\n");
+printf("     authentication mechanisms (e.g. to reconnect with a\n");
+printf("     different authid).\n");
+printf("It might not be possible to change the session authorization,\n");
+printf("as explained in 16.4 GR.4.  In this case, the restrictions that\n");
+printf("render it impossible should be documented and the test assumed\n");
+printf("to be passed.\n\n");
+
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+  
+/* grant USAGE rights on CS to CTS2 user */
+printf("GRANT USAGE ON CHARACTER SET CS TO CTS2\n");
+printf("WITH GRANT OPTION;\n");
+EXEC SQL GRANT USAGE ON CHARACTER SET CS TO CTS2 
+         WITH GRANT OPTION;
+CHCKOK();
+printf("\n");
+ 
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* set session to CTS2 create a temp table based on CS */
+/* and then grant usage to CTS3 */  
+printf("SET SESSION AUTHORIZATION 'CTS2';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS2';
+CHCKOK();
+printf("\n");
+  
+printf("CREATE TABLE TEMP765A \n");
+printf("(COLCH1 CHAR(10) CHARACTER SET CTS1.CS,\n");
+printf(" COLN NUMERIC(5));\n");
+EXEC SQL CREATE TABLE TEMP765A 
+         (COLCH1 CHAR(10) CHARACTER SET CTS1.CS,
+          COLN NUMERIC(5));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("GRANT USAGE ON CHARACTER SET CTS1.CS TO CTS3;\n");
+EXEC SQL GRANT USAGE ON CHARACTER SET CTS1.CS TO CTS3;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* Access the COLUMNS view */  
+printf("SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME, \n");
+printf("ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :cset, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("WHERE COLUMN_NAME = 'COLCH1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :cset, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLCH1';
+CHCKOK();
+printf("TABLE_NAME   should be TEMP765A; its value is %s\n",tabnam);
+printf("COLUMN_NAME    should be COLCH1; its value is %s\n",colnam);
+printf("CHARACTER_SET_NAME should be CS; its value is %s\n",cset);
+printf("ORDINAL_POSITION    should be 1; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765A",8) != 0 || strncmp(colnam,"COLCH1",6) != 0)
+     flag = 0;
+if (strncmp(cset,"CS",2)!=0 || ordpos != 1)
+     flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* now access again the view and check for  column 2 */
+printf("SELECT TABLE_NAME, COLUMN_NAME,ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf("WHERE COLUMN_NAME = 'COLN';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLN';
+CHCKOK();
+printf("TABLE_NAME   should be TEMP765A; its value is %s\n",tabnam);
+printf("COLUMN_NAME    should be   COLN; its value is %s\n",colnam);
+printf("ORDINAL_POSITION    should be 2; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765A",8) != 0 || strncmp(colnam,"COLN",4) != 0)
+     flag = 0;
+if (ordpos != 2)
+     flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Set session authorization to CTS3 and create */
+/* a <schema element i.e. a table under schema CTS3 */
+printf("SET SESSION AUTHORIZATION 'CTS3';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS3';
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE TEMP765B \n");
+printf(" ( COLSTR1 CHAR(10) CHARACTER SET CTS1.CS,\n");
+printf("   COLNUM1 DECIMAL(4));\n");
+EXEC SQL CREATE TABLE TEMP765B 
+         (COLSTR1 CHAR(10) CHARACTER SET CTS1.CS,
+          COLNUM1 DECIMAL(4));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* There's a COLSTR1 in schema CTS1 but it shouldn't be */
+/* visible to authid CTS3 */
+
+/* access the COLUMNS view for CTS3 user */
+printf("SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME,\n");
+printf("ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :cset, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("WHERE COLUMN_NAME = 'COLSTR1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :cset, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLSTR1';
+CHCKOK();
+printf("TABLE_NAME  should be  TEMP765B; its value is %s\n",tabnam);
+printf("COLUMN_NAME should be   COLSTR1; its value is %s\n",colnam);
+printf("CHARACTER_SET_NAME should be CS; its value is %s\n",cset);
+printf("ORDINAL_POSITION   should be  1; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765B",8) != 0 || strncmp(colnam,"COLSTR1",7) != 0)
+     flag = 0;
+if (strncmp(cset,"CS",2)!=0 || ordpos != 1)
+     flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* access again the view for the second column */
+printf("SELECT TABLE_NAME, COLUMN_NAME,\n");
+printf("         ORDINAL_POSITION\n");
+printf("         INTO :tabnam, :colnam, :ordpos\n");
+printf("         FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("         WHERE COLUMN_NAME = 'COLNUM1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLNUM1';
+CHCKOK();
+printf("TABLE_NAME  should be TEMP765B  it is %s\n",tabnam);
+printf("COLUMN_NAME should be COLNUM1   it is %s\n",colnam);
+printf("ORDINAL_POSITION   should be 2  it is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765B",8) != 0 || strncmp(colnam,"COLNUM1",7) != 0)
+     flag = 0;
+if (ordpos != 2)
+     flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now change back to CTS1 */
+printf("SET SESSION AUTHORIZATION 'CTS1';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS1';
+CHCKOK();
+printf("\n");
+
+/* revoke GRANT option for USAGE from CTS2 CASCADE */
+printf("REVOKE GRANT OPTION FOR USAGE ON CHARACTER SET CS\n");
+printf("FROM CTS2 CASCADE;\n");
+EXEC SQL REVOKE GRANT OPTION FOR USAGE ON CHARACTER SET CS
+         FROM CTS2 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now change to CTS2 */
+printf("SET SESSION AUTHORIZATION 'CTS2';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS2';
+CHCKOK();
+printf("\n");
+ 
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* first access the COLUMNS view for column COLCH1 */
+printf("SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME, \n");
+printf("ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :cset, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("WHERE COLUMN_NAME = 'COLCH1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :cset, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLCH1';
+CHCKOK();
+printf("TABLE_NAME  should be  TEMP765A; its value is %s\n",tabnam);
+printf("COLUMN_NAME should be    COLCH1; its value is %s\n",colnam);
+printf("CHARACTER_SET_NAME should be CS; its value is %s\n",cset);
+printf("ORDINAL_POSITION   should be  1; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765A",8) != 0 || strncmp(colnam,"COLCH1",6) != 0)
+     flag = 0;
+if (strncmp(cset,"CS",2)!=0 || ordpos != 1)
+     flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy (grtor,  "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (gtee,   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (objnam, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (objtyp, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+strcpy (isgr,   "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+
+/* access the INFORMATION_SCHEMA.USAGE_PRIVILEGES view */ 
+printf("SELECT GRANTOR, GRANTEE, OBJECT_NAME, OBJECT_TYPE, IS_GRANTABLE\n");
+printf(" INTO :grtor, :gtee, :objnam, :objtyp, :isgr \n"); 
+printf(" FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES \n");
+printf(" WHERE OBJECT_NAME = 'CS';\n");
+EXEC SQL SELECT GRANTOR, GRANTEE, OBJECT_NAME, OBJECT_TYPE, IS_GRANTABLE
+         INTO :grtor, :gtee, :objnam, :objtyp, :isgr  
+         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES 
+         WHERE OBJECT_NAME = 'CS';
+CHCKOK();
+printf("GRANTOR      should be          CTS1; its value is %s\n",grtor);
+printf("GRANTEE      should be          CTS2; its value is %s\n",gtee);
+printf("OBJECT_NAME  should be            CS; its value is %s\n",objnam);
+printf("OBJECT_TYPE  should be CHARACTER SET; its value is %s\n",objtyp);
+printf("IS_GRANTABLE should be            NO; its value is %s\n",isgr);
+if (strncmp(grtor,"CTS1",4) != 0 || strncmp(gtee,"CTS2",4) != 0)
+    flag = 0;
+if (strncmp(objnam,"CS",2)!=0 || strncmp(objtyp,"CHARACTER SET",13)!=0)
+    flag = 0;
+if (strncmp(isgr,"NO",2)!=0)
+    flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* change to CTS3 */
+printf("SET SESSION AUTHORIZATION 'CTS3';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS3';
+CHCKOK();
+printf("\n");
+
+/* access the USAGE_PRIVILEGES view */
+
+coun = 1;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES \n");
+printf("         WHERE OBJECT_NAME = 'CS'\n");
+printf("         AND (GRANTOR = 'CTS3' OR GRANTEE = 'CTS3');\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES 
+         WHERE OBJECT_NAME = 'CS'
+         AND (GRANTOR = 'CTS3' OR GRANTEE = 'CTS3');
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+
+/* now access the COLUMNS view for CTS3 user */ 
+/* for the column based on character set CS */
+coun = 1;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("         WHERE COLUMN_NAME = 'COLSTR1';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLSTR1';
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* now access the COLUMNS view for CTS3 user */ 
+/* for the second column of numeric data type */
+/* the ordinal position now should be 1 instead of 2 */
+printf("SELECT TABLE_NAME, COLUMN_NAME,ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf("WHERE COLUMN_NAME = 'COLNUM1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLNUM1';
+CHCKOK();
+printf("TABLE_NAME should be TEMP765B; its value is %s\n",tabnam);
+printf("COLUMN_NAME should be COLNUM1; its value is %s\n",colnam);
+printf("ORDINAL_POSITION  should be 1; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765B",8) != 0 || strncmp(colnam,"COLNUM1",7) != 0)
+     flag = 0;
+if (ordpos != 1)
+     flag = 0;
+printf("\n");
+ 
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now change to user CTS1 */
+printf("SET SESSION AUTHORIZATION 'CTS1';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS1';
+CHCKOK();
+printf("\n");
+
+/* grant USAGE rights on CS to CTS2 user */
+printf("GRANT USAGE ON CHARACTER SET CS TO CTS2\n");
+printf("WITH GRANT OPTION;\n");
+EXEC SQL GRANT USAGE ON CHARACTER SET CS TO CTS2 
+         WITH GRANT OPTION;
+CHCKOK();
+printf("\n");
+ 
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("SET SESSION AUTHORIZATION 'CTS2';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS2';
+CHCKOK();
+printf("\n");
+
+printf("GRANT USAGE ON CHARACTER SET CTS1.CS TO CTS3;\n");
+EXEC SQL GRANT USAGE ON CHARACTER SET CTS1.CS TO CTS3;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+  
+/* change to CTS3 */ 
+printf("SET SESSION AUTHORIZATION 'CTS3';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS3';
+CHCKOK();
+printf("\n");
+ 
+printf("CREATE TABLE TEMP765C \n");
+printf(" ( COLNIK1 CHAR(10) CHARACTER SET CTS1.CS,\n");
+printf("   COLNUMBER1 DECIMAL(4));\n");
+EXEC SQL CREATE TABLE TEMP765C 
+         ( COLNIK1 CHAR(10) CHARACTER SET CTS1.CS,
+           COLNUMBER1 DECIMAL(4));
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* access the COLUMNS view & check for the presence */ 
+/* of the column based on character set CS */
+printf("SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME, \n");
+printf("ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :cset, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("WHERE COLUMN_NAME = 'COLNIK1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME, CHARACTER_SET_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :cset, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLNIK1';
+CHCKOK();
+printf("TABLE_NAME  should be  TEMP765C; its value is %s\n",tabnam);
+printf("COLUMN_NAME should be   COLNIK1; its value is %s\n",colnam);
+printf("CHARACTER_SET_NAME should be CS; its value is %s\n",cset);
+printf("ORDINAL_POSITION   should be  1; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765C",8) != 0 || strncmp(colnam,"COLNIK1",7) != 0)
+     flag = 0;
+if (strncmp(cset,"CS",2)!=0 || ordpos != 1)
+     flag = 0;
+printf("\n");
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* now access the COLUMNS view for the column of numeric*/
+/* data type of TEMP765C */
+printf("SELECT TABLE_NAME, COLUMN_NAME,ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf("WHERE COLUMN_NAME = 'COLNUMBER1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLNUMBER1';
+CHCKOK();
+printf("TABLE_NAME  should be   TEMP765C; its value is %s\n",tabnam);
+printf("COLUMN_NAME should be COLNUMBER1; its value is %s\n",colnam);
+printf("ORDINAL_POSITION should be     2; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765C",8) != 0 || strncmp(colnam,"COLNUMBER1",10) != 0)
+     flag = 0;
+if (ordpos != 2)
+     flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* change again to CTS1 ! */
+printf("SET SESSION AUTHORIZATION 'CTS1';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS1';
+CHCKOK();
+printf("\n");
+
+printf("REVOKE USAGE ON CHARACTER SET CS\n");
+printf("FROM CTS2 CASCADE;\n");
+EXEC SQL REVOKE USAGE ON CHARACTER SET CS
+         FROM CTS2 CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+ 
+/* change to CTS2 !!!! */
+printf("SET SESSION AUTHORIZATION 'CTS2';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS2';
+CHCKOK();
+printf("\n");
+
+/* access the COLUMNS view and check that column COLCH1 */
+/* based on character set CS is not visible */
+coun = 1;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("         WHERE COLUMN_NAME = 'COLCH1';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLCH1';
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* now access again the view and check for  column 2 */
+printf("SELECT TABLE_NAME, COLUMN_NAME,ORDINAL_POSITION\n");
+printf(" INTO :tabnam, :colnam, :ordpos\n");
+printf(" FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf(" WHERE COLUMN_NAME = 'COLN';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLN';
+CHCKOK();
+printf("TABLE_NAME should be TEMP765A; its  value is %s\n",tabnam);
+printf("COLUMN_NAME should be    COLN; its  value is %s\n",colnam);
+printf("ORDINAL_POSITION should be  1; its  value is %ld\n\n",ordpos);
+if (strncmp(tabnam,"TEMP765A",8) != 0 || strncmp(colnam,"COLN",4) != 0)
+     flag = 0;
+if (ordpos != 1)
+     flag = 0;
+ 
+/* now access the USAGE_PRIVILEGES view */
+
+coun = 1;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES \n");
+printf("         WHERE OBJECT_NAME = 'CS'\n");
+printf("         AND (GRANTOR = 'CTS2' OR GRANTEE = 'CTS2');\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES 
+         WHERE OBJECT_NAME = 'CS'
+         AND (GRANTOR = 'CTS2' OR GRANTEE = 'CTS2');
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now drop table TEMP765A */ 
+printf("DROP TABLE TEMP765A CASCADE;\n");
+EXEC SQL DROP TABLE TEMP765A CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("SET SESSION AUTHORIZATION 'CTS3';\n");
+EXEC SQL SET SESSION AUTHORIZATION 'CTS3';
+CHCKOK();
+printf("\n");
+
+/* access the USAGE_PRIVILEGES view */
+coun = 1;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES \n");
+printf("         WHERE OBJECT_NAME = 'CS'\n");
+printf("         AND (GRANTOR = 'CTS3' OR GRANTEE = 'CTS3');\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES 
+         WHERE OBJECT_NAME = 'CS'
+         AND (GRANTOR = 'CTS3' OR GRANTEE = 'CTS3');
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+
+/* now access the COLUMNS view and check that there is no */
+/* representation for the column based on char. set CS */
+coun = 1;
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.COLUMNS\n");
+printf("         WHERE COLUMN_NAME = 'COLNIK1';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLNIK1';
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+
+/* initialise host variables */
+strcpy(tabnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(colnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(cset,"xxxxxxxxxxxxxxxxxxxx");
+ordpos = 0;
+
+/* now access the columns view for the second column of */
+/* the table TEMP765C */
+printf("SELECT TABLE_NAME, COLUMN_NAME,ORDINAL_POSITION\n");
+printf("INTO :tabnam, :colnam, :ordpos\n");
+printf("FROM INFORMATION_SCHEMA.COLUMNS \n");
+printf("WHERE COLUMN_NAME = 'COLNUMBER1';\n");
+EXEC SQL SELECT TABLE_NAME, COLUMN_NAME,
+         ORDINAL_POSITION
+         INTO :tabnam, :colnam, :ordpos
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE COLUMN_NAME = 'COLNUMBER1';
+CHCKOK();
+printf("TABLE_NAME  should be   TEMP765C; its value is %s\n",tabnam);
+printf("COLUMN_NAME should be COLNUMBER1; its value is %s\n",colnam);
+printf("ORDINAL_POSITION   should be   1; its value is %ld\n",ordpos);
+if (strncmp(tabnam,"TEMP765C",8) != 0 || strncmp(colnam,"COLNUMBER1",10) != 0)
+     flag = 0;
+if (ordpos != 1)
+     flag = 0;
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* now restore Database in its original state */
+/* by dropping the two temp. tables */
+printf("DROP TABLE TEMP765B CASCADE;\n");
+EXEC SQL DROP TABLE TEMP765B CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now Drop TEMP765C CASCADE */
+printf("DROP TABLE TEMP765C CASCADE;\n");
+EXEC SQL DROP TABLE TEMP765C CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+  /* record results */
+
+      if ( flag == 1 )
+       {
+          printf("\n\n       xts765.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7065','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts765.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7065','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7065 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

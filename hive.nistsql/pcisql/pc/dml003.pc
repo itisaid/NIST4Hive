@@ -1,0 +1,126 @@
+/*  EMBEDDED C (file "DML003.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML003.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE CLOSE STATEMENT IN THE LANGUAGE OF  */
+/*  SQL.  THE FORMAT:                                            */
+/*                   CLOSE <cursor name>                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                        SECTION 8.1 <close cursor>             */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+          char EMPNO1[4];
+          long HOURS1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long  i;
+          long  ii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml003.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0007 ********************/
+
+     printf("\n                    TEST0007   \n");
+     printf("                close statement \n");
+     printf("reference X3.135-1989 section 8.1 General Rules\n");
+     printf("   - - - - - - - - - - - - - - - - - - - - - \n\n");
+
+     printf("   *** EXEC SQL CLOSE X \n");
+     printf("   *** EXEC SQL CLOSE X \n\n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT EMPNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P2'
+              ORDER  BY EMPNUM ASC;
+     EXEC SQL OPEN X;
+     
+     for (i=0;i<10;i++)
+     {
+     EXEC SQL FETCH X INTO :EMPNO1,:HOURS1;
+     if (SQLCODE == 0)
+       printf("         EMPNO1=%s and HOURS1=%ld \n",EMPNO1,HOURS1);
+     }
+
+     EXEC SQL CLOSE X;
+     ii = SQLCODE;
+
+     EXEC SQL CLOSE X; 
+
+     printf(" ii = %ld,   sqlcode=%ld \n\n", ii,  SQLCODE);
+     printf("The answer should be ii=0,  sqlcode < 0 & order by EMPNO1 ASC.");
+     if (ii==0 && SQLCODE < 0 && strncmp(EMPNO1,"E4",2)==0)
+       {
+       printf("\n\n                   *** pass *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0007','pass','PC');
+       }
+     else
+       {
+       printf("\n\n         dml003.pc  *** fail *** ");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0007','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0007 ********************/
+
+     exit(errcnt);
+
+}
+

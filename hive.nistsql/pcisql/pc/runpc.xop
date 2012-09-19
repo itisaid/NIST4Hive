@@ -1,0 +1,246 @@
+NOTE ***********************************************************************
+NOTE    NIST SQL Test Suite, V6.0, Pseudo-Shell, runpc.xop
+NOTE      This file lists all the programs to be run for:
+NOTE      XPG4 SQL Profile Embedded C
+NOTE      Identified by file extension .PC
+NOTE      Authorization id is shown after the file name
+NOTE ***********************************************************************
+ 
+NOTE     program AUTHID is an optional subroutine for Login
+NOTE     program CCC004S is a subroutine to be linked with CCC004
+NOTE     program CCC009S is a subroutine to be linked with CCC009
+NOTE     program DML063 should be modified before running - see documentation
+NOTE     program MPB001 is a program to be run concurrently with MPA001
+NOTE     programs MPB002-MPB013 to be run with MPA002-MPA013, respectively
+NOTE     programs XOP719-XOP723 must be run strictly in sequence
+
+NOTE     RUNPC_S indicates a subroutine needs to be linked
+NOTE     RUNPC_2 indicates 2 programs to be run concurrently
+NOTE     RUNC indicates a C program to be run
+
+
+NOTE     ----- XPG4 Profile without Integrity Enhancement Feature -----
+RUNPC    basetab   HU
+RUNPC    cugtab    CUGINI
+RUNPC    flattab   FLATER
+RUNPC    xbasetab  XOPEN1            
+RUNPC    predml    HU
+
+RUNPC    sdl026    CANWEPARSELENGTH18   
+RUNPC    sdl005    CUGINI         
+RUNPC    dml087    FLATER         
+RUNPC    dml092    FLATER         
+RUNPC    dml093    FLATER         
+RUNPC    dml094    FLATER         
+RUNPC    dml098    FLATER         
+RUNPC    dml099    FLATER         
+RUNPC    dml114    FLATER         
+RUNPC    dml115    FLATER         
+RUNPC    dml123    FLATER         
+RUNPC    dml125    FLATER         
+RUNPC    dml126    FLATER         
+RUNPC    dml129    FLATER         
+RUNPC    dml130    FLATER         
+RUNPC    dml131    FLATER         
+RUNPC    dml132    FLATER         
+RUNPC    dml135    FLATER         
+RUNPC    dml141    FLATER         
+RUNPC    dml143    FLATER         
+RUNPC    dml147    FLATER         
+RUNPC    dml151    FLATER         
+RUNPC    dml152    FLATER         
+RUNPC    dml154    FLATER         
+RUNPC    dml155    FLATER         
+RUNPC    dml159    FLATER         
+RUNPC    ist008    FLATER         
+RUNPC    sdl032    FLATER         
+RUNPC_2  mpa010    FLATER; HU     
+RUNPC_2  mpa011    FLATER; HU     
+RUNPC    ccc001    HU             
+RUNPC    ccc002    HU             
+RUNPC    ccc003    HU             
+RUNPC_S  ccc004    HU             
+RUNPC    ccc005    HU             
+RUNPC    ccc006    HU             
+RUNPC    ccc007    HU             
+RUNPC    ccc008    HU             
+RUNPC_S  ccc009    HU             
+RUNPC    ccc011    HU             
+RUNPC    dml001    HU             
+RUNPC    dml002    HU             
+RUNPC    dml003    HU             
+RUNPC    dml004    HU             
+RUNPC    dml005    HU             
+RUNPC    dml006    HU             
+RUNPC    dml007    HU             
+RUNPC    dml008    HU             
+RUNPC    dml009    HU             
+RUNPC    dml010    HU             
+RUNPC    dml011    HU             
+RUNPC    dml012    HU             
+RUNPC    dml013    HU             
+RUNPC    dml014    HU             
+RUNPC    dml015    HU             
+RUNPC    dml017    HU             
+RUNPC    dml018    HU             
+RUNPC    dml019    HU             
+RUNPC    dml020    HU             
+RUNPC    dml021    HU             
+RUNPC    dml022    HU             
+RUNPC    dml023    HU             
+RUNPC    dml024    HU             
+RUNPC    dml025    HU             
+RUNPC    dml026    HU             
+RUNPC    dml027    HU             
+RUNPC    dml028    HU             
+RUNPC    dml029    HU             
+RUNPC    dml033    HU             
+RUNPC    dml034    HU             
+RUNPC    dml035    HU             
+RUNPC    dml036    HU             
+RUNPC    dml037    HU             
+RUNPC    dml038    HU             
+RUNPC    dml039    HU             
+RUNPC    dml040    HU             
+RUNPC    dml041    HU             
+RUNPC    dml042    HU             
+RUNPC    dml043    HU             
+RUNPC    dml047    HU             
+RUNPC    dml048    HU             
+RUNPC    dml049    HU             
+RUNPC    dml050    HU             
+RUNPC    dml051    HU             
+RUNPC    dml052    HU             
+RUNPC    dml053    HU             
+RUNPC    dml054    HU             
+RUNPC    dml055    HU             
+RUNPC    dml056    HU             
+RUNPC    dml057    HU             
+RUNPC    dml058    HU             
+RUNPC    dml059    HU             
+RUNPC    dml060    HU             
+RUNPC    dml061    HU             
+RUNPC    dml062    HU             
+RUNPC    dml063    HU             
+RUNPC    dml064    HU             
+RUNPC    dml065    HU             
+RUNPC    dml066    HU             
+RUNPC    dml067    HU             
+RUNPC    dml069    HU             
+RUNPC    dml070    HU             
+RUNPC    dml071    HU             
+RUNPC    dml072    HU             
+RUNPC    dml073    HU             
+RUNPC    dml075    HU             
+RUNPC    dml076    HU             
+RUNPC    dml077    HU             
+RUNPC    dml079    HU             
+RUNPC    dml086    HU             
+RUNPC    dml090    HU             
+RUNPC    dml142    HU             
+RUNPC    sdl012    HU             
+RUNPC    sdl013    HU             
+RUNPC    sdl014    HU             
+RUNPC    sdl015    HU             
+RUNPC    sdl016    HU             
+RUNPC    sdl017    HU             
+RUNPC    sdl018    HU             
+RUNPC    sdl019    HU             
+RUNPC    sdl020    HU             
+RUNPC    sdl024    HU             
+RUNPC    sdl025    HU             
+RUNPC    sdl027    HU             
+RUNPC    sdl028    HU             
+RUNPC    ccc010    SCHANZLE       
+RUNPC    dml080    SCHANZLE       
+RUNPC    dml081    SCHANZLE       
+RUNPC    dml082    SCHANZLE       
+RUNPC    dml083    SCHANZLE       
+RUNPC    dml084    SCHANZLE       
+RUNPC    dml085    SCHANZLE       
+RUNPC    dml091    SCHANZLE       
+RUNPC    sdl003    SCHANZLE       
+RUNPC    sdl023    SCHANZLE       
+RUNPC    sdl029    SCHANZLE       
+RUNPC    sdl030    SCHANZLE       
+RUNPC    sdl031    SCHANZLE       
+RUNPC    sdl033    SCHANZLE       
+RUNPC    sdl034    SCHANZLE       
+RUNPC    sdl035    SCHANZLE       
+RUNPC    sdl036    SCHANZLE       
+RUNPC    dml016    SULLIVAN       
+RUNPC    sdl002    SULLIVAN       
+RUNPC    sdl004    SULLIVAN       
+RUNPC    sdl006    SULLIVAN       
+RUNPC    sdl007    SULLIVAN       
+RUNPC    sdl008    SULLIVAN       
+RUNPC    sdl009    SULLIVAN       
+RUNPC    sdl010    SULLIVAN       
+RUNPC    sdl021    SULLIVAN       
+RUNPC    sdl022    SULLIVAN       
+RUNPC_2  mpa001    SULLIVAN1      
+RUNPC_2  mpa002    SULLIVAN1      
+RUNPC_2  mpa003    SULLIVAN1      
+RUNPC_2  mpa004    SULLIVAN1      
+RUNPC_2  mpa005    SULLIVAN1      
+RUNPC_2  mpa006    SULLIVAN1      
+RUNPC_2  mpa007    SULLIVAN1      
+RUNPC_2  mpa008    SULLIVAN1      
+RUNPC_2  mpa009    SULLIVAN1      
+RUNPC    sdl011    SULLIVAN1      
+RUNPC    sdl037    SULLIVAN1      
+RUNPC    xop700    XOPEN1         
+RUNPC    xop701    XOPEN1         
+RUNPC    xop702    XOPEN1         
+RUNPC    xop703    XOPEN1         
+RUNPC    xop706    XOPEN1         
+RUNPC    xop707    XOPEN1         
+RUNPC    xop708    XOPEN1         
+RUNPC    xop709    XOPEN1         
+RUNPC    xop710    XOPEN1         
+RUNPC    xop719    XOPEN2         
+RUNPC    xop720    XOPEN3         
+RUNPC    xop721    XOPEN2         
+RUNPC    xop722    XOPEN3         
+RUNPC    xop723    XOPEN1         
+
+NOTE     ----- XPG4 Profile with Integrity Enhancement Feature -----
+RUNPC    suntab0   SUN
+RUNPC    suntab1   SUN
+RUNPC    suntab2   SUN
+RUNPC    suntab3   SUN
+RUNPC    sultab1   SULLIVAN
+
+RUNPC    cdr023    SCHANZLE       
+RUNPC    cdr028    SCHANZLE       
+RUNPC    cdr029    SCHANZLE       
+RUNPC    cdr022    SULLIVAN       
+RUNPC    cdr001    SUN            
+RUNPC    cdr002    SUN            
+RUNPC    cdr003    SUN            
+RUNPC    cdr004    SUN            
+RUNPC    cdr005    SUN            
+RUNPC    cdr006    SUN            
+RUNPC    cdr007    SUN            
+RUNPC    cdr008    SUN            
+RUNPC    cdr009    SUN            
+RUNPC    cdr010    SUN            
+RUNPC    cdr011    SUN            
+RUNPC    cdr012    SUN            
+RUNPC    cdr013    SUN            
+RUNPC    cdr017    SUN            
+RUNPC    cdr019    SUN            
+RUNPC    cdr020    SUN            
+RUNPC    cdr021    SUN            
+RUNPC    cdr024    SUN            
+RUNPC    cdr025    SUN            
+RUNPC    cdr026    SUN            
+RUNPC    cdr027    SUN            
+RUNPC    cdr030    SUN            
+
+NOTE     ----- Automated Reporting System
+RUNSQL   report    HU
+RUNSQL   dataload  HU
+RUNPC    reporta   HU
+RUNPC    reportb   HU
+RUNC     reportzx  HU

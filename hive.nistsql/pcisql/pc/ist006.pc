@@ -1,0 +1,588 @@
+/*  EMBEDDED C (file "IST006.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/06/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  IST006.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE INFORMATION SCHEMA FOR              */
+/*    TRANSITIONAL SQL.                                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      21 Information Schema and Definition Schema              */
+/*    X3H2-93-389  Corrections to FIPS Transitional SQL          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long ctr1;
+long ctr2;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, ist006.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0608 ********************/
+flag = 1;
+
+/* Transitional SQL.  This test does contain some references to */
+/* other schemas.                                               */
+
+     printf("                  TEST0608 \n");
+     printf("  INFO_SCHEM.COLUMN_PRIVILEGES definition\n");
+     printf(" References\n");
+     printf("     ANSI SQL-1992  21.2.11  COLUMN_PRIVILEGES view,\n");
+     printf("     X3H2-93-389  Corrections to FIPS Transitional SQL\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Verify visibility condition. */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTEE NOT IN ('PUBLIC', USER)\n");
+printf("AND GRANTOR <> USER;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTEE NOT IN ('PUBLIC', USER)
+AND GRANTOR <> USER;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+
+/* Verify CONSTRAINT COLUMN_PRIVILEGES_IS_GRANTABLE_NOT_NULL */
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE IS_GRANTABLE IS NULL;\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE IS_GRANTABLE IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT COLUMN_PRIVILEGES_IS_GRANTABLE_CHECK */
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE IS_GRANTABLE NOT IN ('YES', 'NO');\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE IS_GRANTABLE NOT IN ('YES', 'NO');
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT COLUMN_PRIVILEGES_PRIMARY_KEY */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR IS NULL\n");
+printf("OR GRANTEE IS NULL\n");
+printf("OR TABLE_SCHEM IS NULL\n");
+printf("OR TABLE_NAME IS NULL\n");
+printf("OR PRIVILEGE_TYPE IS NULL\n");
+printf("OR COLUMN_NAME IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR IS NULL
+OR GRANTEE IS NULL
+OR TABLE_SCHEM IS NULL
+OR TABLE_NAME IS NULL
+OR PRIVILEGE_TYPE IS NULL
+OR COLUMN_NAME IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES;
+
+CHCKOK ();
+printf ("\n");
+
+ctr2 = -1;
+printf("SELECT COUNT(*) INTO :ctr2\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES A,\n");
+printf("INFO_SCHEM.COLUMN_PRIVILEGES B\n");
+printf("WHERE A.GRANTOR = B.GRANTOR\n");
+printf("AND A.GRANTEE = B.GRANTEE\n");
+printf("AND A.TABLE_SCHEM = B.TABLE_SCHEM\n");
+printf("AND A.TABLE_NAME = B.TABLE_NAME\n");
+printf("AND A.PRIVILEGE_TYPE = B.PRIVILEGE_TYPE\n");
+printf("AND A.COLUMN_NAME = B.COLUMN_NAME;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr2
+FROM INFO_SCHEM.COLUMN_PRIVILEGES A,
+INFO_SCHEM.COLUMN_PRIVILEGES B
+WHERE A.GRANTOR = B.GRANTOR
+AND A.GRANTEE = B.GRANTEE
+AND A.TABLE_SCHEM = B.TABLE_SCHEM
+AND A.TABLE_NAME = B.TABLE_NAME
+AND A.PRIVILEGE_TYPE = B.PRIVILEGE_TYPE
+AND A.COLUMN_NAME = B.COLUMN_NAME;
+
+CHCKOK ();
+printf ("ctr1 should be equal to ctr2.\n");
+printf ("ctr1 is %ld; ctr2 is %ld.\n\n", ctr1, ctr2);
+if (ctr1 != ctr2)
+  flag = 0;
+
+/* Verify CONSTRAINT COLUMN_PRIVILEGES_FOREIGN_KEY_COLUMNS */
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES A\n");
+printf("WHERE NOT EXISTS (\n");
+printf("SELECT * FROM INFO_SCHEM.COLUMNS B\n");
+printf("WHERE A.TABLE_SCHEM = B.TABLE_SCHEM\n");
+printf("AND A.TABLE_NAME = B.TABLE_NAME\n");
+printf("AND A.COLUMN_NAME = B.COLUMN_NAME);\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES A
+WHERE NOT EXISTS (
+SELECT * FROM INFO_SCHEM.COLUMNS B
+WHERE A.TABLE_SCHEM = B.TABLE_SCHEM
+AND A.TABLE_NAME = B.TABLE_NAME
+AND A.COLUMN_NAME = B.COLUMN_NAME);
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Check a couple columns. */
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = '_SYSTEM'\n");
+printf("AND GRANTEE = 'FLATER'\n");
+printf("AND IS_GRANTABLE = 'YES'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'USIG'\n");
+printf("AND COLUMN_NAME = 'C_1'\n");
+printf("AND PRIVILEGE_TYPE = 'SELECT';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = '_SYSTEM'
+AND GRANTEE = 'FLATER'
+AND IS_GRANTABLE = 'YES'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'USIG'
+AND COLUMN_NAME = 'C_1'
+AND PRIVILEGE_TYPE = 'SELECT';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = '_SYSTEM'\n");
+printf("AND GRANTEE = 'FLATER'\n");
+printf("AND IS_GRANTABLE = 'YES'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'USIG'\n");
+printf("AND COLUMN_NAME = 'C_1'\n");
+printf("AND PRIVILEGE_TYPE = 'INSERT';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = '_SYSTEM'
+AND GRANTEE = 'FLATER'
+AND IS_GRANTABLE = 'YES'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'USIG'
+AND COLUMN_NAME = 'C_1'
+AND PRIVILEGE_TYPE = 'INSERT';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = '_SYSTEM'\n");
+printf("AND GRANTEE = 'FLATER'\n");
+printf("AND IS_GRANTABLE = 'YES'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'USIG'\n");
+printf("AND COLUMN_NAME = 'C_1'\n");
+printf("AND PRIVILEGE_TYPE = 'UPDATE';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = '_SYSTEM'
+AND GRANTEE = 'FLATER'
+AND IS_GRANTABLE = 'YES'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'USIG'
+AND COLUMN_NAME = 'C_1'
+AND PRIVILEGE_TYPE = 'UPDATE';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = '_SYSTEM'\n");
+printf("AND GRANTEE = 'FLATER'\n");
+printf("AND IS_GRANTABLE = 'YES'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'USIG'\n");
+printf("AND COLUMN_NAME = 'C_1'\n");
+printf("AND PRIVILEGE_TYPE = 'REFERENCES';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = '_SYSTEM'
+AND GRANTEE = 'FLATER'
+AND IS_GRANTABLE = 'YES'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'USIG'
+AND COLUMN_NAME = 'C_1'
+AND PRIVILEGE_TYPE = 'REFERENCES';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+/* If you doubt the correctness of the following  */
+/* column privileges, see 11.36 <grant statement> */
+/* GR#3 */
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = 'FLATER'\n");
+printf("AND GRANTEE = 'SCHANZLE'\n");
+printf("AND IS_GRANTABLE = 'NO'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'WCOV'\n");
+printf("AND COLUMN_NAME = 'C1'\n");
+printf("AND PRIVILEGE_TYPE = 'SELECT';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = 'FLATER'
+AND GRANTEE = 'SCHANZLE'
+AND IS_GRANTABLE = 'NO'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'WCOV'
+AND COLUMN_NAME = 'C1'
+AND PRIVILEGE_TYPE = 'SELECT';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = 'FLATER'\n");
+printf("AND GRANTEE = 'SCHANZLE'\n");
+printf("AND IS_GRANTABLE = 'NO'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'WCOV'\n");
+printf("AND COLUMN_NAME = 'C1'\n");
+printf("AND PRIVILEGE_TYPE = 'INSERT';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = 'FLATER'
+AND GRANTEE = 'SCHANZLE'
+AND IS_GRANTABLE = 'NO'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'WCOV'
+AND COLUMN_NAME = 'C1'
+AND PRIVILEGE_TYPE = 'INSERT';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = 'FLATER'\n");
+printf("AND GRANTEE = 'SCHANZLE'\n");
+printf("AND IS_GRANTABLE = 'NO'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'WCOV'\n");
+printf("AND COLUMN_NAME = 'C1'\n");
+printf("AND PRIVILEGE_TYPE = 'UPDATE';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = 'FLATER'
+AND GRANTEE = 'SCHANZLE'
+AND IS_GRANTABLE = 'NO'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'WCOV'
+AND COLUMN_NAME = 'C1'
+AND PRIVILEGE_TYPE = 'UPDATE';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = 'FLATER'\n");
+printf("AND GRANTEE = 'SCHANZLE'\n");
+printf("AND IS_GRANTABLE = 'NO'\n");
+printf("AND TABLE_SCHEM = 'FLATER'\n");
+printf("AND TABLE_NAME = 'WCOV'\n");
+printf("AND COLUMN_NAME = 'C1'\n");
+printf("AND PRIVILEGE_TYPE = 'REFERENCES';\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = 'FLATER'
+AND GRANTEE = 'SCHANZLE'
+AND IS_GRANTABLE = 'NO'
+AND TABLE_SCHEM = 'FLATER'
+AND TABLE_NAME = 'WCOV'
+AND COLUMN_NAME = 'C1'
+AND PRIVILEGE_TYPE = 'REFERENCES';
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = 'HU'\n");
+printf("AND GRANTEE = 'PUBLIC'\n");
+printf("AND IS_GRANTABLE = 'YES'\n");
+printf("AND TABLE_SCHEM = 'HU'\n");
+printf("AND TABLE_NAME = 'TESTREPORT'\n");
+printf("AND COLUMN_NAME = 'RESULT'\n");
+printf("AND PRIVILEGE_TYPE = 'INSERT';\n");
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = 'HU'
+AND GRANTEE = 'PUBLIC'
+AND IS_GRANTABLE = 'YES'
+AND TABLE_SCHEM = 'HU'
+AND TABLE_NAME = 'TESTREPORT'
+AND COLUMN_NAME = 'RESULT'
+AND PRIVILEGE_TYPE = 'INSERT';
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMN_PRIVILEGES\n");
+printf("WHERE GRANTOR = 'HU'\n");
+printf("AND GRANTEE = 'FLATER'\n");
+printf("AND IS_GRANTABLE = 'NO'\n");
+printf("AND TABLE_SCHEM = 'HU'\n");
+printf("AND TABLE_NAME = 'STAFF4'\n");
+printf("AND COLUMN_NAME = 'EMPNAME'\n");
+printf("AND PRIVILEGE_TYPE = 'INSERT';\n");
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMN_PRIVILEGES
+WHERE GRANTOR = 'HU'
+AND GRANTEE = 'FLATER'
+AND IS_GRANTABLE = 'NO'
+AND TABLE_SCHEM = 'HU'
+AND TABLE_NAME = 'STAFF4'
+AND COLUMN_NAME = 'EMPNAME'
+AND PRIVILEGE_TYPE = 'INSERT';
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0608','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       ist006.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0608','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0608 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

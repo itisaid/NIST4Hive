@@ -1,0 +1,133 @@
+/*  EMBEDDED C (file "DML035.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML035.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE DECLARE CURSOR STATEMENT IN THE     */
+/*  LANGUGE OF SQL. THE FORMAT:                                  */
+/*            DECLARE <cursor name> CURSOR                       */
+/*            FOR     <cursor specification>                     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*          AMERICAN NATIONAL STANDARD database language - SQL   */
+/*                      X3.135-1989                              */
+/*                                                               */
+/*               SECTION 8.3 <declare cursor>                    */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+            float comp1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+            long  i;
+            long  ii;
+
+
+main()
+{
+
+      strcpy(uid,"HU");
+      AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml035.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+                              
+/******************** BEGIN TEST0157 ********************/
+
+      i=0;
+
+
+      printf("\n                    TEST0157                 \n");
+      printf("declare with ORDER BY < sort specification > ... \n");
+      printf("reference X3.135-1989 section 8.3 General Rules 3) b)\n");
+      printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+      printf(" This test is testing ORDER BY an approximate col.\n");
+
+/*  CREATE TABLE JJ (floattest  FLOAT)      */
+
+      EXEC SQL INSERT INTO JJ VALUES(66.2);
+      EXEC SQL INSERT INTO JJ VALUES(-44.5);
+      EXEC SQL INSERT INTO JJ VALUES(0.2222);
+      EXEC SQL INSERT INTO JJ VALUES(66.3);
+      EXEC SQL INSERT INTO JJ VALUES(-87);
+      EXEC SQL INSERT INTO JJ VALUES(-66.25);
+
+      EXEC SQL DECLARE Z1 CURSOR 
+           FOR SELECT FLOATTEST
+               FROM   JJ
+               ORDER BY FLOATTEST DESC;
+
+      EXEC SQL OPEN Z1;
+
+
+      for (ii=1;ii<15;ii++)
+      {
+      EXEC SQL FETCH Z1 INTO :comp1;
+      if (SQLCODE == 0)
+        {
+         i=ii;
+         printf("     comp1 = %e \n",comp1);
+        }
+      }
+
+      EXEC SQL ROLLBACK WORK;
+
+      printf("The answer should be i = 6; i = %ld & \n",i);
+      printf("           order by comp1 DESC.\n");
+      if (i == 6 && comp1 < -86)
+        {
+        printf("\n\n                  *** pass ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0157','pass','PC');
+        }
+      else
+        {
+        printf("\n\n        dml035.pc  *** fail ***");
+        printf("\n=====================================================");
+        EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0157','fail','PC');
+          errcnt = errcnt + 1;
+        }
+      printf("\n\n\n\n");
+      EXEC SQL COMMIT WORK;
+
+/******************** END TEST0157 ********************/
+
+      exit(errcnt);
+}

@@ -1,0 +1,128 @@
+/*  EMBEDDED C (file "DML039.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/09/22 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML039.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE PREDICATES IN COMMON ELEMENT OF THE */
+/*  SQL LANGUAGE.                                                */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.14 <like predicate>                 */
+/*                 SECTION 8.  Data manipulation language        */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char CITY1[16];
+    char CITY2[16];
+    long i;
+    long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml039.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0208 ********************/
+
+  printf("\n                 TEST0208      \n");
+  printf("               like predicate     \n");
+  printf("This routine tests the upper & lower case in <like...>\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO STAFF
+     VALUES('E7', 'yanping',26,'China');
+
+  EXEC SQL INSERT INTO STAFF
+     VALUES('E8','YANPING',30,'NIST');
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY1
+     FROM   STAFF
+     WHERE  EMPNAME LIKE 'yan____%';
+
+  i = SQLCODE;
+
+  EXEC SQL SELECT CITY
+     INTO   :CITY2
+     FROM   STAFF
+     WHERE  EMPNAME LIKE 'YAN____%';
+
+  ii = SQLCODE;
+
+  printf("CITY1 = %s, i = %ld \n", CITY1, i);
+  printf("CITY2 = %s, ii= %ld \n\n",CITY2, ii);
+  printf("The correct answer should be CITY1=China, CITY2=NIST\n");
+  printf("  and i = ii = 0 \n");
+
+  EXEC SQL ROLLBACK WORK;
+
+  i = i + ii;
+  if (i==0 && strncmp(CITY1,"China",5)==0 && strncmp(CITY2,"NIST",4)==0)
+    {
+     printf("\n\n              *** pass *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0208','pass','PC');
+    }
+  else
+    {
+     printf("\n\n    dml039.pc  *** fail *** \n");
+     EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0208','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0208 ********************/
+
+  exit(errcnt);
+}
+

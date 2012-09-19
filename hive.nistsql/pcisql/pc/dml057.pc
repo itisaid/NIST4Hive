@@ -1,0 +1,340 @@
+/*  EMBEDDED C (file "DML057.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/06/10 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML057.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*     THIS ROUTINE TESTS THE DATA TYPES IN SQL LANGUAGE.        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*              SECTION 5.5 <data type>                          */
+/*                                                               */
+/*           Database Language Embedded SQL                      */
+/*                          X3.168-1989                          */
+/*           SECTION 9. <Embedded SQL Host Program>              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    float float1;
+    float float2;
+    double double1;
+    double double2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long   code1;
+    long   code2;
+    float  flag11;
+    float  flag12;
+    double  flag31;
+    double  flag32;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml057.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0248 ********************/
+ 
+printf("      FIPS sizing TEST0248\n");
+printf("reference: X3.135-1989 5.5  FIPS PUB 127-1 Section 13.5\n"); 
+printf("   The binary precision of FLOAT is at least 20 digits\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("     *** CREATE TABLE JJ (FLOATTEST  FLOAT(20)) \n");
+printf("         DELETE FROM JJ;\n");
+printf("\n");
+printf("         INSERT INTO JJ \n");
+printf("          VALUES(0.1048575);\n");
+printf("\n");
+printf("         SELECT FLOATTEST INTO :float1 FROM JJ;\n");
+printf("\n");
+printf("         DELETE FROM JJ;\n");
+printf("\n");
+printf("         INSERT INTO JJ \n");
+printf("          VALUES(-0.1048575);\n");
+printf("\n");
+printf("         SELECT FLOATTEST INTO :float2 FROM JJ;\n");
+printf("\n\n");
+code1 = -1;
+code2 = -1;
+EXEC SQL DELETE FROM JJ;
+
+EXEC SQL INSERT INTO JJ 
+          VALUES(0.1048575);
+
+code1 = SQLCODE;
+
+EXEC SQL SELECT FLOATTEST INTO :float1 FROM JJ;
+
+EXEC SQL DELETE FROM JJ;
+
+EXEC SQL INSERT INTO JJ 
+          VALUES(-0.1048575);
+
+code2 = SQLCODE;
+
+EXEC SQL SELECT FLOATTEST INTO :float2 FROM JJ;
+
+if (float1 > 0.1048575)
+      {
+      flag11 = (float1 - 0.1048575) * 10000000;
+      }
+else  
+      flag11 = (0.1048575 - float1) * 10000000;
+
+if (float2 > -0.1048575)
+      {
+      flag12 = (float2 + 0.1048575) * 10000000;
+      }
+else  
+      flag12 = (-0.1048575 - float2) * 10000000;
+printf("The correct answer should be:\n");
+printf("                code1 = 0, code2 = 0 \n");
+printf("                flag11 < 1\n");
+printf("                flag12 < 1\n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld,code2 = %ld\n",code1,code2);
+printf("                flag11 = %f\n",flag11);
+printf("                flag12 = %f\n",flag12);
+
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && code2 == 0 && flag11 < 1 && flag12 < 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0248','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0248','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml057.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0248 ********************/
+
+
+/******************** BEGIN TEST0249 ********************/
+ 
+printf("      FIPS sizing TEST0249\n");
+printf("reference: X3.135-1989 5.5  FIPS PUB 127-1 Section 13.5\n"); 
+printf("   The binary precision of real is at least 20 digits\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("     *** CREATE TABLE GG (REALTEST  REAL) \n");
+printf("         DELETE FROM GG;\n");
+printf("\n");
+printf("         INSERT INTO GG \n");
+printf("          VALUES(0.1048575);\n");
+printf("\n");
+printf("         SELECT REALTEST INTO :float1 FROM GG;\n");
+printf("\n");
+printf("         DELETE FROM GG;\n");
+printf("\n");
+printf("         INSERT INTO GG \n");
+printf("          VALUES(-0.1048575);\n");
+printf("\n");
+printf("         SELECT REALTEST INTO :float2 FROM GG;\n");
+printf("\n\n");
+code1 = -1;
+code2 = -1;
+EXEC SQL DELETE FROM GG;
+
+EXEC SQL INSERT INTO GG 
+          VALUES(0.1048575);
+
+code1 = SQLCODE;
+
+EXEC SQL SELECT REALTEST INTO :float1 FROM GG;
+
+EXEC SQL DELETE FROM GG;
+
+EXEC SQL INSERT INTO GG 
+          VALUES(-0.1048575);
+
+code2 = SQLCODE;
+
+EXEC SQL SELECT REALTEST INTO :float2 FROM GG;
+
+if (float1 > 0.1048575)
+      {
+      flag11 = (float1 - 0.1048575) * 10000000;
+      }
+else  
+      flag11 = (0.1048575 - float1) * 10000000;
+if (float2 > -0.1048575)
+      {
+      flag12 = (float2 + 0.1048575) * 10000000;
+      }
+else  
+      flag12 = (-0.1048575 - float2) * 10000000;
+printf("The correct answer should be:\n");
+printf("                code1 = 0, code2 = 0 \n");
+printf("                flag11 < 1\n");
+printf("                flag12 < 1\n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld,code2 = %ld\n",code1,code2);
+printf("                flag11 = %f\n",flag11);
+printf("                flag12 = %f\n",flag12);
+
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && code2 == 0 && flag11 < 1 && flag12 < 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0249','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0249','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml057.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0249 ********************/
+
+
+/******************** BEGIN TEST0250 ********************/
+ 
+printf("      FIPS sizing TEST0250\n");
+printf("reference: X3.135-1989 5.5  FIPS PUB 127-1 Section 13.5\n"); 
+printf("      The binary precision of DOUBLE PRECISION \n");
+printf("           is at least 30 digits\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("     *** CREATE TABLE II (DOUBLETEST  DOUBLE PRECISION) \n");
+printf("         DELETE FROM II;\n");
+printf("\n");
+printf("         INSERT INTO II \n");
+printf("          VALUES(0.1073741823);\n");
+printf("\n");
+printf("         SELECT DOUBLETEST INTO :double1 FROM II;\n");
+printf("\n");
+printf("         DELETE FROM II;\n");
+printf("\n");
+printf("         INSERT INTO II \n");
+printf("          VALUES(-0.1073741823);\n");
+printf("\n");
+printf("         SELECT DOUBLETEST INTO :double2 FROM II;\n");
+printf("\n\n");
+code1 = -1;
+code2 = -1;
+EXEC SQL DELETE FROM II;
+
+EXEC SQL INSERT INTO II 
+          VALUES(0.1073741823);
+
+code1 = SQLCODE;
+
+EXEC SQL SELECT DOUBLETEST INTO :double1 FROM II;
+
+EXEC SQL DELETE FROM II;
+
+EXEC SQL INSERT INTO II 
+          VALUES(-0.1073741823);
+
+code2 = SQLCODE;
+
+EXEC SQL SELECT DOUBLETEST INTO :double2 FROM II;
+double1 = double1 * 100000;
+double2 = double2 * 100000;
+if (double1 > 10737.41823)
+      {
+      flag31 = (double1 - 10737.41823) * 100000;
+      }
+else  
+      flag31 = (10737.41823 - double1) * 100000;
+if (double2 > -10737.41823)
+      {
+      flag32 = (double2 + 10737.41823) * 100000;
+      }
+else  
+      flag32 = (-10737.41823 - double2) * 100000;
+printf("The correct answer should be:\n");
+printf("                code1 = 0, code2 = 0 \n");
+printf("                double1 = 10737.41823\n");
+printf("                flag31 < 1\n");
+printf("                flag32 < 1\n");
+
+printf("Your answer is:\n");
+printf("                code1 = %ld,code2 = %ld\n",code1,code2);
+printf("                double1 = %10.5f\n",double1);
+printf("                flag31 = %f\n",flag31);
+printf("                flag32 = %f\n",flag32);
+
+EXEC SQL ROLLBACK WORK;
+if (code1 == 0 && code2 == 0 && flag31 < 1 && flag32 < 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0250','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0250','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml057.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0250 ********************/
+exit(errcnt);
+}

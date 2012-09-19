@@ -1,0 +1,282 @@
+/*  EMBEDDED C (file "MPB004.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/10/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPB004.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*  THIS PROGRAM IS PART B OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*           SECTION  4.16 Transactions                          */
+/*                    Paragraph Two                              */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long who1;
+   long who2;
+   long knum;
+   long rslt1;
+   long rslt2;
+   char uid[19];
+   char uidx[19];
+   long times1;
+EXEC SQL END DECLARE SECTION;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+   long cnt;
+   long code1;
+   long retrys;
+   long tranct;
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1         ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpb004.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* concurrency tuning variables follow: */
+   retrys = 13;
+   tranct = 50;
+
+   EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0268 ********************/
+
+printf("\n                TEST0268 \n");
+printf(" Reference X3.135-1989 Section 4.16 Transactions      \n");
+printf("                 Paragraph Two                  \n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("*** This program is part B of a two-part             \n");
+printf ("*** program (A & B) that tests deadlock management \n");
+printf ("*** in SQL. An implementation which rolls back \n");
+printf ("*** without a negative SQLCODE will fail\n");
+
+printf ("\n\n This is Program B which starts after Program A... \n\n");
+
+/*                       -----Synchronization----- */
+
+P105:
+   knum = 0;
+   EXEC SQL SELECT COUNT(*)
+        INTO :knum
+        FROM MP4_NEXTKEY WHERE AUTHOR = 'A';
+
+   EXEC SQL COMMIT WORK;
+
+/* are we in sync? */
+
+   if (knum == 0)
+      {
+        printf("   PLEASE start program MPA004!!!   \n\n");
+        goto P105;
+      }
+
+P106:
+   code1 = 0;
+   EXEC SQL INSERT INTO MP4_NEXTKEY (KEYNUM,AUTHOR)
+            VALUES(2, 'B');
+   if (SQLCODE < 0 || SQLCODE == 100)
+        code1 = 1;
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE < 0 || SQLCODE == 100)
+        code1 = 1;
+   if (code1 != 0)
+     {
+        EXEC SQL ROLLBACK WORK;
+        printf("Retrying synchronization logic.\n");
+        goto P106;
+     }
+
+/* YES, we are in sync! */
+
+
+
+   printf("Transaction B Starts!!  \n");
+   printf("\n");
+   printf("IF this test lasts too long, DEADLOCK \n");
+   printf("has taken place, STOP this test!\n");
+   times1 = 0;
+
+/*           -----Concurrent Transaction Loops----- */
+P110:
+   code1 = 0;
+   if (times1 > retrys)
+      {
+       printf("**** TEST 0268 aborted***\n");
+       printf("MPA004 will give a false *** fail ***\n");
+       printf("Remove the test results from TESTREPORT\n");
+       printf(" and RERUN, after debugging.\n");
+       goto P193;
+      }
+   EXEC SQL SELECT NUMTEST INTO :who2  FROM MP4_MM2;
+   if (SQLCODE < 0 || SQLCODE == 100)
+        code1 = 1;
+
+/* MP4_MM2 UPDATE loop */
+   cnt = 0;
+P111:
+/* date_time print */
+time (&cal);
+printf ("Update MP4_MM2 at %s\n", ctime (&cal));
+   EXEC SQL UPDATE MP4_MM2
+       SET NUMTEST = NUMTEST - 3;
+   if (SQLCODE < 0 || SQLCODE == 100)
+       code1 = 1;
+   cnt = cnt + 1;
+   if (cnt < tranct && code1 == 0)
+       goto P111;
+
+/* date_time print */
+time (&cal);
+printf ("Read MP4_NN at %s\n", ctime (&cal));
+   EXEC SQL SELECT NUMTEST INTO :who1 FROM MP4_NN;
+   if (SQLCODE < 0 || SQLCODE == 100)
+        code1 = 1;
+
+/* MP4_NN UPDATE loop */
+   cnt = 0;
+
+P112:
+/* date_time print */
+time (&cal);
+printf ("Update MP4_NN at %s\n", ctime (&cal));
+   EXEC SQL UPDATE MP4_NN
+      SET NUMTEST = NUMTEST - 5;
+   if (SQLCODE < 0 || SQLCODE == 100)
+      code1 = 1;
+   cnt = cnt + 1;
+   if (cnt < 4 && code1 == 0)
+      goto P112;
+
+/*                           -----Evaluation----- */
+
+/* date_time print */
+time (&cal);
+printf ("Read MP4_NN at %s\n", ctime (&cal));
+   EXEC SQL SELECT NUMTEST INTO :rslt1 FROM MP4_NN;
+   if (SQLCODE < 0 || SQLCODE == 100)
+        code1 = 1;
+/* date_time print */
+time (&cal);
+printf ("Read MP4_MM2 at %s\n", ctime (&cal));
+   EXEC SQL SELECT NUMTEST INTO :rslt2 FROM MP4_MM2;
+   if (SQLCODE < 0 || SQLCODE == 100)
+        code1 = 1;
+
+   if (code1 == 0)
+      {
+/* date_time print */
+time (&cal);
+printf ("Transaction commit at %s\n", ctime (&cal));
+         EXEC SQL COMMIT WORK;
+         if (SQLCODE < 0 || SQLCODE == 100)
+              code1 = 1;
+      }
+   if (code1 != 0)
+      {
+        printf(" \n");
+        printf("!+!+!+!+!+!+!+!+  DEADLOCK? !+!+!+!+!+!+!+!+!+!+!\n");
+        printf("Negative SQLCODE (Deadlock?) was returned earlier\n");
+        printf("!+!+!+!+!+!+!+!+  DEADLOCK? !+!+!+!+!+!+!+!+!+!+!\n");
+        times1 = times1 + 1;
+	EXEC SQL ROLLBACK WORK;
+        goto P110;
+      }
+
+P187:
+   /* end transaction */
+
+   EXEC SQL INSERT INTO HU.TOKENS VALUES (4, :times1);
+   if (SQLCODE < 0)
+   {
+     printf ("SQLCODE = %ld -- looping forever....\n", SQLCODE);
+     EXEC SQL ROLLBACK WORK;
+     goto P187;
+   }
+
+   /* date_time print */
+time (&cal);
+printf ("MPB004 transaction completed !! at time:  %s\n", ctime (&cal));
+
+   /*Compute difference from original value*/
+   rslt1 = who1 - rslt1;
+   rslt2 = who2 - rslt2;
+   tranct = tranct * 3;
+
+   printf(" The correct answer is :\n");
+   printf("           rslt1 is 20\n");
+   printf("           rslt2 is %ld\n", tranct);
+   printf(" Your answer is :\n");
+   printf("           rslt1 is %ld\n",rslt1);
+   printf("           rslt2 is %ld\n",rslt2);
+
+   if ( rslt1 == 20 && rslt2 == tranct)
+     {
+       printf("\n\nProgram mpa004 will insert 'pass' if appropriate.");
+     }
+   else
+     {
+     printf("\n\nmpb004.pc:         *** fail *** ");
+     EXEC SQL INSERT INTO HU.TESTREPORT
+        VALUES('0268','fail','PC');
+          errcnt = errcnt + 1;
+      }
+
+P193:
+   printf("\n\n");
+   printf("====================================================\n\n");
+
+   EXEC SQL COMMIT WORK;
+
+   if (times1 == 0)
+      {
+         printf("Look for DEADLOCK message from MPA004.\n");
+         printf("If MPA004 does not issue a DEADLOCK message,\n");
+         printf("  you will need to RERUN this test, after\n");
+         printf("  (using TEd) increasing value of variable tranct.\n");
+       }
+
+/******************** END TEST0268 ********************/
+
+exit(errcnt);
+
+}

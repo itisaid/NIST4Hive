@@ -1,0 +1,351 @@
+/*  EMBEDDED C (file "DML185.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-24 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML185.PC                                                    */
+/*  WRITTEN BY:  Joan Sullivan and David Flater                  */
+/*                                                               */
+/*  This routine tests Transitional SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+varchar   H[32];
+short     indic1;
+long      intval;
+float     fltval;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml185.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0898 ********************/
+flag = 1;
+
+     printf("              TEST0898\n");
+     printf("    COLUMN_DEFAULT interpretation\n");
+     printf("References:\n");
+     printf("    F#2 -- Basic information schema\n");
+     printf("    21.2.9 -- COLUMNS view\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE XX\n");
+printf("   (C1 CHAR(18)   DEFAULT  USER,\n");
+printf("    C2 CHAR(18)   DEFAULT  'USER',\n");
+printf("    C3 CHAR(18)   DEFAULT  'Hello World',\n");
+printf("    C4 CHAR(18)   DEFAULT  NULL,\n");
+printf("    C5 TIMESTAMP  DEFAULT  TIMESTAMP '1993-11-10 00:02:00',\n");
+printf("    C6 REAL       DEFAULT  3.3E1,\n");
+printf("    C7 REAL);\n");
+EXEC SQL CREATE TABLE XX
+   (C1 CHAR(18)   DEFAULT  USER,
+    C2 CHAR(18)   DEFAULT  'USER',
+    C3 CHAR(18)   DEFAULT  'Hello World',
+    C4 CHAR(18)   DEFAULT  NULL,
+    C5 TIMESTAMP  DEFAULT  TIMESTAMP '1993-11-10 00:02:00',
+    C6 REAL       DEFAULT  3.3E1,
+    C7 REAL);
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+strcpy (H, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+indic1 = 2;
+printf("SELECT COLUMN_DEF\n");
+printf("  INTO :H :indic1\n");
+printf("  FROM INFO_SCHEM.COLUMNS\n");
+printf("  WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'XX'\n");
+printf("  AND COLUMN_DEF = 'USER';\n");
+EXEC SQL SELECT COLUMN_DEF
+  INTO :H :indic1
+  FROM INFO_SCHEM.COLUMNS
+  WHERE TABLE_SCHEM = 'FLATER'
+  AND TABLE_NAME = 'XX'
+  AND COLUMN_DEF = 'USER';
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("H should be USER (no quotes); its value is %s\n\n", H);
+if (indic1 != 0 || strcmp (H, "USER") != 0)
+  flag = 0;
+
+strcpy (H, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+indic1 = 2;
+printf("SELECT COLUMN_DEF INTO :H :indic1\n");
+printf("  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'XX' AND COLUMN_DEF = '''USER''';\n");
+EXEC SQL SELECT COLUMN_DEF INTO :H :indic1
+  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'
+  AND TABLE_NAME = 'XX' AND COLUMN_DEF = '''USER''';
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("H should be 'USER' (with quotes); its value is %s\n\n", H);
+if (indic1 != 0 || strcmp (H, "'USER'") != 0)
+  flag = 0;
+
+strcpy (H, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+indic1 = 2;
+printf("SELECT COLUMN_DEF INTO :H :indic1\n");
+printf("  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'XX' AND COLUMN_DEF = '''Hello World''';\n");
+EXEC SQL SELECT COLUMN_DEF INTO :H :indic1
+  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'
+  AND TABLE_NAME = 'XX' AND COLUMN_DEF = '''Hello World''';
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("H should be 'Hello World'; its value is %s\n\n", H);
+if (indic1 != 0 || strcmp (H, "'Hello World'") != 0)
+  flag = 0;
+
+strcpy (H, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+indic1 = 2;
+printf("SELECT COLUMN_DEF INTO :H :indic1\n");
+printf("  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'XX' AND COLUMN_DEF = 'NULL';\n");
+EXEC SQL SELECT COLUMN_DEF INTO :H :indic1
+  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'
+  AND TABLE_NAME = 'XX' AND COLUMN_DEF = 'NULL';
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("H should be NULL (the char string); its value is %s\n\n", H);
+if (indic1 != 0 || strcmp (H, "NULL") != 0)
+  flag = 0;
+
+strcpy (H, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+indic1 = 2;
+printf("SELECT COLUMN_DEF INTO :H :indic1\n");
+printf("  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'XX' AND ORDINAL_POSITION = 5;\n");
+EXEC SQL SELECT COLUMN_DEF INTO :H :indic1
+  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'
+  AND TABLE_NAME = 'XX' AND ORDINAL_POSITION = 5;
+CHCKOK ();
+printf ("\n");
+
+printf("INSERT INTO XX (C4, C5)\n");
+printf("  VALUES ('Timestamp', CAST (:H:indic1 AS TIMESTAMP));\n");
+EXEC SQL INSERT INTO XX (C4, C5)
+  VALUES ('Timestamp', CAST (:H:indic1 AS TIMESTAMP));
+CHCKOK ();
+printf ("\n");
+
+intval = 0;
+printf("SELECT COUNT(*) INTO :intval\n");
+printf("  FROM XX WHERE C4 = 'Timestamp' \n");
+printf("  AND C5 BETWEEN TIMESTAMP '1993-11-10 00:01:00' AND\n");
+printf("                 TIMESTAMP '1993-11-10 00:03:00';\n");
+EXEC SQL SELECT COUNT(*) INTO :intval
+  FROM XX WHERE C4 = 'Timestamp' 
+  AND C5 BETWEEN TIMESTAMP '1993-11-10 00:01:00' AND
+                 TIMESTAMP '1993-11-10 00:03:00';
+CHCKOK ();
+printf ("intval should be 1; its value is %ld\n\n", intval);
+if (intval != 1)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf ("\n");
+
+indic1 = 0;
+fltval = 0.0;
+printf("SELECT CAST (COLUMN_DEF AS REAL)\n");
+printf("  INTO :fltval :indic1\n");
+printf("    FROM INFO_SCHEM.COLUMNS\n");
+printf("    WHERE TABLE_SCHEM = 'FLATER' AND TABLE_NAME = 'XX'\n");
+printf("    AND ORDINAL_POSITION = 6;\n");
+EXEC SQL SELECT CAST (COLUMN_DEF AS REAL)
+  INTO :fltval :indic1
+    FROM INFO_SCHEM.COLUMNS
+    WHERE TABLE_SCHEM = 'FLATER' AND TABLE_NAME = 'XX'
+    AND ORDINAL_POSITION = 6;
+/* COLUMN_DEF character string value may be 33, 3.3E1, +33, etc. */
+CHCKOK ();
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("fltval should be 33 +- 0.1; its value is %f\n\n", fltval);
+if (indic1 != 0 || fltval < 32.9 || fltval > 33.1)
+  flag = 0;
+
+indic1 = 0;
+printf("SELECT COLUMN_DEF INTO :H :indic1\n");
+printf("  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'\n");
+printf("  AND TABLE_NAME = 'XX' AND COLUMN_DEF IS NULL;\n");
+EXEC SQL SELECT COLUMN_DEF INTO :H :indic1
+  FROM INFO_SCHEM.COLUMNS WHERE TABLE_SCHEM = 'FLATER'
+  AND TABLE_NAME = 'XX' AND COLUMN_DEF IS NULL;
+CHCKOK ();
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (indic1 != -1)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE XX CASCADE;\n");
+EXEC SQL DROP TABLE XX CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0898','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml185.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0898','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0898 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,228 @@
+/*  EMBEDDED C (file "XOP701.PC")  */
+
+/*   Copyright 1994, 1995 X/Open Company Limited  */
+
+/* All rights reserved.                                          */
+/*                                                               */
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+/*   X/Open and the 'X' symbol are registered trademarks of X/Open Company  */
+/*   Limited in the UK and other countries.                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/05/03 EMBEDDED C LANGUAGE                          */
+/*  X/Open SQL VALIDATION TEST SUITE V6.0                        */
+/*                                                               */
+/*  XOP701.PC                                                    */
+/*  WRITTEN BY: Colin O'Driscoll                                 */
+/*                                                               */
+/*  WHENEVER SQLWARNING and Scoping of 'C' Labels as targets     */
+/*  for WHENEVER                                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        X/OPEN CAE SQL Specification                           */
+/*        Section 4.6                                            */
+/*                                                               */
+/*                 <embedded SQL C program>                      */
+/*                                                               */
+/*  DATE PROGRAM LAST CHANGED   01/11/94                         */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char testchar[4];
+long testint;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+extern int AUTHID();
+
+EXEC SQL INCLUDE SQLCA;
+
+int errcnt;
+
+/* date_time declaration */
+time_t cal;
+            long  errflg;
+
+main()
+{
+
+
+     strcpy(uid,"XOPEN1");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM XOPEN1.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("X/OPEN Extensions SQL Test Suite, V6.0, Embedded C, xop701.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0701 ********************/
+
+     printf("\n                     TEST0701             \n");
+     printf("\n X/O,WHENEVER SQLWARNING and scoping of C labels\n");
+     printf(" X/Open CAE SQL Sec 4.6\n");
+     printf("This tests for the correct implementation of \n");
+     printf("of WHENEVER SQLWARNING. \n");
+     printf("       - - - - - - - - - - - - - - - - - - -\n\n");
+     printf("### WHENEVER SQLWARNING GOTO P100;\n");
+     printf("###        SELECT SUM(TESTINT) INTO :testint \n");
+     printf("###               FROM WARNING;\n");
+     printf("### WHENEVER SQLWARNING GO TO P101;\n");
+     printf("###        SELECT TESTCHAR INTO :testchar FROM WARNING\n");
+     printf("###               WHERE TESTINT = 1;\n");
+     printf("### WHENEVER SQLWARNING GOTO P102;\n");
+     printf("###        WHENEVER SQLWARNING CONTINUE;\n");
+     printf("###        SELECT SUM(TESTINT) INTO :testint\n");
+     printf("###               FROM WARNING;\n");
+     printf("### WHENEVER SQLWARNING GO TO P104;\n");
+     printf("###        SELECT AVG(TESTINT) INTO :testint\n");
+     printf("###               FROM WARNING;\n");
+     printf("\n\n=================================================\n");
+
+     errflg = 0;
+     /* Load values into WARNING table */
+
+     EXEC SQL INSERT INTO WARNING
+      VALUES ('AAAAAA', 1);
+
+     EXEC SQL INSERT INTO WARNING
+      VALUES ('BBBBBB', 2);
+
+     EXEC SQL INSERT INTO WARNING
+      VALUES ('CCCCCC', NULL);
+
+     /* Start new block */
+     {
+
+     EXEC SQL WHENEVER SQLWARNING GOTO P100;
+
+     /* Generate warning */
+
+     EXEC SQL SELECT SUM(TESTINT) INTO :testint
+      FROM WARNING;
+     printf("\n\n=================================================\n");
+
+        printf ("Program should jump around this code\n");
+        printf ("*** Problem found (TEST STEP NUMBER 1 ) ! *** \n");
+        errflg = errflg + 1;
+
+     printf("\n\n=================================================\n");
+
+     P100:
+
+     EXEC SQL WHENEVER SQLWARNING GO TO P101;
+
+     /* Generate  warning */
+
+     EXEC SQL SELECT TESTCHAR INTO :testchar
+      FROM WARNING
+      WHERE TESTINT = 1;
+
+     printf("\n\n=================================================\n");
+
+        printf ("Program should jump around this code\n");
+        printf ("*** Problem found (TEST STEP NUMBER 2) ! *** \n");
+        errflg = errflg + 1;
+     
+     printf("\n\n=================================================\n");
+
+     P101:
+
+     EXEC SQL WHENEVER SQLWARNING GOTO P102;
+     EXEC SQL WHENEVER SQLWARNING CONTINUE;
+
+     /* Generate warning (which shouldn't cause a jump to P102:) */
+
+     EXEC SQL SELECT SUM(TESTINT) INTO :testint
+              FROM WARNING;
+
+
+     goto P103;
+
+     P102:
+
+     printf("\n\n=================================================\n");
+
+        printf ("Program should jump around this code\n");
+        printf ("*** Problem found (TEST STEP NUMBER 3) ! *** \n");
+        errflg = errflg + 1;
+
+     printf("\n\n=================================================\n");
+
+     P103:
+
+     /* Set WHENEVER SQLWARNING to jump out of block into main() */
+
+     EXEC SQL WHENEVER SQLWARNING GO TO P104;
+
+     EXEC SQL SELECT AVG(TESTINT) INTO :testint
+      FROM WARNING;
+
+     /* Shouldn't get here */
+
+     printf("\n\n=================================================\n");
+
+        printf ("Program should jump around this code\n");
+        printf ("*** Problem found (TEST STEP NUMBER 4) ! *** \n");
+        errflg = errflg + 1;
+        
+     printf("\n\n=================================================\n");
+     }
+     /* End new block */
+     P104:
+     
+     EXEC SQL WHENEVER SQLWARNING CONTINUE;
+     EXEC SQL ROLLBACK WORK;
+     EXEC SQL DELETE FROM WARNING;
+
+     printf("\nNumber of errors detected = %ld \n",errflg);
+     printf("### maximum number of errors is 4 ###\n");
+
+if (errflg == 0)
+             {
+  EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0701','pass','PC');
+  printf("\n\n       xop701.pc  *** pass ***     ");
+  }
+else
+         {
+            EXEC SQL INSERT INTO XOPEN1.TESTREPORT VALUES('0701','fail','PC');
+  errcnt = errcnt + 1;
+  printf("\n\n       xop701.pc  *** fail ***     ");
+ }
+
+
+     printf("\n\n=================================================\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0701 ********************/
+
+     exit(errcnt);
+
+}
+

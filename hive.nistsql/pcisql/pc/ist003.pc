@@ -1,0 +1,542 @@
+/*  EMBEDDED C (file "IST003.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1993/06/17 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  IST003.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE INFORMATION SCHEMA FOR              */
+/*    TRANSITIONAL SQL.                                          */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      21 Information Schema and Definition Schema              */
+/*    X3H2-93-389  Corrections to FIPS Transitional SQL          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long ctr1;
+long ctr2;
+char aa[30];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, ist003.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0605 ********************/
+flag = 1;
+
+/* Transitional SQL.  Examine the contents of the COLUMNS      */
+/* view in INFO_SCHEM with regards to pre-existing             */
+/* objects in our own schema (FLATER).  This test is primarily */
+/* concerned with making sure that all the columns are there   */
+/* and have something resembling the correct data types.       */
+/* It also checks the functionality of the COLUMNS view w.r.t. */
+/* pre-existing objects in our own schema.  Objects in other   */
+/* schemas, privileges, and dynamically created objects are    */
+/* tested later.                                               */
+
+     printf("                  TEST0605 \n");
+     printf("        INFO_SCHEM.COLUMNS definition\n");
+     printf(" References\n");
+     printf("     ANSI SQL-1992  21.2.9  COLUMNS view,\n");
+     printf("     X3H2-93-389  Corrections to FIPS Transitional SQL\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Verify CONSTRAINT COLUMN_POSITION_NOT_NULL */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE ORDINAL_POSITION IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE ORDINAL_POSITION IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT COLUMNS_PRIMARY_KEY */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE TABLE_SCHEM IS NULL\n");
+printf("OR TABLE_NAME IS NULL\n");
+printf("OR COLUMN_NAME IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE TABLE_SCHEM IS NULL
+OR TABLE_NAME IS NULL
+OR COLUMN_NAME IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS;
+
+CHCKOK ();
+printf ("\n");
+
+ctr2 = -1;
+printf("SELECT COUNT(*) INTO :ctr2\n");
+printf("FROM INFO_SCHEM.COLUMNS A,\n");
+printf(" INFO_SCHEM.COLUMNS B\n");
+printf("WHERE A.TABLE_SCHEM = B.TABLE_SCHEM\n");
+printf("AND A.TABLE_NAME = B.TABLE_NAME\n");
+printf("AND A.COLUMN_NAME = B.COLUMN_NAME;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr2
+FROM INFO_SCHEM.COLUMNS A,
+ INFO_SCHEM.COLUMNS B
+WHERE A.TABLE_SCHEM = B.TABLE_SCHEM
+AND A.TABLE_NAME = B.TABLE_NAME
+AND A.COLUMN_NAME = B.COLUMN_NAME;
+
+CHCKOK ();
+printf ("ctr1 should be equal to ctr2.\n");
+printf ("ctr1 is %ld; ctr2 is %ld.\n\n", ctr1, ctr2);
+if (ctr1 != ctr2)
+  flag = 0;
+
+/* Verify CONSTRAINT COLUMNS_UNIQUE */
+/* Note:  ctr1 is preserved from previous constraint check. */
+
+ctr2 = -1;
+printf("SELECT COUNT(*) INTO :ctr2\n");
+printf("FROM INFO_SCHEM.COLUMNS A,\n");
+printf(" INFO_SCHEM.COLUMNS B\n");
+printf("WHERE A.TABLE_SCHEM = B.TABLE_SCHEM\n");
+printf("AND A.TABLE_NAME = B.TABLE_NAME\n");
+printf("AND A.ORDINAL_POSITION = B.ORDINAL_POSITION;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr2
+FROM INFO_SCHEM.COLUMNS A,
+ INFO_SCHEM.COLUMNS B
+WHERE A.TABLE_SCHEM = B.TABLE_SCHEM
+AND A.TABLE_NAME = B.TABLE_NAME
+AND A.ORDINAL_POSITION = B.ORDINAL_POSITION;
+
+CHCKOK ();
+printf ("ctr1 should be equal to ctr2.\n");
+printf ("ctr1 is %ld; ctr2 is %ld.\n\n", ctr1, ctr2);
+if (ctr1 != ctr2)
+  flag = 0;
+
+/* Verify CONSTRAINT COLUMNS_FOREIGN_KEY_TABLES */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS A\n");
+printf("WHERE NOT EXISTS (SELECT * FROM\n");
+printf("INFO_SCHEM.TABLES B WHERE\n");
+printf("A.TABLE_SCHEM = B.TABLE_SCHEM AND\n");
+printf("A.TABLE_NAME = B.TABLE_NAME);\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS A
+WHERE NOT EXISTS (SELECT * FROM
+INFO_SCHEM.TABLES B WHERE
+A.TABLE_SCHEM = B.TABLE_SCHEM AND
+A.TABLE_NAME = B.TABLE_NAME);
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Check that ORDINAL_POSITION is positive. */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE ORDINAL_POSITION < 1;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE ORDINAL_POSITION < 1;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Verify CONSTRAINT IS_NULLABLE_CHECK */
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE (IS_NULLABLE <> 'YES'\n");
+printf("AND IS_NULLABLE <> 'NO')\n");
+printf("OR IS_NULLABLE IS NULL;\n");
+
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE (IS_NULLABLE <> 'YES'
+AND IS_NULLABLE <> 'NO')
+OR IS_NULLABLE IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+/* Exhaustive testing of contents of COLUMNS view. */
+                                                   /* Not. */
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER' AND\n");
+printf("TABLE_NAME = 'USIG' AND\n");
+printf("COLUMN_NAME = 'C1' AND\n");
+printf("COLUMN_DEF IS NULL AND\n");
+printf("IS_NULLABLE = 'YES' AND\n");
+printf("ORDINAL_POSITION = 1 AND\n");
+printf("DATA_TYPE = 'INTEGER' AND\n");
+printf("NUM_SCALE = 0 AND\n");
+printf("CHAR_MAX_LENGTH IS NULL AND\n");
+printf("CHAR_OCTET_LENGTH IS NULL AND\n");
+printf("NUM_PREC_RADIX IN (2, 10)\n");
+printf("AND DATETIME_PREC IS NULL;\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE TABLE_SCHEM = 'FLATER' AND
+TABLE_NAME = 'USIG' AND
+COLUMN_NAME = 'C1' AND
+COLUMN_DEF IS NULL AND
+IS_NULLABLE = 'YES' AND
+ORDINAL_POSITION = 1 AND
+DATA_TYPE = 'INTEGER' AND
+NUM_SCALE = 0 AND
+CHAR_MAX_LENGTH IS NULL AND
+CHAR_OCTET_LENGTH IS NULL AND
+NUM_PREC_RADIX IN (2, 10)
+AND DATETIME_PREC IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER' AND\n");
+printf("TABLE_NAME = 'USIG' AND\n");
+printf("COLUMN_NAME = 'C_1' AND\n");
+printf("COLUMN_DEF IS NULL AND\n");
+printf("IS_NULLABLE = 'YES' AND\n");
+printf("ORDINAL_POSITION = 2 AND\n");
+printf("DATA_TYPE = 'INTEGER' AND\n");
+printf("NUM_SCALE = 0 AND\n");
+printf("CHAR_MAX_LENGTH IS NULL AND\n");
+printf("CHAR_OCTET_LENGTH IS NULL AND\n");
+printf("NUM_PREC_RADIX IN (2, 10)\n");
+printf("AND DATETIME_PREC IS NULL;\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE TABLE_SCHEM = 'FLATER' AND
+TABLE_NAME = 'USIG' AND
+COLUMN_NAME = 'C_1' AND
+COLUMN_DEF IS NULL AND
+IS_NULLABLE = 'YES' AND
+ORDINAL_POSITION = 2 AND
+DATA_TYPE = 'INTEGER' AND
+NUM_SCALE = 0 AND
+CHAR_MAX_LENGTH IS NULL AND
+CHAR_OCTET_LENGTH IS NULL AND
+NUM_PREC_RADIX IN (2, 10)
+AND DATETIME_PREC IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER' AND\n");
+printf("TABLE_NAME = 'USIG' AND\n");
+printf("ORDINAL_POSITION > 2;\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE TABLE_SCHEM = 'FLATER' AND
+TABLE_NAME = 'USIG' AND
+ORDINAL_POSITION > 2;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER' AND\n");
+printf("TABLE_NAME = 'BASE_WCOV' AND\n");
+printf("COLUMN_NAME = 'C1' AND\n");
+printf("COLUMN_DEF IS NULL AND\n");
+printf("IS_NULLABLE = 'YES' AND\n");
+printf("ORDINAL_POSITION = 1 AND\n");
+printf("DATA_TYPE = 'INTEGER' AND\n");
+printf("NUM_SCALE = 0 AND\n");
+printf("CHAR_MAX_LENGTH IS NULL AND\n");
+printf("CHAR_OCTET_LENGTH IS NULL AND\n");
+printf("NUM_PREC_RADIX IN (2, 10)\n");
+printf("AND DATETIME_PREC IS NULL;\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE TABLE_SCHEM = 'FLATER' AND
+TABLE_NAME = 'BASE_WCOV' AND
+COLUMN_NAME = 'C1' AND
+COLUMN_DEF IS NULL AND
+IS_NULLABLE = 'YES' AND
+ORDINAL_POSITION = 1 AND
+DATA_TYPE = 'INTEGER' AND
+NUM_SCALE = 0 AND
+CHAR_MAX_LENGTH IS NULL AND
+CHAR_OCTET_LENGTH IS NULL AND
+NUM_PREC_RADIX IN (2, 10)
+AND DATETIME_PREC IS NULL;
+
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("FROM INFO_SCHEM.COLUMNS\n");
+printf("WHERE TABLE_SCHEM = 'FLATER' AND\n");
+printf("TABLE_NAME = 'BASE_WCOV' AND\n");
+printf("ORDINAL_POSITION <> 1;\n");
+
+ctr1 = -1;
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+FROM INFO_SCHEM.COLUMNS
+WHERE TABLE_SCHEM = 'FLATER' AND
+TABLE_NAME = 'BASE_WCOV' AND
+ORDINAL_POSITION <> 1;
+
+CHCKOK ();
+printf ("ctr1 should be 0; its value is %ld\n\n", ctr1);
+if (ctr1 != 0)
+  flag = 0;
+
+     printf("ROLLBACK WORK;\n\n");
+     EXEC SQL ROLLBACK WORK;
+
+/* TEd hook for DDL/DML #1 */
+/* INFO_SCHEM shows schema as modified by the current transaction */
+/* 4.32 PP.1 */
+
+printf("CREATE TABLE UUUSIG (IRREVERENT DEC (5, 2)\n");
+printf("  DEFAULT 111.22);\n");
+EXEC SQL CREATE TABLE UUUSIG (IRREVERENT DEC (5, 2)
+  DEFAULT 111.22);
+CHCKOK ();
+printf("\n");
+
+ctr1 = -1;
+printf("SELECT COUNT(*) INTO :ctr1\n");
+printf("  FROM INFO_SCHEM.COLUMNS\n");
+printf("  WHERE TABLE_SCHEM = 'FLATER' AND\n");
+printf("  TABLE_NAME = 'UUUSIG' AND\n");
+printf("  COLUMN_NAME = 'IRREVERENT' AND\n");
+printf("  COLUMN_DEF LIKE '%111.22%' AND\n");
+printf("  IS_NULLABLE = 'YES' AND\n");
+printf("  ORDINAL_POSITION = 1 AND\n");
+printf("  DATA_TYPE = 'DECIMAL' AND\n");
+printf("  NUM_SCALE = 2 AND\n");
+printf("  CHAR_MAX_LENGTH IS NULL AND\n");
+printf("  CHAR_OCTET_LENGTH IS NULL AND\n");
+printf("  NUM_PREC_RADIX = 10\n");
+printf("  AND DATETIME_PREC IS NULL;\n");
+EXEC SQL SELECT COUNT(*) INTO :ctr1
+  FROM INFO_SCHEM.COLUMNS
+  WHERE TABLE_SCHEM = 'FLATER' AND
+  TABLE_NAME = 'UUUSIG' AND
+  COLUMN_NAME = 'IRREVERENT' AND
+  COLUMN_DEF LIKE '%111.22%' AND
+  IS_NULLABLE = 'YES' AND
+  ORDINAL_POSITION = 1 AND
+  DATA_TYPE = 'DECIMAL' AND
+  NUM_SCALE = 2 AND
+  CHAR_MAX_LENGTH IS NULL AND
+  CHAR_OCTET_LENGTH IS NULL AND
+  NUM_PREC_RADIX = 10
+  AND DATETIME_PREC IS NULL;
+CHCKOK ();
+printf ("ctr1 should be 1; its value is %ld\n\n", ctr1);
+if (ctr1 != 1)
+  flag = 0;
+
+     printf("ROLLBACK WORK;\n\n");
+     EXEC SQL ROLLBACK WORK;
+
+/* TEd hook for DDL/DML #2 */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0605','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       ist003.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0605','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0605 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

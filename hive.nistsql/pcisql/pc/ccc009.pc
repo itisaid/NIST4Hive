@@ -1,0 +1,55 @@
+/*  EMBEDDED C (file "CCC009.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1991/09/11 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CCC009.PC                                                    */
+/*  WRITTEN BY: YOLANDA HERD                                     */
+/*  This program creates variables "extern" to CCC009s.          */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+int errcnt;
+
+/* BEGIN TEST0399 variables */
+      const long      ECLONG =387;
+      const short     ECS    =387;
+      const double    ECDBLE =387;
+      const float     ECFLT  =387;
+      const char      ECCHAR[2] ={'E','\0'};
+      volatile long   EVLONG;
+      volatile short  EVS;
+      volatile double EVDBLE;
+      volatile float  EVFLT;
+      volatile char   EVCHAR[2];
+/* END TEST0399 variables */
+
+
+
+
+main()
+{
+
+printf("SQL Test Suite, V6.0, Embedded C, ccc009.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+
+ccc009sub();
+printf("Exit from ccc009\n");
+exit(errcnt);
+}
+

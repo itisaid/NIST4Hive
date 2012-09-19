@@ -1,0 +1,402 @@
+/*  EMBEDDED C (file "DML090.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/13 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML090.PC                                                    */
+/*  WRITTEN BY: Joan Sullivan                                    */
+/*                                                               */
+/*    THIS ROUTINE TESTS ADDITIONAL SQL-89 FEATURES              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char uid[19];
+     char uidx[19];
+     long LONG1;
+     long ii;
+     long jj;
+     long kk;
+     char CITY1[16];
+     char PTYPE1[7];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+
+printf("SQL Test Suite, V6.0, Embedded C, dml090.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0512 ********************/
+flag = 1;
+
+     printf("                  TEST0512 \n");
+     printf("<value expression> for IN predicate\n");
+     printf("Reference ANSI SQL-1992 section 8.4 \n");
+     printf("Format for <in predicate>\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("SELECT MIN(PNAME) INTO :PTYPE1\n");
+     printf("    FROM PROJ, WORKS, STAFF \n");
+     printf("    WHERE PROJ.PNUM = WORKS.PNUM\n");
+     printf("    AND WORKS.EMPNUM = STAFF.EMPNUM\n");
+     printf("    AND BUDGET - GRADE * HOURS * 100 IN\n");
+     printf("    (:kk, -1000, :jj)  \n");
+
+jj = 4000;
+kk = -4400;
+strcpy (PTYPE1,"xx");
+EXEC SQL SELECT MIN(PNAME) INTO :PTYPE1
+ FROM PROJ, WORKS, STAFF
+ WHERE PROJ.PNUM = WORKS.PNUM
+   AND WORKS.EMPNUM = STAFF.EMPNUM
+   AND BUDGET - GRADE * HOURS * 100 IN
+             (:kk, -1000, :jj);
+
+printf("PTYPE1 should be CALM; its value is %s\n\n\n",PTYPE1);
+
+if (strncmp (PTYPE1, "CALM  ", 6) != 0)
+  flag = 0;
+
+LONG1 = -1;
+strcpy (CITY1, "Kensington");
+ii = 2;
+jj = 20000;
+kk = 10000;
+
+printf("DECLARE ZZZ CURSOR FOR\n");
+printf("       SELECT CITY, COUNT(*) FROM PROJ\n");
+printf("       GROUP BY CITY\n");
+printf("       HAVING (MAX(BUDGET) - MIN(BUDGET)) / :ii\n");
+printf("       IN (:ii, :jj, :kk)  \n");
+printf("       ORDER BY CITY DESC;\n");
+printf("OPEN ZZZ;\n");
+printf("FETCH ZZZ INTO :CITY1, :LONG1;\n");
+
+EXEC SQL DECLARE ZZZ CURSOR FOR
+SELECT CITY, COUNT(*) FROM PROJ
+GROUP BY CITY
+HAVING (MAX(BUDGET) - MIN(BUDGET)) / :ii
+IN (:ii, :jj, :kk)
+ORDER BY CITY DESC;
+
+EXEC SQL OPEN ZZZ;
+EXEC SQL FETCH ZZZ INTO :CITY1, :LONG1;
+
+printf(" CITY1 should be Vienna; LONG1 should be 2 \n");
+printf(" CITY1 is %s ; LONG1 is %ld\n\n\n", CITY1, LONG1);
+
+if (strncmp(CITY1, "Vienna         ", 15) != 0 || LONG1 != 2)
+  flag = 0;
+
+printf("FETCH ZZZ INTO :CITY1, :LONG1;\n");
+
+EXEC SQL FETCH ZZZ INTO :CITY1, :LONG1;
+printf(" CITY1 should be Deale; LONG1 should be 3 \n");
+printf(" CITY1 is %s; LONG1 is %ld\n\n\n", CITY1, LONG1);
+
+if (strncmp(CITY1, "Deale          ", 15) != 0 || LONG1 != 3)
+  flag = 0;
+
+printf("FETCH ZZZ INTO :CITY1, :LONG1;\n");
+
+EXEC SQL FETCH ZZZ INTO :CITY1, :LONG1;
+
+printf(" SQLCODE should be 100; its value is %ld\n\n\n",SQLCODE);
+if (SQLCODE != 100)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0512','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml090.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0512','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0512 *********************/
+
+/******************** BEGIN TEST0513 ********************/
+flag = 1;
+
+     printf("                  TEST0513 \n");
+     printf("NUMERIC(4) implies CHECK BETWEEN -9999 AND 9999\n");
+     printf("Reference ANSI SQL-1992 section 6.1, SR 17\n");
+     printf("  compare to 6.1 SR18 for DECIMAL\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("DELETE FROM TEMP_OBSERV;\n");
+     printf("INSERT INTO TEMP_OBSERV (YEAR_OBSERV)\n");
+     printf("                  VALUES (9999);\n");
+
+EXEC SQL DELETE FROM TEMP_OBSERV;
+EXEC SQL INSERT INTO TEMP_OBSERV (YEAR_OBSERV)
+VALUES (9999);
+     printf(" SQLCODE should be 0; its value is %ld\n\n\n",SQLCODE);
+if (SQLCODE != 0)
+  flag = 0;
+
+
+     printf("INSERT INTO TEMP_OBSERV (YEAR_OBSERV)\n");
+     printf("                 VALUES (10000);\n");
+EXEC SQL INSERT INTO TEMP_OBSERV (YEAR_OBSERV)
+VALUES (10000);
+     printf(" SQLCODE should be < 0; its value is %ld\n\n\n",SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+     printf("UPDATE TEMP_OBSERV\n");
+     printf("    SET YEAR_OBSERV = -10000\n");
+     printf("    WHERE YEAR_OBSERV = 9999;\n");
+EXEC SQL UPDATE TEMP_OBSERV
+SET YEAR_OBSERV = -10000
+WHERE YEAR_OBSERV = 9999;
+     printf(" SQLCODE should be < 0; its value is %ld\n\n\n",SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+     printf("INSERT \n");
+     printf("        INTO TEMP_OBSERV (YEAR_OBSERV, MAX_TEMP)\n");
+     printf("         VALUES (-9999, 123.4517);\n");
+EXEC SQL INSERT INTO TEMP_OBSERV (YEAR_OBSERV, MAX_TEMP)
+VALUES (-9999, 123.4517);
+     printf(" SQLCODE should be 0; its value is %ld\n\n\n",SQLCODE);
+if (SQLCODE != 0)
+  flag = 0;
+
+LONG1 = -1;
+     printf("SELECT COUNT(*) INTO :LONG1 FROM \n");
+     printf("      TEMP_OBSERV WHERE MAX_TEMP = 123.45\n");
+     printf("      AND MAX_TEMP NOT BETWEEN 123.4516 AND 123.4518;\n");
+EXEC SQL SELECT COUNT(*) INTO :LONG1 FROM TEMP_OBSERV
+WHERE MAX_TEMP = 123.45
+  AND MAX_TEMP NOT BETWEEN 123.4516 AND 123.4518;
+     printf("LONG1 should be 1; its value is %ld\n\n\n",LONG1);
+if (LONG1 != 1)
+  flag = 0;
+
+EXEC SQL INSERT INTO TEMP_OBSERV (YEAR_OBSERV, MAX_TEMP)
+VALUES (-9999, 1234.51);
+
+    printf("INSERT INTO TEMP_OBSERV \n");
+    printf("    (YEAR_OBSERV, MAX_TEMP) VALUES (-9999, 1234.51);\n");
+    printf(" SQLCODE should be < 0; its value is %ld\n\n",SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0513','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml090.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0513','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0513 *********************/
+
+/******************** BEGIN TEST0523 ********************/
+flag = 1;
+
+  printf("                  TEST0523 \n");
+  printf("<value expression> for BETWEEN predicate\n");
+  printf("Reference ANSI SQL-1992 section 8.3 \n");
+  printf("Format for <between predicate>\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+ii = 1000;
+jj = 50000;
+kk = 24;
+LONG1 = -1;
+
+
+printf("SELECT COUNT(*) INTO :LONG1 FROM PROJ\n");
+printf("  WHERE :kk * :ii BETWEEN BUDGET - 5000 AND :jj / 1.7;\n");
+printf("where variables are: ii = %ld; jj = %ld; kk = %ld\n", ii, jj, kk);
+EXEC SQL SELECT COUNT(*) INTO :LONG1
+FROM PROJ
+WHERE :kk * :ii BETWEEN BUDGET - 5000 AND :jj / 1.7;
+printf("LONG1 should be 3; its value is %ld\n\n\n",LONG1);
+if (LONG1 != 3)
+   flag = 0;
+
+strcpy (CITY1, "Tampa");
+strcpy (PTYPE1, "NOTMOI");
+EXEC SQL SELECT PNAME INTO :PTYPE1
+FROM PROJ
+WHERE :CITY1 NOT BETWEEN CITY AND 'Vienna'
+  AND PNUM > 'P2';
+
+  printf("SELECT PNAME INTO :PTYPE1\n");
+  printf("    FROM PROJ\n");
+  printf("    WHERE :CITY1 NOT BETWEEN CITY AND 'Vienna'\n");
+  printf("    AND PNUM > 'P2';\n");
+printf(" PTYPE1 should be 'IRM'; its value is %s\n\n\n",PTYPE1);
+if (strncmp (PTYPE1, "IRM   ", 6) != 0)
+  flag = 0;
+
+strcpy (CITY1, "Kensington");
+jj = 50000;
+LONG1 = -1;
+
+  printf("DECLARE KKK CURSOR FOR\n");
+  printf("      SELECT CITY, COUNT(*) FROM PROJ\n");
+  printf("             GROUP BY CITY\n");
+  printf("    HAVING :jj + 2 BETWEEN 33000 AND SUM(BUDGET) - 20;\n");
+  printf("OPEN KKK;\n");
+  printf("FETCH KKK INTO :CITY1, :LONG1;\n");
+
+EXEC SQL DECLARE KKK CURSOR FOR
+SELECT CITY, COUNT(*) FROM PROJ
+GROUP BY CITY
+HAVING :jj + 2 BETWEEN 33000 AND SUM(BUDGET) - 20;
+EXEC SQL OPEN KKK;
+EXEC SQL FETCH KKK INTO :CITY1, :LONG1;
+printf("LONG1 should be 3; its value is %ld\n",LONG1);
+printf("CITY1 should be 'Deale'; its value is %s\n\n\n",CITY1);
+if (strncmp (CITY1, "Deale          ", 15) != 0 || LONG1 != 3)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0523','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml090.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0523','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0523 *********************/
+
+/******************** BEGIN TEST0564 ********************/
+flag = 1;
+LONG1 =  -1;
+
+    printf("                  TEST0564 \n");
+    printf(" Reference ANSI SQL 1992 subclause 7.8 \n");
+    printf("  <having clause>, SR 1 \n");
+    printf(" A <column reference> directly contained in the\n");
+    printf(" <search condition> of a <having clause> may be\n");
+    printf(" an outer reference.\n");
+    printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+   printf("DECLARE P_JONES CURSOR FOR\n");
+   printf("     SELECT EMPNUM, GRADE*1000 \n");
+   printf("     FROM HU.STAFF WHERE GRADE * 1000 > ANY\n");
+   printf("     (SELECT SUM(BUDGET) FROM HU.PROJ\n");
+   printf("             GROUP BY CITY, PTYPE \n");
+   printf("             HAVING HU.PROJ.CITY = HU.STAFF.CITY);\n\n");
+   printf("OPEN P_JONES;\n");
+   printf("FETCH P_JONES INTO :PTYPE1, :LONG1;\n");
+
+strcpy (PTYPE1,"xx");
+EXEC SQL DECLARE P_JONES CURSOR FOR 
+     SELECT EMPNUM, GRADE*1000
+     FROM HU.STAFF WHERE GRADE * 1000 > ANY
+     (SELECT SUM(BUDGET) FROM HU.PROJ
+             GROUP BY CITY, PTYPE 
+             HAVING HU.PROJ.CITY = HU.STAFF.CITY);
+EXEC SQL OPEN P_JONES;
+EXEC SQL FETCH P_JONES INTO :PTYPE1, :LONG1;
+
+
+printf("PTYPE1 should be E3; its value is %s\n",PTYPE1);
+printf("LONG1 should be 13000; its value is %ld\n\n\n",LONG1);
+if (strncmp (PTYPE1, "E3    ", 6) != 0 || LONG1 != 13000)
+  flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0564','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml090.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0564','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0564 *********************/
+
+
+     exit(errcnt);
+}

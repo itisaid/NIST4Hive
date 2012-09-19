@@ -1,0 +1,4097 @@
+SPECIAL NOTE
+------------
+
+Many of the Transitional tests use <concatenation operator> in an INSERT
+expression, which is F# 21.  We could not keep the line length within the
+necessary constraints without using this feature.
+
+---------------------------------------
+
+                            ENTRY TESTS
+                            -----------
+
+IDENTIFICATION:
+     TEST0514
+
+DESCRIPTION:
+     SQLSTATE 23000: integrity constraint violation
+
+REFERENCES:
+     10.6 GR.4
+     22.1 -- SQLSTATE
+     11.4 -- <column constraint> in <column definition>
+
+TEST PURPOSE:
+     To verify that SQLSTATE 23000 is generated upon violating a UNIQUE or
+     NOT NULL column constraint by trying to violate each and checking for
+     the SQLSTATE.
+
+
+IDENTIFICATION:
+     TEST0515
+
+DESCRIPTION:
+     FIPS sizing:  NUMERIC (15) decimal precision
+
+REFERENCES:
+     FIPS 16.6 #.8 -- Sizing specification for NUMERIC
+
+TEST PURPOSE:
+     To insure that the FIPS sizing requirement for the precision of NUMERIC
+     is met in Entry SQL by testing the following cases on a column
+     declared as NUMERIC(15):
+
+     1.  Largest value required to support, positive;
+     2.  Largest value required to support, negative;
+     3.  Check for loss of precision in least significant bits.
+
+
+IDENTIFICATION:
+     TEST0524
+
+DESCRIPTION:
+     FIPS sizing:  100 Items in a SELECT list
+
+REFERENCES:
+     FIPS 16.6 #.41 -- Items in a SELECT list
+
+TEST PURPOSE:
+     To insure that the FIPS sizing requirement for the number of items
+     in a SELECT list is met in Entry SQL as follows:
+
+     1.  Let T100 be a table with 100 columns.
+     2.  Insert 100 literals into T100;
+     3.  List all 100 columns of T100 in the <select list> of a
+         single row SELECT;
+     4.  Verify the values of several of the host language variables that
+         were targets of the SELECT.
+
+
+IDENTIFICATION:
+     TEST0525
+
+DESCRIPTION:
+     FIPS sizing:  15 Table references in SQL statement
+
+REFERENCES:
+     FIPS 16.6 #.36 -- Table references in SQL statement
+
+TEST PURPOSE:
+     To insure that the FIPS sizing requirement for the number of table
+     references in an SQL statement is met in Entry SQL as follows:
+
+     1.  Declare a cursor that references 15 tables (including base tables,
+         views, and underlying tables) and selects COUNT(*);
+     2.  Fetch from the cursor and verify the result.
+
+
+IDENTIFICATION:
+     TEST0526
+
+DESCRIPTION:
+     FIPS sizing:  Length of FOREIGN KEY column list = 120
+
+REFERENCES:
+     FIPS 16.6 #.35 -- Length of FOREIGN KEY column list
+
+TEST PURPOSE:
+     To insure that the FIPS sizing requirement for the length of a FOREIGN
+     KEY column list is met in Entry SQL as follows:
+
+     1.  Let T6118REF be a table with four CHAR (20) columns, one
+         CHAR (23) column, one NUMERIC (4) column, and one CHAR (118) column.
+         Let T118 be a talbe with a CHAR (118) column that references the
+         CHAR (118) column of T6118REF.  Let T6 be a table with six columns
+         with data types matching the other columns of T6118REF and referencing
+         the respective columns.
+     2.  Insert one row into T6118REF;
+     3.  Insert one row into each of T118 and T6 that should not violate the
+         integrity constraint, check for normal SQLSTATE;
+     4.  Insert one row into each of T118 and T6 that violates the integrity
+         constraint, check for 23000 SQLSTATE.
+
+
+IDENTIFICATION:
+     TEST0527
+
+DESCRIPTION:
+     Priv. violation:  HU
+
+REFERENCES:
+     6.3 AR.1 -- Access rule violation
+
+TEST PURPOSE:
+     To insure that a 42000 SQLSTATE is returned when HU attempts to SELECT,
+     INSERT, UPDATE, or DELETE from a table on which no privileges have
+     been granted.  This closes a loophole in the test suite wherein
+     certain vendors gave DBA privileges to HU to circumvent certain tests.
+
+
+IDENTIFICATION:
+     TEST0528
+
+DESCRIPTION:
+     Tables are multi-sets:  cursor operations
+
+REFERENCES:
+     4.9 PP.1 -- A table is a multiset of rows
+
+TEST PURPOSE:
+     To check for correct behavior of a table containing duplicate rows when
+     a cursor is involved as follows:
+
+     1.  Let TEMP_S be a table containing duplicate rows;
+     2.  Check the contents of TEMP_S using an unordered cursor;
+     3.  Check the contents of TEMP_S using an ordered cursor;
+     4.  Delete one of the duplicate rows using a positioned delete statement;
+     5.  Repeat the unordered and unordered checks to verify the delete;
+     6.  Update one of the duplicate rows using a positioned update statement;
+     7.  Repeat the unordered and unordered checks to verify the update.
+
+
+IDENTIFICATION:
+     TEST0529
+
+DESCRIPTION:
+     Priv. violation:  SELECT in <insert statement>
+
+REFERENCES:
+     6.3 AR.1.a -- <table reference> in <query expression>
+
+TEST PURPOSE:
+     To verify the correct processing of privileges for a <table reference>
+     in a <query expression> in an <insert statement> when the user does
+     not have SELECT privilege on the table referenced in the <query
+     expression>.
+
+
+IDENTIFICATION:
+     TEST0540
+**** This test has been DELETED ****
+
+DESCRIPTION:
+     SQLSTATE 01001: cursor operation conflict
+
+REFERENCES:
+     22.1 -- SQLSTATE
+     13.6 GR.4 -- delete positioned
+     13.9 GR.4 -- update positioned
+     13.7 GR.3 -- delete searched
+     13.10 GR.3 -- update searched
+
+TEST PURPOSE:
+     To verify that an 01001 SQLSTATE is generated in the following cases:
+
+     1. Positioned delete conflicts with previous searched delete;
+     2. Positioned update conflicts with previous positioned delete;
+     3. Positioned update conflicts with previous positioned update;
+     4. Searched delete conflicts with previous positioned update;
+     5. Searched update conflicts with previous positioned update.
+
+
+
+                         TRANSITIONAL TESTS
+                         ------------------
+
+IDENTIFICATION:
+     TEST0556
+
+DESCRIPTION:
+     Static insert, dynamic fetch, static commit
+
+REFERENCES:
+     4.28 -- SQL-transactions
+     F# 1 -- Dynamic SQL
+     13.3 GR.1 -- <invalid cursor state> on FETCH
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that a dynamic cursor interacts properly with static SQL
+     statements by performing the following operations:
+
+     1.  Create and populate a table using static SQL;
+     2.  Verify the results of a dynamic fetch;
+     3.  Do a static commit;
+     4.  Verify that the dynamic cursor was closed by the commit.
+
+
+IDENTIFICATION:
+     TEST0557
+
+DESCRIPTION:
+     Static insert, dynamic commit, static rollback
+
+REFERENCES:
+     4.28 -- SQL-transactions
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that dynamic transaction statements do the right thing with
+     respect to static data manipulation by performing the following
+     operations:
+
+     1.  Create and populate a table using static SQL;
+     2.  Do a dynamic commit, followed immediately by a static rollback;
+     3.  Verify that the populating of the table was committed and not
+         rolled back.
+
+
+IDENTIFICATION:
+     TEST0558
+
+DESCRIPTION:
+     Dynamic insert, static delete, dynamic count
+
+REFERENCES:
+     4.28 -- SQL-transactions
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that there are no unhealthy interactions between static and
+     dynamic data manipulation statements as follows:
+
+     1.  Create a table using static SQL;
+     2.  Populate the table using Dynamic SQL;
+     3.  Open and fetch from a dynamic cursor, leaving it open afterwards;
+     4.  Delete data in the table using a static delete statement;
+     5.  Verify that the delete succeeded using a dynamic SELECT COUNT.
+
+
+IDENTIFICATION:
+     TEST0559
+
+DESCRIPTION:
+     Static insert, dynamic rollback, static fetch
+
+REFERENCES:
+     4.28 -- SQL-transactions
+     F# 1 -- Dynamic SQL
+     13.3 GR.1 -- <invalid cursor state> on FETCH
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that a static cursor interacts properly with dynamic SQL
+     statements by performing the following operations:
+
+     1.  Create and populate a table using static SQL;
+     2.  Open a static cursor;
+     3.  Do a dynamic rollback;
+     4.  Verify that the static cursor was closed by the rollback.
+
+
+IDENTIFICATION:
+     TEST0560
+
+DESCRIPTION:
+     Table privileges vs. column privileges
+
+REFERENCES:
+     11.37 -- <revoke statement>
+     11.11 GR.3 -- add column privileges
+     F# 3 -- Basic schema manipulation
+
+TEST PURPOSE:
+     To verify that table privileges are not lost when individual column
+     privileges are revoked as follows:
+
+     1.  Create a table X;
+     2.  Grant select and update on X to HU;
+     3.  Revoke update on one column of X from HU;
+     4.  Add another column to X;
+     5.  Verify that HU can update every column except for the one that was
+         explicitly revoked.
+
+
+IDENTIFICATION:
+     TEST0561
+
+DESCRIPTION:
+     Double SET TRANSACTION
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     14.1 -- <set transaction statement>
+     4.22.6 -- transaction statements do not initiate a transaction
+
+TEST PURPOSE:
+     To verify that two consecutive <set transaction statement>s are accepted
+     by the implementation.
+
+
+IDENTIFICATION:
+     TEST0565
+
+DESCRIPTION:
+     VARCHAR for Transitional SQL
+
+REFERENCES:
+     F# 6 -- VARCHAR
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules, esp. for VARCHAR data types
+     F# 10 -- Implicit character casting
+
+TEST PURPOSE:
+     To establish that basic support is provided for the VARCHAR data type,
+     that both the content and the length of stored/retrieved data are
+     preserved, that indicator variables work correctly, and that the rules
+     for truncation are followed, for data stored from literals and host
+     language variables, for VARCHAR data types declared as CHARACTER VARYING,
+     CHAR VARYING, and VARCHAR, in each of the following cases:
+
+     1.  Data string same length as SQL field;
+     2.  Data string shorter than SQL field;
+     3.  Data string of zero length;
+     4.  SQL data longer than host variable on retrieval;
+     5.  Data string longer than SQL field;
+     6.  Data string longer than SQL field, but only because of trailing
+         blanks;
+     7.  Data string shorter than SQL field, with trailing blanks.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.  Any other languages
+     pass by default.
+
+
+IDENTIFICATION:
+     TEST0566
+
+DESCRIPTION:
+     VARCHAR for TSQL:  dynamic version
+
+REFERENCES:
+     F# 6 -- VARCHAR
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules, esp. for VARCHAR data types
+     F# 10 -- Implicit character casting
+
+TEST PURPOSE:
+     To establish that basic support is provided for the VARCHAR data type
+     in Dynamic SQL, that both the content and the length of stored/retrieved
+     data are preserved, that indicator variables work correctly, and that the
+     rules for truncation are followed, for data stored from literals and host
+     language variables, for VARCHAR data types declared as CHARACTER VARYING,
+     CHAR VARYING, and VARCHAR, in each of the following cases:
+
+     1.  Data string same length as SQL field;
+     2.  Data string shorter than SQL field;
+     3.  Data string of zero length;
+     4.  SQL data longer than host variable on retrieval;
+     5.  Data string longer than SQL field;
+     6.  Data string longer than SQL field, but only because of trailing
+         blanks;
+     7.  Data string shorter than SQL field, with trailing blanks.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.  Any other languages
+     pass by default.
+
+
+IDENTIFICATION:
+     TEST0567
+
+DESCRIPTION:
+     CHAR type in Dynamic SQL
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 10 -- Implicit character casting
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules
+
+TEST PURPOSE:
+     To establish that the CHAR data type is functional in Dynamic SQL, that
+     rules pertaining to blank padding, syntax, and truncation are followed,
+     and that basic support is provided for F# 10, implicit character casting,
+     for fields declared with CHARACTER and with CHAR, for data stored from
+     literals and host language variables, using the following cases:
+
+     1.  Data string same length as SQL field;
+     2.  Data string shorter than SQL field;
+     3.  Data string of zero length;
+     4.  SQL data longer than host variable on retrieval;
+     5.  Data string longer than SQL field;
+     6.  Data string longer than SQL field, but only because of trailing
+         blanks.
+
+
+IDENTIFICATION:
+     TEST0576
+
+DESCRIPTION:
+     NUMERIC type in Dynamic SQL
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To establish that the NUMERIC data type is functional in Dynamic SQL
+     and that scale and precision are correctly supported, for numerics
+     declared with explicit precision and scale, precision only, and neither,
+     for data stored from literals and host language variables, using the
+     following cases:
+
+     1.  Largest legal value, positive;
+     2.  Largest legal value, negative;
+     3.  Out-of-range value, positive;
+     4.  Out-of-range value, negative;
+     5.  Truncation/rounding of excess precision on store assignment.
+
+
+IDENTIFICATION:
+     TEST0577
+
+DESCRIPTION:
+     DECIMAL type in Dynamic SQL
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To establish that the DECIMAL data type is functional in Dynamic SQL
+     and that scale and precision are correctly supported, for decimals
+     declared with explicit precision and scale, precision only, and neither,
+     for decimals declared as DECIMAL and as DEC, for data stored from
+     literals and host language variables, using the following cases:
+
+     1.  Largest value required to support, positive;
+     2.  Largest value required to support, negative.
+
+
+IDENTIFICATION:
+     TEST0578
+
+DESCRIPTION:
+     INTEGER and SMALLINT types in Dynamic SQL
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To establish that the INTEGER and SMALLINT data types are functional in
+     Dynamic SQL, for integers declared as INTEGER and as INT, for data stored
+     from literals and host language variables, using the following cases:
+
+     1.  Positive values;
+     2.  Negative values;
+     3.  Truncation/rounding of excess precision on store assignment.
+
+
+IDENTIFICATION:
+     TEST0579
+
+DESCRIPTION:
+     FIPS sizing, Dynamic SQL exact numerics
+
+REFERENCES:
+     FIPS 16.6 #.8 #.9 #.10 #.12 -- Sizing specifications
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for the precision of exact
+     numerics are met in Dynamic SQL by declaring fields as NUMERIC(15),
+     DECIMAL(15), INTEGER, and SMALLINT and testing the following cases:
+
+     1.  Largest value required to support, positive;
+     2.  Largest value required to support, negative;
+     3.  Check for loss of precision in least significant bits.
+
+
+IDENTIFICATION:
+     TEST0580
+
+DESCRIPTION:
+     FIPS sizing, Dynamic SQL approximate numerics
+
+REFERENCES:
+     FIPS 16.6 #.14 #.16 #.18 -- Sizing specifications
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for the precision of approximate
+     numerics are met in Dynamic SQL by declaring fields as FLOAT(20), REAL,
+     and DOUBLE PRECISION and checking for loss of precision in the least
+     significant bits.
+
+
+IDENTIFICATION:
+     TEST0581
+
+DESCRIPTION:
+     Implicit numeric casting (feature 9) dynamic
+
+REFERENCES:
+     F# 9 -- Implicit numeric casting
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for implicit numeric casting in Dynamic SQL by checking
+     the following cases:
+
+     1.  Implicitly convert floating point literals to integer and decimal 
+         on store assignment;
+     2.  Implicitly convert REAL SQL data to integer on retrieval assignment;
+     3.  Implicitly convert floating point literal and variable value to
+         integer and decimal in a positioned UPDATE statement;
+     4.  Implicitly convert floating point variable value and literal to
+         integer and decimal in a searched UPDATE statement.
+
+
+IDENTIFICATION:
+     TEST0582
+
+DESCRIPTION:
+     Implicit numeric casting (feature 9) static
+
+REFERENCES:
+     F# 9 -- Implicit numeric casting
+     13.5 LR.2.a -- Implicit casting in a <select statement: single row>
+     13.8 LR.2.b -- Implicit casting in an <insert statement>
+     13.9 LR.2.a -- Implicit casting in an <update statement: positioned>
+     13.10 LR.2.a -- Implicit casting in an <update statement: searched>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for implicit numeric casting in non-Dynamic SQL by
+     checking the following cases:
+
+     1.  Implicitly convert floating point literal to smallint and numeric
+         on store assignment;
+     2.  Implicitly convert DOUBLE PRECISION SQL data to integer and smallint
+         on retrieval assignment;
+     3.  Implicitly convert floating point variable value and literal to
+         smallint and numeric in a positioned UPDATE statement;
+     4.  Implicitly convert floating point literal and variable value to
+         smallint and numeric in a searched UPDATE statement.
+     5.  Assign DOUBLE PRECISION SQL value to smallint column and add
+         DOUBLE PRECISION SQL value to numeric column in a searched 
+         UPDATE statement.
+
+
+IDENTIFICATION:
+     TEST0583
+
+DESCRIPTION:
+     FIPS sizing, Dynamic SQL character strings
+
+REFERENCES:
+     FIPS 16.6 #.2 -- Sizing specification
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     TEST0222 -- Non-Dynamic test on which TEST0583 is based
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for the maximum length of
+     character strings are met in Dynamic SQL by declaring a CHAR(240) field,
+     inserting a string of length 240, and checking to insure that it was not
+     truncated or otherwise mangled.
+
+
+IDENTIFICATION:
+     TEST0584
+
+DESCRIPTION:
+     FIPS sizing, VARCHAR (254) strings (static)
+
+REFERENCES:
+     FIPS 16.6 #.3 -- Sizing specification
+     F# 6 -- VARCHAR
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules, esp. for VARCHAR data types
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for the maximum length of
+     VARCHAR strings are met in non-Dynamic SQL by declaring a VARCHAR(254)
+     field, inserting a string of length 254, and checking to insure that it
+     was not truncated or otherwise mangled.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.  Any other languages
+     pass by default.
+
+
+IDENTIFICATION:
+     TEST0585
+
+DESCRIPTION:
+     FIPS sizing, VARCHAR (254) strings (dynamic)
+
+REFERENCES:
+     FIPS 16.6 #.3 -- Sizing specification
+     F# 1 -- Dynamic SQL
+     F# 6 -- VARCHAR
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules, esp. for VARCHAR data types
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for the maximum length of
+     VARCHAR strings are met in Dynamic SQL by declaring a VARCHAR(254)
+     field, inserting a string of length 254, and checking to insure that it
+     was not truncated or otherwise mangled.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.  Any other languages
+     pass by default.
+
+
+IDENTIFICATION:
+     TEST0586
+
+DESCRIPTION:
+     Sizing of FLOAT in a descriptor (dynamic)
+
+REFERENCES:
+     17.8 -- <describe statement>
+     17.4 -- <get descriptor statement>
+     FIPS 16.6 #.16 -- Sizing specification
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that the PRECISION value reported by DESCRIBE for a field
+     declared as FLOAT is consistent with FIPS sizing requirements in Dynamic
+     SQL.
+
+
+IDENTIFICATION:
+     TEST0587
+
+DESCRIPTION:
+     SET TR READ ONLY / READ WRITE (static)
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     13.8 GR.1 -- <insert statement> generation of invalid transaction state
+     14.1 -- <set transaction statement>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for SET TRANSACTION READ ONLY and SET TRANSACTION READ
+     WRITE by generating an invalid transaction state exception after SET
+     TRANSACTION READ ONLY and then insuring that the same does not occur after
+     SET TRANSACTION READ WRITE.
+
+
+IDENTIFICATION:
+     TEST0588
+
+DESCRIPTION:
+     SET TR READ ONLY / READ WRITE (dynamic)
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     13.8 GR.1 -- <insert statement> generation of invalid transaction state
+     F# 1 -- Dynamic SQL
+     14.1 -- <set transaction statement>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for SET TRANSACTION READ ONLY and SET TRANSACTION READ
+     WRITE in Dynamic SQL by generating an invalid transaction state exception
+     after SET TRANSACTION READ ONLY and then insuring that the same does not
+     occur after SET TRANSACTION READ WRITE.
+
+
+IDENTIFICATION:
+     TEST0589
+
+DESCRIPTION:
+     SET TR ISOLATION LEVEL (static)
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     14.1 -- <set transaction statement>
+     4.28 -- Table 9, SQL-transaction isolation levels and the three phenomena
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that SET TRANSACTION ISOLATION LEVEL functions properly with
+     non-dynamic statements in the following cases:
+
+     1.  SET TRANSACTION ISOLATION LEVEL READ COMMITTED and then attempt to
+         perform a "dirty read;"
+     2.  SET TRANSACTION ISOLATION LEVEL REPEATABLE READ and then attempt to
+         perform a "non-repeatable read;"
+     3.  SET TRANSACTION ISOLATION LEVEL SERIALIZABLE and then attempt to
+         perform a "phantom read;"
+     4.  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED to insure that the
+         syntax is accepted.
+
+NOGO:
+     SQL-92 14.1 GR.5 says that a transaction at a particular isolation level
+     must not exhibit phenomena which are not supposed to be possible at that
+     level, but does not require transactions to exhibit those phenomena which
+     are possible.  A conforming implementation could simply ignore all SET
+     TRANSACTION ISOLATION LEVEL statements and treat all transactions as
+     SERIALIZABLE.  The phenomena are defined in SQL-92 4.28.  This test is
+     difficult to conduct reliably, and any failures should be reviewed to
+     insure that the failure is genuine and not a result of a timing problem.
+     Some extra features are used to conduct this test that may need to be
+     worked around on some implementations.
+
+
+IDENTIFICATION:
+     TEST0590
+
+DESCRIPTION:
+     SET TR ISOLATION LEVEL (dynamic)
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     14.1 -- <set transaction statement>
+     4.28 -- Table 9, SQL-transaction isolation levels and the three phenomena
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that SET TRANSACTION ISOLATION LEVEL functions properly with
+     dynamic statements in the following cases:
+
+     1.  SET TRANSACTION ISOLATION LEVEL READ COMMITTED and then attempt to
+         perform a "dirty read;"
+     2.  SET TRANSACTION ISOLATION LEVEL REPEATABLE READ and then attempt to
+         perform a "non-repeatable read;"
+     3.  SET TRANSACTION ISOLATION LEVEL SERIALIZABLE and then attempt to
+         perform a "phantom read;"
+     4.  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED to insure that the
+         syntax is accepted.
+
+NOGO:
+     SQL-92 14.1 GR.5 says that a transaction at a particular isolation level
+     must not exhibit phenomena which are not supposed to be possible at that
+     level, but does not require transactions to exhibit those phenomena which
+     are possible.  A conforming implementation could simply ignore all SET
+     TRANSACTION ISOLATION LEVEL statements and treat all transactions as
+     SERIALIZABLE.  The phenomena are defined in SQL-92 4.28.  This test is
+     difficult to conduct reliably, and any failures should be reviewed to
+     insure that the failure is genuine and not a result of a timing problem.
+     Some extra features are used to conduct this test that may need to be
+     worked around on some implementations.
+
+
+IDENTIFICATION:
+     TEST0591
+
+DESCRIPTION:
+     NATURAL JOIN (feature 4) (static)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the NATURAL JOIN variation of <joined table> by
+     creating a view that contains a natural join and verifying its contents.
+
+
+IDENTIFICATION:
+     TEST0592
+
+DESCRIPTION:
+     INNER JOIN (feature 4) (static)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the INNER JOIN variation of <joined table>, and
+     also the simultaneous use of <join condition> and <named columns join>, by
+     creating two views containing inner joins, one explicitly using the INNER
+     keyword and one implicit, and verifying their contents.
+
+
+IDENTIFICATION:
+     TEST0593
+
+DESCRIPTION:
+     LEFT OUTER JOIN (feature 4) (static)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the LEFT OUTER JOIN variation of <joined table>,
+     and also the ON syntax for joins, by creating two views containing left
+     outer joins, one with the ON keyword and one with the USING keyword, and
+     verifying their contents.
+
+
+IDENTIFICATION:
+     TEST0594
+
+DESCRIPTION:
+     RIGHT OUTER JOIN (feature 4) (static)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the RIGHT OUTER JOIN variation of <joined table>
+     by creating a view containing a right outer join and verifying its
+     contents.
+
+
+IDENTIFICATION:
+     TEST0595
+
+DESCRIPTION:
+     NATURAL JOIN (feature 4) (dynamic)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the NATURAL JOIN variation of <joined table> in
+     Dynamic SQL by creating a view that contains a natural join and verifying
+     its contents.
+
+
+IDENTIFICATION:
+     TEST0596
+
+DESCRIPTION:
+     INNER JOIN (feature 4) (dynamic)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the INNER JOIN variation of <joined table>, and
+     also the simultaneous use of <join condition> and <named columns join>, in
+     Dynamic SQL by creating two views containing inner joins, one explicitly
+     using the INNER keyword and one implicit, and verifying their contents.
+
+
+IDENTIFICATION:
+     TEST0597
+
+DESCRIPTION:
+     LEFT OUTER JOIN (feature 4) (dynamic)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the LEFT OUTER JOIN variation of <joined table>,
+     and also the ON syntax for joins, in Dynamic SQL by creating two views
+     containing left outer joins, one with the ON keyword and one with the
+     USING keyword, and verifying their contents.
+
+
+IDENTIFICATION:
+     TEST0598
+
+DESCRIPTION:
+     RIGHT OUTER JOIN (feature 4) (dynamic)
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To establish support for the RIGHT OUTER JOIN variation of <joined table>
+     in Dynamic SQL by creating a view containing a right outer join and
+     verifying its contents.
+
+
+IDENTIFICATION:
+     TEST0599
+
+DESCRIPTION:
+     UNION in views (feature 8) (static)
+
+REFERENCES:
+     F# 8 -- UNION in views
+     11.19 LR.2.a -- UNION is permitted in a <view definition>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for UNION in views by creating a view containing a
+     union and verifying its contents:
+     1.  Test UNION of two columns in a single table.
+     2.  Test UNION of set function specifications with named columns.
+     3.  Test UNION ALL and check for expected duplicates.
+     4.  Test UNION of 3 tables (1 used twice), using numeric literals,
+         character literals, and column values.
+
+
+IDENTIFICATION:
+     TEST0600
+
+DESCRIPTION:
+     UNION in views (feature 8) (dynamic)
+
+REFERENCES:
+     F# 8 -- UNION in views
+     11.19 LR.2.a -- UNION is permitted in a <view definition>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for UNION in views in Dynamic SQL by creating a view
+     containing a union and verifying its contents.
+
+
+IDENTIFICATION:
+     TEST0601
+
+DESCRIPTION:
+     DATETIME data types (feature 5) (static)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     6.1 -- <data type>
+     4.5 -- Datetimes and intervals
+     6.6 GR.3 -- <extract expression>
+     8.11 -- <overlaps predicate>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for the simplest datetime operations by creating a table
+     containing columns of type DATE, TIME, TIMESTAMP, INTERVAL YEAR TO MONTH,
+     and INTERVAL DAY TO SECOND, inserting values using literals, and verifying
+     the results using temporal arithmetic, EXTRACT, and the OVERLAPS
+     predicate.
+
+
+IDENTIFICATION:
+     TEST0602
+
+DESCRIPTION:
+     DATETIME data types (feature 5) (dynamic)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     6.1 -- <data type>
+     4.5 -- Datetimes and intervals
+     6.6 GR.3 -- <extract expression>
+     8.11 -- <overlaps predicate>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for the simplest datetime operations in Dynamic SQL by
+     creating a table containing columns of type DATE, TIME, TIMESTAMP,
+     INTERVAL YEAR TO MONTH, and INTERVAL DAY TO SECOND, inserting values
+     using literals, and verifying the results using temporal arithmetic,
+     EXTRACT, and the OVERLAPS predicate.
+
+
+IDENTIFICATION:
+     TEST0603
+
+DESCRIPTION:
+     INFO_SCHEM.TABLES definition
+
+REFERENCES:
+     21.2.7 -- TABLES view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.8 -- TABLES base table
+     F# 2 -- Basic information schema
+     F# 17 -- Multiple schemas per user
+     F# 23 -- Privilege tables
+
+TEST PURPOSE:
+     To verify basic support of the TABLES view in INFO_SCHEM by examining a
+     few fields pertaining to tables in the default schema and verifying the
+     following constraints:  TABLE_TYPE_NOT_NULL; TABLE_TYPE_CHECK;
+     CHECK_TABLE_IN_COLUMNS; TABLES_PRIMARY_KEY; TABLES_FOREIGN_KEY_SCHEMATA;
+     TABLES_CHECK_NOT_VIEW.  It is also verified that all tables visible in
+     TABLES appear in TABLE_PRIVILEGES or COLUMN_PRIVILEGES with the current
+     user or PUBLIC as GRANTEE.
+
+
+IDENTIFICATION:
+     TEST0604
+
+DESCRIPTION:
+     INFO_SCHEM.VIEWS definition
+
+REFERENCES:
+     21.2.8 -- VIEWS view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.9 -- VIEWS base table
+     F# 2 -- Basic information schema
+
+TEST PURPOSE:
+     To verify basic support of the VIEWS view in INFO_SCHEM by examining a
+     few fields pertaining to views in the default schema and verifying the
+     following constraints:  CHECK_OPTION_NOT_NULL; CHECK_OPTION_CHECK;
+     IS_UPDATABLE_NOT_NULL; IS_UPDATABLE_CHECK; VIEWS_PRIMARY_KEY;
+     VIEWS_IN_TABLES_CHECK; VIEWS_IS_UPDATABLE_CHECK_OPTION_CHECK.
+
+
+IDENTIFICATION:
+     TEST0605
+
+DESCRIPTION:
+     INFO_SCHEM.COLUMNS definition
+
+REFERENCES:
+     21.2.9 -- COLUMNS view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.10 -- COLUMNS base table
+     F# 2 -- Basic information schema
+
+TEST PURPOSE:
+     To verify basic support of the COLUMNS view in INFO_SCHEM by examining a
+     few fields pertaining to columns in the default schema, insuring that
+     ORDINAL_POSITION is always positive and that IS_NULLABLE is always either
+     YES or NO, and verifying the following constraints:
+     COLUMN_POSITION_NOT_NULL; COLUMNS_PRIMARY_KEY; COLUMNS_UNIQUE;
+     COLUMNS_FOREIGN_KEY_TABLES.
+
+
+IDENTIFICATION:
+     TEST0606
+
+DESCRIPTION:
+     INFO_SCHEM.SCHEMATA definition
+
+REFERENCES:
+     21.2.4 -- SCHEMATA view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.4 -- SCHEMATA base table
+     F# 2 -- Basic information schema
+     F# 17 -- Multiple schemas per user
+
+TEST PURPOSE:
+     To verify basic support of the SCHEMATA view in INFO_SCHEM by insuring
+     that only schemata to which the current user has access are listed,
+     verifying the tuple for the default schema, and verifying constraint
+     SCHEMATA_PRIMARY_KEY.
+
+
+IDENTIFICATION:
+     TEST0607
+
+DESCRIPTION:
+     INFO_SCHEM.TABLE_PRIVILEGES definition
+
+REFERENCES:
+     21.2.10 -- TABLE_PRIVILEGES view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.20 -- TABLE_PRIVILEGES base table
+     F# 2 -- Basic information schema
+     F# 23 -- Privilege tables
+
+TEST PURPOSE:
+     To verify basic support of the TABLE_PRIVILEGES view in INFO_SCHEM by
+     insuring that only tables to which the current user has access are listed,
+     inspecting an assortment of tuples pertaining to tables owned by the
+     current user and other users, and verifying the following constraints:
+     TABLE_PRIVILEGES_TYPE_CHECK; TABLE_PRIVILEGES_GRANTABLE_NOT_NULL;
+     TABLE_PRIVILEGES_GRANTABLE_CHECK; TABLE_PRIVILEGES_PRIMARY_KEY;
+     TABLE_PRIVILEGES_FOREIGN_KEY_TABLES.
+
+
+IDENTIFICATION:
+     TEST0608
+
+DESCRIPTION:
+     INFO_SCHEM.COLUMN_PRIVILEGES definition
+
+REFERENCES:
+     21.2.11 -- COLUMN_PRIVILEGES view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.21 -- COLUMN_PRIVILEGES base table
+     F# 2 -- Basic information schema
+     F# 23 -- Privilege tables
+
+TEST PURPOSE:
+     To verify basic support of the COLUMN_PRIVILEGES view in INFO_SCHEM by
+     insuring that only columns to which the current user has access are
+     listed, inspecting an assortment of tuples pertaining to columns owned by
+     the current user, and verifying the following constraints:
+     COLUMN_PRIVILEGES_TYPE_CHECK; COLUMN_PRIVILEGES_IS_GRANTABLE_NOT_NULL;
+     COLUMN_PRIVILEGES_IS_GRANTABLE_CHECK; COLUMN_PRIVILEGES_PRIMARY_KEY;
+     COLUMN_PRIVILEGES_FOREIGN_KEY_COLUMNS.
+
+
+IDENTIFICATION:
+     TEST0609
+
+DESCRIPTION:
+     Orphaned IS data structures, Transitional SQL
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 17 -- Multiple schemas per user
+     F# 23 -- Privilege tables
+     F# 35 -- Explains why useless tables must be there
+     21.2.12 -- USAGE_PRIVILEGES view
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+     21.3.22 -- USAGE_PRIVILEGES base table
+     COR2 21.2.9 -- COLUMNS view gets two new columns
+
+TEST PURPOSE:
+     To verify basic support for those INFO_SCHEM structures that are required
+     to be present, but not necessarily populated, in Transitional SQL by
+     accessing the columns in each of the Transitional INFO_SCHEM views that
+     pertain to catalog names, domains, character sets, collations, and
+     translations and checking that no errors are generated.  The two new
+     columns DATETIME_PRECISION and INTERVAL_PRECISION that were added to the
+     COLUMNS view after the Standard was published are also checked.
+
+NOGO:
+     If the catalog name is longer than 39 characters, this test will
+     incorrectly report a failure.  The length of the character string catlog
+     should be increased and the test re-run.
+
+
+IDENTIFICATION:
+     TEST0610
+
+DESCRIPTION:
+     VARCHAR in INFO_SCHEM
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 6 -- VARCHAR data type
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules, esp. for VARCHAR data types
+     FIPS CN.1 -- Shorter INFO_SCHEM identifiers
+
+TEST PURPOSE:
+     To verify that INFO_SCHEM supports VARCHAR fields by checking that all the
+     values in INFO_SCHEM.COLUMNS.COLUMN_NAME are not of identical lengths.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.  If the values in
+     INFO_SCHEM.COLUMNS.COLUMN_NAME all have the same length, NOGO is returned
+     instead of FAIL because various arguments exist for how the blank padding
+     could get there even if the column itself is of type VARCHAR.
+
+
+IDENTIFICATION:
+     TEST0611
+
+DESCRIPTION:
+     FIPS sizing, DATETIME data types (static)
+
+REFERENCES:
+     FIPS 16.6 #.20 #.21 #.22 #.23 -- Sizing specifications
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 5 -- DATETIME data types
+     6.1 SR.25 SR.26 LR.1.a -- TSQL forced to use default precisions
+     10.1 SR.3 SR.4 -- Minimal precisions
+     4.5 -- Datetimes and intervals
+     6.6 GR.3.a.i -- Determining the sign of an extracted field
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for temporal data types are met
+     by declaring fields with the maximum required precision and checking for
+     truncation and rounding errors.
+
+
+IDENTIFICATION:
+     TEST0612
+
+DESCRIPTION:
+     FIPS sizing, DATETIME data types (dynamic)
+
+REFERENCES:
+     FIPS 16.6 #.20 #.21 #.22 #.23 -- Sizing specifications
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 5 -- DATETIME data types
+     6.1 SR.25 SR.26 LR.1.a -- TSQL forced to use default precisions
+     10.1 SR.3 SR.4 -- Minimal precisions
+     4.5 -- Datetimes and intervals
+     6.6 GR.3.a.i -- Determining the sign of an extracted field
+
+TEST PURPOSE:
+     To insure that FIPS sizing requirements for temporal data types are met
+     in Dynamic SQL by declaring fields with the maximum required precision and
+     checking for truncation and rounding errors.
+
+
+IDENTIFICATION:
+     TEST0613
+
+DESCRIPTION:
+     <datetime value function> (static)
+
+REFERENCES:
+     6.8 -- <datetime value function>
+     6.8 GR.3 -- Agreement between <datetime value function>s in same statement
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for <datetime value function>s by executing an INSERT
+     statement containing all three and then verifying that the values they
+     produced are mutually consistent.
+
+
+IDENTIFICATION:
+     TEST0614
+
+DESCRIPTION:
+     <datetime value function> (dynamic)
+
+REFERENCES:
+     6.8 -- <datetime value function>
+     F# 1 -- Dynamic SQL
+     6.8 GR.3 -- Agreement between <datetime value function>s in same statement
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for <datetime value function>s in Dynamic SQL by
+     executing an INSERT statement containing all three and then verifying
+     that the values they produced are mutually consistent.
+
+
+IDENTIFICATION:
+     TEST0615
+
+DESCRIPTION:
+     DATETIME-related SQLSTATE codes (static)
+
+REFERENCES:
+     22.1 -- SQLSTATE
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     6.14 GR.3.c -- How to generate a datetime field overflow
+     9.2 GR.3.m -- How to generate an interval field overflow
+     COR2 6.10 GR.9.a.ii.1 GR.10.a.ii.1 GR.11.a.ii.1 -- invalid datetime fmt
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     COR2 5.3 6.10 -- Technical Corrigendum #2
+
+TEST PURPOSE:
+     To verify that DATETIME-related SQLSTATE codes are correctly generated
+     as follows:
+
+     1.  Generate a datetime field overflow (22008) by adding a one-year
+         interval to a YEAR 9999 datetime;
+     2.  Generate an interval field overflow (22015) by inserting an interval
+         with too many digits in the leading field;
+     3.  Generate an invalid datetime format (22007) by CASTing February 30
+         from a character string to a datetime.
+
+NOGO:
+     If the errors are caught at compile time, the SQLSTATEs cannot be
+     generated and the test is passed.
+
+
+IDENTIFICATION:
+     TEST0616
+
+DESCRIPTION:
+     DATETIME-related SQLSTATE codes (dynamic)
+
+REFERENCES:
+     22.1 -- SQLSTATE
+     F# 1 -- Dynamic SQL
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     6.14 GR.3.c -- How to generate a datetime field overflow
+     9.2 GR.3.m -- How to generate an interval field overflow
+     COR2 6.10 GR.9.a.ii.1 GR.10.a.ii.1 GR.11.a.ii.1 -- invalid datetime fmt
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that DATETIME-related SQLSTATE codes are correctly generated
+     in Dynamic SQL as follows:
+
+     1.  Generate a datetime field overflow (22008) by adding a one-year
+         interval to a YEAR 9999 datetime;
+     2.  Generate an interval field overflow (22015) by inserting an interval
+         with too many digits in the leading field;
+     3.  Generate an invalid datetime format (22007) by CASTing February 30
+         from a character string to a datetime.
+
+
+IDENTIFICATION:
+     TEST0617
+
+DESCRIPTION:
+     DATETIME with predicates, set fns (static)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     8 -- Predicates
+     6.5 -- <set function specification>
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     COR2 7.1 -- <row value constructor> is legal in an OVERLAPS predicate
+
+TEST PURPOSE:
+     To verify that DATETIMES work correctly with predicates and set functions
+     as follows:
+
+     1.  Compare intervals with <;
+     2.  Compare intervals with <=;
+     3.  Compare intervals with <>;
+     4.  Compare intervals with =;
+     5.  Compare intervals with >;
+     6.  Compare intervals with >=;
+     7.  Use the BETWEEN predicate with timestamps;
+     8.  Use the IN predicate with intervals;
+     9.  Use the OVERLAPS predicate;
+     10. Use the ALL, SOME, ANY qualifiers with assorted datetime operations;
+     11. Use MIN over a TIME column;
+     12. Use MAX over a DATE column;
+     13. Use AVG over an INTERVAL HOUR TO MINUTE column;
+     14. Use DISTINCT with AVG of an interval column;
+     15. Use SUM over an INTERVAL DAY column;
+     16. Use COUNT DISTINCT over an INTERVAL HOUR TO MINUTE column.
+
+     Note:  IS NULL is tested in TEST0621.
+
+
+IDENTIFICATION:
+     TEST0618
+
+DESCRIPTION:
+     DATETIME with predicates, set fns (dynamic)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 1 -- Dynamic SQL
+     8 -- Predicates
+     6.5 -- <set function specification>
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     COR2 7.1 -- <row value constructor> is legal in an OVERLAPS predicate
+
+TEST PURPOSE:
+     To verify that DATETIMES work correctly with predicates and set functions
+     in Dynamic SQL as follows:
+
+     1.  Compare intervals with <;
+     2.  Compare intervals with <=;
+     3.  Compare intervals with <>;
+     4.  Compare intervals with =;
+     5.  Compare intervals with >;
+     6.  Compare intervals with >=;
+     7.  Use the BETWEEN predicate with timestamps;
+     8.  Use the IN predicate with intervals;
+     9.  Use the OVERLAPS predicate;
+     10. Use the ALL, SOME, ANY qualifiers with assorted datetime operations;
+     11. Use MIN over a TIME column;
+     12. Use MAX over a DATE column;
+     13. Use AVG over an INTERVAL HOUR TO MINUTE column;
+     14. Use DISTINCT with AVG of an interval column;
+     15. Use SUM over an INTERVAL DAY column;
+     16. Use COUNT DISTINCT over an INTERVAL HOUR TO MINUTE column.
+
+     Note:  IS NULL is tested in TEST0622.
+
+
+IDENTIFICATION:
+     TEST0619
+
+DESCRIPTION:
+     DATETIME cursor operations (static)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     13 -- Data manipulation
+
+TEST PURPOSE:
+     To establish that DATETIME data types also work with cursor operations by
+     scanning a table containing datetimes with a cursor, performing a
+     positioned update and positioned delete, and verifying the results.
+
+
+IDENTIFICATION:
+     TEST0620
+
+DESCRIPTION:
+     DATETIME cursor operations (dynamic)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 1 -- Dynamic SQL
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     13 -- Data manipulation
+
+TEST PURPOSE:
+     To establish that DATETIME data types also work with dynamic cursor
+     operations by scanning a table containing datetimes with a dynamic cursor,
+     performing a dynamic positioned update and dynamic positioned delete, and
+     verifying the results.
+
+
+IDENTIFICATION:
+     TEST0621
+
+DESCRIPTION:
+     DATETIME NULLs (static)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     Verify that NULLs in temporal contexts work properly as follows:
+
+     1.  Use predicates NULL and NOT NULL over temporal columns in a <view
+         definition>;
+     2.  Explicitly cast NULL into various temporal types;
+     3.  Use a <null specification> in an INSERT statement for a temporal
+         field;
+     4.  Generate a temporal NULL using an indicator variable;
+     5.  Check the results of SELECT COUNT queries that perform comparisons
+         involving temporal NULLs, using equality as well as IS [NOT] NULL;
+     6.  Extract a NULL datetime field into a variable with indicator, and
+         insure that the indicator is -1;
+     7.  Eliminate a datetime NULL with a set function in a cursor, verifying
+         the result and the SQLSTATE warning;
+     8.  Use IS [NOT] NULL through a cursor.
+
+
+IDENTIFICATION:
+     TEST0622
+
+DESCRIPTION:
+     DATETIME NULLs (dynamic)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 1 -- Dynamic SQL
+     F# 20 -- CAST functions
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     Verify that NULLs in temporal contexts work properly in Dynamic SQL as
+     follows:
+
+     1.  Use predicates NULL and NOT NULL over temporal columns in a <view
+         definition>;
+     2.  Explicitly cast NULL into various temporal types;
+     3.  Use a <null specification> in an INSERT statement for a temporal
+         field;
+     4.  Generate a temporal NULL using an indicator variable;
+     5.  Check the results of SELECT COUNT queries that perform comparisons
+         involving temporal NULLs, using equality as well as IS [NOT] NULL;
+     6.  Extract a NULL datetime field into a variable with indicator, and
+         insure that the indicator is -1;
+     7.  Eliminate a datetime NULL with a set function in a cursor, verifying
+         the result and the SQLSTATE warning;
+     8.  Use IS [NOT] NULL through a cursor.
+
+
+IDENTIFICATION:
+     TEST0623
+
+DESCRIPTION:
+     OUTER JOINs with NULLs and empty tables (static)
+
+REFERENCES:
+     F# 4 -- Joined table.
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify correct operation of outer joins with respect to null values
+     and empty tables using the following cases:
+
+     1.  Verify the contents of a view defined with LEFT OUTER JOIN and an
+         equality <search condition> over tables containing NULLs;
+     2.  Verify the results of a RIGHT OUTER JOIN <named columns join> over
+         tables containing NULLs;
+     3.  Repeat 1. and 2. when one of the tables is empty.
+
+
+IDENTIFICATION:
+     TEST0624
+
+DESCRIPTION:
+     OUTER JOINs with NULLs and empty tables (dynamic)
+
+REFERENCES:
+     F# 4 -- Joined table.
+     F# 1 -- Dynamic SQL
+     7.5 -- <joined table>
+     7.10 LR.2.c -- <joined table> in a <query expression>
+     6.3 LR.2.a -- <joined table> in a <table reference>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify correct operation of outer joins with respect to null values
+     and empty tables in Dynamic SQL using the following cases:
+
+     1.  Verify the contents of a view defined with LEFT OUTER JOIN and an
+         equality <search condition> over tables containing NULLs;
+     2.  Verify the results of a RIGHT OUTER JOIN <named columns join> over
+         tables containing NULLs;
+     3.  Repeat 1. and 2. when one of the tables is empty.
+
+
+IDENTIFICATION:
+     TEST0625
+
+DESCRIPTION:
+     ADD COLUMN and DROP COLUMN (static)
+
+REFERENCES:
+     F# 3 -- Schema manipulation
+     11.10 -- <alter table statement>
+     11.11 -- <add column definition>
+     11.15 -- <drop column definition>
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that the ADD COLUMN and DROP COLUMN parts of the schema
+     manipulation feature are supported using the following cases:
+
+     1.  Make sure that added columns are not visible before they are added;
+     2.  Test <add column definition> with and without optional COLUMN
+         keyword;
+     3.  Add a column that has a default value and verify the default;
+     4.  Check that ordinary everyday operations do not fail after a table has
+         been altered;
+     5.  Test <drop column definition> with and without optional COLUMN keyword
+         and CASCADE option;
+     6.  Insure that dropped columns are not visible after they are dropped;
+     7.  Insure that columns not dropped remain visible;
+     8.  Insure that all columns can be dropped without affecting COUNT(*);
+     9.  Insure that RESTRICT prevents dopping a referenced column;
+    10.  Insure that CASCADE drops a referenced column and also drops the
+         referential constraint;
+    11.  Create a view, SELECT * ..., referencing another table, then check
+         that a restricted DROP of a referenced column fails;
+    12.  Insure that adding a column to the referenced table does not add a
+         column to a pre-existing, referencing view.
+
+
+IDENTIFICATION:
+     TEST0626
+
+DESCRIPTION:
+     ADD COLUMN and DROP COLUMN (dynamic)
+
+REFERENCES:
+     F# 3 -- Schema manipulation
+     F# 1 -- Dynamic SQL
+     11.10 -- <alter table statement>
+     11.11 -- <add column definition>
+     11.15 -- <drop column definition>
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that the ADD COLUMN and DROP COLUMN parts of the schema
+     manipulation feature are supported in Dynamic SQL using the following
+     cases:
+
+     1.  Make sure that added columns are not visible before they are added;
+     2.  Test <add column definition> with and without optional COLUMN
+         keyword;
+     3.  Add a column that has a default value and verify the default;
+     4.  Check that ordinary everyday operations do not fail after a table has
+         been altered;
+     5.  Test <drop column definition> with and without optional COLUMN keyword
+         and CASCADE option;
+     6.  Insure that dropped columns are not visible after they are dropped;
+     7.  Insure that columns not dropped remain visible;
+     8.  Insure that all columns can be dropped without affecting COUNT(*).
+
+
+IDENTIFICATION:
+     TEST0627
+
+DESCRIPTION:
+     <grant statement> (static)
+
+REFERENCES:
+     F# 3 -- Schema manipulation
+     11.36 -- <grant statement>
+
+TEST PURPOSE:
+     To verify the correct execution of a <grant statement> inside of a module
+     by running two programs concurrently, one under authorization FLATER and
+     one under authorization HU, and checking the following:
+
+     1.  HU cannot access table before FLATER grants privileges;
+     2.  HU can only SELECT after FLATER grants SELECT;
+     3.  HU can SELECT, INSERT, UPDATE, and DELETE after FLATER grants ALL
+         PRIVILEGES;
+     4.  HU still cannot GRANT without the GRANT OPTION.
+
+
+IDENTIFICATION:
+     TEST0628
+
+DESCRIPTION:
+     <revoke statement> (static)
+
+REFERENCES:
+     F# 3 -- Schema manipulation
+     11.37 -- <revoke statement>
+
+TEST PURPOSE:
+     To verify the correct execution of a <revoke statement> inside of a module
+     by running two programs concurrently, one under authorization FLATER and
+     one under authorization HU, and checking the following:
+
+     1.  HU can only INSERT after SELECT, UPDATE, and DELETE are revoked
+         (ALL PRIVILEGES was carried over from TEST0627);
+     2.  HU cannot access table after ALL PRIVILEGES are revoked.
+
+
+IDENTIFICATION:
+     TEST0629
+
+DESCRIPTION:
+     <grant statement> (dynamic)
+
+REFERENCES:
+     F# 3 -- Schema manipulation
+     11.36 -- <grant statement>
+     F# 1 -- Dynamic SQL
+
+TEST PURPOSE:
+     To verify the correct execution of a <grant statement> inside of a module
+     in Dynamic SQL by running two programs concurrently, one under
+     authorization FLATER and one under authorization HU, and checking the
+     following:
+
+     1.  HU cannot access table before FLATER grants privileges;
+     2.  HU can only SELECT after FLATER grants SELECT;
+     3.  HU can SELECT, INSERT, UPDATE, and DELETE after FLATER grants ALL
+         PRIVILEGES;
+     4.  HU still cannot GRANT without the GRANT OPTION.
+
+
+IDENTIFICATION:
+     TEST0630
+
+DESCRIPTION:
+     <revoke statement> (dynamic)
+
+REFERENCES:
+     F# 3 -- Schema manipulation
+     11.37 -- <revoke statement>
+     F# 1 -- Dynamic SQL
+
+TEST PURPOSE:
+     To verify the correct execution of a <revoke statement> inside of a module
+     in Dynamic SQL by running two programs concurrently, one under
+     authorization FLATER and one under authorization HU, and checking the
+     following:
+
+     1.  HU can only INSERT after SELECT, UPDATE, and DELETE are revoked
+         (ALL PRIVILEGES was carried over from TEST0627);
+     2.  HU cannot access table after ALL PRIVILEGES are revoked.
+
+
+IDENTIFICATION:
+     TEST0631
+
+DESCRIPTION:
+     Datetimes in a <default clause> (static)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 22 -- Removal of 11.5 LR.2.a
+     11.5 -- <default clause>
+     6.8 -- <datetime value function>
+     5.3 -- <literal>
+     6.1 -- <data type>
+     4.5 -- Datetimes and intervals
+     6.6 GR.3 -- <extract expression>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 21 -- INSERT expressions
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for datetime literals and <datetime value function>s in
+     <default option>s by creating and verifying the following defaults:
+
+     1.  DEFAULT <date literal>;
+     2.  DEFAULT <time literal>;
+     3.  DEFAULT <interval literal>;
+     4.  DEFAULT CURRENT_DATE;
+     5.  DEFAULT CURRENT_TIME;
+     6.  DEFAULT CURRENT_TIMESTAMP.
+
+
+IDENTIFICATION:
+     TEST0632
+
+DESCRIPTION:
+     Datetimes in a <default clause> (dynamic)
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 22 -- Removal of 11.5 LR.2.a
+     11.5 -- <default clause>
+     F# 1 -- Dynamic SQL
+     6.8 -- <datetime value function>
+     5.3 -- <literal>
+     6.1 -- <data type>
+     4.5 -- Datetimes and intervals
+     6.6 GR.3 -- <extract expression>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 21 -- INSERT expressions
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for datetime literals and <datetime value function>s in
+     <default option>s in Dynamic SQL by creating and verifying the following
+     defaults:
+
+     1.  DEFAULT <date literal>;
+     2.  DEFAULT <time literal>;
+     3.  DEFAULT <interval literal>;
+     4.  DEFAULT CURRENT_DATE;
+     5.  DEFAULT CURRENT_TIME;
+     6.  DEFAULT CURRENT_TIMESTAMP.
+
+
+IDENTIFICATION:
+     TEST0633
+
+DESCRIPTION:
+     TRIM function (static)
+
+REFERENCES:
+     F# 7 -- TRIM function
+     6.7 GR.5 -- <trim function>
+     6.7 LR.2.b -- A <character value function> can be a <trim function>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for <trim function> by checking the results of
+     operations using <trim function>s, with explicit <trim character>s and
+     without, with <trim specification>s of LEADING, TRAILING, and BOTH, and
+     with implicit <trim specification>s.  To verify support for <trim
+     character>s and <trim specification>s as columns, literals, or variables.
+     To verify that <trim function> using either NULL <trim character> or NULL
+     <trim specification> is NULL.  Trim source and trim character may be
+     columns, literals, or variables.  Trim source and trim character may be
+     NULL.
+
+
+IDENTIFICATION:
+     TEST0634
+
+DESCRIPTION:
+     TRIM function (dynamic)
+
+REFERENCES:
+     F# 7 -- TRIM function
+     6.7 GR.5 -- <trim function>
+     6.7 LR.2.b -- A <character value function> can be a <trim function>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for <trim function> in Dynamic SQL by checking the
+     results of operations using <trim function>s, with explicit <trim
+     character>s and without, with <trim specification>s of LEADING, TRAILING,
+     and BOTH, and with implicit <trim specification>s.
+
+
+IDENTIFICATION:
+     TEST0635
+
+DESCRIPTION:
+     Feature 13, grouped operations (static)
+
+REFERENCES:
+     F# 13 -- Grouped operations
+     7.3 LR.2.a -- where, group by, and having are legal with a grouped view
+     7.4 LR.2.a -- multiple <table reference>s 
+     COR2 7.4 LR.2.a -- Typo in 7.4 LR.2.a
+     7.9 LR.2.c -- <set function specification> with grouped view
+     7.11 LR.2.a -- <subquery> in <comparison predicate> with grouped view etc.
+     13.5 LR.2.b -- Grouped view etc. in <select statement: single row>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for grouped operations by creating a grouped view and
+     checking the results of the following operations:
+
+     1.  A select with GROUP BY and HAVING;
+     2.  A select with a <where clause>;
+     3.  A select in which the <from clause> references the grouped view along
+         with a separate base table;
+     4.  A SELECT COUNT(*) from the grouped view;
+     5.  A select containing a <comparison predicate> containing a <subquery>
+         that references the grouped view;
+     6.  A select containing a <comparison predicate> containing a <subquery>
+         that references the grouped view with GROUP BY and HAVING;
+     7.  A cursor scan of the grouped view using GROUP BY.
+
+
+IDENTIFICATION:
+     TEST0636
+
+DESCRIPTION:
+     Feature 13, grouped operations (dynamic)
+
+REFERENCES:
+     F# 13 -- Grouped operations
+     7.3 LR.2.a -- where, group by, and having are legal with a grouped view
+     7.4 LR.2.a -- multiple <table reference>s 
+     COR2 7.4 LR.2.a -- Typo in 7.4 LR.2.a
+     7.9 LR.2.c -- <set function specification> with grouped view
+     7.11 LR.2.a -- <subquery> in <comparison predicate> with grouped view etc.
+     13.5 LR.2.b -- Grouped view etc. in <select statement: single row>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for grouped operations in Dynamic SQL by creating a
+     grouped view and checking the results of the following operations:
+
+     1.  A select with GROUP BY and HAVING;
+     2.  A select with a <where clause>;
+     3.  A select in which the <from clause> references the grouped view along
+         with a separate base table;
+     4.  A SELECT COUNT(*) from the grouped view;
+     5.  A select containing a <comparison predicate> containing a <subquery>
+         that references the grouped view;
+     6.  A select containing a <comparison predicate> containing a <subquery>
+         that references the grouped view with GROUP BY and HAVING;
+     7.  A cursor scan of the grouped view using GROUP BY.
+
+
+IDENTIFICATION:
+     TEST0637
+
+DESCRIPTION:
+     Feature 14, Qualified * in select list (static)
+
+REFERENCES:
+     F# 14 -- Qualified * in select list
+     7.9 LR.2.b -- <select sublist> doesn't have to be a <derived column>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for specifying <qualifier>.* in a <select sublist> by
+     creating a view explicitly referencing HU.STAFF.* and checking its
+     contents, and also checking a cursor and a single row select that use
+     <qualifier>.*.
+
+
+IDENTIFICATION:
+     TEST0638
+
+DESCRIPTION:
+     Feature 14, Qualified * in select list (dynamic)
+
+REFERENCES:
+     F# 14 -- Qualified * in select list
+     7.9 LR.2.b -- <select sublist> doesn't have to be a <derived column>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for specifying <qualifier>.* in a <select sublist> in
+     Dynamic SQL by creating a view explicitly referencing HU.STAFF.* and
+     checking its contents.
+
+
+IDENTIFICATION:
+     TEST0639
+
+DESCRIPTION:
+     Feature 15, Lowercase Identifiers (static)
+
+REFERENCES:
+     F# 15 -- Lowercase identifiers
+     5.2 LR.2.b -- We can use <simple Latin lower case letter>s now
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for lower case letters in identifiers by creating a view
+     using lower case letters in identifiers and insuring that case is not
+     significant while checking its contents.
+
+
+IDENTIFICATION:
+     TEST0640
+
+DESCRIPTION:
+     Feature 15, Lowercase Identifiers (dynamic)
+
+REFERENCES:
+     F# 15 -- Lowercase identifiers
+     5.2 LR.2.b -- We can use <simple Latin lower case letter>s now
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for lower case letters in identifiers in Dynamic SQL by
+     creating a view using lower case letters in identifiers and insuring that
+     case is not significant while checking its contents.
+
+
+IDENTIFICATION:
+     TEST0641
+
+DESCRIPTION:
+     Feature 16, PRIMARY KEY enhancement (static)
+
+REFERENCES:
+     F# 16 -- PRIMARY KEY enhancement
+     11.7 LR.2.a -- Don't have to specify NOT NULL with PRIMARY KEY or UNIQUE
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for the PRIMARY KEY enhancement by declaring a table
+     with a PRIMARY KEY and a UNIQUE constraint, neither specifying NOT
+     NULL, and testing out the constraints.
+
+
+IDENTIFICATION:
+     TEST0642
+
+DESCRIPTION:
+     Feature 16, PRIMARY KEY enhancement (dynamic)
+
+REFERENCES:
+     F# 16 -- PRIMARY KEY enhancement
+     11.7 LR.2.a -- Don't have to specify NOT NULL with PRIMARY KEY or UNIQUE
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for the PRIMARY KEY enhancement in Dynamic SQL by
+     declaring a table with a PRIMARY KEY column and a UNIQUE COLUMN, neither
+     specifying NOT NULL, and testing out the constraints.
+
+
+IDENTIFICATION:
+     TEST0643
+
+DESCRIPTION:
+     Feature 17, Multiple schemas per user
+
+REFERENCES:
+     F# 17 -- Multiple schemas per user
+     11.1 LR.2.b -- <schema name> in a <schema definition>
+
+TEST DESCRIPTION:
+     To verify support for multiple schemas per user by checking the
+     existence of the two schemas created in SCHEMA6.STD.
+
+
+IDENTIFICATION:
+     TEST0644
+
+DESCRIPTION:
+     Feature 18, Multiple module support
+
+REFERENCES:
+     F# 18 -- Multiple module support
+     12.1 LR.2.a -- An SQL-agent may associate with many <module>s
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for multiple modules by creating a test table in one
+     module, populating it in a second, and verifying its contents in a third.
+
+
+IDENTIFICATION:
+     TEST0645
+
+DESCRIPTION:
+     Feature 19, Referential delete actions (static)
+
+REFERENCES:
+     F# 19 -- Referential delete actions
+     11.8 LR.2.a -- in <referential constraint definition>
+     11.4 LR.2.b -- in <column constraint>
+     F# 16 -- PRIMARY KEY enhancement
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for referential delete actions by declaring tables with
+     <delete rule>s in <column constraint>s and <referential constraint
+     definition>s using each of the four possible <referential action>s,
+     populating the tables, performing deletes, and checking the results.
+
+
+IDENTIFICATION:
+     TEST0646
+
+DESCRIPTION:
+     Feature 19, Referential delete actions (dynamic)
+
+REFERENCES:
+     F# 19 -- Referential delete actions
+     11.8 LR.2.a -- in <referential constraint definition>
+     11.4 LR.2.b -- in <column constraint>
+     F# 1 -- Dynamic SQL
+     F# 16 -- PRIMARY KEY enhancement
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for referential delete actions in Dynamic SQL by
+     declaring tables with <delete rule>s in <column constraint>s and
+     <referential constraint definition>s using each of the four possible
+     <referential action>s, populating the tables, performing deletes, and
+     checking the results.
+
+
+IDENTIFICATION:
+     TEST0647
+
+DESCRIPTION:
+     Feature 20, CAST functions (static)
+
+REFERENCES:
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+     6.11 LR.2.d -- in a <value expression primary>
+     13.8 LR.2.a -- <value expression> in an <insert statement>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To verify support for CAST functions, insofar as this has not been
+     established in previous tests such as the datetime series, by performing
+     the following operations:
+
+     1.  Create a table with columns of type INT, CHAR (10), and
+         NUMERIC (5, 2);
+     2.  Create a view over that table that casts the INT column as CHAR (10),
+         the CHAR (10) column as NUMERIC (5, 2), and the NUMERIC (5, 2)
+         column as REAL;
+     3.  Stock the table with test data, using <cast specification>s in the
+         <row value constructor> of one of the inserts (this tests support for
+         feature 21);
+     4.  Check the results of a <general set function> containing a
+         <cast specification>;
+     5.  Declare, open, and fetch from a cursor whose <cursor specification>
+         contains a <cast specification>;
+     6.  Perform a positioned update where the <update source>s contain
+         <cast specification>s;
+     7.  Verify the contents of the view.
+
+
+IDENTIFICATION:
+     TEST0648
+
+DESCRIPTION:
+     Feature 20, CAST functions (dynamic)
+
+REFERENCES:
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+     6.11 LR.2.d -- in a <value expression primary>
+     13.8 LR.2.a -- <value expression> in an <insert statement>
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 9 -- Implicit numeric casting
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To verify support for CAST functions in Dynamic SQL, insofar as this has
+     not been established in previous tests such as the datetime series, by
+     performing the following operations:
+
+     1.  Create a table with columns of type INT, CHAR (10), and
+         NUMERIC (5, 2);
+     2.  Create a view over that table that casts the INT column as CHAR (10),
+         the CHAR (10) column as NUMERIC (5, 2), and the NUMERIC (5, 2)
+         column as REAL;
+     3.  Stock the table with test data, using <cast specification>s in the
+         <row value constructor> of one of the inserts (this tests support for
+         feature 21);
+     4.  Check the results of a <general set function> containing a
+         <cast specification>;
+     5.  Declare, open, and fetch from a cursor whose <cursor specification>
+         contains a <cast specification>;
+     6.  Perform a positioned update where the <update source>s contain
+         <cast specification>s;
+     7.  Verify the contents of the view.
+
+
+IDENTIFICATION:
+     TEST0649
+
+DESCRIPTION:
+     Feature 22, Explicit defaults (static)
+
+REFERENCES:
+     F# 22 -- Explicit defaults
+     13.8 LR.2.d -- DEFAULT VALUES in an <insert statement>
+     7.1 LR.2.a -- DEFAULT in a <row value constructor>
+     11.5 LR.2.a -- various things in a <default option>
+     13.9 LR.2.c -- DEFAULT in update statements
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for explicit defaults as follows:
+
+     1.  Create a table using DEFAULT USER, DEFAULT <literal>, and DEFAULT
+         NULL;
+     2.  Insert DEFAULT VALUES;
+     3.  Insert (DEFAULT, DEFAULT, DEFAULT);
+     4.  For each column, perform an insert such that DEFAULT is inserted for
+         that column and a <literal> for all other columns;
+     5.  Perform an UPDATE such that <update source> is DEFAULT;
+     6.  Verify the contents of the table.
+
+
+IDENTIFICATION:
+     TEST0650
+
+DESCRIPTION:
+     Feature 22, Explicit defaults (dynamic)
+
+REFERENCES:
+     F# 22 -- Explicit defaults
+     13.8 LR.2.d -- DEFAULT VALUES in an <insert statement>
+     7.1 LR.2.a -- DEFAULT in a <row value constructor>
+     11.5 LR.2.a -- various things in a <default option>
+     13.9 LR.2.c -- DEFAULT in update statements
+     F# 1 -- Dynamic SQL
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify support for explicit defaults in Dynamic SQL as follows:
+
+     1.  Create a table using DEFAULT USER, DEFAULT <literal>, and DEFAULT
+         NULL;
+     2.  Insert DEFAULT VALUES;
+     3.  Insert (DEFAULT, DEFAULT, DEFAULT);
+     4.  For each column, perform an insert such that DEFAULT is inserted for
+         that column and a <literal> for all other columns;
+     5.  Perform an UPDATE such that <update source> is DEFAULT;
+     6.  Verify the contents of the table.
+
+
+IDENTIFICATION:
+     TEST0651
+
+DESCRIPTION:
+     Feature 24, Keyword relaxations (static)
+
+REFERENCES:
+     F# 24 -- Keyword relaxations
+     6.3 LR.2.b -- AS <correlation name>
+     11.36 LR.2.a -- TABLE <table name> with GRANT
+     13.3 LR.2.b -- FETCH FROM <cursor name>
+     14.3 LR.2.a -- COMMIT;
+     14.4 LR.2.a -- ROLLBACK;
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for feature 24, keyword relaxations, as follows:
+
+     1.  Create a view using AS <correlation name>;
+     2.  GRANT SELECT ON TABLE <table name> TO PUBLIC;
+     3.  COMMIT;
+     4.  Open a cursor on that view and verify the contents of the view
+         using FETCH FROM;
+     5.  ROLLBACK.
+
+
+IDENTIFICATION:
+     TEST0652
+
+DESCRIPTION:
+     Feature 24, Keyword relaxations (dynamic)
+
+REFERENCES:
+     F# 24 -- Keyword relaxations
+     6.3 LR.2.b -- AS <correlation name>
+     11.36 LR.2.a -- TABLE <table name> with GRANT
+     13.3 LR.2.b -- FETCH FROM <cursor name>
+     14.3 LR.2.a -- COMMIT;
+     14.4 LR.2.a -- ROLLBACK;
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 1 -- Dynamic SQL
+
+TEST PURPOSE:
+     To verify support for feature 24, keyword relaxations, in Dynamic SQL
+     as follows:
+
+     1.  Create a view using AS <correlation name>;
+     2.  GRANT SELECT ON TABLE <table name> TO PUBLIC;
+     3.  COMMIT;
+     4.  Open a cursor on that view and verify the contents of the view
+         using FETCH FROM;
+     5.  ROLLBACK.
+
+
+IDENTIFICATION:
+     TEST0653
+
+DESCRIPTION:
+     Descriptors:  DESCRIBE OUTPUT
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     17.8 -- <describe statement>
+     17.1 -- Description of SQL item descriptor areas
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+     7.9 GR.10 -- nullability
+     6.1 -- <data type>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+DESCRIPTION:
+     To test the DESCRIBE OUTPUT statement, with and without the optional
+     OUTPUT keyword, by allocating a descriptor and using GET DESCRIPTOR
+     to verify the results of the following:
+
+     1.  DESCRIBE OUTPUT of a SELECT * from a table containing CHAR and
+         DECIMAL types;
+     2.  DESCRIBE a SELECT * from the join of a view and a base table such that
+         all other Entry SQL data types are exercised;
+     3.  DESCRIBE a SELECT USER, COUNT(*).
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0654
+
+DESCRIPTION:
+     Descriptors:  INTO SQL DESCRIPTOR
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     17.9 -- <using clause>
+     17.8 -- <describe statement>
+     17.1 -- Description of SQL item descriptor areas
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+     6.1 -- <data type>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify the correct operation of descriptors in a <dynamic fetch
+     statement> by creating and populating a table containing each Entry SQL
+     data type and performing the following operations:
+
+     1.  DESCRIBE a SELECT *, fetch into the descriptor, and check each result;
+     2.  Use SET DESCRIPTOR to modify the type of one of the fields and then
+         verify the implicit casting after another fetch;
+     3.  Update the table to include nulls and then verify that the indicator
+         field is set after a fetch.
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0655
+
+DESCRIPTION:
+     Descriptors:  USING SQL DESCRIPTOR
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     17.9 -- <using clause>
+     17.10 -- <execute statement>
+     17.14 -- <dynamic open statement>
+     17.1 -- Description of SQL item descriptor areas
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+     6.1 -- <data type>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify the correct operation of descriptors in an <execute statement>
+     and a <dynamic open statement> where USING SQL DESCRIPTOR is specified
+     by creating a table containing each Entry SQL data type and performing
+     the following operations:
+
+     1.  Populate the table with an insert statement that is USING SQL
+         DESCRIPTOR, and let the descriptor contain implicit casts for some
+         of the columns;
+     2.  Verify that the insert succeeded using a normal SELECT;
+     3.  Verify the contents again by preparing a SELECT containing <dynamic
+         parameter specification>s, executing a <dynamic open statement> that
+         is USING SQL DESCRIPTOR with different implicit casts than before,
+         and verifying the results of a FETCH.
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0656
+
+DESCRIPTION:
+     Descriptors:  datetimes
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     6.1 -- <data type> esp. temporal types
+     10.1 -- <interval qualifier>
+     17.1 -- Description of SQL item descriptor areas
+     17.9 -- <using clause>
+     17.10 -- <execute statement>
+     17.14 -- <dynamic open statement>
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that the previously tested descriptor operations also work with
+     temporal data types by creating a table containing each temporal data
+     type and performing the following operations:
+
+     1.  DESCRIBE a SELECT * and verify the results using GET DESCRIPTOR;
+     2.  Populate the descriptor with data using SET DESCRIPTOR;
+     3.  EXECUTE an INSERT USING that descriptor;
+     4.  Verify the success of the insert without using descriptors;
+     5.  Replace some of the values in the descriptor with values that are
+         equivalent after an implicit cast;
+     6.  Verify the equality of the modified descriptor with the table data
+         by executing a SELECT USING the descriptor;
+     7.  EXECUTE a SELECT INTO a descriptor with implicit casting and verify
+         the results.
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0657
+
+DESCRIPTION:
+     Descriptors:  VARCHAR
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     6.1 -- <data type> CHARACTER VARYING
+     17.1 -- Description of SQL item descriptor areas
+     17.9 -- <using clause>
+     17.10 -- <execute statement>
+     17.14 -- <dynamic open statement>
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that the previously tested descriptor operations also work with
+     variable-length character strings by creating a table containing a column
+     of type VARCHAR and performing the following operations:
+
+     1.  DESCRIBE a SELECT * and verify the results using GET DESCRIPTOR;
+     2.  Set the descriptor to contain a character string that is shorter than
+         the maximum length of the column;
+     3.  EXECUTE an INSERT USING that descriptor;
+     4.  Verify the success of the insert without using descriptors;
+     5.  FETCH the inserted data into a descriptor and verify its correctness,
+         including LENGTH and RETURNED_LENGTH;
+     6.  Set the descriptor to a value that is the original string with some
+         blanks appended and verify that it is equivalent to the string in the
+         database using a cursor and OPEN ... USING the descriptor;
+     7.  Set the descriptor to a string that is longer than the maximum length
+         of the database field and check for SQLSTATE 22001 on an INSERT USING
+         that descriptor;
+     8.  FETCH the data into a descriptor whose length has been set too short
+         and check for the correct SQLSTATE and INDICATOR values.
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0658
+
+DESCRIPTION:
+     Descriptors:  SQLSTATE codes
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     22.1 -- SQLSTATE
+     17.2 GR.3
+     17.4 GR.3 GR.5
+     17.5 GR.2 GR.5
+     17.9 GR.2 GR.3.d GR.5.b GR.5.e GR.6.b
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+
+TEST PURPOSE:
+     To verify the correct reporting of SQLSTATE codes of particular interest
+     to descriptors by performing the following operations:
+
+     1.  Try to allocate a descriptor WITH MAX 0 and check for SQLSTATE 07009;
+     2.  Refer to VALUE 0 in a GET DESCRIPTOR and check for SQLSTATE 07009;
+     3.  Refer to VALUE 0 in a SET DESCRIPTOR and check for SQLSTATE 07009;
+     4.  Refer to a non-existent descriptor in an EXECUTE ... USING and check
+         for SQLSTATE 33000;
+     5.  Describe a relation with more attributes than there is room for in
+         the descriptor and check for SQLSTATE 01005;
+     6.  Verify that COUNT was correctly set by the previous operation;
+     7.  EXECUTE an INSERT with COUNT too big and check for SQLSTATE 07008;
+     8.  EXECUTE an INSERT USING a descriptor containing invalid values and
+         check for SQLSTATE 07001;
+     9.  Try to do an illegal implicit cast and check for SQLSTATE 07006;
+     10.  Try to FETCH INTO a descriptor with the wrong COUNT and check for
+          SQLSTATE 07002;
+     11.  Try to GET DATA but not INDICATOR from a descriptor item that is null
+          and check for SQLSTATE 22002;
+     12.  Try to set DATA and TYPE to conflicting values and check for SQLSTATE
+          22005.
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0659
+
+DESCRIPTION:
+     Descriptors:  TSQL orphaned features
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     17.1 -- Description of SQL item descriptor areas
+     17.5 GR.5.a
+     17.2 GR.3 -- limit on descriptor areas is implementation-defined
+
+TEST PURPOSE:
+     To verify that it is possible to fetch the values of
+     CHARACTER_SET_CATALOG, CHARACTER_SET_SCHEMA, CHARACTER_SET_NAME,
+     COLLATION_CATALOG, COLLATION_SCHEMA, and COLLATION_NAME from a
+     descriptor.
+
+NOGO:
+     17.2 GR.3 specifies that the maximum number of occurrences that may be
+     specified in an <allocate descriptor statement> is implementation-defined.
+     An implementation that returns Dynamic SQL error -- invalid descriptor
+     index (SQLSTATE 07009) on the <allocate descriptor statement> passes by
+     default.
+
+
+IDENTIFICATION:
+     TEST0660
+
+DESCRIPTION:
+     Dynamic SQL SQLSTATEs
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     22.1 -- SQLSTATE
+     17.6 GR.9.b
+     17.9 GR.5.a GR.6.a
+     17.10 GR.4
+
+TEST PURPOSE:
+     To verify that the as yet untested 07xxx SQLSTATEs that can be generated
+     in Transitional SQL are supported by performing the following operations:
+
+     1.  Try to open a cursor for an INSERT statement and check for SQLSTATE
+         07005;
+     2.  Try to EXECUTE an INSERT USING too many parameters and check for
+         SQLSTATE 07001;
+     3.  Try to FETCH into the wrong number of variables and check for SQLSTATE
+         07002;
+     4.  Try to EXECUTE a parameterized INSERT without USING any variables and
+         check for SQLSTATE 07004.
+
+
+IDENTIFICATION:
+     TEST0661
+
+DESCRIPTION:
+     Errata:  datetime casting (static)
+
+REFERENCES:
+     COR2 5.3 6.10 -- Technical Corrigendum #2
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+
+TEST PURPOSE:
+     To verify support for the shortened syntax for character strings
+     being cast into temporal data types and the use of a <sign>
+     inside of the quotes for interval literals by creating a table
+     containing each temporal data type, populating it by casting
+     character strings into the appropriate data types, and verifying
+     its contents with a SELECT COUNT using literals.
+
+
+IDENTIFICATION:
+     TEST0662
+
+DESCRIPTION:
+     Errata:  datetime casting (dynamic)
+
+REFERENCES:
+     COR2 5.3 6.10 -- Technical Corrigendum #2
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+     F# 1 -- Dynamic SQL
+
+TEST PURPOSE:
+     To verify support for the shortened syntax for character strings
+     being cast into temporal data types and the use of a <sign>
+     inside of the quotes for interval literals in Dynamic SQL by
+     creating a table containing each temporal data type, populating
+     it by casting character strings into the appropriate data types,
+     and verifying its contents with a SELECT COUNT using literals.
+
+
+IDENTIFICATION:
+     TEST0663
+
+DESCRIPTION:
+     Errata:  datetime SQLSTATEs (static)
+
+REFERENCES:
+     COR2 6.1 22.1 -- Technical Corrigendum #2
+     COR2 6.10 GR.9.a.ii.1 GR.12.b.ii.1
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+
+TEST PURPOSE:
+     To verify implementation of the 22006 and 22007 SQLSTATEs as
+     specified in COR2 by creating a table with columns of type DATE
+     and INTERVAL YEAR TO MONTH and performing the following
+     operations:
+
+     1.  Try to INSERT CAST ('1994-02-30' AS DATE) and check for 22007
+         SQLSTATE;
+     2.  Try to INSERT CAST ('1-12' AS INTERVAL YEAR TO MONTH) and
+         check for 22006 SQLSTATE.
+
+
+IDENTIFICATION:
+     TEST0664
+
+DESCRIPTION:
+     Errata:  datetime SQLSTATEs (dynamic)
+
+REFERENCES:
+     COR2 6.1 22.1 -- Technical Corrigendum #2
+     COR2 6.10 GR.9.a.ii.1 GR.12.b.ii.1
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+     F# 1 -- Dynamic SQL
+
+TEST PURPOSE:
+     To verify implementation of the 22006 and 22007 SQLSTATEs in
+     Dynamic SQL as specified in COR2 by creating a table with
+     columns of type DATE and INTERVAL YEAR TO MONTH and performing
+     the following operations:
+
+     1.  Try to INSERT CAST ('1994-02-30' AS DATE) and check for 22007
+         SQLSTATE;
+     2.  Try to INSERT CAST ('1-12' AS INTERVAL YEAR TO MONTH) and
+         check for 22006 SQLSTATE.
+
+
+IDENTIFICATION:
+     TEST0665
+
+DESCRIPTION:
+     Diagnostics:  statement information
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     18.1 GR.1.b -- MORE
+     18.1 GR.1.c -- COMMAND_FUNCTION
+     18.1 GR.1.e -- ROW_COUNT
+
+TEST PURPOSE:
+     To check the functionality of the NUMBER, MORE, and ROW_COUNT options for
+     GET DIAGNOSTICS <statement information> by performing the following
+     operations:
+
+     1.  Do a simple SELECT COUNT, verify that NUMBER > 0, MORE is Y or N,
+         and COMMAND_FUNCTION is SELECT;
+     2.  Do a searched DELETE, verify that NUMBER > 0, MORE is Y or N,
+         COMMAND_FUNCTION is DELETE WHERE, and ROW_COUNT is the number of
+         rows deleted;
+     3.  Do a searched UPDATE, verify that NUMBER > 0, MORE is Y or N,
+         COMMAND_FUNCTION is UPDATE WHERE, and ROW_COUNT is the number of
+         rows updated;
+     4.  INSERT a <query specification>, verify that NUMBER > 0, MORE is Y or
+         N, COMMAND_FUNCTION is INSERT, and ROW_COUNT is the number of rows
+         inserted.
+
+
+IDENTIFICATION:
+     TEST0666
+
+DESCRIPTION:
+     Diagnostics:  condition information
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To check the functionality of the condition information fields of the
+     diagnostics area that do not pertain to orphaned features as follows:
+
+     1.  Do a simple SELECT COUNT and verify that CONDITION_NUMBER is 1,
+         RETURNED_SQLSTATE is the returned SQLSTATE, CLASS_ORIGIN is
+         ISO 9075, SUBCLASS_ORIGIN is ISO 9075 if and only if a standard
+         subclass was returned, the MESSAGE_TEXT, MESSAGE_LENGTH, and
+         MESSAGE_OCTET_LENGTH fields contain valid values, and
+         CONSTRAINT_SCHEMA, SCHEMA_NAME, TABLE_NAME, COLUMN_NAME, and
+         CURSOR_NAME are all empty strings;
+     2.  Generate a data exception and perform the same verifications twice
+         in a row to insure that the status codes do not change;
+     3.  Generate an integrity constraint violation and perform the same
+         verifications except CONSTRAINT_SCHEMA, SCHEMA_NAME, and TABLE_NAME
+         should now have valid values;
+     4.  Generate an invalid cursor state and perform the same verifications
+         as for 1. except CURSOR_NAME should now have a valid value;
+     5.  Generate a with check option violation and perform the same
+         verifications as for 3. except CONSTRAINT_SCHEMA should be an
+         empty string;
+     6.  Generate a cursor operation conflict and perform the same
+         verifications as for 4.
+
+
+IDENTIFICATION:
+     TEST0667
+
+DESCRIPTION:
+     Diagnostics:  access violations
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 GR.3.j -- security of diagnostics area
+
+TEST PURPOSE:
+     To check that table names etc. are appropriately blanked out in the
+     diagnostics area for access violations as follows:
+
+     1.  Try to select from a table with no privileges, verify that
+         SCHEMA_NAME, TABLE_NAME, and COLUMN_NAME are all empty;
+     2.  Try to delete from a table with only select privilege, verify that
+         SCHEMA_NAME and TABLE_NAME are valid but COLUMN_NAME is empty;
+     3.  Try to UPDATE a column on which we have been granted only a
+         column-specific insert privilege, verify that SCHEMA_NAME, TABLE_NAME,
+         and COLUMN_NAME are all valid.
+
+
+IDENTIFICATION:
+     TEST0668
+
+DESCRIPTION:
+     Diagnostics:  COMMAND_FUNCTION (static)
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     COR2 18.1 -- unrecognized statements
+
+TEST PURPOSE:
+     To verify that COMMAND_FUNCTION in the diagnostics area is set properly
+     for the following statements:  COMMIT WORK; SELECT; DELETE WHERE; INSERT;
+     UPDATE WHERE; OPEN; FETCH; UPDATE CURSOR; DELETE CURSOR; CLOSE CURSOR;
+     ROLLBACK WORK; and an unrecognized statement.
+
+NOGO:
+     If the "unrecognized statement" is recognized by the database, it must
+     be changed.  If it is rejected at compile time, that portion of the
+     test must be removed.
+
+
+IDENTIFICATION:
+     TEST0669
+
+DESCRIPTION:
+     Diagnostics:  COMMAND_FUNCTION F# 3, 11
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     F# 3 -- Basic schema manipulation
+     F# 11 -- Transaction isolation
+
+TEST PURPOSE:
+     To verify that COMMAND_FUNCTION in the diagnostics area is set properly
+     for the following statements:  SET TRANSACTION; CREATE VIEW; CREATE
+     TABLE; ALTER TABLE; GRANT; REVOKE; DROP TABLE; DROP VIEW.
+
+
+IDENTIFICATION:
+     TEST0670
+
+DESCRIPTION:
+     Diagnostics:  COMMAND_FUNCTION (dynamic)
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+
+TEST PURPOSE:
+     To verify that COMMAND_FUNCTION in the diagnostics area is set properly
+     for the following statements:  ALLOCATE DESCRIPTOR; SET DESCRIPTOR;
+     PREPARE; DESCRIBE; GET DESCRIPTOR; DEALLOCATE DESCRIPTOR; DYNAMIC OPEN;
+     DYNAMIC FETCH; DYNAMIC UPDATE CURSOR; DYNAMIC DELETE CURSOR;
+     DYNAMIC CLOSE; EXECUTE; EXECUTE IMMEDIATE.
+
+
+IDENTIFICATION:
+     TEST0671
+
+DESCRIPTION:
+     Diagnostics:  DYNAMIC_FUNCTION
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     COR2 18.1 -- info from <prepare statement>
+
+TEST PURPOSE:
+     To verify that DYNAMIC_FUNCTION in the diagnostics area is set properly
+     for the following statements:  SELECT (prepared); DELETE WHERE (prepared);
+     DELETE WHERE (executed); INSERT (prepared); UPDATE WHERE (prepared);
+     unrecognized statement (prepared); UPDATE WHERE (executed); unrecognized
+     statement (executed immediately); INSERT (executed immediately).
+
+
+IDENTIFICATION:
+     TEST0672
+
+DESCRIPTION:
+     Diagnostics:  Multiple conditions
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     F# 11 -- Transaction isolation
+     18.1 -- <get diagnostics statement>
+     COR2 4.18.1 -- precedence rules for SQLSTATE
+
+TEST PURPOSE:
+     To verify that multiple diagnostics are handled correctly by
+     simultaneously generating a string data, right truncation warning and a
+     null value, no indicator parameter exception and checking the diagnostics
+     area.
+
+NOGO:
+     An implementation has the right to stop looking for errors after finding
+     the first one, so parts of the test are skipped if NUMBER = 1.
+
+
+IDENTIFICATION:
+     TEST0673
+
+DESCRIPTION:
+     Diagnostics SQLSTATE:  inv. cond. number
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 GR.2
+
+TEST PURPOSE:
+     To verify that the 35000 SQLSTATE is generated when EXCEPTION 0 is
+     referenced in a GET DIAGNOSTICS.
+
+
+IDENTIFICATION:
+     TEST0674
+
+DESCRIPTION:
+     Diagnostics:  TSQL orphaned features
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+
+TEST PURPOSE:
+     To verify that diagnostics identifiers for features that are not required
+     in Transitional SQL are at least vacuously supported by generating an
+     access violation, getting the following fields from the descriptor area,
+     and verifying that no exceptions were generated:  SERVER_NAME,
+     CONNECTION_NAME, CONSTRAINT_CATALOG, CONSTRAINT_NAME, CATALOG_NAME.
+
+
+IDENTIFICATION:
+     TEST0675
+
+DESCRIPTION:
+     Diagnostics:  MORE
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     F# 11 -- Transaction isolation
+     COR2 4.18.1 -- precedence rules for SQLSTATE
+
+TEST PURPOSE:
+     To verify that MORE is set to Y in the diagnostics area when the
+     diagnostics size is set to 1 and multiple diagnostics are generated
+     by simultaneously generating a string data, right truncation warning and
+     a null value, no indicator parameter exception.
+
+NOGO:
+     Since an implementation does not have to support multiple diagnostics,
+     this test is NOGO if MORE is N.  The test is failed if MORE is neither
+     Y nor N.
+
+
+IDENTIFICATION:
+     TEST0676
+
+DESCRIPTION:
+     Diagnostics:  VARCHAR
+
+REFERENCES:
+     F# 12 -- Get diagnostics
+     18.1 -- <get diagnostics statement>
+     F# 6 -- VARCHAR data type
+     COR2 18.1 -- zero-length strings instead of <space>s
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To verify that zero-length strings are returned as appropriate
+     in the diagnostics area and that MESSAGE_OCTET_LENGTH accurately
+     reflects the length of MESSAGE_TEXT.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.
+
+
+IDENTIFICATION:
+     TEST0677
+
+DESCRIPTION:
+     VARCHAR with <like predicate>
+
+REFERENCES:
+     F# 6 -- VARCHAR data type
+     8.5 -- <like predicate>
+
+TEST PURPOSE:
+     To verify that trailing blanks are handled correctly for VARCHAR strings
+     and the <like predicate> as follows:
+
+     1.  Create a table with a CHARACTER VARYING column and insert the values
+         'Cool' and 'Cool ';
+     2.  Select Count(*) where the data is LIKE 'Cool' and verify that the
+         result is 1;
+     3.  Select Count(*) where the data is LIKE 'Cool ' and verify that the
+         result is 1;
+     4.  Select Count(*) where the data is LIKE 'Cool%' and verify that the
+         result is 2;
+     5.  Select Count(*) where the data is LIKE 'Cool %' and verify that the
+         result is 1;
+     6.  Insert the 0-length string "" into the table;
+     7.  Select Count(*) where the data is like a 0-length string in a C
+         variable;
+     8.  Do a self-join of the table testing the column to be LIKE itself
+         and verify that the result is 3;
+     9.  Do a self-join of the table testing the column to be equal to
+         itself and verify that the result is 5.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.
+
+
+IDENTIFICATION:
+     TEST0678
+
+DESCRIPTION:
+     Data type semantics with NULL / NOT NULL
+
+REFERENCES:
+     F# 10 -- Implicit character casting
+     6.1 -- <data type>
+     12.4 -- Calls to a <procedure>
+     9 -- Data assignment rules
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that adding NOT NULL to column definitions for CHAR and
+     NUMERIC data types does not affect the data type semantics as follows:
+
+     1.  Create a table with data types CHAR (10) NOT NULL and CHARACTER
+         NOT NULL.
+     2.  Create another table with data types NUMERIC (3, 2), NUMERIC (2),
+         and NUMERIC, all NOT NULL.
+     3.  Check that short strings inserted into the character table are
+         padded with spaces.
+     4.  Check that selecting a string from the character table into a host
+         language variable that is too short generates an 01004 SQLSTATE
+         and a truncation.
+     5.  Check that inserting a string that is too long generates a 22001
+         SQLSTATE.
+     6.  Check that inserting a string that is not too long after trailing
+         blanks are stripped causes enough trailing spaces to be removed for
+         the string to fit.
+     7.  Check that the values 9.99, -99, and 9 can be inserted into the
+         numeric table.
+     8.  Check that inserting -10 into the first column of the numeric table
+         generates a 22003 SQLSTATE.
+     9.  Check that inserting 100 into the second column of the numeric table
+         generates a 22003 SQLSTATE.
+     10.  Check that inserting 0.1 into the third column of the numeric table
+          results in a value of 0.
+
+
+IDENTIFICATION:
+     TEST0679
+
+DESCRIPTION:
+     INFO_SCHEM:  Table data types
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+     COR1 21.2.9 -- Interval columns in COLUMNS view
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To check the functionality of the INFO_SCHEM.COLUMNS view with respect
+     to different data types by creating a table using the following data
+     types and checking the relevant tuples in COLUMNS:  CHAR DEFAULT 'Y',
+     CHAR (5) NOT NULL, REAL DEFAULT 3, DOUBLE PRECISION, FLOAT, INTEGER,
+     SMALLINT, NUMERIC (3, 2), and DECIMAL (2).
+
+
+IDENTIFICATION:
+     TEST0680
+
+DESCRIPTION:
+     INFO_SCHEM:  View data types
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+     COR1 21.2.9 -- Interval columns in COLUMNS view
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To check the functionality of the INFO_SCHEM.COLUMNS view with respect
+     to different data types in a view by creating a view over two separate
+     base tables that use the following data types and checking the relevant
+     tuples in COLUMNS:  CHAR DEFAULT 'Y', CHAR (5) NOT NULL, REAL DEFAULT 3,
+     DOUBLE PRECISION, FLOAT, INTEGER, SMALLINT, NUMERIC (3, 2), and
+     DECIMAL (2).
+
+
+IDENTIFICATION:
+     TEST0681
+
+DESCRIPTION:
+     INFO_SCHEM:  Varchar data types
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 6 -- VARCHAR data type
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+     COR2 21.2.9 -- Interval columns in COLUMNS view
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To check the functionality of the INFO_SCHEM.COLUMNS view with respect
+     to CHARACTER VARYING types by creating a table containing a VARCHAR
+     column and a view referencing that table and checking the relevant
+     tuples in COLUMNS.
+
+
+IDENTIFICATION:
+     TEST0682
+
+DESCRIPTION:
+     INFO_SCHEM:  Datetime data types
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 5 -- DATETIME data types
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+     COR2 21.2.9 -- Interval columns in COLUMNS view
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To check the functionality of the INFO_SCHEM.COLUMNS view with respect
+     to datetime data types by creating a table containing each Transitional
+     SQL temporal data type and checking the relevant tuples in COLUMNS.
+
+
+IDENTIFICATION:
+     TEST0683
+
+DESCRIPTION:
+     INFO_SCHEM:  Changes are visible
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+     F# 3 -- Basic schema manipulation
+
+TEST PURPOSE:
+     To check that alterations made with CREATE TABLE, ALTER TABLE, and DROP
+     TABLE are reflected in INFO_SCHEM as follows:
+
+     1.  Check that the table about to be created is not yet listed in
+         INFO_SCHEM.TABLES or INFO_SCHEM.COLUMNS;
+     2.  In a separate transaction, create a small table;
+     3.  Check that the table just created is now listed in INFO_SCHEM.TABLES
+         and INFO_SCHEM.COLUMNS;
+     4.  In a separate transaction, alter the table by dropping a column;
+     5.  Check that the dropped column is no longer listed in
+         INFO_SCHEM.COLUMNS;
+     6.  In a separate transaction, drop the table;
+     7.  Check that the dropped table is no longer listed in INFO_SCHEM.TABLES
+         or INFO_SCHEM.COLUMNS.
+
+
+IDENTIFICATION:
+     TEST0684
+
+DESCRIPTION:
+     INFO_SCHEM:  Visibility to other users
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+
+TEST PURPOSE:
+     To verify that INFO_SCHEM data on tables to which the current user has
+     been granted access is visible, and that data on tables to which the
+     current user has not been granted access is not visible, by checking the
+     following cases:
+
+     1.  A table on which the current user has been granted SELECT access is
+         visible;
+     2.  A table on which PUBLIC has been granted INSERT access is visible;
+     3.  A table on which the current user has been granted column-specific
+         UPDATE access is visible;
+     4.  A table on which no privileges have been granted is not visible.
+
+
+IDENTIFICATION:
+     TEST0685
+
+DESCRIPTION:
+     INFO_SCHEM:  Privileges and privilege views
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 3 -- Basic schema manipulation
+     F# 23 -- Privilege tables
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+
+TEST PURPOSE:
+     To verify that GRANT and REVOKE cause the appropriate changes in
+     INFO_SCHEM.TABLE_PRIVILEGES and INFO_SCHEM.COLUMN_PRIVILEGES as follows:
+
+     1.  Verify that all privileges on tables created by the current user are
+         granted to the current user by _SYSTEM;
+     2.  Verify that a GRANT ALL by the current user generates five rows in
+         INFO_SCHEM.TABLE_PRIVILEGES (one for each of SELECT, INSERT, UPDATE,
+         DELETE, and REFERENCES) and five rows in INFO_SCHEM.COLUMN_PRIVILEGES
+         for each column of the affected table;
+     3.  Verify that a GRANT SELECT TO PUBLIC generates one row in
+         INFO_SCHEM.TABLE_PRIVILEGES and one row per column in
+         INFO_SCHEM.COLUMN_PRIVILEGES with GRANTEE = 'PUBLIC';
+     4.  Verify that WITH GRANT OPTION causes IS_GRANTABLE to be 'YES' and
+         that otherwise it is 'NO';
+     5.  Verify that a column-specific GRANT does not generate a row in
+         INFO_SCHEM.TABLE_PRIVILEGES but does generate a row in
+         INFO_SCHEM.COLUMN_PRIVILEGES;
+     6.  Verify that grants on tables to which we have no access are not
+         visible;
+     7.  Execute a GRANT and a REVOKE of a particular privilege, verifying that
+         the privilege is listed in INFO_SCHEM only after it is granted and
+         before it is revoked.
+
+
+IDENTIFICATION:
+     TEST0686
+
+DESCRIPTION:
+     INFO_SCHEM:  Primary key enh. is not null
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 3 -- Basic schema manipulation
+     F# 16 -- PRIMARY KEY enhancement
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that PRIMARY KEY implies NOT NULL but UNIQUE does not by
+     creating a table with two columns, one PRIMARY KEY and one UNIQUE,
+     and inspecting the IS_NULLABLE column of INFO_SCHEM.COLUMNS.
+
+
+IDENTIFICATION:
+     TEST0687
+
+DESCRIPTION:
+     INFO_SCHEM:  Multiple schemas per user
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 17 -- Multiple schemas per user
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+
+TEST PURPOSE:
+     To verify support for multiple schemas per user by checking that
+     the two schemas created in SCHEMA6.STD are listed in INFO_SCHEM.SCHEMATA.
+
+
+IDENTIFICATION:
+     TEST0688
+
+DESCRIPTION:
+     INFO_SCHEM:  Dynamic changes are visible
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 2 -- Basic information schema
+     F# 3 -- Basic schema manipulation
+     FIPS Change Notice #1 -- Shortened identifiers in INFO_SCHEM
+
+TEST PURPOSE:
+     To verify that dynamic schema manipulation is reflected in	INFO_SCHEM
+     by performing the following operations:
+
+     1.  Check that table VISCHANGE is not listed in INFO_SCHEM.TABLES or
+         INFO_SCHEM.COLUMNS;
+     2.  Dynamically create table VISCHANGE with two columns in a separate
+         transaction;
+     3.  Check that VISCHANGE is listed once in INFO_SCHEM.TABLES and twice
+         in INFO_SCHEM.COLUMNS;
+     4.  Alter VISCHANGE by dropping one of its columns in a separate
+         transaction;
+     5.  Check that VISCHANGE is listed once in INFO_SCHEM.TABLES and once
+         in INFO_SCHEM.COLUMNS;
+     6.  Drop VISCHANGE in a separate transaction;
+     7.  Check that table VISCHANGE is not listed in INFO_SCHEM.TABLES or
+         INFO_SCHEM.COLUMNS.
+
+
+IDENTIFICATION:
+     TEST0689
+
+DESCRIPTION:
+     Many Trans SQL features #1:  inventory system
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Basic schema manipulation
+     F# 4 -- Joined table
+     F# 6 -- VARCHAR data type
+     F# 7 -- TRIM function
+     F# 8 -- UNION in views
+     F# 16 -- PRIMARY KEY enhancement
+     F# 21 -- INSERT expressions
+     F# 24 -- Keyword relaxations
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that many features of Transitional SQL can successfully be used
+     together as follows:
+
+     1.  Create two tables with INT UNIQUE and VARCHAR NOT NULL columns, one
+         table with INT PRIMARY KEY and VARCHAR NOT NULL columns, and one
+         table that REFERENCES the UNIQUE and PRIMARY KEY columns of the other
+         three tables;
+     2.  Create a view that does a NATURAL JOIN over the four base tables;
+     3.  Create a second view that includes all the rows that were excluded
+         by the natural join because of null values;
+     4.  Create a third view that is the UNION of the other two views;
+     5.  Use COMMIT instead of COMMIT WORK;
+     6.  Populate the base tables using dynamically prepared INSERT statements
+         that TRIM the strings being inserted into the VARCHAR columns;
+     7.  Check the cardinality of all three views and check the contents of
+         the union view.
+
+
+IDENTIFICATION:
+     TEST0690
+
+DESCRIPTION:
+     Many Trans SQL features #2:  talk show schedule
+
+REFERENCES:
+     F# 3 -- Basic schema manipulation
+     F# 5 -- DATETIME data types
+     F# 6 -- VARCHAR data type
+     F# 16 -- PRIMARY KEY enhancement
+     F# 20 -- CAST functions
+     F# 21 -- INSERT expressions
+     F# 24 -- Keyword relaxations
+     COR2 5.3 6.10 -- Technical Corrigendum #2
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that many features of Transitional SQL can successfully be used
+     together as follows:
+
+     1.  Create a table PROGRAM that simulates a schedule for a talk show
+         with columns SEGNO INT PRIMARY KEY, STARTS TIME NOT NULL, LASTS
+         INTERVAL MINUTE TO SECOND NOT NULL, and SEGMENT VARCHAR (50);
+     2.  Create a view GAPS that retrieves rows from PROGRAM representing
+         segments that are not contiguous with following segments, i.e.
+         where STARTS plus LASTS does not equal the STARTS time of any
+         segment;
+     3.  Populate PROGRAM with a one-hour schedule with no gaps, terminating
+         it with a segment called END where LASTS is 0:00;
+     4.  Verify that COUNT is zero for GAPS;
+     5.  Update PROGRAM to reflect a schedule rearrangement and verify that
+         COUNT for GAPS is still zero;
+     6.  Scan through PROGGRAM with a cursor ordered by STARTS and verify that
+         the ordering of the segments is chronological;
+     7.  Shorten a segment and verify that this creates a row in GAPS;
+     8.  Lengthen another segment to take up the slack and verify that the
+         row in GAPS goes away.
+
+
+IDENTIFICATION:
+     TEST0691
+
+DESCRIPTION:
+     INFO_SCHEM:  SQLSTATEs for length overruns
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     11.9 GR.2 -- search condition too long
+     11.19 GR.13 -- query expression too long
+     22.1 -- SQLSTATE
+     COR2 11.5 GR.4 -- default option too long (not tested)
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify the correct usage of SQLSTATEs 01009 and 0100A as follows:
+
+     1.  Attempt to create a table with a <table constraint definition>
+         containing a <check constraint definition> consisting of an
+         extremely long <search condition> and check for SQLSTATE 01009,
+         warning -- search condition too long for information schema;
+     2.  Attempt to create a view with an extremely long <query expression>
+         and check for SQLSTATE 0100A, warning -- query expression too
+         long for information schema.
+
+NOGO:
+     Either subtest might be processed without generating warnings if the
+     information schema contains sufficient room for the extremely long
+     definitions.  In this case, the test passes by default.  If the
+     long statements violate implementor-defined sizing restrictions, the
+     test must be removed manually and marked as passed.  SQLSTATE 0100B,
+     warning -- default option too long for information schema, is not
+     tested becuase it cannot be tested without violating the 80-character
+     line length coding rule.
+
+
+IDENTIFICATION:
+     TEST0692
+
+DESCRIPTION:
+     Many TSQL features #3:  enhanced proj/works
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Basic schema manipulation
+     F# 13 -- Grouped operations
+     F# 15 -- Lowercase identifiers
+     F# 16 -- PRIMARY KEY enhancement
+     F# 19 -- Referential delete actions
+     F# 22 -- Explicit defaults
+     F# 24 -- Keyword relaxations
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that many features of Transitional SQL can successfully be used
+     together as follows:
+
+     1.  Create a table "Proj" with a PRIMARY KEY column and three columns
+         that have <default specification>s, one of which is PTYPE;
+     2.  Create a view "PTypes" that selects PTYPE and COUNT from "Proj"
+         grouped by PTYPE;
+     3.  Create a view PTYPES that selects * from "PTypes" where the COUNT
+         column is greater than 1;
+     4.  Create a table "Works" with a two-column PRIMARY KEY, a column HOURS,
+         and a column PNUM that REFERENCES "Proj" with ON DELETE CASCADE;
+     5.  Create a view "PStaff" that selects PNUM and COUNT from "Works"
+         WHERE HOURS >= 20 GROUP BY PNUM;
+     6.  Populate "Proj" and "Works" with interesting data;
+     7.  Verify the contents of the views PTYPES and "PStaff";
+     8.  Delete some rows from "Proj" that should cause a cascaded delete
+         from "Works";
+     9.  Verify the contents of the views PTYPES and "PStaff" after the delete.
+
+
+IDENTIFICATION:
+     TEST0693
+
+DESCRIPTION:
+     Many TSQL features #4:  enhanced INFO_SCHEM
+
+REFERENCES:
+     F# 2 -- Basic information schema
+     F# 3 -- Basic schema manipulation
+     F# 4 -- Joined table
+     F# 5 -- DATETIME data types
+     F# 11 -- Transaction isolation
+     F# 15 -- Lowercase identifiers
+     F# 22 -- Explicit defaults
+     F# 24 -- Keyword relaxations
+
+TEST PURPOSE:
+     To verify that many features of Transitional SQL can successfully be used
+     together as follows:
+
+     1.  Create a table CreationTimes with CHAR columns TABLE_SCHEM and
+         TABLE_NAME and a TIMESTAMP column CREATE_TIME;
+     2.  Create a view TablesColumns that selects some interesting columns
+         from Info_Schem.Tables NATURAL JOIN Info_Schem.Columns NATURAL
+         JOIN CreationTimes;
+     3.  Insert a row into CREATIONTIMES for CREATIONTIMES itself, choosing
+         a likely CREATION_TIME;
+     4.  Insert another row into CREATIONTIMES for TABLESCOLUMNS, using DEFAULT
+         for CREATION_TIME;
+     5.  Start a new transaction and SET TRANSACTION READ ONLY;
+     6.  Verify the contents of TABLESCOLUMNS;
+     7.  Verify that an attempt to update CREATIONTIMES generates a 25000
+         SQLSTATE.
+
+
+IDENTIFICATION:
+     TEST0694
+
+DESCRIPTION:
+     Interval Arithmetic and Casts
+
+REFERENCES:
+     F# 5 -- DATETIME data types
+     F# 20 -- CAST functions
+     TC #2 5.3 -- Extended syntax of interval string
+     6.15 FT.1 -- Syntax for subtracting two datetimes
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify support for <interval value expression>s containing an
+     <asterisk> or <solidus>, and several complex <cast specification>s,
+     as follows:
+
+     1.  Create a view that multiplies the result of an AVG of a DECIMAL
+         column with INTERVAL '01:00' HOUR TO MINUTE;
+     2.  Create a view that calculates the same result by taking the AVG
+         of a <cast specification> that translates the DECIMAL column
+         into INTERVAL HOUR TO MINUTE via INTERVAL HOUR (the ability to
+         cast directly from DECIMAL to INTERVAL HOUR TO MINUTE is not
+         required by the Standard);
+     3.  Create a view that multiplies the result of an AVG of a REAL
+         column with INTERVAL '01.000000' SECOND;
+     4.  Create a view that calculates the same result by taking the
+         AVG of a <cast specification> that translates the REAL column into
+         INTERVAL SECOND via NUMERIC (8, 6) (casting approximate numerics
+         to intervals is not required by the Standard);
+     5.  Create a view that divides the SUM of a CAST of the INTERVAL
+         HOUR TO MINUTE column of the view created by 1. above as
+         INTERVAL DAY TO MINUTE by 100;
+     6.  Verify that the views created by 1. and 2. above are identical,
+         except for possible roundoff or truncation error;
+     7.  Verify that the views created by 3. and 4. above are identical,
+         except for possible roundoff or truncation error;
+     8.  Check the actual contents of the views created by 1. and 3. above;
+     9.  Check the contents of the view created by 5. above.
+
+
+IDENTIFICATION:
+     TEST0695
+
+DESCRIPTION:
+     <updatability clause> in <declare cursor>
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     13.1 LR.2.b -- <updatability clause> in <declare cursor>
+
+TEST PURPOSE:
+     To verify support for an <updatability clause> in a <declare cursor>
+     as follows:
+
+     1.  Declare a cursor FOR READ ONLY and verify that neither a positioned
+         update nor a positioned delete will succeed;
+     2.  Declare a cursor FOR UPDATE OF specific columns, verify that only
+         the specified columns may be updated, and verify that a positioned
+         delete will not succeed;
+     3.  Declare a cursor FOR UPDATE and verify that positioned updates and
+         positioned deletes will succeed.
+
+
+IDENTIFICATION:
+     TEST0696
+
+DESCRIPTION:
+     Many TSQL features #5:  Video Game Scores
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Basic schema manipulation
+     F# 4 -- Joined table
+     F# 5 -- DATETIME data types
+     F# 11 -- Transaction isolation
+     F# 12 -- Get diagnostics
+     F# 14 -- Qualified * in select list
+     F# 20 -- CAST functions
+     F# 24 -- Keyword relaxations
+     COR2 5.3 6.10
+
+TEST PURPOSE:
+     To verify that many features of Transitional SQL can successfully be used
+     together as follows:
+
+     1.  Check the SQLSTATE after each statement using GET DIAGNOSTICS and
+         omit the WORK keyword with COMMIT and ROLLBACK;
+     2.  Create a table containing approximate numeric and interval data,
+         and a table that contains exact numeric data, all keyed by an
+         integer column PLAYER_NO to support a natural join;
+     3.  Create a view that calculates averages grouped by PLAYER_NO for the
+         approximate numeric data, and the interval data cast as seconds;
+     4.  Create a view that calculates the grouped averages for the
+         exact numeric data;
+     5.  Create a view that calculates the maxima of the three sets of
+         grouped averages;
+     6.  Create a view that brings together the grouped averages and the
+         calculated maxima using qualified * in select list, a natural
+         join, and a Cartesian product;
+     7.  Create a view that normalizes the averages against the maxima and
+         gives a single average for each PLAYER_NO;
+     8.  Populate the first table via a descriptor, implicitly casting
+         character strings to intervals;
+     9.  Populate the other table using simple inserts;
+     10.  Verify the contents of the view of normalized averages using
+          a read-only cursor.
+
+
+IDENTIFICATION:
+     TEST0697
+
+DESCRIPTION:
+     Erratum:  drop behavior, constraints (static)
+
+REFERENCES:
+     COR2 11.18 -- Same-table constraints are not RESTRICTed
+     F# 3 -- Basic schema manipulation
+     11.2 FT.2 -- <drop behavior>
+     11.18 -- <drop table statement>
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that a table constraint referencing only the current table
+     does not prevent a <drop table statement> that specifies RESTRICT
+     from succeeding as follows:
+
+     1.  Create a table UNDROPPABLE with a PRIMARY KEY column;
+     2.  Create a table DROPPABLE with a CHECK constraint that references
+         only DROPPABLE and a <references specification> that references
+         UNDROPPABLE;
+     3.  Try to drop a table for which there exists a referencing view using
+         RESTRICTED, verify that the drop fails;
+     4.  Try to drop UNDROPPABLE with RESTRICTED, verify that the drop fails;
+     5.  Try to drop DROPPABLE with RESTRICTED, verify that the drop succeeds;
+     6.  Try to drop UNDROPPABLE again with RESTRICTED, verify that the drop
+         succeeds.
+
+
+IDENTIFICATION:
+     TEST0698
+
+DESCRIPTION:
+     Erratum:  drop behavior, constraints (dynamic)
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     COR2 11.18 -- Same-table constraints are not RESTRICTed
+     F# 3 -- Basic schema manipulation
+     11.2 FT.2 -- <drop behavior>
+     11.18 -- <drop table statement>
+     SQL-89 9 -- Integrity Enhancement Feature
+
+TEST PURPOSE:
+     To verify that a table constraint referencing only the current table
+     does not prevent a <drop table statement> that specifies RESTRICT
+     from succeeding in Dynamic SQL as follows:
+
+     1.  Create a table UNDROPPABLE with a PRIMARY KEY column;
+     2.  Create a table DROPPABLE with a CHECK constraint that references
+         only DROPPABLE and a <references specification> that references
+         UNDROPPABLE;
+     3.  Try to drop a table for which there exists a referencing view using
+         RESTRICTED, verify that the drop fails;
+     4.  Try to drop UNDROPPABLE with RESTRICTED, verify that the drop fails;
+     5.  Try to drop DROPPABLE with RESTRICTED, verify that the drop succeeds;
+     6.  Try to drop UNDROPPABLE again with RESTRICTED, verify that the drop
+         succeeds.
+
+
+IDENTIFICATION:
+     TEST0699
+
+DESCRIPTION:
+     <drop behavior> on a REVOKE (static)
+
+REFERENCES:
+     F# 3 -- Basic schema manipulation
+     11.2 FT.2 -- <drop behavior>
+     11.37 -- <revoke statement>
+
+TEST PURPOSE:
+     To verify that <drop behavior> can be used in a <revoke statement>
+     as follows:
+
+     1.  Attempt to REVOKE GRANT OPTION ... RESTRICT for a grant option that
+         would violate 11.37 SR.18, check for a 42000 SQLSTATE;
+     2.  Repeat the same REVOKE with CASCADE and check for a normal SQLSTATE;
+     3.  Attempt to REVOKE a GRANT SELECT TO PUBLIC that never carried the
+         GRANT OPTION and check for a normal SQLSTATE, despite the existence
+         of another explicit GRANT SELECT TO FLATER where FLATER's schema5
+         has created a dependent view;
+     4.  Attempt to REVOKE a GRANT SELECT TO PUBLIC that never carried the
+         GRANT OPTION and has a dependent table.  Check for SQLSTATE 42000;
+     5.  Attempt to REVOKE a GRANT SELECT TO PUBLIC that never carried the
+         GRANT OPTION and has no dependent tables.  Check for a normal
+         completion.
+
+
+IDENTIFICATION:
+     TEST0829
+
+DESCRIPTION:
+     <drop behavior> on a REVOKE (dynamic)
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 3 -- Basic schema manipulation
+     11.2 FT.2 -- <drop behavior>
+     11.37 -- <revoke statement>
+
+TEST PURPOSE:
+     To verify that <drop behavior> can be used in a <revoke statement>
+     in Dynamic SQL as follows:
+
+     1.  Attempt to REVOKE GRANT OPTION ... RESTRICT for a grant option that
+         would violate 11.37 SR.18, check for a 42000 SQLSTATE;
+     2.  Repeat the same REVOKE with CASCADE and check for a normal SQLSTATE;
+     3.  Attempt to REVOKE a GRANT SELECT TO PUBLIC that never carried the
+         GRANT OPTION and check for a normal SQLSTATE, despite the existence
+         of another explicit GRANT SELECT TO FLATER where FLATER's schema5
+         has created a dependent view;
+     4.  Attempt to REVOKE a GRANT SELECT TO PUBLIC that never carried the
+         GRANT OPTION and has a dependent table.  Check for SQLSTATE 42000;
+     5.  Attempt to REVOKE a GRANT SELECT TO PUBLIC that never carried the
+         GRANT OPTION and has no dependent tables.  Check for a normal
+         completion.
+
+
+IDENTIFICATION:
+     TEST0834
+
+DESCRIPTION:
+     <length expression> (static)
+
+REFERENCES:
+     F# 6 -- VARCHAR data type
+     6.6 LR.2.a -- Leveling rule relaxed by F# 6
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that CHAR_LENGTH, CHARACTER_LENGTH, and OCTET_LENGTH are
+     supported in a <numeric value function>.
+
+
+IDENTIFICATION:
+     TEST0835
+
+DESCRIPTION:
+     <character substring function> (static)
+
+REFERENCES:
+     F# 6 -- VARCHAR data type
+     6.7 LR.2.a -- Leveling rule relaxed by F# 6
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that SUBSTRING is correctly supported by testing the following
+     cases:
+
+     1.  <start position> and <string length> are both supplied;
+     2.  Only <start position> is supplied, causing right truncation of
+         blanks;
+     3.  A negative number is supplied for <string length>, causing a data
+         exception (substring error);
+     4.  0 is supplied for <start position>, which should have the same
+         effect as supplying 1;
+     5.  A large number is supplied for <string length>, which should have
+         the same effect as supplying the length of the string;
+     6.  1 is supplied for <string length>;
+     7.  0 is supplied for <string length>, giving an empty result;
+     8.  A number larger than the length of the string is supplied for
+         <start position>, giving an empty result;
+     9.  Several combinations are tried through a view that is defined using
+         SUBSTRING;
+     10.  A column reference is supplied for <start position>;
+     11.  A column reference is supplied for <string length>;
+     12.  Using a view, retrieve a substring of a NULL, which should be
+          NULL;
+     13.  Supply a null column reference for <start position>, yielding NULL;
+     14.  Supply a null column reference for <string length>, yielding NULL;
+     15.  Supply a character value expression concatenating a column
+          reference, a literal and a parameter as well as a numeric
+          value expression (parameter + 1) as a <string length>. 
+
+
+IDENTIFICATION:
+     TEST0836
+
+DESCRIPTION:
+     <length expression> (dynamic)
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 6 -- VARCHAR data type
+     6.6 LR.2.a -- Leveling rule relaxed by F# 6
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that CHAR_LENGTH, CHARACTER_LENGTH, and OCTET_LENGTH are
+     supported in a <numeric value function> in Dynamic SQL.
+
+
+IDENTIFICATION:
+     TEST0837
+
+DESCRIPTION:
+     <character substring function> (dynamic)
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 6 -- VARCHAR data type
+     6.7 LR.2.a -- Leveling rule relaxed by F# 6
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that SUBSTRING is correctly supported in Dynamic SQL by testing
+     the following cases:
+
+     1.  <start position> and <string length> are both supplied (as dynamic
+         parameters);
+     2.  Only <start position> is supplied, causing right truncation of
+         blanks (a where clause tests substring of column concatenated
+         with parameter);
+     3.  A negative number is supplied for <string length>, causing a data
+         exception (substring error);
+     4.  0 is supplied for <start position>, which should have the same
+         effect as supplying 1;
+     5.  A large number is supplied for <string length>, which should have
+         the same effect as supplying the length of the string;
+     6.  1 is supplied for <string length>;
+     7.  0 is supplied for <string length>, giving an empty result;
+     8.  A number larger than the length of the string is supplied for
+         <start position>, giving an empty result;
+     9.  Several combinations are tried through a view that is defined using
+         SUBSTRING;
+     10.  A column reference is supplied for <start position>;
+     11.  A column reference is supplied for <string length>;
+     12.  Using a view, retrieve a substring of a NULL, which should be
+          NULL;
+     13.  Supply a null column reference for <start position>, yielding NULL;
+     14.  Supply a null dynamic parameter for <string length>, yielding NULL.
+
+
+IDENTIFICATION:
+     TEST0838
+
+DESCRIPTION:
+     <character substring function> varchar
+
+REFERENCES:
+     6.7 SR.2.a -- SUBSTRING returns a varchar
+     F# 6 -- VARCHAR data type
+     6.7 LR.2.a -- Leveling rule relaxed by F# 6
+
+TEST PURPOSE:
+     To verify that SUBSTRING returns a varchar string of the correct
+     length and does not incorrectly blank-pad the result.
+
+NOGO:
+     This test is only applicable in C, PL/I, and MUMPS.  Any other languages
+     pass by default.
+
+
+IDENTIFICATION:
+     TEST0839
+
+DESCRIPTION:
+     Composed <length expression> and SUBSTRING
+
+REFERENCES:
+     F# 6 -- VARCHAR data type
+     6.7 LR.2.a -- Leveling rule relaxed by F# 6
+
+TEST PURPOSE:
+     To verify that taking the CHARACTER_LENGTH of a <character substring
+     function> returns the correct value.
+
+
+IDENTIFICATION:
+     TEST0840
+
+DESCRIPTION:
+     Roll back schema manipulation
+
+REFERENCES:
+     F# 3 -- Basic schema manipulation
+
+TEST PURPOSE:
+     To verify that a CREATE TABLE and a CREATE VIEW can be rolled back by
+     attempting to access them afterwards and checking for the 42000 SQLSTATE.
+
+
+IDENTIFICATION:
+     TEST0841
+
+DESCRIPTION:
+     Multiple-join and default order of joins
+
+REFERENCES:
+     F# 4 -- Joined table
+     3.3.4.4 PP.2 -- Order of evaluation
+     7.5 -- Format of <joined table> allows parens
+
+TEST PURPOSE:
+     To verify that unparenthesized join operations are processed from left
+     to right by checking the results of a multiple join, with and without
+     parenthesis.
+
+
+IDENTIFICATION:
+     TEST0842
+
+DESCRIPTION:
+     Multi-column joins
+
+REFERENCES:
+     F# 4 -- Joined table
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that joins having multiple corresponding join columns are done
+     correctly by checking the results of several multi-column joins.
+
+
+IDENTIFICATION:
+     TEST0843
+
+DESCRIPTION:
+     Ordering of column names in joins
+
+REFERENCES:
+     F# 4 -- Joined table
+     7.5 SR.6.f -- Ordering of columns
+     7.5 SR.5 -- Ordering of columns
+
+TEST PURPOSE:
+     To verify that a <query specification> having a <select list> that is
+     an <asterisk> and a <table expression> that is a <joined table>
+     gives a result with the columns in the correct order by checking the
+     result of a natural left outer join, an inner <named columns join>,
+     and a right outer join having a <join condition>.
+
+
+IDENTIFICATION:
+     TEST0844
+
+DESCRIPTION:
+     Outer join predicates
+
+REFERENCES:
+     F# 4 -- Joined table
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+
+TEST PURPOSE:
+     To verify that different sorts of join conditions may be used in outer
+     joins by checking the results of outer joins that are done using a
+     variety of predicates and data types.
+
+
+IDENTIFICATION:
+     TEST0845
+
+DESCRIPTION:
+     Parameters and indicators in dynamic SQL statement
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     F# 20 -- CAST functions
+     17.6 -- preparable <delete statement: searched> 
+     17.6 -- preparable <update statement: searched> 
+     17.6 -- GR 6, existing SQL statement implicitly deallocated 
+     17.6 -- preparable <insert statement> with 13.8 <insert column list>
+     17.6 -- preparable <insert statement> with 13.8 <query expression>
+     17.12 -- <dynamic declare cursor> 
+     17.14 -- <dynamic open statement> 
+     17.15 -- <dynamic fetch statement> 
+     17.16 -- <dynamic close statement> 
+     17.17 -- <dynamic delete statement: positioned> 
+     17.18 -- <dynamic update statement: positioned> 
+
+TEST PURPOSE:
+     To use parameter and indicators in all Transitional SQL statements.
+     To verify that indicator values 0 and -1 are used correctly
+     in store and retrieval assignments in dynamic SQL statements.
+
+
+IDENTIFICATION: 
+     TEST0846
+
+DESCRIPTION:
+     Feature 20, CAST function (static) nits
+
+REFERENCES:
+     F# 20 -- CAST functions
+     6.10 -- <cast specification>
+     6.11 LR.2.d -- in a <value expression primary>
+     13.8 LR.2.a -- <value expression> in an <insert statement>
+     F# 3 -- Schema manipulation is used in most Transitional SQL tests
+     F# 21 -- INSERT expressions
+
+TEST PURPOSE:
+     To verify support for CAST function specifications as follows:
+
+     1.  In numeric-to-numeric cast, loss of leading significant
+         digits raises SQLSTATE 22003.  GR.3.a.ii  GR.4.a.ii
+     2.  In numeric-to-numeric cast, rounding or truncation is OK
+         (supported without exception).  GR.3.a.i  GR.4.a.i
+     3.  Leading or trailing blanks are removed from a character
+         string before cast to numeric.  GR.3.b  GR.4.b
+     4.  Garbage string cast to numeric raises SQLSTATE 22018.
+         GR.3.b.i  GR.4.b.i
+     5.  An exact numeric cast to string gives the shortest literal
+         with correct scale (including trailing zeroes).  GR.5.a
+     6.  Exact numeric to string cast gives leading hypen for negative
+         numbers, no blanks or plus sign for non-negative numbers.
+         GR.5.a
+     7.  Exact numeric to string cast raises SQLSTATE 22001 on
+         right truncation.  GR.5.a.iv
+     8.  Approximate numeric value zero cast to string is 0E0.
+         GR.5.b.i.1
+     9.  Approximate numeric cast to string normalized; i.e., 
+         starts with 1-9 (after any hypen), followed by period.
+         GR.5.b.i.2  GR.5.b.ii
+     10. An approximate numeric cast to string gives the shortest literal.
+         GR.5.b.i.2
+     11. Approximate numeric to string cast gives leading hypen for
+         negative numbers and negative exponent, no blanks or plus sign
+         for non-negative numbers.  GR.5.b.ii
+     12. Approximate numeric to string cast raises SQLSTATE 22001 on
+         right truncation.  GR.5.b.iii.4
+     13. Cast of literal NULL yields NULL value.  GR.2.a
+     14. Cast of column or parameter with NULL value yields NULL value.
+         GR.2.a
+
+
+IDENTIFICATION:
+     TEST0847
+
+DESCRIPTION:
+     Dynamic SQL:  serializability
+
+REFERENCES:
+     F# 1 -- Dynamic SQL
+     4.28 -- SQL-transactions
+
+TEST PURPOSE:
+     To verify that transactions containing Dynamic SQL statements are
+     serializable by attempting to execute two transactions with conflicting
+     dynamic cursor operations concurrently and checking the results.
+
+
+IDENTIFICATION:
+     TEST0848
+
+DESCRIPTION:
+     Query spec with subquery is now updatable
+
+REFERENCES:
+     F# 11 -- Transaction isolation
+     7.9 LR.2.a
+
+TEST PURPOSE:
+     To verify that a cursor and a view whose query specs contain a subquery
+     can be updated in accordance with the lifting of 7.9 LR.2.a.
+
+
+
+                                FLAGGING TESTS
+                                --------------
+
+IDENTIFICATION:
+     TEST0830
+
+DESCRIPTION:
+     FIPS Flagger - WHENEVER SQLWARNING
+
+REFERENCES:
+     X/Open CAE SQL 4.6
+
+TEST PURPOSE:
+     To verify that the WHENEVER SQLWARNING extension is flagged by a FIPS SQL
+     implementation.
+
+NOGO:
+     A flagger warning only needs to be demonstrated if the feature is
+     supported.  If it is not supported, the test is passed by default.
+     This test is not applicable to module language.
+
+
+IDENTIFICATION:
+     TEST0831
+
+DESCRIPTION:
+     FIPS Flagger - ADD (column, ...)
+
+REFERENCES:
+     X/Open CAE SQL 5.3.2
+
+TEST PURPOSE:
+     To verify that the ADD (column, ...) extension is flagged by a FIPS SQL
+     implementation.
+
+NOGO:
+     A flagger warning only needs to be demonstrated if the feature is
+     supported.  If it is not supported, the test is passed by default.
+
+
+IDENTIFICATION:
+     TEST0832
+
+DESCRIPTION:
+     FIPS Flagger - CREATE INDEX
+
+REFERENCES:
+     X/Open CAE SQL 5.3.3
+
+TEST PURPOSE:
+     To verify that the CREATE INDEX extension is flagged by a FIPS SQL
+     implementation.
+
+NOGO:
+     A flagger warning only needs to be demonstrated if the feature is
+     supported.  If it is not supported, the test is passed by default.
+
+
+IDENTIFICATION:
+     TEST0833
+
+DESCRIPTION:
+     FIPS Flagger - INCLUDE SQLCA
+
+REFERENCES:
+     X/Open CAE SQL 8.1.1
+
+TEST PURPOSE:
+     To verify that the INCLUDE SQLCA extension is flagged by a FIPS SQL
+     implementation.
+
+NOGO:
+     A flagger warning only needs to be demonstrated if the feature is
+     supported.  If it is not supported, the test is passed by default.
+     This test is not applicable to module language.

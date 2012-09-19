@@ -1,0 +1,115 @@
+/*  EMBEDDED C (file "SDL018.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/06/20 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL018.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SAME TABLE NAME IN DIFFERENT SCHEMA.*/
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                    SECTION 6. Schema definition               */
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     long i;
+     long ii;
+     long iii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl018.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+     
+     printf("                   TEST0154             \n");
+     printf("Reference X3.135-1989 section 6. General Rules\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     i = 0;
+     ii = 0;
+     iii = 0;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :i
+              FROM   VTABLE;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :ii
+              FROM   CUGINI.VTABLE;
+
+     EXEC SQL INSERT INTO CUGINI.VTABLE
+              SELECT *
+              FROM   VTABLE;
+
+     EXEC SQL SELECT COUNT(*)
+              INTO   :iii
+              FROM   CUGINI.VTABLE;
+
+     EXEC SQL ROLLBACK WORK;
+     
+     printf(" i = %ld, ii = %ld  , iii = %ld \n\n",i,ii,iii);
+     printf("The correct answer should be i=4, ii=0 & iii=4 \n");
+
+     if (i == 4 && ii == 0 && iii == 4)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0154','pass','PC');
+       printf("\n\n                 *** pass ***     \n");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0154','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       sdl018.pc  *** fail ***    \n");
+       }
+     printf("================================================\n\n");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+
+}
+

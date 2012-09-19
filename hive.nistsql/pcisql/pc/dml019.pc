@@ -1,0 +1,378 @@
+/*  EMBEDDED C (file "DML019.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML019.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE GROUP BY CLAUSE IN THE SQL LANGUAGE */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                SECTION 5.22 <group by clause>                 */
+/*                                                               */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+
+     char     EMPNO1[4];
+     char     PNO1[4];
+     long    HOURS1;
+     long    i;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long    ii;
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml019.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0074 ********************/
+
+printf("\n\n              TEST0074 \n");
+printf("  reference ANSI X3.135-1989 5.22 <group by clause>\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** SELECT PNUM, SUM(HOURS) \n");
+printf ("          *** FROM WORKS \n");
+printf ("          *** GROUP BY PNUM \n");
+
+EXEC SQL DECLARE WORKS1 CURSOR FOR
+          SELECT PNUM, SUM(HOURS)
+          FROM WORKS
+          GROUP BY PNUM;
+EXEC SQL OPEN WORKS1;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS1 INTO
+               :PNO1,:HOURS1;
+     if (SQLCODE == 0)
+       {
+          i = i + 1;
+          printf(" PNUM=%s      HOURS=%ld\n",PNO1,HOURS1);
+       }
+     }
+EXEC SQL CLOSE WORKS1;
+printf ("\n");
+
+printf("\n           i should be 6, i=%ld\n",i);
+if (i == 6)
+     {
+     printf("\n\n               *** pass *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0074','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml019.pc  *** fail *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0074','fail','PC');
+          errcnt = errcnt + 1;
+     }
+ 
+printf("========================================================");
+printf("\n\n");
+
+EXEC SQL COMMIT WORK;
+/******************** END TEST0074 ********************/
+/******************** BEGIN TEST0075 ********************/
+ 
+
+printf("\n\n               TEST0075 \n");
+printf("  reference ANSI X3.135-1989 5.22 <group by clause>\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** SELECT EMPNUM \n");
+printf ("          *** FROM WORKS \n");
+printf ("          *** GROUP BY EMPNUM \n");
+EXEC SQL DECLARE WORKS2 CURSOR FOR
+          SELECT EMPNUM
+          FROM WORKS
+          GROUP BY EMPNUM;
+EXEC SQL OPEN WORKS2;
+i=0;
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS2 INTO
+               :EMPNO1;
+     if (SQLCODE == 0)
+        {
+          i = i + 1;
+          printf ("          WORKS.EMPNUM = %s \n",EMPNO1);
+        }
+     }
+EXEC SQL CLOSE WORKS2;
+printf (" ");
+printf("\n          i should be 4, i=%ld\n",i);
+if (i == 4)
+     {
+     printf("\n\n               *** pass *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0075','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml019.pc  *** fail *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0075','fail','PC');
+          errcnt = errcnt + 1;
+     }
+ 
+printf("========================================================");
+printf("\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0075 ********************/
+/******************** BEGIN TEST0076 ********************/
+
+printf("\n\n               TEST0076 \n");
+printf("  reference ANSI X3.135-1989 5.22 <group by clause>\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf ("          *** SELECT * \n");
+printf ("          *** FROM WORKS \n");
+printf ("          *** GROUP BY EMPNUM,HOURS \n");
+
+EXEC SQL DECLARE WORKS4 CURSOR FOR
+          SELECT EMPNUM,HOURS
+          FROM WORKS
+          GROUP BY EMPNUM,HOURS;
+
+EXEC SQL OPEN WORKS4;
+i=0;
+if (SQLCODE == 0)
+     printf ("          EMPNUM     HOURS \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS4 INTO
+               :EMPNO1,:HOURS1;
+     if (SQLCODE == 0)
+        {
+          i = i + 1;
+          printf ("          %s     %ld \n",EMPNO1,HOURS1);
+        }
+     }
+EXEC SQL CLOSE WORKS4;
+printf ("\n");
+ 
+printf("\n          i should be 10, i=%ld\n",i);
+if (i == 10)
+     {
+     printf("\n\n               *** pass *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0076','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml019.pc  *** fail *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0076','fail','PC');
+          errcnt = errcnt + 1;
+     }
+ 
+printf("========================================================");
+printf("\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0076 ********************/
+/******************** BEGIN TEST0077 ********************/
+ 
+
+printf("\n\n               TEST0077 \n");
+printf("  reference ANSI X3.135-1989 5.22 <group by clause>\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** SELECT * \n");
+printf ("          *** FROM WORKS \n");
+printf ("          *** GROUP BY PNUM,EMPNUM,HOURS \n");
+
+/*  This query satisfies 5.25 SR 7), becuase table WORKS only   */
+/*  has three columns which are all in GROUP BY cluase.         */
+/*  (see 5.25 SR 4). about the <select list> "*".)              */
+
+EXEC SQL DECLARE WORKS5 CURSOR FOR
+          SELECT *
+          FROM WORKS
+          GROUP BY PNUM,EMPNUM,HOURS;
+EXEC SQL OPEN WORKS5;
+i=0;
+if (SQLCODE == 0)
+     printf ("     EMPNUM     PNUM     HOURS \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS5 INTO
+               :EMPNO1,:PNO1,:HOURS1;
+     if (SQLCODE == 0)
+      {
+       i = i + 1;
+       printf ("     %s     %s     %ld\n",EMPNO1,PNO1,HOURS1);
+      }
+     }
+EXEC SQL CLOSE WORKS5;
+printf ("\n");
+ 
+printf("\n          i should be 12, i=%ld\n",i);
+if (i == 12)
+     {
+     printf("\n\n               *** pass *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0077','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml019.pc  *** fail *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0077','fail','PC');
+          errcnt = errcnt + 1;
+     }
+ 
+printf("========================================================");
+printf("\n\n");
+
+EXEC SQL COMMIT WORK;
+ 
+/******************** END TEST0077 ********************/
+/******************** BEGIN TEST0078 ********************/
+
+printf("\n\n               TEST0078 \n");
+printf("  reference ANSI X3.135-1989 5.22 <group by clause>\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+printf ("          *** SELECT PNUM,EMPNUM \n");
+printf ("          *** FROM WORKS \n");
+printf ("          *** GROUP BY EMPNUM,PNUM,HOURS \n");
+
+EXEC SQL DECLARE WORKS10 CURSOR FOR
+          SELECT PNUM,EMPNUM
+          FROM WORKS
+          GROUP BY EMPNUM,PNUM,HOURS;
+EXEC SQL OPEN WORKS10;
+i=0;
+if (SQLCODE == 0)
+     printf ("          PNUM     EMPNUM \n");
+for (ii=1;ii<20;ii++)
+     {
+     EXEC SQL FETCH WORKS10 INTO
+               :PNO1,:EMPNO1;
+     if (SQLCODE == 0)
+        {
+          i = i + 1;
+          printf ("          %s     %s \n",PNO1,EMPNO1);
+        }
+     }
+EXEC SQL CLOSE WORKS10;
+printf ("\n");
+printf("\n          i shoud be 12, i=%ld\n", i);
+if (i == 12)
+     {
+     printf("\n\n               *** pass *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0078','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml019.pc  *** fail *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0078','fail','PC');
+          errcnt = errcnt + 1;
+     }
+ 
+printf("========================================================");
+printf("\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0078 ********************/
+/******************** BEGIN TEST0079 ********************/
+
+
+printf("\n\n               TEST0079 \n");
+printf("  reference ANSI X3.135-1989 5.22 <group by clause>\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME,GRADE)
+          VALUES('E6','WANG',40);
+EXEC SQL INSERT INTO STAFF(EMPNUM,EMPNAME,GRADE)
+          VALUES('E7','Song',50);
+
+printf ("          *** SELECT SUM(GRADE) \n");
+printf ("          *** FROM STAFF \n");
+printf ("          *** WHERE CITY IS NULL \n");
+printf ("          *** GROUP BY CITY \n");
+
+EXEC SQL DECLARE WORKS11 CURSOR FOR
+          SELECT SUM(GRADE)
+          FROM   STAFF
+          WHERE  CITY IS NULL
+          GROUP BY CITY;
+EXEC SQL OPEN WORKS11;
+i=0;
+EXEC SQL FETCH WORKS11 INTO :i;
+EXEC SQL CLOSE WORKS11;
+EXEC SQL DELETE FROM STAFF WHERE CITY IS NULL;
+
+printf ("\n");
+printf("\n          i shoud be 90, i=%ld\n", i);
+if (i == 90)
+     {
+     printf("\n\n               *** pass *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0079','pass','PC');
+     }
+else
+     {
+     printf("\n\n     dml019.pc  *** fail *** \n\n");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0079','fail','PC');
+          errcnt = errcnt + 1;
+     }
+ 
+printf("========================================================");
+printf("\n\n");
+ 
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0079 ********************/
+
+exit(errcnt);
+
+}

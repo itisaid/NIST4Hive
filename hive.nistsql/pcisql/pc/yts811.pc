@@ -1,0 +1,439 @@
+/*  EMBEDDED C (file "YTS811.PC")  */
+
+/* Copyright 1996 National Computing Centre Ltd, */
+/* and Computer Logic R&D S.A */
+/* on behalf of CTS5 SQL2 Project. */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  YTS811.PC                                                   */
+/*  WRITTEN BY:  Susan Watters                                   */
+/*                                                               */
+/*  This routine tests WHERE <search cond.> referencing          */
+/*  column generally containing SUM                              */
+/*                                                               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    7.6      <where clause>                                    */
+/*    6.5 GR1b  <set function specification>                     */
+/*    3.3.4.2  Syntactic containment                             */
+/*    7.6 LR2a Raised                                            */
+/*    F#44     Intermediate set function                         */
+/*                                                               */
+/*  DATE LAST ALTERED 02.01.96 CTS5 Hand-over Test               */
+/*                                                               */
+/*  QA Status: Full FC                                           */
+/*                                                               */
+/*  Revised by DWF 1996-04-02                                    */
+/*    Added rollback after authid                                */
+/*    Removed EXEC SQL from printfs                              */
+/*    Fixed SDL transactions                                     */
+/*    Dropped view when done                                     */
+/*    Fixed syntax errors                                        */
+/*    Fixed printouts                                            */
+/*    Corrected expected results                                 */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+short val1;
+short val2;
+short val3;
+short indic1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"CTS1              ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, yts811.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST7568 ********************/
+flag = 1;
+
+     printf("                  TEST7568 \n");
+     printf("   WHERE <search cond.> referencing column\n");
+     printf("   generally containing SUM\n");
+     printf("References:\n");
+     printf("    7.6    <where clause>\n");
+     printf("    6.5 GR1b  <set function specification>\n");
+     printf("    3.3.4.2 Syntactic containment\n");
+     printf("    7.6 LR2a Raised\n");
+     printf("    F#44 Intermediate set function\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+/* The new names (VT1, VT2, VT3) aren't visible until after you get */
+/* out of the query expression. */
+
+printf("CREATE VIEW V_DATA_TYPE AS\n");
+printf("SELECT SUM(NUM) AS VT1, ING AS VT2, SMA AS VT3\n");
+printf("FROM DATA_TYPE\n");
+printf("GROUP BY ING, SMA;\n");
+EXEC SQL CREATE VIEW V_DATA_TYPE AS
+SELECT SUM(NUM) AS VT1, ING AS VT2, SMA AS VT3
+FROM DATA_TYPE
+GROUP BY ING, SMA;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+/* prepare database for test */
+/* insert rows into DATA_TYPE */
+
+printf("INSERT INTO CTS1.DATA_TYPE (ING, SMA) VALUES\n");
+printf("(1,1);\n");
+EXEC SQL INSERT INTO CTS1.DATA_TYPE (ING, SMA) VALUES
+(1,1);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)\n");
+printf("VALUES (2,2,3);\n");
+EXEC SQL INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)
+VALUES (2,2,3);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)\n");
+printf("VALUES (3,4,5);\n");
+EXEC SQL INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)
+VALUES (3,4,5);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)\n");
+printf("VALUES (2,2,3);\n");
+EXEC SQL INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)
+VALUES (2,2,3);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)\n");
+printf("VALUES (5,4,3);\n");
+EXEC SQL INSERT INTO CTS1.DATA_TYPE (NUM, ING, SMA)
+VALUES (5,4,3);
+CHCKOK ();
+printf("\n");
+
+/* NOT VT1 = 0 in this context acts like VT1 IS NOT NULL */
+
+printf("DECLARE data811 CURSOR FOR\n");
+printf("SELECT VT1, VT2, VT3\n");
+printf("FROM V_DATA_TYPE\n");
+printf("WHERE NOT VT1 = 0\n");
+printf("ORDER BY VT2, VT3;\n\n");
+EXEC SQL DECLARE data811 CURSOR FOR
+SELECT VT1, VT2, VT3
+FROM V_DATA_TYPE
+WHERE NOT VT1 = 0
+ORDER BY VT2, VT3;
+
+printf("OPEN data811;\n");
+EXEC SQL OPEN data811;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE can be 00000 or 01003; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "00000", 5)!=0 && strncmp(SQLSTATE,"01003",5)!=0)
+  flag = 0;
+
+/* FETCH all rows defined by data811 */
+
+/* initialise host variables */
+
+val1 = -99;
+val2 = -99;
+val3 = -99;
+
+printf("FETCH data811 INTO :val1, :val2, :val3;\n");
+EXEC SQL FETCH data811 INTO :val1, :val2, :val3;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE can be 00000 or 01003; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "00000", 5)!=0 && strncmp(SQLSTATE,"01003",5)!=0)
+  flag = 0;
+printf("values expected were 4, 2, 3,\n");
+printf("values returned were %d, %d, %d\n",val1, val2, val3);
+printf("\n");
+if (val1 != 4 || val2 != 2 || val3 != 3)
+  flag = 0;
+
+/* initialise host variables */
+
+val1 = -99;
+val2 = -99;
+val3 = -99;
+
+printf("FETCH data811 INTO :val1, :val2, :val3;\n");
+EXEC SQL FETCH data811 INTO :val1, :val2, :val3;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE can be 00000 or 01003; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "00000", 5)!=0 && strncmp(SQLSTATE,"01003",5)!=0)
+  flag = 0;
+printf("values expected were 5, 4, 3,\n");
+printf("values returned were %d, %d, %d\n",val1, val2, val3);
+printf("\n");
+if (val1 != 5 || val2 != 4 || val3 != 3)
+  flag = 0;
+
+/* initialise host variables */
+
+val1 = -99;
+val2 = -99;
+val3 = -99;
+
+printf("FETCH data811 INTO :val1, :val2, :val3;\n");
+EXEC SQL FETCH data811 INTO :val1, :val2, :val3;
+printf ("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf ("SQLSTATE can be 00000 or 01003; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp(NORMSQ, "00000", 5)!=0 && strncmp(SQLSTATE,"01003",5)!=0)
+  flag = 0;
+printf("values expected were 3, 4, 5,\n");
+printf("values returned were %d, %d, %d\n",val1, val2, val3);
+printf("\n");
+if (val1 != 3 || val2 != 4 || val3 != 5)
+  flag = 0;
+
+/* CLOSE data811 */
+
+printf("CLOSE data811\n");
+EXEC SQL CLOSE data811;
+CHCKOK ();
+printf("\n");
+
+/* return the row that includes the null value in SUM */
+
+/* initialise host variables */
+
+val1 = -99;
+val2 = -99;
+val3 = -99;
+indic1 = 99;
+
+printf("SELECT VT1, VT2, VT3\n");
+printf("INTO :val1:indic1, :val2, :val3\n");
+printf("FROM V_DATA_TYPE WHERE VT2 = 1;\n");
+EXEC SQL SELECT VT1, VT2, VT3
+INTO :val1:indic1, :val2, :val3
+FROM V_DATA_TYPE WHERE VT2 = 1;
+printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf("SQLSTATE should be 01003; its value is %s\n", SQLSTATE);
+if (strncmp (SQLSTATE, "01003", 5) != 0)
+  flag = 0;
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("val2, val3 should be 1, 1; their values are %d, %d\n\n", val2, val3);
+if (indic1 != -1 || val2 != 1 || val3 != 1)
+   flag = 0;
+
+/* check correct values selected in VT1 from NUM */
+/* initialise host variables */
+
+val1 = -99;
+val2 = -99;
+
+printf("SELECT SUM(NUM) INTO :val1\n");
+printf("FROM DATA_TYPE\n");
+printf("WHERE NUM IS NOT NULL;\n");
+EXEC SQL SELECT SUM(NUM) INTO :val1
+FROM DATA_TYPE
+WHERE NUM IS NOT NULL;
+CHCKOK ();
+printf("val1 should be 12; its value is %d\n\n", val1);
+if (val1 != 12)
+  flag = 0;
+
+printf("SELECT SUM(VT1) AS SUNTA1 INTO :val2\n");
+printf("FROM V_DATA_TYPE AS TB3;\n");
+EXEC SQL SELECT SUM(VT1) AS SUNTA1 INTO :val2
+FROM V_DATA_TYPE AS TB3;
+printf("SQLCODE should be >= 0; its value is %ld\n", SQLCODE);
+if (SQLCODE < 0)
+  flag = 0;
+printf("SQLSTATE should be 01003; its value is %s\n", SQLSTATE);
+printf("val2 should be 12; its value is %d\n\n", val2);
+if (strncmp (SQLSTATE, "01003", 5) != 0)
+  flag = 0;
+if (val2 != 12)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP VIEW V_DATA_TYPE;\n");
+EXEC SQL DROP VIEW V_DATA_TYPE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       yts811.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7568','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       yts811.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7568','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7568 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

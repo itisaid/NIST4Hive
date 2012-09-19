@@ -1,0 +1,716 @@
+/*  EMBEDDED C (file "DML142.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/11/1 EMBEDDED C LANGUAGE                           */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML142.PC                                                    */
+/*  WRITTEN BY: David Flater                                     */
+/*                                                               */
+/*  This routine tests privilege violations by user HU and       */
+/*  cursor operations on tables with duplicate rows.             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+long int1;
+long c10;
+long c12;
+long c13;
+long cxx;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"HU                ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml142.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0527 ********************/
+flag = 1;
+
+     printf("                  TEST0527 \n");
+     printf("             Priv. violation:  HU\n");
+     printf("References:\n");
+     printf("    6.3 AR.1 -- Access rule violation\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* Select */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1 FROM FLATER.USIG;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1 FROM FLATER.USIG;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("int1 should NOT be 2; its value is %ld\n\n", int1);
+if (int1 == 2)
+  flag = 0;
+
+/* Insert */
+
+printf("INSERT INTO FLATER.USIG VALUES (2, 4);\n");
+EXEC SQL INSERT INTO FLATER.USIG VALUES (2, 4);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Update */
+
+printf("UPDATE FLATER.USIG SET C1 = 0;\n");
+EXEC SQL UPDATE FLATER.USIG SET C1 = 0;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+/* Delete */
+
+printf("DELETE FROM FLATER.USIG;\n");
+EXEC SQL DELETE FROM FLATER.USIG;
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 42000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE >= 0 || strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0527','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml142.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0527','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0527 *********************/
+/******************** BEGIN TEST0528 ********************/
+flag = 1;
+
+     printf("                  TEST0528 \n");
+     printf("  Tables are multi-sets:  cursor operations\n");
+     printf("References:\n");
+     printf("    4.9 PP.1 -- A table is a multiset of rows\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("DELETE FROM TEMP_S;\n\n");
+EXEC SQL DELETE FROM TEMP_S;
+
+printf("INSERT INTO TEMP_S\n");
+printf("  SELECT EMPNUM, GRADE, CITY FROM STAFF;\n");
+EXEC SQL INSERT INTO TEMP_S
+  SELECT EMPNUM, GRADE, CITY FROM STAFF;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO TEMP_S\n");
+printf("  SELECT EMPNUM, GRADE, CITY FROM STAFF\n");
+printf("  WHERE GRADE = 12;\n");
+EXEC SQL INSERT INTO TEMP_S
+  SELECT EMPNUM, GRADE, CITY FROM STAFF
+  WHERE GRADE = 12;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14221 CURSOR FOR\n");
+printf("  SELECT GRADE FROM TEMP_S;\n\n");
+EXEC SQL DECLARE C14221 CURSOR FOR
+  SELECT GRADE FROM TEMP_S;
+
+printf("OPEN C14221;\n");
+EXEC SQL OPEN C14221;
+CHCKOK ();
+printf("\n");
+
+c10 = 0;
+c12 = 0;
+c13 = 0;
+cxx = 0;
+
+P101:
+int1 = -1;
+printf("FETCH C14221 INTO :int1;\n");
+EXEC SQL FETCH C14221 INTO :int1;
+if (SQLCODE != 0)
+  goto P102;
+printf ("int1 is %ld\n", int1);
+if (int1 == 10)
+  c10 = c10 + 1;
+if (int1 == 12)
+  c12 = c12 + 1;
+if (int1 == 13)
+  c13 = c13 + 1;
+if (int1 != 10 && int1 != 12 && int1 != 13)
+  cxx = cxx + 1;
+goto P101;
+
+P102:
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("Count of 10s should be 1; its value is %ld\n", c10);
+printf ("Count of 12s should be 4; its value is %ld\n", c12);
+printf ("Count of 13s should be 2; its value is %ld\n", c13);
+printf ("Count of others should be 0; its value is %ld\n\n", cxx);
+if (c10 != 1 || c12 != 4)
+  flag = 0;
+if (c13 != 2 || cxx != 0)
+  flag = 0;
+
+printf("CLOSE C14221;\n");
+EXEC SQL CLOSE C14221;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14222 CURSOR FOR\n");
+printf("  SELECT GRADE FROM TEMP_S ORDER BY GRADE;\n\n");
+EXEC SQL DECLARE C14222 CURSOR FOR
+  SELECT GRADE FROM TEMP_S ORDER BY GRADE;
+
+printf("OPEN C14222;\n");
+EXEC SQL OPEN C14222;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+printf("CLOSE C14222;\n");
+EXEC SQL CLOSE C14222;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14221;\n");
+EXEC SQL OPEN C14221;
+CHCKOK ();
+printf("\n");
+
+cxx = 4;
+P103:
+int1 = -1;
+printf("FETCH C14221 INTO :int1;\n");
+EXEC SQL FETCH C14221 INTO :int1;
+if (SQLCODE != 0)
+{
+  CHCKOK ();
+  printf("Skipping remainder of subtest.\n\n");
+  goto P104;
+}
+printf ("int1 is %ld\n", int1);
+if (int1 == 12)
+  goto P105;
+cxx = cxx - 1;
+if (cxx > 0)
+  goto P103;
+printf ("Error -- should have run into a grade 12 by now.\n");
+printf ("Skipping remainder of subtest.\n\n");
+goto P104;
+
+P105:
+printf("DELETE FROM TEMP_S WHERE CURRENT OF C14221;\n");
+EXEC SQL DELETE FROM TEMP_S WHERE CURRENT OF C14221;
+CHCKOK ();
+printf("\n");
+
+P104:
+printf("CLOSE C14221;\n");
+EXEC SQL CLOSE C14221;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14221;\n");
+EXEC SQL OPEN C14221;
+CHCKOK ();
+printf("\n");
+
+c10 = 0;
+c12 = 0;
+c13 = 0;
+cxx = 0;
+
+P106:
+int1 = -1;
+printf("FETCH C14221 INTO :int1;\n");
+EXEC SQL FETCH C14221 INTO :int1;
+if (SQLCODE != 0)
+  goto P107;
+printf ("int1 is %ld\n", int1);
+if (int1 == 10)
+  c10 = c10 + 1;
+if (int1 == 12)
+  c12 = c12 + 1;
+if (int1 == 13)
+  c13 = c13 + 1;
+if (int1 != 10 && int1 != 12 && int1 != 13)
+  cxx = cxx + 1;
+goto P106;
+
+P107:
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("Count of 10s should be 1; its value is %ld\n", c10);
+printf ("Count of 12s should be 3; its value is %ld\n", c12);
+printf ("Count of 13s should be 2; its value is %ld\n", c13);
+printf ("Count of others should be 0; its value is %ld\n\n", cxx);
+if (c10 != 1 || c12 != 3)
+  flag = 0;
+if (c13 != 2 || cxx != 0)
+  flag = 0;
+
+printf("CLOSE C14221;\n");
+EXEC SQL CLOSE C14221;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14222;\n");
+EXEC SQL OPEN C14222;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+printf("CLOSE C14222;\n");
+EXEC SQL CLOSE C14222;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14221;\n");
+EXEC SQL OPEN C14221;
+CHCKOK ();
+printf("\n");
+
+cxx = 4;
+P108:
+int1 = -1;
+printf("FETCH C14221 INTO :int1;\n");
+EXEC SQL FETCH C14221 INTO :int1;
+if (SQLCODE != 0)
+{
+  CHCKOK ();
+  printf("Skipping remainder of subtest.\n\n");
+  goto P109;
+}
+printf ("int1 is %ld\n", int1);
+if (int1 == 12)
+  goto P110;
+cxx = cxx - 1;
+if (cxx > 0)
+  goto P108;
+printf ("Error -- should have run into a grade 12 by now.\n");
+printf ("Skipping remainder of subtest.\n\n");
+goto P109;
+
+P110:
+printf("UPDATE TEMP_S SET GRADE = 13 WHERE CURRENT OF C14221;\n");
+EXEC SQL UPDATE TEMP_S SET GRADE = 13 WHERE CURRENT OF C14221;
+CHCKOK ();
+printf("\n");
+
+P109:
+printf("CLOSE C14221;\n");
+EXEC SQL CLOSE C14221;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14221;\n");
+EXEC SQL OPEN C14221;
+CHCKOK ();
+printf("\n");
+
+c10 = 0;
+c12 = 0;
+c13 = 0;
+cxx = 0;
+
+P111:
+int1 = -1;
+printf("FETCH C14221 INTO :int1;\n");
+EXEC SQL FETCH C14221 INTO :int1;
+if (SQLCODE != 0)
+  goto P112;
+printf ("int1 is %ld\n", int1);
+if (int1 == 10)
+  c10 = c10 + 1;
+if (int1 == 12)
+  c12 = c12 + 1;
+if (int1 == 13)
+  c13 = c13 + 1;
+if (int1 != 10 && int1 != 12 && int1 != 13)
+  cxx = cxx + 1;
+goto P111;
+
+P112:
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("Count of 10s should be 1; its value is %ld\n", c10);
+printf ("Count of 12s should be 2; its value is %ld\n", c12);
+printf ("Count of 13s should be 3; its value is %ld\n", c13);
+printf ("Count of others should be 0; its value is %ld\n\n", cxx);
+if (c10 != 1 || c12 != 2)
+  flag = 0;
+if (c13 != 3 || cxx != 0)
+  flag = 0;
+
+printf("CLOSE C14221;\n");
+EXEC SQL CLOSE C14221;
+CHCKOK ();
+printf("\n");
+
+printf("OPEN C14222;\n");
+EXEC SQL OPEN C14222;
+CHCKOK ();
+printf("\n");
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 12; its value is %ld\n\n", int1);
+if (int1 != 12)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+int1 = -1;
+printf("FETCH C14222 INTO :int1;\n");
+EXEC SQL FETCH C14222 INTO :int1;
+CHCKOK ();
+printf ("int1 should be 13; its value is %ld\n\n", int1);
+if (int1 != 13)
+  flag = 0;
+
+printf("CLOSE C14222;\n");
+EXEC SQL CLOSE C14222;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0528','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml142.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0528','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0528 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

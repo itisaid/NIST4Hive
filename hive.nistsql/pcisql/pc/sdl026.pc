@@ -1,0 +1,137 @@
+/*  EMBEDDED C (file "SDL026.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/06/26 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SDL026.PC                                                    */
+/*  WRITTEN BY: S HURWITZ                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS 18 CHARACTER LENGTH FOR AN IDENTIFIER   */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                          Section 5.3 SR 3)                    */
+/*                          FIPS 127-1                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char     make18byadding12ch[5];
+     char     tobe18byadding12ch[5];
+     short indic1byadding12ch;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long      ct;
+
+
+main()
+{
+     strcpy(uid,"CANWEPARSELENGTH18");      
+     AUTHID(uid);           
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sdl026.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+     printf("===============================================\n\n");
+
+     printf("                  TEST0237       \n");
+     printf("    Tests 18 character length for an identifier  \n");
+     printf("    Reference X3.135-89 section 5.3 3); 5.4  \n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("*** CREATE SCHEMA AUTHORIZATION CANWEPARSELENGTH18 \n");
+     printf("*** CREATE TABLE CHARACTER18TABLE18  \n");
+     printf("***        (CHARS18NAME18CHARX CHAR(4)  \n");
+     printf("***         CHARS18NAME18CHARS CHAR(4))   \n");
+     printf("***CREATE VIEW CHARACTERS18VIEW18(LONGNAME18LONGNAME) \n");
+     printf("***        AS SELECT CHARS18NAME18CHARS   \n");
+     printf("***        FROM CHARACTER18TABLE18         \n");
+     printf("***        WHERE CHARS18NAME18CHARS <> 'long';  \n");
+     ct = 0;
+     indic1byadding12ch = 99;
+
+     EXEC SQL DELETE FROM CHARACTER18TABLE18;
+     EXEC SQL INSERT INTO CHARACTERS18VIEW18 (LONGNAME18LONGNAME)
+              VALUES ('VALU');
+     EXEC SQL COMMIT WORK;
+     EXEC SQL UPDATE CHARACTER18TABLE18 SET CHARS18NAME18CHARS = 
+              'VAL4' WHERE CHARS18NAME18CHARS = 'VALU';
+     EXEC SQL COMMIT WORK;
+     EXEC SQL SELECT * INTO 
+              :make18byadding12ch :indic1byadding12ch  FROM
+              CANWEPARSELENGTH18.CHARACTERS18VIEW18;
+     EXEC SQL DECLARE CURSOR18LONGCURSOR CURSOR FOR
+              SELECT CORRELATIONNAMES18.CHARS18NAME18CHARS
+              FROM CHARACTER18TABLE18 CORRELATIONNAMES18
+              WHERE CORRELATIONNAMES18.CHARS18NAME18CHARS 
+              = 'VAL4';
+
+    EXEC SQL OPEN CURSOR18LONGCURSOR;
+    EXEC SQL FETCH CURSOR18LONGCURSOR INTO
+              :tobe18byadding12ch :indic1byadding12ch;
+    EXEC SQL CLOSE CURSOR18LONGCURSOR;
+    
+    EXEC SQL DELETE FROM CHARACTER18TABLE18;
+
+ printf("\n *** tobe18byadding12ch & make18byadding12ch \n");
+ printf("\n *** should both be VAL4 & indic1byadding12ch = 0 \n");
+ printf("\n  tobe18byadding12ch = %s \n", tobe18byadding12ch);
+ printf("\n  make18byadding12ch = %s \n", make18byadding12ch);
+ printf("\n  indic1byadding12ch = %d \n", indic1byadding12ch);
+
+     if ( strncmp(tobe18byadding12ch,"VAL4",4) == 0 )  
+        ct = 1;
+     if(strncmp(make18byadding12ch,"VAL4",4) == 0 && indic1byadding12ch == 0) 
+        ct = ct + 1;
+     if ( ct == 2)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0237','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       sdl026.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0237','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+     exit(errcnt);
+}

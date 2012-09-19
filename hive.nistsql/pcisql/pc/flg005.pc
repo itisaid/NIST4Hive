@@ -1,0 +1,162 @@
+/*  EMBEDDED C (file "FLG005.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/11/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLG005.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE IS AN OPPORTUNITY FOR THE VERDOR TO           */
+/*                                                               */
+/*  DEMONSTRATE THE FIPS FLAGGER. THE VENDOR SHOULD SUPPLY       */
+/*                                                               */
+/*  A CHARACTER EXTENSION AND AN INTEGER FUNCTION EXTENSION      */
+/*                                                               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        long cnt;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, flg005.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+
+/******************** BEGIN TEST0296 ********************/
+
+    printf("     Vendor provided charater function\n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0296     \n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("         SELECT COUNT(*) \n");
+printf("         INTO :cnt FROM STAFF\n");
+printf("         WHERE SUBSTR(EMPNAME,1,3) = 'Ali';\n");
+printf("\n");
+printf(" If the vendor does not pass this test, as written,\n");
+printf(" the vendor should replace the SUBSTR(....) syntax\n");
+printf(" below with a vendor extension which selects exactly\n");
+printf(" one row.\n");
+cnt = -1;
+EXEC SQL SELECT COUNT(*) 
+         INTO :cnt FROM STAFF
+         WHERE SUBSTR(EMPNAME,1,3) = 'Ali';
+printf(" The correct answer is :\n");
+printf("          cnt = 1\n");
+printf(" Your answer is :\n");
+
+printf("        cnt = %ld\n",cnt);
+if (cnt == 1)
+      {
+      printf("Implementor-defined character function executed.\n");
+      printf("Vendor must demonstrate FIPS flagger WARNING.\n");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0296','pass','PC');
+      }
+    else
+      {
+      printf("\n     flg005.pc  *** fail *** ");
+      printf("Vendor must provide character function extension.\n");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0296','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0296 ********************/
+
+
+/******************** BEGIN TEST0297 ********************/
+
+    printf("     Vendor provided integer function\n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0297     \n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("         SELECT COUNT(*) \n");
+printf("         INTO :cnt FROM STAFF\n");
+printf("         WHERE ABS(GRADE) = 12;\n");
+printf("\n");
+printf(" If the vendor does not pass this test, as written,\n");
+printf(" the vendor should replace the ABS(....) syntax\n");
+printf(" below with a vendor extension which selects two rows.\n");
+cnt = -1;
+EXEC SQL UPDATE STAFF
+         SET GRADE = -GRADE;
+
+EXEC SQL SELECT COUNT(*) 
+         INTO :cnt FROM STAFF
+         WHERE ABS(GRADE) = 12;
+EXEC SQL ROLLBACK WORK;
+printf(" The correct answer is :\n");
+printf("          cnt = 2\n");
+printf(" Your answer is :\n");
+
+printf("        cnt = %ld\n",cnt);
+if (cnt == 2)
+      {
+      printf("Implementor-defined integer function executed.\n");
+      printf("Vendor must demonstrate FIPS flagger WARNING.\n");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0297','pass','PC');
+      }
+    else
+      {
+      printf("\n     flg005.pc  *** fail *** \n");
+      printf("Vendor must provide integer function extension.\n");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0297','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0297 ********************/
+
+
+
+exit(errcnt);
+}
+
+

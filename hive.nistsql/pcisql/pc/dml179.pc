@@ -1,0 +1,409 @@
+/*  EMBEDDED C (file "DML179.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1996-05-15 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                          */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML179.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests Intermediate SQL.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.2 Intermediate SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char longst[4001];
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml179.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0892 ********************/
+flag = 1;
+
+     printf("              FIPS sizing TEST0892\n");
+     printf("FIPS sizing, rowlen >= 8000, statement var >= 4000\n");
+     printf("References:\n");
+     printf("  FIPS 16.6 -- Sizing #27, Length of a row\n");
+     printf("  FIPS 16.6 -- Sizing #44, Length of <SQL statement variable>\n");
+     printf("  FIPS 16.6 -- Sizing #3, CHARACTER VARYING max length\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* twice the number of columns   18 */
+/* length of char strings    7978 */
+/* decimal precision plus 1 of each exact numeric column  4 */
+
+printf("CREATE TABLE T0892 (\n");
+printf("  INTKEY NUMERIC (3) PRIMARY KEY,\n");
+printf("  NAAM VARCHAR (1000),\n");
+printf("  ADDRESS VARCHAR (1000),\n");
+printf("  KEYWORDS VARCHAR (1000),\n");
+printf("  FUNCTION1 VARCHAR (1000),\n");
+printf("  FUNCTION2 VARCHAR (1000),\n");
+printf("  DESCRIPT1 VARCHAR (1000),\n");
+printf("  DESCRIPT2 VARCHAR (1000),\n");
+printf("  DESCRIPT3 VARCHAR (978));\n");
+EXEC SQL CREATE TABLE T0892 (
+  INTKEY NUMERIC (3) PRIMARY KEY,
+  NAAM VARCHAR (1000),
+  ADDRESS VARCHAR (1000),
+  KEYWORDS VARCHAR (1000),
+  FUNCTION1 VARCHAR (1000),
+  FUNCTION2 VARCHAR (1000),
+  DESCRIPT1 VARCHAR (1000),
+  DESCRIPT2 VARCHAR (1000),
+  DESCRIPT3 VARCHAR (978));
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+/* use host language continuation */
+
+strcpy (longst, 
+"INSERT INTO T0892 (INTKEY, NAAM, ADDRESS, KEYWORDS, DESCRIPT3) VALUES (\
+0, \
+'John                                                               \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                            Smith', \
+'1313 Osprey Alley                                                  \
+                                                                    \
+                                                                    \
+Box 35B Sector 28 Quadrant 3                                        \
+                                                                    \
+                                                                    \
+                                                                    \
+Rural Route 29837-39234234324-XRZ                                   \
+                                                                    \
+                                                                    \
+                                                                    \
+Beverly Hills, CA                                                   \
+                                                                    \
+                                                                    \
+                                            90210', \
+'aardvark osprey          metrology                                 \
+                                                                    \
+                                                                    \
+synthetic             SQL RDA PDP                                   \
+                                                                    \
+          antelope gnu yak bison quadruped cattle                   \
+                                                                    \
+           CORBA IDL       Amsterdam                                \
+                                                                    \
+                                                                    \
+                                                                    \
+production  crystal growth                                          \
+                                                                    \
+                                                                    \
+                                          gravity', \
+'filler filler filler blah blah blah                                \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                    \
+                                                                 \
+this is going to be overwritten')");
+
+printf ("The SQL statement variable longst contains a 4000-char statement:\n");
+printf ("%s\n\n", longst);
+
+printf("EXECUTE IMMEDIATE :longst;\n");
+EXEC SQL EXECUTE IMMEDIATE :longst;
+CHCKOK ();
+printf ("\n");
+
+printf("UPDATE T0892\n");
+printf("  SET FUNCTION1 =\n");
+printf("'Harry works in the Redundancy Automation Division of the '\n");
+printf("'Materials '\n");
+printf("'Blasting Laboratory in the National Cattle Acceleration '\n");
+printf("'Project of '\n");
+printf("'lower Michigan.  His job is to document the trajectory of '\n");
+printf("'cattle and '\n");
+printf("'correlate the loft and acceleration versus the quality of '\n");
+printf("'materials '\n");
+printf("'used in the trebuchet.  He served ten years as the '\n");
+printf("'vice-president in '\n");
+printf("'charge of marketing in the now defunct milk trust of the '\n");
+printf("'Pennsylvania '\n");
+printf("'Coalition of All Things Bovine.  Prior to that he '\n");
+printf("'established himself '\n");
+printf("'as a world-class graffiti artist and source of all good '\n");
+printf("'bits related '\n");
+printf("'to channel dredging in poor weather.  He is author of over '\n");
+printf("'ten thousand '\n");
+printf("'paperback novels, including such titles as \"How Many '\n");
+printf("'Pumpkins will Fit '\n");
+printf("'on the Head of a Pin,\" \"A Whole Bunch of Useless Things '\n");
+printf("'that you Don''t '\n");
+printf("'Want to Know,\" and \"How to Lift Heavy Things Over your '\n");
+printf("'Head without '\n");
+printf("'Hurting Yourself or Dropping Them.\"  He attends ANSI and '\n");
+printf("'ISO standards '\n");
+printf("'meetings in his copious free time and funds the development '\n");
+printf("'of test '\n");
+printf("'suites with his pocket change.'\n");
+printf("  WHERE INTKEY = 0;\n");
+EXEC SQL UPDATE T0892
+  SET FUNCTION1 =
+'Harry works in the Redundancy Automation Division of the '
+'Materials '
+'Blasting Laboratory in the National Cattle Acceleration '
+'Project of '
+'lower Michigan.  His job is to document the trajectory of '
+'cattle and '
+'correlate the loft and acceleration versus the quality of '
+'materials '
+'used in the trebuchet.  He served ten years as the '
+'vice-president in '
+'charge of marketing in the now defunct milk trust of the '
+'Pennsylvania '
+'Coalition of All Things Bovine.  Prior to that he '
+'established himself '
+'as a world-class graffiti artist and source of all good '
+'bits related '
+'to channel dredging in poor weather.  He is author of over '
+'ten thousand '
+'paperback novels, including such titles as "How Many '
+'Pumpkins will Fit '
+'on the Head of a Pin," "A Whole Bunch of Useless Things '
+'that you Don''t '
+'Want to Know," and "How to Lift Heavy Things Over your '
+'Head without '
+'Hurting Yourself or Dropping Them."  He attends ANSI and '
+'ISO standards '
+'meetings in his copious free time and funds the development '
+'of test '
+'suites with his pocket change.'
+  WHERE INTKEY = 0;
+CHCKOK ();
+printf ("\n");
+
+printf("UPDATE T0892\n");
+printf("  SET FUNCTION2 = FUNCTION1,\n");
+printf("  DESCRIPT1 = FUNCTION1,\n");
+printf("  DESCRIPT2 = FUNCTION1,\n");
+printf("  DESCRIPT3 = SUBSTRING (FUNCTION1 FROM 1 FOR 978);\n");
+EXEC SQL UPDATE T0892
+  SET FUNCTION2 = FUNCTION1,
+  DESCRIPT1 = FUNCTION1,
+  DESCRIPT2 = FUNCTION1,
+  DESCRIPT3 = SUBSTRING (FUNCTION1 FROM 1 FOR 978);
+CHCKOK ();
+printf ("\n");
+
+int1 = 0;
+printf("SELECT CHAR_LENGTH (NAAM) +\n");
+printf("                CHAR_LENGTH (ADDRESS) +\n");
+printf("                CHAR_LENGTH (KEYWORDS) +\n");
+printf("                CHAR_LENGTH (FUNCTION1) +\n");
+printf("                CHAR_LENGTH (FUNCTION2) +\n");
+printf("                CHAR_LENGTH (DESCRIPT1) +\n");
+printf("                CHAR_LENGTH (DESCRIPT2) +\n");
+printf("                CHAR_LENGTH (DESCRIPT3) + 22\n");
+printf("  INTO :int1\n");
+printf("  FROM T0892\n");
+printf("  WHERE INTKEY = 0;\n");
+EXEC SQL SELECT CHAR_LENGTH (NAAM) +
+                CHAR_LENGTH (ADDRESS) +
+                CHAR_LENGTH (KEYWORDS) +
+                CHAR_LENGTH (FUNCTION1) +
+                CHAR_LENGTH (FUNCTION2) +
+                CHAR_LENGTH (DESCRIPT1) +
+                CHAR_LENGTH (DESCRIPT2) +
+                CHAR_LENGTH (DESCRIPT3) + 22
+  INTO :int1
+  FROM T0892
+  WHERE INTKEY = 0;
+CHCKOK ();
+printf ("int1 should be 8000; its value is %ld\n\n", int1);
+if (int1 != 8000)
+  flag = 0;
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+printf("DROP TABLE T0892 CASCADE;\n");
+EXEC SQL DROP TABLE T0892 CASCADE;
+CHCKOK ();
+printf ("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf ("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0892','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml179.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0892','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0892 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

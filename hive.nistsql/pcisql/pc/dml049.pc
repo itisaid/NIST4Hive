@@ -1,0 +1,173 @@
+/*  EMBEDDED C (file "DML049.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/09 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML049.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*     THIS ROUTINE TESTS THE LIMIT ON THE NUMBER OF TABLES      */
+/*  DIRECTLY OR INDIRECTLY REFERENCED IN A STATEMENT. THIS LIMIT */
+/*  IS NOT LESS THAN TEN(10).                                    */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char PNO1[4];
+          char PNO2[4];
+          char COLUM2[3];
+          char EMPNO1[4];
+          char CITY1[16];
+          long HOURS1;
+          long HOURS2;
+          long GRADE1;
+          long GRADE2;
+          long GRADE4;
+
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+  long  i;
+  long  ii;
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml049.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0225 ********************/
+
+     printf("\n        FIPS sizing TEST0225             \n");
+     printf("     Number of tables (10) directly \n");
+     printf("       referenced in a statement \n");          
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL INSERT INTO TEMP_S
+             SELECT EMPNUM,GRADE,CITY
+             FROM STAFF
+             WHERE GRADE > 11;
+
+     EXEC SQL INSERT INTO STAFF1
+             SELECT *
+             FROM STAFF; 
+
+      EXEC SQL INSERT INTO WORKS1
+             SELECT *
+             FROM WORKS;
+
+     EXEC SQL INSERT INTO STAFF4
+             SELECT *
+             FROM STAFF;
+
+     EXEC SQL INSERT INTO PROJ1
+             SELECT *
+             FROM PROJ;
+
+     EXEC SQL DECLARE TEN CURSOR
+             FOR SELECT STAFF.EMPNUM,PROJ.PNUM,WORKS.HOURS,
+                        STAFF3.GRADE,STAFF4.CITY,WORKS1.HOURS,
+                        TEMP_S.GRADE,PROJ1.PNUM,STAFF1.GRADE,
+                        UPUNIQ.COL2
+                 FROM   STAFF,PROJ,WORKS,STAFF3,STAFF4,WORKS1,
+                        TEMP_S,PROJ1,STAFF1,UPUNIQ
+                 WHERE  STAFF.EMPNUM = WORKS.EMPNUM    AND
+                        PROJ.PNUM = WORKS.PNUM         AND
+                        STAFF3.EMPNUM = WORKS.EMPNUM   AND
+                        STAFF4.EMPNUM = WORKS.EMPNUM   AND
+                        WORKS1.EMPNUM = WORKS.EMPNUM   AND
+                        WORKS1.PNUM = WORKS.PNUM       AND
+                        TEMP_S.EMPNUM = WORKS.EMPNUM   AND
+                        PROJ1.PNUM = WORKS.PNUM        AND
+                        STAFF1.EMPNUM = WORKS.EMPNUM   AND
+                        UPUNIQ.COL2 = 'A'
+                 ORDER BY 1, 2;
+
+     EXEC SQL OPEN TEN;
+
+     i = 0;
+
+     for (ii=1;ii<25;ii++)
+     
+     {
+     EXEC SQL FETCH TEN INTO :EMPNO1,:PNO1,:HOURS1,:GRADE1,:CITY1,:HOURS2,
+                             :GRADE2,:PNO2,:GRADE4,:COLUM2;
+     
+     if (SQLCODE == 0) 
+         {
+            i = i + 1;
+    
+     printf("EMPNO1 = %s, PNO1 = %s, HOURS1 = %ld \n", EMPNO1, PNO1, HOURS1);
+     printf("GRADE1 = %ld, CITY1 = %s, HOURS2 = %ld\n", GRADE1,CITY1,HOURS2);
+     printf("GRADE2 = %ld, PNO2 = %s, GRADE4 = %ld\n",GRADE2,PNO2,GRADE4);
+     printf("COLUM2 = %s, SQLCODE = %ld \n", COLUM2, SQLCODE);
+         }
+     }
+  
+     printf("i = %ld \n", i);
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (i == 10  && HOURS1 == 80 && GRADE1 == 12)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0225','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0225','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       dml049.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+     printf("\n\n\n\n");
+                         
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0225 ********************/
+
+  exit(errcnt);
+}
+

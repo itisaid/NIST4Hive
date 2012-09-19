@@ -1,0 +1,216 @@
+/*  EMBEDDED C (file "DML006.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML006.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE DELETE STATEMENT IN THE LANGUAGE OF */
+/*  SQL.  THE FORMAT:                                            */
+/*                   DELETE FROM <table name>                    */
+/*                   WHERE  CURRENT OF <cursor name>             */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                     SECTION 8.1 <close statement>             */
+/*                     SECTION 8.3 <declare cursor>              */
+/*                     SECTION 8.4 <delete statement: positioned */
+/*                     SECTION 8.7 <insert statement>            */
+/*                     SECTION 8.8 <open statement>              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          char PNO1[4];
+          char EMPNO1[4];
+          long HOURS1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long  i;
+          long  ii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml006.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0012 ********************/
+
+     printf("\n                 TEST0012      \n");
+     printf("        delete an unexist record \n");
+     printf("reference X3.135-1989 section 8.4 General Rules 1)\n");
+     printf("    - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+     EXEC SQL DECLARE X CURSOR
+          FOR SELECT EMPNUM,PNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P8';
+     
+     EXEC SQL OPEN X;
+
+     EXEC SQL FETCH X INTO :EMPNO1,:PNO1,:HOURS1;
+     ii = SQLCODE;
+
+     EXEC SQL DELETE FROM WORKS
+          WHERE CURRENT OF X;
+
+     printf("\n\n ii = %ld,    sqlcode=%ld \n", ii, SQLCODE);
+     printf("\nThe answer should be (ii = 100 and) sqlcode < 0.");
+     if (SQLCODE < 0)
+       {
+       printf("\n\n                 *** pass *** \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0012','pass','PC');
+       }
+     else
+       {
+       printf("\n\n       dml006.pc  *** fail *** \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0012','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL CLOSE X;
+     printf("===================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0012 ********************/
+
+/******************** BEGIN TEST0163 ********************/
+
+     printf("\n                    TEST0163      \n");
+     printf("       delete a record without positioning \n");
+     printf("reference X3.135-1989 section 8.4 GR1 & 8.8 GR3c\n");
+     printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+
+     EXEC SQL DECLARE XX CURSOR
+          FOR SELECT EMPNUM,PNUM,HOURS
+              FROM   WORKS
+              WHERE  PNUM='P5';
+     
+     EXEC SQL OPEN XX;
+
+     EXEC SQL DELETE FROM WORKS
+          WHERE CURRENT OF XX;
+
+     printf("\n\n                  sqlcode=%ld \n",SQLCODE);
+     printf("\nThe answer should be sqlcode < 0.");
+     if (SQLCODE < 0)
+       {
+       printf("\n\n                 *** pass *** \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0163','pass','PC');
+       }
+     else
+       {
+       printf("\n\n       dml006.pc  *** fail *** \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0163','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     EXEC SQL CLOSE XX;
+     printf("===================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0163 ********************/
+
+/******************** BEGIN TEST0013 ********************/
+
+     printf("\n                 TEST0013      \n");
+     printf("          delete an exist record \n");
+     printf("reference X3.135-1989 section 8.4 General Rules 2)\n");
+     printf("    - - - - - - - - - - - - - - - - - - - - - \n\n");
+     EXEC SQL INSERT INTO WORKS VALUES('E8','P8',90);
+
+     EXEC SQL DECLARE Y CURSOR
+          FOR SELECT *
+              FROM   WORKS
+              WHERE  PNUM='P8';
+     
+     EXEC SQL OPEN Y;
+
+     EXEC SQL FETCH Y INTO :EMPNO1,:PNO1,:HOURS1;
+
+     printf("\n\n    EMPNO1=%s, PNO1=%s and HOURS1=%ld",EMPNO1,PNO1,HOURS1);
+
+     EXEC SQL DELETE FROM WORKS
+          WHERE CURRENT OF Y;
+
+     i = SQLCODE;
+     EXEC SQL CLOSE Y;
+     
+     EXEC SQL OPEN Y;
+
+     EXEC SQL FETCH Y INTO :EMPNO1,:PNO1,:HOURS1;
+
+     ii = SQLCODE;
+
+     printf("\n");
+     printf("     sqlcode=%ld, i=%ld \n\n",SQLCODE,i);
+     printf("The answer should be sqlcode=100 & i = 0.");
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (ii == 100 && i == 0)
+       {
+       printf("\n\n                    *** pass ***  \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0013','pass','PC');
+       }
+     else
+       {
+       printf("\n\n          dml006.pc  *** fail ***  \n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0013','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     printf("\n==================================================");
+
+     printf("\n\n\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0013 ********************/
+
+     exit(errcnt);
+}

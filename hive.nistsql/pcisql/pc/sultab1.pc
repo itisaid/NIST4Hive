@@ -1,0 +1,91 @@
+/*  EMBEDDED C (file "SULTAB1.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SULTAB1.PC                                                   */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*   This routine initializes the contents of tables:            */
+/*        WORKS_P, and TTT                                       */
+/*   This routine may be run at any time to re-initialize tables.*/
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     long count1;
+     long count2;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+strcpy(uid,"SULLIVAN");
+AUTHID(uid);
+
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, sultab1.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+EXEC SQL DELETE FROM WORKS_P;
+EXEC SQL DELETE FROM TTT;
+count1 = -1;
+count2 = -1;
+
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E1','P1',40);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E1','P2',20);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E1','P3',80);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E1','P4',20);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E1','P5',12);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E1','P6',12);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E2','P1',40);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E2','P2',80);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E3','P2',20);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E4','P2',20);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E4','P4',40);
+EXEC SQL INSERT INTO WORKS_P VALUES  ('E4','P5',80);
+
+EXEC SQL INSERT INTO TTT VALUES (1,'AAA');
+
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM WORKS_P;
+EXEC SQL SELECT COUNT(*) INTO :count2 FROM TTT;
+
+EXEC SQL COMMIT WORK;
+if (count1 == 12 && count2 == 1)
+  {
+  printf("WORKS_P and TTT were created successfully!\n");
+  }
+else
+  {
+    printf("*****************************************\n");
+    printf("*  WORKS_P or TTT ERROR !!!             *\n");
+    printf("*****************************************\n");
+  }
+
+
+exit(errcnt);
+}
+

@@ -1,0 +1,284 @@
+/*  EMBEDDED C (file "MPA002.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/12/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  MPA002.PC                                                    */
+/*  WRITTEN BY: J Sullivan                                       */
+/*                                                               */
+/*  THIS PROGRAM IS PART A OF A TWO-PART PROGRAM(A & B) THAT     */
+/*  TESTS THE CONCURRENCY OF SQL                                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*           SECTION  4.16 Transactions                          */
+/*                    Paragraph Two                              */
+/*****************************************************************/
+
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+   long dol1;
+   long dol500;
+   long dollar;
+   long keyval;
+   long    i;
+   char uid[19];
+   char uidx[19];
+EXEC SQL END DECLARE SECTION;
+   long SQLCODE;
+   int errcnt;
+/* date_time declaration */
+time_t cal;
+   long iserr;
+   long pauze;
+   long tranct;
+   long code1;
+   long olddol;
+   long doldif;
+   long concur;
+
+main()
+{
+
+strcpy(uid,"SULLIVAN1");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,9) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, mpa002.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/* concurrency tuning variables follow: */
+   pauze = 11;
+   tranct = 15;
+
+   EXEC SQL COMMIT WORK;
+
+/******************** BEGIN TEST0231 ********************/
+
+printf("\n                TEST0231 \n");
+printf(" Reference X3.135-1989 Section 4.16 Transactions      \n");
+printf("              Paragraph Two  -  Serializability       \n");
+printf(" SELECT into host variable and then\n");
+printf(" UPDATE with recomputed host variable\n");
+printf(" e.g.    SELECT DOLLARS INTO :dol1  ... \n");
+printf("        dol1 = dol1 + 10               \n");
+printf("        UPDATE ... SET DOLLARS = :dol1  ...\n");
+printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+printf (" *** This program is part A of a two-part             \n");
+printf (" *** program (A & B) that tests for the concurrency   \n");
+printf (" *** of SQL.  Program A inserts 1000 rows into  \n");
+printf (" *** a table and waits for Program B.                 \n\n");
+ 
+printf (" This is Program A which starts first and waits.... \n\n");
+ 
+/*                       -----Initialization----- */
+P100:
+   code1 = 0;
+   EXEC SQL DELETE FROM MP2_NEXTKEY;
+   if (SQLCODE < 0) 
+        code1 = 1;
+   keyval = 1;
+P101:
+   EXEC SQL INSERT
+   INTO MP2_NEXTKEY (KEYNUM,AUTHOR,DOLLARS)
+      VALUES (:keyval,'A',500);
+   if (SQLCODE != 0)
+        code1 = 1;
+   keyval = keyval + 1;
+   if (keyval < 1001)
+        goto P101;
+      
+   printf ("1000 rows inserted into MP2_NEXTKEY      \n\n");
+
+   dollar = 0;
+   EXEC SQL SELECT SUM(DOLLARS) INTO :dollar
+      FROM MP2_NEXTKEY
+      WHERE KEYNUM = 1  OR  KEYNUM = 500  OR KEYNUM = 999;
+   printf("MPA002:  sum of accounts 1, 500, and 999 starts at $%ld\n",dollar);
+   printf("sum should be $1500 initially \n\n");
+
+   EXEC SQL COMMIT WORK;
+   if (SQLCODE != 0)
+        code1 = 1;
+   if (code1 == 1)
+      {
+        printf(" Cannot initialize MP2_NEXTKEY\n");
+        goto P100;
+      }
+   printf("MPA002:  account 1 has $500 and account 500 has $500\n");
+
+/*                       -----Synchronization----- */
+P102:
+
+   /* pause a little */
+   EXEC SQL DELETE FROM MP2_NN;
+   i = 1;
+P103:
+   EXEC SQL INSERT INTO MP2_NN VALUES (:i);
+   i = i + 1;
+   if (i < pauze)
+       goto P103;
+  /* end of pause */
+
+  /* are we in sync? */
+   dollar = 0;
+   EXEC SQL SELECT DOLLARS
+     INTO :dollar
+     FROM MP2_NEXTKEY WHERE KEYNUM = 999;
+
+   EXEC SQL COMMIT WORK;
+
+   if (dollar == 500)
+      {       
+        printf("   PLEASE start program MPB002!!!   \n\n");
+        goto P102;
+      }  
+
+   /* YES, we are in sync! */
+   doldif = 0;
+   concur = 0;
+   olddol = 500;
+   i = 0;
+
+/*            -----Concurrent Transaction Loop----- */
+P120:
+   iserr = 0;
+   dol1 = 0;
+   dol500 = 0;
+      /* start record lock */
+   EXEC SQL SELECT DOLLARS INTO :dol500
+      FROM MP2_NEXTKEY  WHERE KEYNUM = 500;
+   if (SQLCODE != 0)
+      {
+         iserr = 1;
+         goto P901;
+      }
+   EXEC SQL SELECT DOLLARS INTO :dol1
+      FROM MP2_NEXTKEY  WHERE KEYNUM = 1;
+   if (SQLCODE != 0)
+      {
+         iserr = 1;
+         goto P901;
+      }
+
+   dol500 = dol500 - 5;
+   dol1   = dol1   + 5;
+
+   EXEC SQL UPDATE MP2_NEXTKEY
+      SET DOLLARS = :dol1    WHERE KEYNUM = 1;
+   if (SQLCODE != 0)
+      {
+         iserr = 1;
+         goto P901;
+      }
+   EXEC SQL UPDATE MP2_NEXTKEY
+      SET DOLLARS = :dol500  WHERE KEYNUM = 500;
+   if (SQLCODE != 0)
+      {
+         iserr = 1;
+         goto P901;
+      }
+P901:
+   if (iserr == 0)
+      {
+         EXEC SQL COMMIT WORK;
+   printf("MPA002:  account 1 has $%ld and account 500 has $%ld\n",dol1,dol500);
+         doldif = olddol - dol500;
+         olddol = dol500;
+      }
+   if (iserr == 1 || SQLCODE != 0)
+      {
+         iserr = 1;
+         EXEC SQL ROLLBACK WORK;
+         tranct = tranct + 1;
+         printf("ROLLBACK due to nonzero SQLCODE (Deadlock?)\n");
+      }
+   if (iserr == 0 && doldif > 5)
+      {
+         concur = concur + 1;
+         printf("     *** A interleaved #%ld ***\n",concur);
+      }
+      /* end record lock */
+   i = i + 1;
+   if (i < tranct)
+      goto P120;
+
+/*                           -----Evaluation----- */
+P130:
+   dollar = 0;
+   EXEC SQL SELECT SUM(DOLLARS) INTO :dollar
+      FROM MP2_NEXTKEY
+      WHERE KEYNUM = 1  OR  KEYNUM = 500  OR KEYNUM = 999;
+   if (SQLCODE != 0)
+      {
+        printf("\n Cannot select for MP2_NEXTKEY");
+        goto P130;
+      }
+   printf("\n MPA002:  sum of accounts 1, 500, and 999 = $%ld\n",dollar);
+   printf("\n          sum should be $1500 after transferring money");
+   EXEC SQL COMMIT WORK;
+
+   if (concur < 3 && dollar == 1500)
+      {
+        printf("\n Insufficient interleaving to demonstrate concurrency!");
+        printf("\n Using TEd, decrease variable pauze to start");
+        printf("\n MPA002 sooner or increase value of variable tranct");
+        printf("\n in both MPA002 and MPB002 to lengthen test.");
+        printf("\n  Then RERUN!");
+        goto P140;
+      }
+
+   if ( dollar == 1500)
+      {
+        printf("\n\nmpa002.pc:        *** pass *** ");
+        EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0231','pass','PC');
+      }
+   else
+      {
+        printf("\n\nmpa002.pc:        *** fail *** ");
+        EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0231','fail','PC');
+        errcnt = errcnt + 1;
+      }
+
+P140:
+   printf("\n\n");
+   printf("====================================================\n\n");
+ 
+   EXEC SQL COMMIT WORK;
+
+/******************** END TEST0231 ********************/
+
+
+exit(errcnt);
+
+}

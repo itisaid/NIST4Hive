@@ -1,0 +1,309 @@
+/*  EMBEDDED C (file " XTS766.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS766.PC                                                   */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  Drop character set no granted privileges                     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    11.29   -- <Drop character set statement>                  */
+/*    TC#1    11.29                                              */
+/*    11.29   AR.1                                               */
+/*    11.29   SR.3                                               */
+/*    21.2.12 -- USAGE_PRIVILEGES view                           */ 
+/*    21.3.22 -- USAGE_PRIVILEGES base table                     */
+/*    F#23    -- Privilege Tables                                */
+/*    F#2     -- Basic Information Schema                        */
+/*    F#45    -- Character set definition.                       */
+/*                                                               */
+/*  DATE LAST ALTERED  18/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 18/12/95                    */
+/*         Print timestamp                                       */
+/*         Include Files                                         */
+/*         Define NOSUBCLASS/CHCKOK at test beginning            */
+/*                                                               */
+/*  QA STATUS : QA CHECK                                         */
+/*                                                               */
+/*  Revised by DWF 1996-02-23                                    */
+/*    Shortened variable names to 6 chars                        */
+/*    Removed field widths from printfs                          */
+/*    Fixed SDL transactions                                     */
+/*    Corrected printout                                         */
+/*    Fixed SQL syntax errors                                    */
+/*    Fixed bad schema references                                */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char gtor[129];
+char gtee[129]; 
+char objsch[129];
+char objnam[129];
+char objtyp[129];
+long coun;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS1              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts766.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time Run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7066 ********************/
+flag = 1;
+printf("                      TEST7066\n");
+printf("    Drop character set no granted privileges \n");
+printf(" References:\n");
+printf("    11.29   -- <Drop character set statement> \n");
+printf("    TC#1    11.29 \n");
+printf("    11.29   SR.3 \n");
+printf("    21.2.12 -- USAGE_PRIVILEGES view      \n");
+printf("    21.3.22 -- USAGE_PRIVILEGES base table \n");
+printf("    F#23    -- Privilege Tables   \n");
+printf("    F#2     -- Basic Information Schema    \n");
+printf("    F#45    -- Character set definition.   \n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+/* Initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE, "xxxxx");
+
+/* create a character set under the current schema */
+printf("CREATE CHARACTER SET TESTSET GET SQL_TEXT;\n");
+EXEC SQL CREATE CHARACTER SET TESTSET GET SQL_TEXT;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* access the USAGE_PRIVILEGES view from the Information*/
+/* and ensure that the character set is visible */
+printf("SELECT GRANTOR, GRANTEE, OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE\n");
+printf("INTO :gtor, :gtee ,:objsch, :objnam, :objtyp \n");
+printf("FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES \n");
+printf("WHERE OBJECT_TYPE = 'CHARACTER SET'\n");
+printf("AND OBJECT_NAME = 'TESTSET';\n");
+ 
+/* intialise host variables */
+strcpy(gtor,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(gtee,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(objsch,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(objnam,"xxxxxxxxxxxxxxxxxxxx");
+strcpy(objtyp,"xxxxxxxxxxxxxxxxxxxx");
+EXEC SQL SELECT GRANTOR, GRANTEE, OBJECT_SCHEMA, OBJECT_NAME, OBJECT_TYPE
+         INTO :gtor, :gtee ,:objsch, :objnam, :objtyp 
+         FROM INFORMATION_SCHEMA.USAGE_PRIVILEGES
+         WHERE OBJECT_TYPE = 'CHARACTER SET'
+         AND OBJECT_NAME = 'TESTSET';
+CHCKOK();
+printf("GRANTOR       should be       _SYSTEM; its value is %s\n",gtor);
+printf("GRANTEE       should be          CTS1; its value is %s\n",gtee);
+printf("OBJECT_SCHEMA should be          CTS1; its value is %s\n",objsch);
+printf("OBJECT_TYPE   should be CHARACTER SET; its value is %s\n",objtyp);
+printf("OBJECT_NAME   should be       TESTSET; its value is %s\n",objnam);
+if (strncmp(gtor,"_SYSTEM",7)!=0 || strncmp(gtee,"CTS1",4)!=0) 
+        flag = 0;
+if (strncmp(objsch,"CTS1",4)!=0 || strncmp(objtyp,"CHARACTER SET",13)!=0)
+        flag = 0;
+if (strncmp(objnam,"TESTSET",7)!=0) 
+        flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* now drop the character set */
+
+/* 11.29 drop character set does NOT get a drop behavior! */
+/* It's always restrict (see SR.3 in TC) */
+
+printf("DROP CHARACTER SET TESTSET;\n");
+EXEC SQL DROP CHARACTER SET TESTSET;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+coun = 1;
+/* now access the character sets view and check that */
+/* no data will be returned for CTS1 & TESTSET */
+printf("SELECT COUNT(*) INTO :coun\n");
+printf("         FROM INFORMATION_SCHEMA.CHARACTER_SETS \n");
+printf("         WHERE CHARACTER_SET_SCHEMA = 'CTS1'\n");
+printf("         AND CHARACTER_SET_NAME = 'TESTSET';\n");
+EXEC SQL SELECT COUNT(*) INTO :coun
+         FROM INFORMATION_SCHEMA.CHARACTER_SETS 
+         WHERE CHARACTER_SET_SCHEMA = 'CTS1'
+         AND CHARACTER_SET_NAME = 'TESTSET';
+CHCKOK();
+printf ("coun should be 0; its value is %ld\n\n", coun);
+if (coun != 0)
+  flag = 0;
+ 
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* now record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts766.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7066','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts766.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7066','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST7066 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

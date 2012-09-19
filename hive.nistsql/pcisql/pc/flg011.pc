@@ -1,0 +1,116 @@
+/*  EMBEDDED C (file "FLG011.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/12/27 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  FLG011.PC                                                    */
+/*  WRITTEN BY:  David W. Flater                                 */
+/*                                                               */
+/*  This routine tests an extension to FIPS SQL.                 */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    XOP702.PC -- X/O,ALTER TABLE ADD                           */
+/*    X/Open CAE SQL 5.3.2                                       */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+
+printf("SQL Test Suite, V6.0, Embedded C, flg011.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0831 ********************/
+flag = 1;
+
+     /* If this test will not compile the result is 'nogo'. */
+
+     printf("                  TEST0831 \n");
+     printf("       FIPS Flagger - ADD (column, ...)\n");
+     printf("References:\n");
+     printf("    X/Open CAE SQL 5.3.2\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf ("The next statement should be flagged or rejected.\n\n");
+
+printf("ALTER TABLE USIG\n");
+printf("  ADD(COL3 INTEGER, COL4 SMALLINT);\n");
+EXEC SQL ALTER TABLE USIG
+  ADD(COL3 INTEGER, COL4 SMALLINT);
+printf ("SQLCODE is %ld\n", SQLCODE);
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE is %s\n\n", SQLSTATE);
+
+if (SQLCODE < 0)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+  if (flag == 0)
+  {
+    printf ("\n\n  The extension does not appear to be supported.\n");
+    printf ("  Support for ADD (column, ...) is not required.\n");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0831','nogo','PC');
+    errcnt = errcnt + 1;
+  }
+  else
+  {
+    printf ("\n\n  SQL extension ADD (column, ...) executed successfully.\n");
+    printf ("  Vendor must demonstrate FIPS flagger WARNING.\n");
+    EXEC SQL INSERT INTO HU.TESTREPORT
+    VALUES('0831','pass','PC');
+  }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0831 *********************/
+
+     exit(errcnt);
+}

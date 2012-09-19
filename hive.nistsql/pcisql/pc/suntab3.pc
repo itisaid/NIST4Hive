@@ -1,0 +1,164 @@
+/*  EMBEDDED C (file "SUNTAB3.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  SUNTAB3.PC                                                   */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*   This routine initializes the contents of tables:            */
+/*        EMP, DEPT, EXPERIENCE, STAFF_P, PROJ_P and ACR_SCH_P   */
+/*   This routine may be run at any time to re-initialize tables.*/
+/*                                                               */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     long count1;
+     long count2;
+     long count3;
+     long count4;
+     long count5;
+     long count6;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+main()
+{
+strcpy(uid,"SUN");
+AUTHID(uid);
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, suntab3.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+EXEC SQL DELETE FROM SUN.ECCO;
+EXEC SQL INSERT INTO SUN.ECCO VALUES ('NL');
+EXEC SQL DELETE FROM EXPERIENCE;
+EXEC SQL DELETE FROM EMP;
+EXEC SQL DELETE FROM DEPT;
+EXEC SQL DELETE FROM STAFF_P;
+EXEC SQL DELETE FROM PROJ_P;
+EXEC SQL DELETE FROM ACR_SCH_P;
+
+EXEC SQL INSERT INTO DEPT VALUES (12,'Computer','Charles');
+EXEC SQL INSERT INTO DEPT VALUES (13,'Physics','Richard');
+EXEC SQL INSERT INTO DEPT VALUES (14,'Education','Jeffersion');
+EXEC SQL INSERT INTO DEPT VALUES (15,'English','Liss');
+
+EXEC SQL INSERT INTO EMP VALUES (21,'Tom',
+         'Languages & Operating System',12,'Computer',040523);
+EXEC SQL INSERT INTO EMP VALUES (22,'David',
+         'Database',12,'Computer',101024);
+EXEC SQL INSERT INTO EMP VALUES (23,'Lilian',
+         'Software Enginerring',12,'Computer',112156);
+EXEC SQL INSERT INTO EMP VALUES (24,'Mary',
+         'Liquid Mechanics',13,'Physics',121245);
+EXEC SQL INSERT INTO EMP VALUES (25,'John',
+         'Fraction',13,'Physics',030542);
+EXEC SQL INSERT INTO EMP VALUES (26,'Joseph',
+         'Child Education',14,'Education',020556);
+EXEC SQL INSERT INTO EMP VALUES (27,'Peter',
+         'Literature',15,'English',020434);
+
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Tom',040523,000046,'Teacher');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Tom',040523,000066,'Officer');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Tom',040523,000076,'Retire');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('David',101024,000048,'Farmer');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('David',101024,000066,'Porter');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Lilian',112156,000072,'Baby siter');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Lilian',112156,000082,'Nurse');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Mary',121245,000065,'Fashion Model');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('John',030542,000064,'Actor');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Joseph',020556,000072,'Sportsman');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Joseph',020556,000072,'Teacher');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Peter',020434,000071,'Photographer');
+EXEC SQL INSERT INTO EXPERIENCE VALUES
+         ('Peter',020434,000081,'Movie Producer');
+
+EXEC SQL COMMIT WORK;
+
+
+EXEC SQL INSERT INTO STAFF_P VALUES ('E1','Alice',12,'Deale');
+EXEC SQL INSERT INTO STAFF_P VALUES ('E2','Betty',10,'Vienna');
+EXEC SQL INSERT INTO STAFF_P VALUES ('E3','Carmen',13,'Vienna');
+EXEC SQL INSERT INTO STAFF_P VALUES ('E4','Don',12,'Deale');
+EXEC SQL INSERT INTO STAFF_P VALUES ('E5','Ed',13,'Akron');
+
+EXEC SQL INSERT INTO PROJ_P VALUES
+         ('P1','MXSS','Design',10000,'Deale');
+EXEC SQL INSERT INTO PROJ_P VALUES
+         ('P2','CALM','Code',30000,'Vienna');
+EXEC SQL INSERT INTO PROJ_P VALUES
+         ('P3','SDP','Test',30000,'Tampa');
+EXEC SQL INSERT INTO PROJ_P VALUES
+         ('P4','SDP','Design',20000,'Deale');
+EXEC SQL INSERT INTO PROJ_P VALUES
+         ('P5','IRM','Test',10000,'Vienna');
+EXEC SQL INSERT INTO PROJ_P VALUES
+         ('P6','PAYR','Design',50000,'Deale');
+
+EXEC SQL INSERT INTO ACR_SCH_P VALUES(1,'AAA');
+
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM DEPT;
+EXEC SQL SELECT COUNT(*) INTO :count2 FROM EMP;
+EXEC SQL SELECT COUNT(*) INTO :count3 FROM EXPERIENCE;
+EXEC SQL SELECT COUNT(*) INTO :count4 FROM STAFF_P;
+EXEC SQL SELECT COUNT(*) INTO :count5 FROM PROJ_P;
+EXEC SQL SELECT COUNT(*) INTO :count6 FROM ACR_SCH_P;
+
+EXEC SQL COMMIT WORK;
+
+if (count4 == 5 && count5 == 6 && count6 == 1)
+     count4 = 100;
+if (count1 == 4 && count2 == 7 && count3 == 13 && count4 == 100)
+  {
+  printf("STAFF_P, PROJ_P, DEPT, EMP, EXPRIENCE and ACR_SCH_P\n");
+  printf(" were created successfully!\n");
+  }
+else
+  {
+    printf("********************************************\n");
+    printf("*  STAFF_P, PROJ_P, DEPT, EMP, EXPERIENCE  *\n");
+    printf("*  or ACR_SCH_P       ERROR !!!            *\n");
+    printf("********************************************\n");
+  }
+
+exit(errcnt);
+}
+
+

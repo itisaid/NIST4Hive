@@ -1,0 +1,359 @@
+/*  EMBEDDED C (file "DML087.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/08/01 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML087.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS ENTRY LEVEL SQL.                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     char uid[19];
+     char uidx[19];
+     long tmpcnt;
+     long cnt1;
+     long cnt2;
+     long cnt3;
+     long cnt4;
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+flag = 1;
+
+printf("SQL Test Suite, V6.0, Embedded C, dml087.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0518 ********************/
+flag = 1;
+
+     printf("                  TEST0518 \n");
+     printf("         CREATE VIEW with DISTINCT\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("   CREATE VIEW DV1 AS\n");
+     printf("   SELECT DISTINCT HOURS FROM HU.WORKS\n");
+     printf("\n");
+     tmpcnt = -1;
+     printf("SELECT COUNT(*) FROM DV1;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM DV1;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 4; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 4)
+       flag = 0;
+
+     printf("\n");
+     tmpcnt = -1;
+     cnt1 = 0;
+     printf(" DECLARE POIU CURSOR FOR\n"); 
+     printf("   SELECT HOURS FROM DV1\n");
+     printf("   ORDER BY HOURS DESC;\n");
+     printf(" OPEN POIU;\n");
+     EXEC SQL DECLARE POIU CURSOR FOR 
+              SELECT HOURS FROM DV1
+              ORDER BY HOURS DESC;
+     EXEC SQL OPEN POIU;
+     for (cnt3 = 1; cnt3 < 6; cnt3++)
+        {
+         EXEC SQL FETCH POIU INTO :cnt1;
+         printf(" FETCH POIU INTO :cnt1;\n");
+         printf("cnt1 = %ld; and SQLCODE = %ld\n",cnt1,SQLCODE);
+         if (SQLCODE == 0)
+            tmpcnt = cnt3;
+         if (cnt3 == 4 && cnt1 != 12)
+            flag = 0;
+        }
+     printf("\n");
+     printf("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 4; its value is %ld\n", tmpcnt);
+
+     if (tmpcnt != 4 || SQLCODE != 100)
+       flag = 0;
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0518','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml087.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0518','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0518 *********************/
+
+/******************** BEGIN TEST0519 ********************/
+flag = 1;
+
+     printf("                  TEST0519 \n");
+     printf("         CREATE VIEW with subqueries\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     printf("   CREATE VIEW VS2 AS\n");
+     printf("     SELECT A.C1 FROM BASE_VS1 A WHERE EXISTS\n");
+     printf("     (SELECT B.C2 FROM BASE_VS1 B WHERE B.C2 = A.C1)\n");
+     printf("\n");
+     printf("SELECT COUNT(*) FROM VS2 WHERE C1 = 0;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM VS2 WHERE C1 = 0;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 2; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 2)
+       flag = 0;
+     
+     printf("\n");
+     printf("SELECT COUNT(*) FROM VS2 WHERE C1 = 1;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM VS2 WHERE C1 = 1;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 2; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 2)
+       flag = 0;
+     
+     printf("\n");
+     printf("CREATE VIEW VS3 AS\n");
+     printf("  SELECT A.C2 FROM BASE_VS1 A WHERE A.C2 IN\n");
+     printf("    (SELECT B.C1 FROM BASE_VS1 B WHERE B.C1 < A.C2)\n");
+     printf("\n");
+     printf("SELECT COUNT(*) FROM VS3;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM VS3;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 0; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 0)
+       flag = 0;
+     
+     printf("\n");
+     printf("CREATE VIEW VS4 AS\n");
+     printf("  SELECT A.C1 FROM BASE_VS1 A WHERE A.C1 < ALL\n");
+     printf("    (SELECT B.C2 FROM BASE_VS1 B)\n");
+     printf("\n");
+     printf("SELECT COUNT(*) FROM VS4;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM VS4;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 0; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 0)
+       flag = 0;
+     
+     printf("\n");
+     printf("CREATE VIEW VS5 AS\n");
+     printf("  SELECT A.C1 FROM BASE_VS1 A WHERE A.C1 < SOME\n");
+     printf("    (SELECT B.C2 FROM BASE_VS1 B)\n");
+     printf("\n");
+     printf("SELECT COUNT(*) FROM VS5;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM VS5;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 2; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 2)
+       flag = 0;
+     
+     printf("\n");
+     printf("CREATE VIEW VS6 AS\n");
+     printf("  SELECT A.C1 FROM BASE_VS1 A WHERE A.C1 < ANY\n");
+     printf("    (SELECT B.C2 FROM BASE_VS1 B)\n");
+     printf("\n");
+     printf("SELECT COUNT(*) FROM VS6;\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM VS6;
+     printf("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf("COUNT should be 2; its value is %ld\n", tmpcnt);
+
+     if (SQLCODE != 0 || tmpcnt != 2)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0519','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml087.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0519','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0519 *********************/
+
+/******************** BEGIN TEST0520 ********************/
+flag = 1;
+
+     printf("                  TEST0520 \n");
+     printf("   Underscores are legal and significant\n");
+     printf("Reference ANSI SQL-1992 section 5.2,\n");
+     printf("  <token> and <separator>\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     /* Unique between columns */
+
+     cnt1 = -1;
+     cnt2 = -1;
+     cnt3 = -1;
+     cnt4 = -1;
+
+     printf("SELECT COUNT(*) INTO :cnt1 FROM USIG WHERE C1 = 0;\n");
+     printf("SELECT COUNT(*) INTO :cnt2 FROM USIG WHERE C1 = 2;\n");
+     printf("SELECT COUNT(*) INTO :cnt3 FROM USIG WHERE C_1 = 0;\n");
+     printf("SELECT COUNT(*) INTO :cnt4 FROM USIG WHERE C_1 = 2;\n");
+
+     EXEC SQL SELECT COUNT(*) INTO :cnt1 FROM USIG WHERE C1 = 0;
+     EXEC SQL SELECT COUNT(*) INTO :cnt2 FROM USIG WHERE C1 = 2;
+     EXEC SQL SELECT COUNT(*) INTO :cnt3 FROM USIG WHERE C_1 = 0;
+     EXEC SQL SELECT COUNT(*) INTO :cnt4 FROM USIG WHERE C_1 = 2;
+
+     printf("cnt1 cnt2 cnt3 cnt4 should be 1 0 0 1;\n");
+     printf("  they are %ld %ld %ld %ld\n", cnt1, cnt2, cnt3, cnt4);
+
+     if (cnt1 != 1 || cnt2 != 0 || cnt3 != 0 || cnt4 != 1)
+       flag = 0;
+
+     /* Unique between tables */
+
+     cnt1 = -1;
+     cnt2 = -1;
+     cnt3 = -1;
+
+     printf("SELECT COUNT(*) INTO :cnt1 FROM USIG WHERE C1 = 4;\n");
+     printf("SELECT COUNT(*) INTO :cnt2 FROM U_SIG WHERE C1 = 0;\n");
+     printf("SELECT COUNT(*) INTO :cnt3 FROM U_SIG WHERE C1 = 4;\n");
+
+     EXEC SQL SELECT COUNT(*) INTO :cnt1 FROM USIG WHERE C1 = 4;
+     EXEC SQL SELECT COUNT(*) INTO :cnt2 FROM U_SIG WHERE C1 = 0;
+     EXEC SQL SELECT COUNT(*) INTO :cnt3 FROM U_SIG WHERE C1 = 4;
+
+     printf("cnt1 cnt2 cnt3 should be 0 0 1;\n");
+     printf("  they are %ld %ld %ld\n", cnt1, cnt2, cnt3);
+
+     if (cnt1 != 0 || cnt2 != 0 || cnt3 != 1)
+       flag = 0;
+
+     /* Correlation name and cursor names */
+
+     cnt1 = -1;
+     cnt2 = -1;
+     cnt3 = -1;
+
+     printf("SELECT COUNT(*) INTO :cnt1 FROM HU.STAFF U_CN\n");
+     printf("  WHERE U_CN.GRADE IN (SELECT UCN.GRADE FROM HU.STAFF UCN\n");
+     printf("    WHERE UCN.GRADE > 10);\n");
+     printf("DECLARE UCRSR CURSOR FOR\n");
+     printf("  SELECT COUNT(*) FROM HU.STAFF WHERE GRADE > 10;\n");
+     printf("DECLARE U_CRSR CURSOR FOR\n");
+     printf("  SELECT COUNT(*) FROM HU.STAFF WHERE GRADE < 10;\n");
+     printf("OPEN UCRSR;\n");
+     printf("FETCH UCRSR INTO :cnt2;\n");
+     printf("CLOSE UCRSR;\n");
+     printf("OPEN U_CRSR;\n");
+     printf("FETCH U_CRSR INTO :cnt3;\n");
+     printf("CLOSE U_CRSR;\n");
+
+     EXEC SQL SELECT COUNT(*) INTO :cnt1 FROM HU.STAFF U_CN
+       WHERE U_CN.GRADE IN (SELECT UCN.GRADE FROM HU.STAFF UCN
+         WHERE UCN.GRADE > 10);
+
+     EXEC SQL DECLARE UCRSR CURSOR FOR
+       SELECT COUNT(*) FROM HU.STAFF WHERE GRADE > 10;
+     EXEC SQL DECLARE U_CRSR CURSOR FOR
+       SELECT COUNT(*) FROM HU.STAFF WHERE GRADE < 10;
+
+     EXEC SQL OPEN UCRSR;
+     EXEC SQL FETCH UCRSR INTO :cnt2;
+     EXEC SQL CLOSE UCRSR;
+     EXEC SQL OPEN U_CRSR;
+     EXEC SQL FETCH U_CRSR INTO :cnt3;
+     EXEC SQL CLOSE U_CRSR;
+
+     printf("cnt1 cnt2 cnt3 should be 4 4 0;\n");
+     printf("  they are %ld %ld %ld\n", cnt1, cnt2, cnt3);
+
+     if (cnt1 != 4 || cnt2 != 4 || cnt3 != 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0520','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml087.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0520','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0520 *********************/
+
+     exit(errcnt);
+}

@@ -1,0 +1,1325 @@
+/*  EMBEDDED C (file "DML147.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/2/1 EMBEDDED C LANGUAGE                            */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML147.PC                                                    */
+/*  WRITTEN BY:  Joan Sullivan (mostly)                          */
+/*  Embedded C by David Flater                                   */
+/*                                                               */
+/*  This routine tests (1) the rolling back of schema            */
+/*  manipulation, and (2) queries involving joins.               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+char en[4];
+char ename[21];
+char ename2[21];
+char ct[16];
+long sl;
+long gr;
+short indic1;
+short indic2;
+long int1;
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml147.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0840 ********************/
+flag = 1;
+
+     printf("                  TEST0840 \n");
+     printf("        Roll back schema manipulation\n");
+     printf("References:\n");
+     printf("    F# 3 -- Basic schema manipulation\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE NOT_THERE (C1 CHAR (10));\n");
+EXEC SQL CREATE TABLE NOT_THERE (C1 CHAR (10));
+CHCKOK ();
+printf("\n");
+
+/* 14.4 GR.3:  Any changes to schema are cancelled by a rollback */
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* This is a syntax error.  If it is rejected at compile time,  */
+/* this portion of the test is passed. */
+
+printf("INSERT INTO NOT_THERE VALUES ('1234567890');\n");
+EXEC SQL INSERT INTO NOT_THERE VALUES ('1234567890');
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("CREATE VIEW NOT_HERE AS\n");
+printf("  SELECT * FROM USIG;\n");
+EXEC SQL CREATE VIEW NOT_HERE AS
+  SELECT * FROM USIG;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* This is a syntax error.  If it is rejected at compile time,  */
+/* this portion of the test is passed. */
+
+printf("SELECT COUNT (*) INTO :int1\n");
+printf("  FROM NOT_HERE;\n");
+EXEC SQL SELECT COUNT (*) INTO :int1
+  FROM NOT_HERE;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("ALTER TABLE USIG\n");
+printf("  ADD COLUMN NUL INT;\n");
+EXEC SQL ALTER TABLE USIG
+  ADD COLUMN NUL INT;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+/* This is a syntax error.  If it is rejected at compile time,  */
+/* this portion of the test is passed. */
+
+printf("SELECT COUNT (*) INTO :int1\n");
+printf("  FROM USIG WHERE NUL IS NULL;\n");
+EXEC SQL SELECT COUNT (*) INTO :int1
+  FROM USIG WHERE NUL IS NULL;
+printf("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+printf("SQLSTATE should be 42000; its value is %s\n\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "42000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "42000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE USIG CASCADE;\n");
+EXEC SQL DROP TABLE USIG CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+int1 = 50;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM U_SIG;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM U_SIG;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+int1 = 50;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM USIG;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM USIG;
+CHCKOK ();
+printf ("int1 should be 2; its value is %ld\n\n", int1);
+if (int1 != 2)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0840','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml147.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0840','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0840 *********************/
+/******************** BEGIN TEST0841 ********************/
+flag = 1;
+
+     printf("                  TEST0841 \n");
+     printf("    Multiple-join and default order of joins\n");
+     printf("References:\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("    3.3.4.4 PP.2 -- Order of evaluation\n");
+     printf("    7.5 -- Format of <joined table> allows parens\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("DELETE FROM HU.STAFF4;\n");
+EXEC SQL DELETE FROM HU.STAFF4;
+
+printf("INSERT INTO HU.STAFF4\n");
+printf("  SELECT * FROM HU.STAFF3\n");
+printf("  WHERE EMPNUM > 'E3';\n");
+EXEC SQL INSERT INTO HU.STAFF4
+  SELECT * FROM HU.STAFF3
+  WHERE EMPNUM > 'E3';
+CHCKOK ();
+printf("\n");
+
+/* testing that joins are done left to right */
+/* same as next query where parentheses are explicit */
+
+printf("DECLARE C14721 CURSOR FOR\n");
+printf("  SELECT EMPNUM FROM HU.STAFF3\n");
+printf("    NATURAL LEFT JOIN HU.STAFF\n");
+printf("    NATURAL INNER JOIN HU.STAFF4\n");
+printf("    ORDER BY EMPNUM DESC;\n\n");
+EXEC SQL DECLARE C14721 CURSOR FOR
+  SELECT EMPNUM FROM HU.STAFF3
+    NATURAL LEFT JOIN HU.STAFF
+    NATURAL INNER JOIN HU.STAFF4
+    ORDER BY EMPNUM DESC;
+
+printf("OPEN C14721;\n");
+EXEC SQL OPEN C14721;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+printf("FETCH C14721 INTO :en;\n");
+EXEC SQL FETCH C14721 INTO :en;
+CHCKOK ();
+printf ("en should be 'E5 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E5 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+printf("FETCH C14721 INTO :en;\n");
+EXEC SQL FETCH C14721 INTO :en;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E4 ") != 0)
+  flag = 0;
+
+printf("FETCH C14721 INTO :en;\n");
+EXEC SQL FETCH C14721 INTO :en;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14721;\n");
+EXEC SQL CLOSE C14721;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14722 CURSOR FOR\n");
+printf("  SELECT EMPNUM FROM\n");
+printf("    (HU.STAFF3 NATURAL LEFT JOIN HU.STAFF)\n");
+printf("    NATURAL INNER JOIN HU.STAFF4\n");
+printf("    ORDER BY EMPNUM ASC;\n\n");
+EXEC SQL DECLARE C14722 CURSOR FOR
+  SELECT EMPNUM FROM
+    (HU.STAFF3 NATURAL LEFT JOIN HU.STAFF)
+    NATURAL INNER JOIN HU.STAFF4
+    ORDER BY EMPNUM ASC;
+
+printf("OPEN C14722;\n");
+EXEC SQL OPEN C14722;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+printf("FETCH C14722 INTO :en;\n");
+EXEC SQL FETCH C14722 INTO :en;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E4 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+printf("FETCH C14722 INTO :en;\n");
+EXEC SQL FETCH C14722 INTO :en;
+CHCKOK ();
+printf ("en should be 'E5 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E5 ") != 0)
+  flag = 0;
+
+printf("FETCH C14722 INTO :en;\n");
+EXEC SQL FETCH C14722 INTO :en;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14722;\n");
+EXEC SQL CLOSE C14722;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14723 CURSOR FOR\n");
+printf("  SELECT EMPNUM FROM\n");
+printf("    HU.STAFF3 NATURAL LEFT JOIN\n");
+printf("    (HU.STAFF NATURAL INNER JOIN HU.STAFF4)\n");
+printf("    ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C14723 CURSOR FOR
+  SELECT EMPNUM FROM
+    HU.STAFF3 NATURAL LEFT JOIN
+    (HU.STAFF NATURAL INNER JOIN HU.STAFF4)
+    ORDER BY EMPNUM;
+
+printf("OPEN C14723;\n");
+EXEC SQL OPEN C14723;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+printf("FETCH C14723 INTO :en;\n");
+EXEC SQL FETCH C14723 INTO :en;
+CHCKOK ();
+printf ("en should be 'E1 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E1 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+printf("FETCH C14723 INTO :en;\n");
+EXEC SQL FETCH C14723 INTO :en;
+CHCKOK ();
+printf ("en should be 'E2 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E2 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+printf("FETCH C14723 INTO :en;\n");
+EXEC SQL FETCH C14723 INTO :en;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E3 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+printf("FETCH C14723 INTO :en;\n");
+EXEC SQL FETCH C14723 INTO :en;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E4 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+printf("FETCH C14723 INTO :en;\n");
+EXEC SQL FETCH C14723 INTO :en;
+CHCKOK ();
+printf ("en should be 'E5 '; its value is '%s'\n\n", en);
+if (strcmp (en, "E5 ") != 0)
+  flag = 0;
+
+printf("FETCH C14723 INTO :en;\n");
+EXEC SQL FETCH C14723 INTO :en;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14723;\n");
+EXEC SQL CLOSE C14723;
+CHCKOK ();
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0841','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml147.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0841','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0841 *********************/
+/******************** BEGIN TEST0842 ********************/
+flag = 1;
+
+     printf("                  TEST0842 \n");
+     printf("             Multi-column joins\n");
+     printf("References:\n");
+     printf("    F# 4 -- Joined table\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE STAFF66 (\n");
+printf("  SALARY   INTEGER,\n");
+printf("  EMPNAME CHAR(20),\n");
+printf("  GRADE   DECIMAL,\n");
+printf("  EMPNUM  CHAR(3));\n");
+EXEC SQL CREATE TABLE STAFF66 (
+  SALARY   INTEGER,
+  EMPNAME CHAR(20),
+  GRADE   DECIMAL,
+  EMPNUM  CHAR(3));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO STAFF66\n");
+printf("   SELECT GRADE*1000, EMPNAME, GRADE, EMPNUM\n");
+printf("   FROM HU.STAFF3 WHERE EMPNUM > 'E2';\n");
+EXEC SQL INSERT INTO STAFF66
+   SELECT GRADE*1000, EMPNAME, GRADE, EMPNUM
+   FROM HU.STAFF3 WHERE EMPNUM > 'E2';
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE HU.STAFF3 SET EMPNUM = 'E6' WHERE EMPNUM = 'E5';\n");
+EXEC SQL UPDATE HU.STAFF3 SET EMPNUM = 'E6' WHERE EMPNUM = 'E5';
+CHCKOK ();
+printf("\n");
+
+printf("UPDATE HU.STAFF3 SET EMPNAME = 'Ali' WHERE GRADE = 12;\n");
+EXEC SQL UPDATE HU.STAFF3 SET EMPNAME = 'Ali' WHERE GRADE = 12;
+CHCKOK ();
+printf("\n");
+
+/* 7.5 SR 6 d */
+/* Table STAFF66 has 3 rows, only 1 matching on all columns */
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+sl = 0;
+strcpy (ct, "xxxxxxxxxxxxxxx");
+printf("SELECT * INTO :ename, :gr, :en, :sl, :ct FROM\n");
+printf("   STAFF66 NATURAL INNER JOIN HU.STAFF3;\n");
+EXEC SQL SELECT * INTO :ename, :gr, :en, :sl, :ct FROM
+   STAFF66 NATURAL INNER JOIN HU.STAFF3;
+CHCKOK ();
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("ct should be 'Vienna         '; its value is '%s'\n\n", ct);
+if (gr != 13 || sl != 13000)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0 || strcmp (en, "E3 ") != 0)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+
+printf("DECLARE C14731 CURSOR FOR\n");
+printf("  SELECT EMPNUM, EMPNAME, SALARY FROM\n");
+printf("    HU.STAFF3 NATURAL LEFT OUTER JOIN STAFF66\n");
+printf("    WHERE EMPNUM > 'E1'\n");
+printf("    ORDER BY EMPNUM ASC;\n\n");
+EXEC SQL DECLARE C14731 CURSOR FOR
+  SELECT EMPNUM, EMPNAME, SALARY FROM
+    HU.STAFF3 NATURAL LEFT OUTER JOIN STAFF66
+    WHERE EMPNUM > 'E1'
+    ORDER BY EMPNUM ASC;
+
+printf("OPEN C14731;\n");
+EXEC SQL OPEN C14731;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14731 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14731 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E2 '; its value is '%s'\n", en);
+printf ("ename should be 'Betty               '; its value is '%s'\n", ename);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E2 ") != 0 || indic1 != -1)
+  flag = 0;
+if (strcmp (ename, "Betty               ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = -1;
+sl = 0;
+printf("FETCH C14731 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14731 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E3 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0 || sl != 13000)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14731 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14731 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n", en);
+printf ("ename should be 'Ali                 '; its value is '%s'\n", ename);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E4 ") != 0 || indic1 != -1)
+  flag = 0;
+if (strcmp (ename, "Ali                 ") != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14731 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14731 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E6 '; its value is '%s'\n", en);
+printf ("ename should be 'Ed                  '; its value is '%s'\n", ename);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E6 ") != 0 || indic1 != -1)
+  flag = 0;
+if (strcmp (ename, "Ed                  ") != 0)
+  flag = 0;
+
+printf("FETCH C14731 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14731 INTO :en, :ename, :sl:indic1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14731;\n");
+EXEC SQL CLOSE C14731;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14732 CURSOR FOR\n");
+printf("  SELECT EMPNUM, EMPNAME, SALARY FROM\n");
+printf("    STAFF66 NATURAL RIGHT OUTER JOIN HU.STAFF\n");
+printf("    WHERE EMPNUM > 'E1'\n");
+printf("    ORDER BY EMPNUM DESC;\n\n");
+EXEC SQL DECLARE C14732 CURSOR FOR
+  SELECT EMPNUM, EMPNAME, SALARY FROM
+    STAFF66 NATURAL RIGHT OUTER JOIN HU.STAFF
+    WHERE EMPNUM > 'E1'
+    ORDER BY EMPNUM DESC;
+
+printf("OPEN C14732;\n");
+EXEC SQL OPEN C14732;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = -1;
+sl = 0;
+printf("FETCH C14732 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14732 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E5 '; its value is '%s'\n", en);
+printf ("ename should be 'Ed                  '; its value is '%s'\n", ename);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E5 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Ed                  ") != 0 || sl != 13000)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = -1;
+sl = 0;
+printf("FETCH C14732 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14732 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n", en);
+printf ("ename should be 'Don                 '; its value is '%s'\n", ename);
+printf ("sl should be 12000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E4 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Don                 ") != 0 || sl != 12000)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = -1;
+sl = 0;
+printf("FETCH C14732 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14732 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E3 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0 || sl != 13000)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+indic1 = 0;
+sl = 0;
+printf("FETCH C14732 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14732 INTO :en, :ename, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E2 '; its value is '%s'\n", en);
+printf ("ename should be 'Betty               '; its value is '%s'\n", ename);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E2 ") != 0 || indic1 != -1)
+  flag = 0;
+if (strcmp (ename, "Betty               ") != 0)
+  flag = 0;
+
+printf("FETCH C14732 INTO :en, :ename, :sl:indic1;\n");
+EXEC SQL FETCH C14732 INTO :en, :ename, :sl:indic1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14732;\n");
+EXEC SQL CLOSE C14732;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14733 CURSOR FOR\n");
+printf("  SELECT * FROM STAFF66 RIGHT JOIN HU.STAFF\n");
+printf("    USING (GRADE, EMPNUM, EMPNAME)\n");
+printf("    WHERE EMPNUM > 'E1'\n");
+printf("    ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C14733 CURSOR FOR
+  SELECT * FROM STAFF66 RIGHT JOIN HU.STAFF
+    USING (GRADE, EMPNUM, EMPNAME)
+    WHERE EMPNUM > 'E1'
+    ORDER BY EMPNUM;
+
+printf("OPEN C14733;\n");
+EXEC SQL OPEN C14733;
+CHCKOK ();
+printf("\n");
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;\n");
+EXEC SQL FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;
+CHCKOK ();
+printf ("ename should be 'Betty               '; its value is '%s'\n", ename);
+printf ("gr should be 10; its value is %ld\n", gr);
+printf ("en should be 'E2 '; its value is '%s'\n", en);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("ct should be 'Vienna         '; its value is '%s'\n\n", ct);
+if (strcmp (en, "E2 ") != 0 || indic1 != -1)
+  flag = 0;
+if (strcmp (ename, "Betty               ") != 0 || gr != 10)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+printf("FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;\n");
+EXEC SQL FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;
+CHCKOK ();
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("ct should be 'Vienna         '; its value is '%s'\n\n", ct);
+if (strcmp (en, "E3 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0 || gr != 13)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0 || sl != 13000)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+printf("FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;\n");
+EXEC SQL FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;
+CHCKOK ();
+printf ("ename should be 'Don                 '; its value is '%s'\n", ename);
+printf ("gr should be 12; its value is %ld\n", gr);
+printf ("en should be 'E4 '; its value is '%s'\n", en);
+printf ("sl should be 12000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("ct should be 'Deale          '; its value is '%s'\n\n", ct);
+if (strcmp (en, "E4 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Don                 ") != 0 || gr != 12)
+  flag = 0;
+if (strcmp (ct, "Deale          ") != 0 || sl != 12000)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+printf("FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;\n");
+EXEC SQL FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;
+CHCKOK ();
+printf ("ename should be 'Ed                  '; its value is '%s'\n", ename);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("en should be 'E5 '; its value is '%s'\n", en);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("ct should be 'Akron          '; its value is '%s'\n\n", ct);
+if (strcmp (en, "E5 ") != 0 || indic1 != 0)
+  flag = 0;
+if (strcmp (ename, "Ed                  ") != 0 || gr != 13)
+  flag = 0;
+if (strcmp (ct, "Akron          ") != 0 || sl != 13000)
+  flag = 0;
+
+printf("FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;\n");
+EXEC SQL FETCH C14733 INTO :ename, :gr, :en, :sl:indic1, :ct;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14733;\n");
+EXEC SQL CLOSE C14733;
+CHCKOK ();
+printf("\n");
+
+printf("DECLARE C14734 CURSOR FOR\n");
+printf("  SELECT * FROM HU.STAFF3 LEFT JOIN STAFF66\n");
+printf("    USING (GRADE, EMPNUM)\n");
+printf("    WHERE EMPNUM > 'E1'\n");
+printf("    ORDER BY EMPNUM ASC;\n\n");
+EXEC SQL DECLARE C14734 CURSOR FOR
+  SELECT * FROM HU.STAFF3 LEFT JOIN STAFF66
+    USING (GRADE, EMPNUM)
+    WHERE EMPNUM > 'E1'
+    ORDER BY EMPNUM ASC;
+
+printf("OPEN C14734;\n");
+EXEC SQL OPEN C14734;
+CHCKOK ();
+printf("\n");
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ename2, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = 2;
+indic2 = 2;
+printf("FETCH C14734 INTO :en, :gr, :ename, :ct,\n");
+printf("  :sl:indic1, :ename2:indic2;\n");
+EXEC SQL FETCH C14734 INTO :en, :gr, :ename, :ct,
+  :sl:indic1, :ename2:indic2;
+CHCKOK ();
+printf ("en should be 'E2 '; its value is '%s'\n", en);
+printf ("gr should be 10; its value is %ld\n", gr);
+printf ("ename should be 'Betty               '; its value is '%s'\n", ename);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strcmp (en, "E2 ") != 0 || gr != 10)
+  flag = 0;
+if (strcmp (ename, "Betty               ") != 0)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ename2, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = 2;
+indic2 = 2;
+printf("FETCH C14734 INTO :en, :gr, :ename, :ct,\n");
+printf("  :sl:indic1, :ename2:indic2;\n");
+EXEC SQL FETCH C14734 INTO :en, :gr, :ename, :ct,
+  :sl:indic1, :ename2:indic2;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic2 should be 0; its value is %d\n", indic2);
+printf("ename2 should be 'Carmen              '; its value is '%s'\n\n",ename2);
+if (strcmp (en, "E3 ") != 0 || gr != 13)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+if (sl != 13000 || strcmp (ename2, "Carmen              ") != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ename2, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = 2;
+indic2 = 2;
+printf("FETCH C14734 INTO :en, :gr, :ename, :ct,\n");
+printf("  :sl:indic1, :ename2:indic2;\n");
+EXEC SQL FETCH C14734 INTO :en, :gr, :ename, :ct,
+  :sl:indic1, :ename2:indic2;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n", en);
+printf ("gr should be 12; its value is %ld\n", gr);
+printf ("ename should be 'Ali                 '; its value is '%s'\n", ename);
+printf ("ct should be 'Deale          '; its value is '%s'\n", ct);
+printf ("indic1 should be 0; its value is %d\n", indic1);
+printf ("sl should be 12000; its value is %ld\n", sl);
+printf ("indic2 should be 0; its value is %d\n", indic2);
+printf("ename2 should be 'Don                 '; its value is '%s'\n\n",ename2);
+if (strcmp (en, "E4 ") != 0 || gr != 12)
+  flag = 0;
+if (strcmp (ename, "Ali                 ") != 0)
+  flag = 0;
+if (strcmp (ct, "Deale          ") != 0)
+  flag = 0;
+if (indic1 != 0 || indic2 != 0)
+  flag = 0;
+if (sl != 12000 || strcmp (ename2, "Don                 ") != 0)
+  flag = 0;
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ename2, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = 2;
+indic2 = 2;
+printf("FETCH C14734 INTO :en, :gr, :ename, :ct,\n");
+printf("  :sl:indic1, :ename2:indic2;\n");
+EXEC SQL FETCH C14734 INTO :en, :gr, :ename, :ct,
+  :sl:indic1, :ename2:indic2;
+CHCKOK ();
+printf ("en should be 'E6 '; its value is '%s'\n", en);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("ename should be 'Ed                  '; its value is '%s'\n", ename);
+printf ("ct should be 'Akron          '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n", indic1);
+printf ("indic2 should be -1; its value is %d\n\n", indic2);
+if (strcmp (en, "E6 ") != 0 || gr != 13)
+  flag = 0;
+if (strcmp (ename, "Ed                  ") != 0)
+  flag = 0;
+if (strcmp (ct, "Akron          ") != 0)
+  flag = 0;
+if (indic1 != -1 || indic2 != -1)
+  flag = 0;
+
+printf("FETCH C14734 INTO :en, :gr, :ename, :ct,\n");
+printf("  :sl:indic1, :ename2:indic2;\n");
+EXEC SQL FETCH C14734 INTO :en, :gr, :ename, :ct,
+  :sl:indic1, :ename2:indic2;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("CLOSE C14734;\n");
+EXEC SQL CLOSE C14734;
+CHCKOK ();
+printf("\n");
+
+/* Similar to above, except for explicit names of columns */
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ename2, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+printf("SELECT EMPNUM, GRADE, HU.STAFF3.EMPNAME, CITY,\n");
+printf("  SALARY, STAFF66.EMPNAME\n");
+printf("  INTO :en, :gr, :ename, :ct, :sl, :ename2\n");
+printf("  FROM HU.STAFF3 LEFT JOIN STAFF66\n");
+printf("  USING (GRADE, EMPNUM)\n");
+printf("  WHERE EMPNUM = 'E3';\n");
+EXEC SQL SELECT EMPNUM, GRADE, HU.STAFF3.EMPNAME, CITY,
+  SALARY, STAFF66.EMPNAME
+  INTO :en, :gr, :ename, :ct, :sl, :ename2
+  FROM HU.STAFF3 LEFT JOIN STAFF66
+  USING (GRADE, EMPNUM)
+  WHERE EMPNUM = 'E3';
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf("ename2 should be 'Carmen              '; its value is '%s'\n\n",ename2);
+if (strcmp (en, "E3 ") != 0 || gr != 13)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (sl != 13000 || strcmp (ename2, "Carmen              ") != 0)
+  flag = 0;
+
+printf("DECLARE C14735 CURSOR FOR\n");
+printf("  SELECT EMPNUM, GRADE, HU.STAFF3.EMPNAME, CITY,\n");
+printf("    SALARY, STAFF66.EMPNAME\n");
+printf("    FROM HU.STAFF3 LEFT JOIN STAFF66\n");
+printf("    USING (GRADE, EMPNUM)\n");
+printf("    WHERE EMPNUM = 'E3';\n\n");
+EXEC SQL DECLARE C14735 CURSOR FOR
+  SELECT EMPNUM, GRADE, HU.STAFF3.EMPNAME, CITY,
+    SALARY, STAFF66.EMPNAME
+    FROM HU.STAFF3 LEFT JOIN STAFF66
+    USING (GRADE, EMPNUM)
+    WHERE EMPNUM = 'E3';
+
+printf("OPEN C14735;\n");
+EXEC SQL OPEN C14735;
+CHCKOK ();
+printf("\n");
+
+strcpy (ename, "xxxxxxxxxxxxxxxxxxxx");
+strcpy (ename2, "xxxxxxxxxxxxxxxxxxxx");
+gr = 0;
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+printf("FETCH C14735 INTO :en, :gr, :ename, :ct, :sl, :ename2;\n");
+EXEC SQL FETCH C14735 INTO :en, :gr, :ename, :ct, :sl, :ename2;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("gr should be 13; its value is %ld\n", gr);
+printf ("ename should be 'Carmen              '; its value is '%s'\n", ename);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf("ename2 should be 'Carmen              '; its value is '%s'\n\n",ename2);
+if (strcmp (en, "E3 ") != 0 || gr != 13)
+  flag = 0;
+if (strcmp (ename, "Carmen              ") != 0)
+  flag = 0;
+if (strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (sl != 13000 || strcmp (ename2, "Carmen              ") != 0)
+  flag = 0;
+
+printf("CLOSE C14735;\n");
+EXEC SQL CLOSE C14735;
+CHCKOK ();
+printf("\n");
+
+/* REF: 7.5 GR 1 d ii  This is a cartesian product */
+
+int1 = 0;
+printf("SELECT COUNT (*) INTO :int1\n");
+printf("  FROM STAFF66 NATURAL RIGHT JOIN HU.PROJ;\n");
+EXEC SQL SELECT COUNT (*) INTO :int1
+  FROM STAFF66 NATURAL RIGHT JOIN HU.PROJ;
+CHCKOK ();
+printf ("int1 should be 18; its value is %ld\n\n", int1);
+if (int1 != 18)
+  flag = 0;
+
+/* FULL OUTER JOIN of tables with unique data in the joined column */
+
+printf("DECLARE C14736 CURSOR FOR\n");
+printf("  SELECT EMPNUM, CITY, SALARY\n");
+printf("    FROM HU.STAFF3 LEFT JOIN STAFF66 USING (EMPNUM)\n");
+printf("  UNION\n");
+printf("  SELECT EMPNUM, CITY, SALARY\n");
+printf("    FROM HU.STAFF3 RIGHT JOIN STAFF66 USING (EMPNUM)\n");
+printf("  ORDER BY EMPNUM;\n\n");
+EXEC SQL DECLARE C14736 CURSOR FOR
+  SELECT EMPNUM, CITY, SALARY
+    FROM HU.STAFF3 LEFT JOIN STAFF66 USING (EMPNUM)
+  UNION
+  SELECT EMPNUM, CITY, SALARY
+    FROM HU.STAFF3 RIGHT JOIN STAFF66 USING (EMPNUM)
+  ORDER BY EMPNUM;
+
+printf("OPEN C14736;\n");
+EXEC SQL OPEN C14736;
+CHCKOK ();
+printf("\n");
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E1 '; its value is '%s'\n", en);
+printf ("ct should be 'Deale          '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E1 ") != 0 || strcmp (ct, "Deale          ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E2 '; its value is '%s'\n", en);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E2 ") != 0 || strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = -1;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E3 '; its value is '%s'\n", en);
+printf ("ct should be 'Vienna         '; its value is '%s'\n", ct);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E3 ") != 0 || strcmp (ct, "Vienna         ") != 0)
+  flag = 0;
+if (sl != 13000 || indic1 != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = -1;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E4 '; its value is '%s'\n", en);
+printf ("ct should be 'Deale          '; its value is '%s'\n", ct);
+printf ("sl should be 12000; its value is %ld\n", sl);
+printf ("indic1 should be 0; its value is %d\n\n", indic1);
+if (strcmp (en, "E4 ") != 0 || strcmp (ct, "Deale          ") != 0)
+  flag = 0;
+if (sl != 12000 || indic1 != 0)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+sl = 0;
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct:indic1, :sl;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct:indic1, :sl;
+CHCKOK ();
+printf ("en should be 'E5 '; its value is '%s'\n", en);
+printf ("sl should be 13000; its value is %ld\n", sl);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E5 ") != 0)
+  flag = 0;
+if (sl != 13000 || indic1 != -1)
+  flag = 0;
+
+strcpy (en, "xxx");
+strcpy (ct, "xxxxxxxxxxxxxxx");
+indic1 = 0;
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+CHCKOK ();
+printf ("en should be 'E6 '; its value is '%s'\n", en);
+printf ("ct should be 'Akron          '; its value is '%s'\n", ct);
+printf ("indic1 should be -1; its value is %d\n\n", indic1);
+if (strcmp (en, "E6 ") != 0 || strcmp (ct, "Akron          ") != 0)
+  flag = 0;
+if (indic1 != -1)
+  flag = 0;
+
+printf("FETCH C14736 INTO :en, :ct, :sl:indic1;\n");
+EXEC SQL FETCH C14736 INTO :en, :ct, :sl:indic1;
+printf ("SQLCODE should be 100; its value is %ld\n", SQLCODE);
+printf ("SQLSTATE should be 02000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (SQLCODE != 100 || strncmp (NORMSQ, "02000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "02000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE STAFF66 CASCADE;\n");
+EXEC SQL DROP TABLE STAFF66 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0842','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml147.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0842','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0842 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

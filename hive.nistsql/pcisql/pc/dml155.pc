@@ -1,0 +1,398 @@
+/*  EMBEDDED C (file "DML155.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1995/06/07 EMBEDDED C LANGUAGE                          */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/* DISCLAIMER:                                                  */
+/* This program was written by employees of NIST to test SQL    */
+/* implementations for conformance to the SQL standards.        */
+/* NIST assumes no responsibility for any party's use of        */
+/* this program.                                                */
+/*                                                               */
+/*  DML155.PC                                                    */
+/*  WRITTEN BY:  David Flater                                    */
+/*                                                               */
+/*  This routine tests variable-length character strings and is  */
+/*  only applicable in C, PL/I, and MUMPS.                       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    FIPS PUB 127-2 14.1 Transitional SQL                       */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+char uid[19];
+char uidx[19];
+long int1;
+varchar vc1[16];
+varchar vc2[8];
+char c1[16];
+char c2[8];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml155.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0850 ********************/
+flag = 1;
+
+     printf("                  TEST0850 \n");
+     printf("Comparing fixed vs. variable length char strings\n");
+     printf("References:\n");
+     printf("    F# 6 -- VARCHAR data type\n");
+     printf("    8.2 GR.3 -- Comparison of two character strings\n");
+     printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+printf("CREATE TABLE T850 (\n");
+printf("  T850KEY INT NOT NULL UNIQUE,\n");
+printf("  T850C   CHAR (11),\n");
+printf("  T850VC  VARCHAR (10),\n");
+printf("  T850LVC VARCHAR (20));\n");
+EXEC SQL CREATE TABLE T850 (
+  T850KEY INT NOT NULL UNIQUE,
+  T850C   CHAR (11),
+  T850VC  VARCHAR (10),
+  T850LVC VARCHAR (20));
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO T850 VALUES (\n");
+printf("  10, '1234567890', '1234567890', '1234567890   ');\n");
+EXEC SQL INSERT INTO T850 VALUES (
+  10, '1234567890', '1234567890', '1234567890   ');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO T850 VALUES (\n");
+printf("  5, '12345     ', '12345', '12345');\n");
+EXEC SQL INSERT INTO T850 VALUES (
+  5, '12345     ', '12345', '12345');
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO T850 VALUES (\n");
+printf("  0, '          ', '', '                    ');\n");
+EXEC SQL INSERT INTO T850 VALUES (
+  0, '          ', '', '                    ');
+CHCKOK ();
+printf("\n");
+
+/*   vcol vs. ccol */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850C = T850VC;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850C = T850VC;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+/*   vcol vs. cvariable */
+
+printf("strcpy (c1, \"1234567890     \");\n");
+printf("strcpy (c2, \"12345  \");\n");
+strcpy (c1, "1234567890     ");
+strcpy (c2, "12345  ");
+
+int1 = -1;
+printf("SELECT T850KEY INTO :int1\n");
+printf("  FROM T850 WHERE T850VC = :c1;\n");
+EXEC SQL SELECT T850KEY INTO :int1
+  FROM T850 WHERE T850VC = :c1;
+CHCKOK ();
+printf ("int1 should be 10; its value is %ld\n\n", int1);
+if (int1 != 10)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT T850KEY INTO :int1\n");
+printf("  FROM T850 WHERE T850VC = :c2;\n");
+EXEC SQL SELECT T850KEY INTO :int1
+  FROM T850 WHERE T850VC = :c2;
+CHCKOK ();
+printf ("int1 should be 5; its value is %ld\n\n", int1);
+if (int1 != 5)
+  flag = 0;
+
+printf("strcpy (c1, "               ");\n");
+strcpy (c1, "               ");
+
+int1 = -1;
+printf("SELECT T850KEY INTO :int1\n");
+printf("  FROM T850 WHERE T850VC = :c1;\n");
+EXEC SQL SELECT T850KEY INTO :int1
+  FROM T850 WHERE T850VC = :c1;
+CHCKOK ();
+printf ("int1 should be 0; its value is %ld\n\n", int1);
+if (int1 != 0)
+  flag = 0;
+
+/* What are the semantics if the cvar is not padded to its max length? */
+
+printf("strcpy (c1, \"1234567890\");\n");
+printf("strcpy (c2, \"12345\");\n");
+strcpy (c1, "1234567890");
+strcpy (c2, "12345");
+
+printf ("The following is informational.\n");
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850C = :c1;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850C = :c1;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("SQLSTATE is %s\n", SQLSTATE);
+printf ("int1 is %ld\n\n", int1);
+
+printf ("The following is informational.\n");
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850C = :c2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850C = :c2;
+printf ("SQLCODE is %ld\n", SQLCODE);
+printf ("SQLSTATE is %s\n", SQLSTATE);
+printf ("int1 is %ld\n\n", int1);
+
+/*   vcol vs. longer vcol */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850VC = T850LVC;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850VC = T850LVC;
+CHCKOK ();
+printf ("int1 should be 3; its value is %ld\n\n", int1);
+if (int1 != 3)
+  flag = 0;
+
+/*   vcol vs. vvariable -- longer / shorter */
+
+printf("strcpy (vc1, \"12345          \");\n");
+printf("strcpy (vc2, \"12345  \");\n");
+strcpy (vc1, "12345          ");
+strcpy (vc2, "12345  ");
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850VC = :vc1;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850VC = :vc1;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850VC = :vc2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850VC = :vc2;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850LVC = :vc1;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850LVC = :vc1;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850LVC = :vc2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850LVC = :vc2;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+/*   ccol vs. vvariable */
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850C = :vc1;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850C = :vc1;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+int1 = -1;
+printf("SELECT COUNT(*) INTO :int1\n");
+printf("  FROM T850 WHERE T850C = :vc2;\n");
+EXEC SQL SELECT COUNT(*) INTO :int1
+  FROM T850 WHERE T850C = :vc2;
+CHCKOK ();
+printf ("int1 should be 1; its value is %ld\n\n", int1);
+if (int1 != 1)
+  flag = 0;
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+printf("DROP TABLE T850 CASCADE;\n");
+EXEC SQL DROP TABLE T850 CASCADE;
+CHCKOK ();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK ();
+printf("\n");
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0850','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml155.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0850','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0850 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

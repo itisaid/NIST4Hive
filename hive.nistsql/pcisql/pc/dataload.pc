@@ -1,0 +1,263 @@
+/* dataload.pc  Portable data loader, Embedded C version
+   DWF  1/12/95
+*/
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <ctype.h>
+
+extern void
+AUTHID (char *);
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+EXEC SQL END DECLARE SECTION;
+
+void
+checkok ()
+{
+  if (SQLCODE < 0) {
+    printf ("SQLCODE is %ld\n", SQLCODE);
+    printf ("SQL ERROR -- rolling back\n");
+    EXEC SQL ROLLBACK WORK;
+    exit (-1);
+  }
+}
+
+FILE *
+saffopen (char *fname)
+{
+  FILE *fp;
+  assert (fname);
+  if (!(fp = fopen (fname, "r"))) {
+    perror ("fopen");
+    exit (-1);
+  }
+  return fp;
+}
+
+/* Copy src to dest, blank-padding or truncating to the specified length */
+void
+fixstrcpy (char *dest, char *src, int len)
+{
+  int srclen;
+  assert (dest);
+  assert (src);
+  assert (len > 0);
+  srclen = strlen (src);
+  if (srclen > len)
+    srclen = len;
+  /* Strip trailing newlines */
+  while (srclen) {
+    if (!iscntrl(src[srclen-1]))
+      break;
+    src[--srclen] = '\0';
+  }
+  strncpy (dest, src, srclen);
+  if (srclen < len)
+    memset (dest+srclen, ' ', len-srclen);
+  dest[len] = '\0';
+}
+
+void
+attach_to_database (char uid[19])
+{
+  EXEC SQL BEGIN DECLARE SECTION;
+  char uidx[19];
+  EXEC SQL END DECLARE SECTION;
+  assert (uid);
+  AUTHID (uid);
+  strcpy (uidx, "not logged in, not");
+  EXEC SQL SELECT USER INTO :uidx FROM ECCO;
+  checkok ();
+  if (strcmp (uid, uidx)) {
+    printf ("ERROR: User %s expected.  User %s connected\n", uid, uidx);
+    exit (-1);
+  }
+}
+
+void
+reportfeature ()
+{
+  FILE *fp;
+  char linrec[80];
+  EXEC SQL BEGIN DECLARE SECTION;
+  char col11[5], col12[31];
+  EXEC SQL END DECLARE SECTION;
+  puts ("Loading reportfeature");
+  fp = saffopen ("REPTFT.DAT");
+  while (fgets (linrec, 80, fp)) {
+    assert (strlen (linrec) > 4);
+    fixstrcpy (col11, linrec, 4);
+    fixstrcpy (col12, linrec+5, 30);
+    EXEC SQL INSERT INTO REPORTFEATURE VALUES (:col11, :col12);
+    checkok ();
+  }
+  fclose (fp);
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+implication ()
+{
+  FILE *fp;
+  char linrec[80];
+  EXEC SQL BEGIN DECLARE SECTION;
+  char col21[5], col22[5];
+  EXEC SQL END DECLARE SECTION;
+  puts ("Loading implication");
+  fp = saffopen ("IMPLIC.DAT");
+  while (fgets (linrec, 80, fp)) {
+    assert (strlen (linrec) > 4);
+    fixstrcpy (col21, linrec, 4);
+    fixstrcpy (col22, linrec+5, 4);
+    EXEC SQL INSERT INTO IMPLICATION VALUES (:col21, :col22);
+    checkok ();
+  }
+  fclose (fp);
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+testprog ()
+{
+  FILE *fp;
+  char linrec[80];
+  EXEC SQL BEGIN DECLARE SECTION;
+  char col31[7], col32[19], col33[11];
+  short col33i;
+  EXEC SQL END DECLARE SECTION;
+  puts ("Loading testprog");
+  fp = saffopen ("TSTPRG.DAT");
+  while (fgets (linrec, 80, fp)) {
+    assert (strlen (linrec) > 25);
+    fixstrcpy (col31, linrec, 6);
+    fixstrcpy (col32, linrec+7, 18);
+    fixstrcpy (col33, linrec+26, 10);
+    col33i = (strcmp (col33, "NULL      ") ? 0 : -1);
+    EXEC SQL INSERT INTO TESTPROG VALUES (:col31, :col32, :col33:col33i);
+    checkok ();
+  }
+  fclose (fp);
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+testcase ()
+{
+  FILE *fp;
+  char linrec[80];
+  EXEC SQL BEGIN DECLARE SECTION;
+  char col41[5], col42[51], col43[7], col44[11];
+  short col44i, col45;
+  EXEC SQL END DECLARE SECTION;
+  puts ("Loading testcase");
+  fp = saffopen ("TSTCAS.DAT");
+  while (fgets (linrec, 80, fp)) {
+    assert (strlen (linrec) > 74);
+    fixstrcpy (col41, linrec, 4);
+    fixstrcpy (col42, linrec+5, 50);
+    fixstrcpy (col43, linrec+56, 6);
+    fixstrcpy (col44, linrec+63, 10);
+    assert (sscanf (linrec+74, "%hd", &col45) == 1);
+    assert (col45 >= 0);
+    col44i = (strcmp (col44, "NULL      ") ? 0 : -1);
+    EXEC SQL INSERT INTO TESTCASE VALUES (:col41, :col42, :col43,
+      :col44:col44i, :col45);
+    checkok ();
+  }
+  fclose (fp);
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+testfeature ()
+{
+  FILE *fp;
+  char linrec[80];
+  EXEC SQL BEGIN DECLARE SECTION;
+  char col51[5], col52[5];
+  EXEC SQL END DECLARE SECTION;
+  puts ("Loading testfeature");
+  fp = saffopen ("TESTFT.DAT");
+  while (fgets (linrec, 80, fp)) {
+    assert (strlen (linrec) > 4);
+    fixstrcpy (col51, linrec, 4);
+    fixstrcpy (col52, linrec+5, 4);
+    EXEC SQL INSERT INTO TESTFEATURE VALUES (:col51, :col52);
+    checkok ();
+  }
+  fclose (fp);
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+savef ()
+{
+  puts ("Saving feature_claimed");
+  EXEC SQL DELETE FROM F_TEMP;
+  checkok ();
+  EXEC SQL INSERT INTO F_TEMP
+    SELECT FEATURE1, 'AAAA', 'AAAA', 0 FROM FEATURE_CLAIMED;
+  checkok ();
+  EXEC SQL DELETE FROM FEATURE_CLAIMED;
+  checkok ();
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+destroy ()
+{
+  puts ("Clearing tables");
+  EXEC SQL DELETE FROM TESTFEATURE;
+  checkok ();
+  EXEC SQL DELETE FROM TESTCASE;
+  checkok ();
+  EXEC SQL DELETE FROM TESTPROG;
+  checkok ();
+  EXEC SQL DELETE FROM IMPLICATION;
+  checkok ();
+  EXEC SQL DELETE FROM REPORTFEATURE;
+  checkok ();
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+void
+unsavef ()
+{
+  puts ("Recovering feature_claimed");
+  EXEC SQL INSERT INTO FEATURE_CLAIMED SELECT C1 FROM F_TEMP;
+  checkok ();
+  EXEC SQL COMMIT WORK;
+  checkok ();
+  EXEC SQL DELETE FROM F_TEMP;
+  checkok ();
+  EXEC SQL COMMIT WORK;
+  checkok ();
+}
+
+int
+main ()
+{
+  attach_to_database ("HU                ");
+
+  savef ();
+  destroy ();
+  reportfeature ();
+  implication ();
+  testprog ();
+  testcase ();
+  testfeature ();
+  unsavef ();
+
+  exit (0);
+}

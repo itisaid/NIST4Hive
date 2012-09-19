@@ -1,0 +1,444 @@
+/*  EMBEDDED C (file " XTS721.PC ")  */
+
+/* Copyright 1995 National Computing Centre Limited                          */
+/* and Computer Logic R&D S.A                                                */
+/* on behalf of the CTS5 SQL2 Project.                                       */
+/* All rights reserved.                                          */
+/* The CTS5 SQL2 Project is sponsored by the European Community. */
+/*                                                               */
+/* The National Computing Centre Limited and Computer Logic R&D  */
+/* have given permission to NIST to distribute this program      */
+/* over the World Wide Web in order to promote SQL standards.    */
+
+/* DISCLAIMER:                                                   */
+/* This program was reviewed by employees of NIST for            */
+/* conformance to the SQL standards.                             */
+/* NIST assumes no responsibility for any party's use of         */
+/* this program.                                                 */
+
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  SQL VALIDATION TEST SUITE V6.0                               */
+/*                                                               */
+/*  XTS721.PC                                                   */
+/*  WRITTEN BY: Nickos Backalidis                                */
+/*                                                               */
+/*  Access to VIEW_COLUMN_USAGE view                             */ 
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    21.2.22 -- VIEW_COLUMN_USAGE view                          */
+/*    21.3.12 -- VIEW_COLUMN_USAGE base table.                   */
+/*    11.20   -- <drop view statement>                           */
+/*    F#1     -- Dynamic SQL                                     */
+/*    F#2     -- Basic information schema                        */
+/*    F#3     -- Basic schema manipulation                       */
+/*    F#34    -- Usage tables                                    */
+/*                                                               */
+/*  DATE LAST ALTERED  14/12/95 CTS5 Hand-over Test              */
+/*                                                               */
+/*  Cleanups and fixes by V. Kogakis 04/12/95:                   */
+/*       Respect length of strings in variable initialization.   */
+/*                                                               */
+/*  QA Status: QA check                                          */
+/*                                                               */
+/*  Revised by DWF 1/25/96                                       */
+/*    Fixed SDL transactions                                     */
+/*    Dynamic SQL broken; replaced with static                   */
+/*    Removed extraneous SQL syntax                              */
+/*    Removed status checks after cursor definition              */
+/*    Upcased information schema identifiers                     */
+/*****************************************************************/
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void NOSUBCLASS();
+void CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+ long SQLCODE;
+ char SQLSTATE[6];
+ char uid[19];
+ char uidx[19];
+ long counok;
+ char vschma[129];
+ char v_name[129];
+ char tabnam[129];
+ char colnam[129];
+EXEC SQL END DECLARE SECTION;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+short i;
+long flag;
+
+main()
+{
+strcpy(uid,"CTS4              ");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM CTS1.ECCO;
+EXEC SQL ROLLBACK WORK;
+if (strncmp(uid,uidx,4) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, xts721.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time(&cal);
+printf("\n Time run:  %s\n", ctime(&cal));
+
+/******************** BEGIN TEST7021 ********************/
+flag = 1;
+printf("                  TEST7021\n");
+printf("   Access to VIEW_COLUMN_USAGE view \n");
+printf(" References \n");
+printf("   21.2.22 -- VIEW_COLUMN_USAGE view \n");
+printf("   21.3.12 -- VIEW_COLUMN_USAGE base table\n");
+printf("   11.20   -- <drop view statement> \n");
+printf("   F#2     -- Basic information schema \n");
+printf("   F#3     -- Basic schema manipulation\n");
+printf("   F#34    -- Usage tables         \n");
+printf("   - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* initialise error reporting variables */
+SQLCODE = -1;
+strcpy(SQLSTATE,"xxxxx");
+
+/* initialise host variable */
+/* we expect a zero so initialise it to a value <> 0 */
+counok = 9;
+
+printf("SELECT COUNT(*) INTO :counok\n");
+printf("FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE\n");
+printf("WHERE VIEW_SCHEMA = 'CTS4';\n");
+EXEC SQL SELECT COUNT(*) INTO :counok
+         FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE
+         WHERE VIEW_SCHEMA = 'CTS4';
+CHCKOK();
+printf("counok should be 0; its value is : %ld\n",counok);
+if (counok != 0)
+   flag = 0;
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE TABLE TAB721a \n");
+printf("(COLNUM1 NUMERIC(5),\n");
+printf(" COLNUM2 NUMERIC(7),\n");
+printf(" COLSTR1 CHAR(10),\n");
+printf(" COLSTR2 CHAR(5));\n");
+EXEC SQL CREATE TABLE TAB721a 
+         (COLNUM1 NUMERIC(5),
+          COLNUM2 NUMERIC(7),
+          COLSTR1 CHAR(10),
+          COLSTR2 CHAR(5));
+CHCKOK();  
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("CREATE VIEW VA_721a AS SELECT \n");
+printf("COLNUM1,COLNUM2,COLSTR1,COLSTR2 FROM TAB721a;\n");
+EXEC SQL CREATE VIEW VA_721a AS SELECT 
+         COLNUM1,COLNUM2,COLSTR1,COLSTR2 FROM TAB721a;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+printf("DECLARE ALPHA CURSOR FOR SELECT \n");
+printf("VIEW_SCHEMA,VIEW_NAME,TABLE_NAME,COLUMN_NAME\n"); 
+printf("FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE\n"); 
+printf("WHERE VIEW_SCHEMA = 'CTS4' AND TABLE_SCHEMA = 'CTS4'\n");
+printf("ORDER BY COLUMN_NAME;\n\n");
+EXEC SQL DECLARE ALPHA CURSOR FOR SELECT 
+         VIEW_SCHEMA,VIEW_NAME,TABLE_NAME,COLUMN_NAME
+         FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE
+         WHERE VIEW_SCHEMA = 'CTS4' AND TABLE_SCHEMA = 'CTS4'
+         ORDER BY COLUMN_NAME;
+
+printf("OPEN ALPHA;\n");
+EXEC SQL OPEN ALPHA;
+CHCKOK();
+printf("\n");
+
+/* initialise host variables */
+for(i = 0; i < 128; i++)
+{
+  vschma[i] = 'x';
+  v_name[i] = 'x';
+  tabnam[i] = 'x';
+  colnam[i] = 'x';
+}
+vschma[128] = '\0';
+v_name[128] = '\0';
+tabnam[128] = '\0';
+colnam[128] = '\0';
+
+/* four rows should be returned by the cursor */
+/* fetch first row */
+printf("FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;\n");
+EXEC SQL FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;
+CHCKOK();
+printf("VIEW_SCHEMA should be CTS4    it is %s\n",vschma);
+printf("VIEW_NAME   should be VA_721A it is %s\n",v_name);
+printf("TABLE_NAME  should be TAB721A it is %s\n",tabnam); 
+printf("COLUMN_NAME should be COLNUM1 it is %s\n",colnam);
+if (strncmp(vschma,"CTS4",4)!=0 || strncmp(v_name,"VA_721A",7)!=0)
+    flag = 0; 
+if (strncmp(tabnam,"TAB721A",7)!=0 || strncmp(colnam,"COLNUM1",7)!=0)
+     flag = 0;
+printf("\n");
+
+for(i = 0; i < 128; i++)
+{
+  vschma[i] = 'x';
+  v_name[i] = 'x';
+  tabnam[i] = 'x';
+  colnam[i] = 'x';
+}
+vschma[128] = '\0';
+v_name[128] = '\0';
+tabnam[128] = '\0';
+colnam[128] = '\0';
+
+/* fetch the second row */
+printf("FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;\n");
+EXEC SQL FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;
+CHCKOK();
+printf("VIEW_SCHEMA should be CTS4    it is %s\n",vschma);
+printf("VIEW_NAME   should be VA_721A it is %s\n",v_name);
+printf("TABLE_NAME  should be TAB721A it is %s\n",tabnam); 
+printf("COLUMN_NAME should be COLNUM2 it is %s\n",colnam);
+if (strncmp(vschma,"CTS4",4)!=0 || strncmp(v_name,"VA_721A",7)!=0)
+     flag = 0;
+if (strncmp(tabnam,"TAB721A",7)!=0 || strncmp(colnam,"COLNUM2",7)!=0)
+     flag = 0;
+printf("\n");
+ 
+for(i = 0; i < 128; i++)
+{
+  vschma[i] = 'x';
+  v_name[i] = 'x';
+  tabnam[i] = 'x';
+  colnam[i] = 'x';
+}
+vschma[128] = '\0';
+v_name[128] = '\0';
+tabnam[128] = '\0';
+colnam[128] = '\0';
+
+/* fetch third row */
+printf("FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;\n");
+EXEC SQL FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;
+CHCKOK();
+printf("VIEW_SCHEMA should be CTS4    it is %s\n",vschma);
+printf("VIEW_NAME   should be VA_721A it is %s\n",v_name);
+printf("TABLE_NAME  should be TAB721A it is %s\n",tabnam); 
+printf("COLUMN_NAME should be COLSTR1 it is %s\n",colnam);
+if (strncmp(vschma,"CTS4",4)!=0 || strncmp(v_name,"VA_721A",7)!=0)
+    flag = 0;
+if (strncmp(tabnam,"TAB721A",7)!=0 || strncmp(colnam,"COLSTR1",7)!=0)
+    flag = 0;
+printf("\n");
+
+for(i = 0; i < 128; i++)
+{
+  vschma[i] = 'x';
+  v_name[i] = 'x';
+  tabnam[i] = 'x';
+  colnam[i] = 'x';
+}
+vschma[128] = '\0';
+v_name[128] = '\0';
+tabnam[128] = '\0';
+colnam[128] = '\0';
+
+/* fetch fourth and final row */
+printf("FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam;\n");
+EXEC SQL FETCH ALPHA INTO :vschma,:v_name,:tabnam,:colnam; 
+CHCKOK();
+printf("VIEW_SCHEMA should be CTS4    it is %s\n",vschma);
+printf("VIEW_NAME   should be VA_721A it is %s\n",v_name);
+printf("TABLE_NAME  should be TAB721A it is %s\n",tabnam); 
+printf("COLUMN_NAME should be COLSTR2 it is %s\n",colnam);
+if (strncmp(vschma,"CTS4",4)!=0 || strncmp(v_name,"VA_721A",7)!=0)
+    flag = 0;
+if (strncmp(tabnam,"TAB721A",7)!=0 || strncmp(colnam,"COLSTR2",7)!=0)
+     flag = 0;
+printf("\n");
+ 
+/* end fetches **
+/* close the cursor */
+printf("CLOSE ALPHA;\n");
+EXEC SQL CLOSE ALPHA;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* Now drop view VA_721a */
+printf("DROP VIEW VA_721a CASCADE;\n");
+EXEC SQL DROP VIEW VA_721a CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+counok = 9;
+printf("SELECT COUNT(*) INTO :counok\n");
+printf("FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE\n");
+printf("WHERE VIEW_SCHEMA = 'CTS4';\n");
+EXEC SQL SELECT COUNT(*) INTO :counok
+         FROM INFORMATION_SCHEMA.VIEW_COLUMN_USAGE
+         WHERE VIEW_SCHEMA = 'CTS4';
+CHCKOK();
+printf("counok should be 0; its value is : %ld\n",counok);
+if (counok != 0)
+   flag = 0;
+printf("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK();
+printf("\n");
+
+/* now restore the database in its original state */
+/* by dropping table TAB721a */
+printf("DROP TABLE TAB721a CASCADE;\n");
+EXEC SQL DROP TABLE TAB721a CASCADE;
+CHCKOK();
+printf("\n");
+
+printf("COMMIT WORK;\n");
+EXEC SQL COMMIT WORK;
+CHCKOK();
+printf("\n");
+
+/* record results */
+
+     if ( flag == 1 )
+       {
+          printf("\n\n       xts721.pc  *** pass *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7021','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       xts721.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO CTS1.TESTREPORT
+          VALUES('7021','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+     printf("========================================\n\n");
+
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST7021 *********************/
+
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}

@@ -1,0 +1,196 @@
+/*  EMBEDDED C (file "DML044.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/11/22 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML044.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE LIMIT ON THE COLUMNS IN A UNIQUE    */
+/*  CLAUSE. THE LIMIT ON THE NUMBER OF COLUMNS IS NOT LESS       */
+/*  THAN SIX (6). THE LIMIT ON THE TOTAL LENGTH OF A KEY         */
+/*  IS NOT LESS THAN ONE HUNDREND AND TWENTY (120).              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*        FIPS PUB 127-1, Section 13.5                           */
+/*        Sizing for database constructs                         */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+  char vcol1[3];
+  char vcol2[5];
+  char vcol3[7];
+  char vcol4[9];
+  char vcol5[11];
+  char vcol6[13];
+  char vcol7[15];
+  char vcol8[17];
+  char vtr119[119];
+  char shrt12[13];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+  char part1[60];
+  char part2[60];
+  long  i;
+  long  ii;
+  long  iii;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml044.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+
+/******************** BEGIN TEST0215 ********************/
+
+  printf("\n          FIPS sizing TEST0215      \n");
+  printf("Tests number (6) of columns in a UNIQUE constraint\n");  
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  EXEC SQL INSERT INTO T8
+    VALUES('th','seco','third3','fourth_4','fifth_colu',
+           'sixth_column','seventh_column','last_column_of_t');
+
+  i = SQLCODE;
+
+
+  EXEC SQL INSERT INTO T8
+    VALUES('th','seco','third3','fourth_4','fifth_colu',
+           'sixth_column','column_seventh','column_eighth_la');
+  
+  ii = SQLCODE;
+
+  EXEC SQL SELECT COL1,COL2,COL3,COL4,COL5,COL6,COL7,COL8
+           INTO :vcol1,:vcol2,:vcol3,:vcol4,:vcol5,:vcol6,:vcol7,:vcol8
+           FROM T8;
+
+  iii = SQLCODE;
+
+  printf("i = %ld, ii = %ld, iii = %ld \n", i, ii, iii);
+  printf("vcol1 = %s, vcol2 = %s\n",vcol1,vcol2);
+  printf("vcol3 = %s, vcol4 = %s\n",vcol3,vcol4);
+  printf("vcol5 = %s, vcol6 = %s\n",vcol5,vcol6);
+  printf("vcol7 = %s, vcol8 = %s\n",vcol7,vcol8);
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (i==0 && ii < 0 && iii == 0 && strncmp(vcol1,"th",2)==0)
+    {
+      printf("        *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0215','pass','PC');
+    }
+  else
+    {
+      printf("dml044.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0215','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0215 ********************/
+
+
+/******************** BEGIN TEST0216 ********************/
+
+  printf("\n          FIPS sizing TEST0216      \n");
+  printf("Tests total length (120) of columns in a UNIQUE constraint\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  strcpy(vtr119,"This test is trying to test the limit on the total length of");
+  strcpy(part2," an index key which is not less than one hundred and twent");
+  strcat(vtr119,part2);
+
+  printf(" vtr119 = %s \n",vtr119);
+  EXEC SQL INSERT INTO T118
+    VALUES( :vtr119 );
+
+  i = SQLCODE;
+
+
+  EXEC SQL INSERT INTO T118
+    VALUES( :vtr119 );
+  
+  ii = SQLCODE;
+
+  EXEC SQL SELECT STR118
+           INTO :shrt12
+           FROM T118;
+
+  iii = SQLCODE;
+
+  printf("i = %ld, ii = %ld, iii = %ld \n", i, ii, iii);
+  printf("shrt12 = %s\n", shrt12);
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (i==0 && ii < 0 && strncmp(shrt12,"This test is",12)==0)
+    {
+      printf("        *** pass *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0216','pass','PC');
+    }
+  else
+    {
+      printf("dml044.pc  *** fail *** \n\n");
+      EXEC SQL INSERT INTO TESTREPORT
+               VALUES('0216','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0216 ********************/
+
+  exit(errcnt);
+}
+

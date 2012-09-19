@@ -1,0 +1,549 @@
+/*  EMBEDDED C (file "DML060.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/07/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML060.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SET FUNCTION SPECIFICATION IN       */
+/*  COMMON ELEMENTS OF THE SQL LANGUAGE.                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                 SECTION 5.21 <where clause>                   */
+/*                 SECTION 5.9  <value expression>               */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+        long int1;
+        long int2;
+        long int3;
+        char EMPNO1[4];
+        char PNO1[4];
+        char PNO2[4];
+        long HOURS1;
+        long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long i;
+    long flag;
+
+
+main()
+{
+    strcpy(uid,"HU");
+    AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml060.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0261 ********************/
+
+    printf("         Computation in Where Clause   \n");
+    printf("Reference X3.135-1989 section 5.9 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0261     \n");
+    printf("    Reference 5.9 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("         DECLARE SUN CURSOR \n");
+printf("         FOR   SELECT COL1, COL2\n");
+printf("           FROM VTABLE\n");
+printf("           WHERE (:int3 * (COL3 - COL2)) BETWEEN 5 AND 200\n");
+printf("           ORDER BY COL1;\n");
+printf("\n");
+int3 = 2;
+    EXEC SQL DECLARE SUN CURSOR 
+            FOR   SELECT COL1, COL2
+                  FROM VTABLE
+                  WHERE (:int3 * (COL3 - COL2)) BETWEEN 5 AND 200
+                  ORDER BY COL1;
+    EXEC SQL OPEN SUN;    
+printf(" The correct answer is :\n");
+printf("          10,   20\n");
+printf("         100,  200\n");
+printf(" Your answer is :\n");
+
+flag = 0;
+
+    EXEC SQL FETCH SUN INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 10 && int2 == 20)
+        {
+           flag = flag;
+         }
+     else 
+        flag = 1; 
+
+    EXEC SQL FETCH SUN INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 100 && int2 == 200)
+        {
+           flag = flag;
+         }
+     else 
+       flag = 1; 
+
+
+    EXEC SQL CLOSE SUN;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0261','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml060.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0261','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0261 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0262 ********************/
+
+    printf("         Computation in Where Clause   \n");
+    printf("Reference X3.135-1989 section 5.9 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0262     \n");
+    printf("    Reference 5.9 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("\n");
+printf("            UPDATE VTABLE\n");
+printf("            SET COL1 = 1\n");
+printf("            WHERE COL1 = 0;\n");
+printf("\n");
+printf("            DECLARE SUN1 CURSOR \n");
+printf("            FOR   SELECT COL1, COL2\n");
+printf("                  FROM VTABLE\n");
+printf("                  WHERE (COL3 * COL2 / COL1) > ALL\n");
+printf("                        (SELECT HOURS FROM WORKS)\n");
+printf("                        OR -(COL3 * COL2 /COL1) > ANY\n");
+printf("                        (SELECT HOURS FROM WORKS)\n");
+printf("                  ORDER BY COL1;\n");
+printf("\n");
+    EXEC SQL UPDATE VTABLE
+            SET COL1 = 1
+            WHERE COL1 = 0;
+    EXEC SQL DECLARE SUN1 CURSOR 
+            FOR   SELECT COL1, COL2
+                  FROM VTABLE
+                  WHERE (COL3 * COL2 / COL1) > ALL
+                        (SELECT HOURS FROM WORKS)
+                        OR -(COL3 * COL2 /COL1) > ANY
+                        (SELECT HOURS FROM WORKS)
+                  ORDER BY COL1;
+    EXEC SQL OPEN SUN1;    
+printf(" The correct answer is :\n");
+printf("          100,   200\n");
+printf("         1000,  -2000\n");
+printf(" Your answer is :\n");
+
+flag = 0;
+
+    EXEC SQL FETCH SUN1 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 100 && int2 == 200)
+        {
+           flag = flag;
+        }
+     else 
+       flag = 1; 
+
+    EXEC SQL FETCH SUN1 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 1000 && int2 == -2000)
+         {
+           flag = flag;
+         }
+     else 
+        flag = 1; 
+
+
+    EXEC SQL CLOSE SUN1;
+    EXEC SQL ROLLBACK WORK;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0262','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml060.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0262','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0262 ********************/
+
+
+
+
+
+
+/******************** BEGIN TEST0263 ********************/
+
+    printf("         Computation in ORDER BY   \n");
+    printf("Reference X3.135-1989 section 5.9 General Rules \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0263     \n");
+    printf("    Reference 5.9 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("\n");
+printf("          FOR   SELECT COL1, COL3 * COL2 /COL1 - COL2 + 10\n");
+printf("                FROM VTABLE\n");
+printf("                WHERE COL1 > 0\n");
+printf("                ORDER BY 2;\n");
+printf("\n");
+    EXEC SQL DECLARE SUN2 CURSOR 
+            FOR   SELECT COL1, (COL3 * COL2 /COL1 - COL2 + 10)
+                  FROM VTABLE
+                  WHERE COL1 > 0
+                  ORDER BY 2;
+    EXEC SQL OPEN SUN2;    
+printf(" The correct answer is :\n");
+printf("        1000, -3990\n");
+printf("          10,   50\n");
+printf("         100,  410\n");
+
+printf(" Your answer is :\n");
+flag = 0;
+
+
+    EXEC SQL FETCH SUN2 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 1000 && int2 == -3990)
+         {
+           flag = flag;
+         }
+     else 
+       flag = 1; 
+
+    EXEC SQL FETCH SUN2 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 10 && int2 == 50)
+         {
+           flag = flag;
+         }
+     else 
+         flag = 1; 
+
+    EXEC SQL FETCH SUN2 INTO :int1,:int2;
+printf("        %ld,  %ld\n",int1,int2);
+     if (int1 == 100 && int2 == 410)
+        {
+           flag = flag;
+        }
+     else 
+        flag = 1; 
+
+    EXEC SQL CLOSE SUN2;
+
+    if (flag==0)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0263','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml060.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0263','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0263 ********************/
+
+
+
+
+/******************** BEGIN TEST0265 ********************/
+
+  printf("\n                  TEST0265                \n");
+  printf("   update: positioned -- view with check option\n");
+  printf("reference X3.135-1989 section 6.6 General Rules 2)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  i= 0;
+
+/* EXEC SQL CREATE VIEW SUBSP (EMPNUM,PNUM,HOURS)     */
+/*     AS SELECT EMPNUM,PNUM,HOURS                    */
+/*        FROM   WORKS                                */
+/*        WHERE  EMPNUM='E3'                          */
+/*     WITH CHECK OPTION;                             */
+
+printf("\n");
+printf("          INSERT INTO WORKS\n");
+printf("          VALUES ('E3','P4',50);\n");
+printf("\n");
+printf("          DECLARE DIPER CURSOR\n");
+printf("          FOR SELECT EMPNUM,PNUM,HOURS\n");
+printf("          FROM   SUBSP;\n");
+printf("\n");
+printf("          UPDATE SUBSP\n");
+printf("          SET EMPNUM='E9'\n");
+printf("          WHERE CURRENT OF DIPER;\n");
+printf("\n");
+  EXEC SQL INSERT INTO WORKS
+          VALUES ('E3','P4',50);
+  EXEC SQL DECLARE DIPER CURSOR
+    FOR SELECT EMPNUM,PNUM,HOURS
+        FROM   SUBSP;
+     /*    FOR UPDATE OF EMPNUM;     */
+  
+  EXEC SQL OPEN DIPER;
+
+  EXEC SQL FETCH DIPER INTO :EMPNO1,:PNO1,:HOURS1;
+
+
+  printf("   EMPNO1=%s, PNO1=%s and HOURS1=%ld \n",EMPNO1,PNO1,HOURS1);
+
+  EXEC SQL UPDATE SUBSP
+    SET EMPNUM='E9'
+    WHERE CURRENT OF DIPER;
+
+  i=SQLCODE;
+  EXEC SQL CLOSE DIPER;
+  EXEC SQL ROLLBACK WORK;
+
+  printf("The answer should be: i < 0 \n");
+printf(" Your answer is :\n");
+  printf(" i = %ld  \n",i);
+  if (i < 0)
+    {
+    printf("\n\n                   *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0265','pass','PC');
+    }
+  else
+    {
+    printf("\n\n         dml060.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0265','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0265 ********************/
+
+
+
+
+
+/******************** BEGIN TEST0266 ********************/
+
+  printf("\n                  TEST0266                \n");
+  printf("   update: positioned -- UNIQUE violation under view \n");
+  printf("reference X3.135-1989 section 8.11 General Rules 5)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  i= 0;
+
+/* EXEC SQL CREATE VIEW SUBSP (EMPNUM,PNUM,HOURS)     */
+/*     AS SELECT EMPNUM,PNUM,HOURS                    */
+/*        FROM   WORKS                                */
+/*        WHERE  EMPNUM='E3'                          */
+/*     WITH CHECK OPTION;                             */
+
+printf("\n");
+printf("          INSERT INTO WORKS\n");
+printf("          VALUES ('E3','P4',50);\n");
+printf("\n");
+printf("          DECLARE DOVE CURSOR\n");
+printf("          FOR SELECT EMPNUM,PNUM,HOURS\n");
+printf("          FROM   SUBSP;\n");
+printf("\n");
+printf("          UPDATE SUBSP\n");
+printf("          SET PNUM='P6'\n");
+printf("          WHERE CURRENT OF DOVE;\n");
+printf("\n");
+
+  EXEC SQL INSERT INTO WORKS
+          VALUES ('E3','P4',50);
+  EXEC SQL DECLARE DOVE CURSOR
+    FOR SELECT EMPNUM,PNUM,HOURS
+        FROM   SUBSP;
+     /*    FOR UPDATE OF PNUM;     */
+  
+  EXEC SQL OPEN DOVE;
+
+  EXEC SQL FETCH DOVE INTO :EMPNO1,:PNO1,:HOURS1;
+
+
+  printf("   EMPNO1=%s, PNO1=%s and HOURS1=%ld \n",EMPNO1,PNO1,HOURS1);
+
+  EXEC SQL UPDATE SUBSP
+    SET PNUM='P6'
+    WHERE CURRENT OF DOVE;
+
+  EXEC SQL FETCH DOVE INTO :EMPNO1,:PNO1,:HOURS1;
+
+
+  printf("   EMPNO1=%s, PNO1=%s and HOURS1=%ld \n",EMPNO1,PNO1,HOURS1);
+
+  EXEC SQL UPDATE SUBSP
+    SET PNUM='P6'
+    WHERE CURRENT OF DOVE;
+
+  i=SQLCODE;
+  EXEC SQL CLOSE DOVE;
+  EXEC SQL ROLLBACK WORK;
+
+  printf("The answer should be: i < 0\n ");
+printf(" Your answer is :\n");
+  printf(" i = %ld  \n",i);
+  if (i < 0)
+    {
+    printf("\n\n                   *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0266','pass','PC');
+    }
+  else
+    {
+    printf("\n\n         dml060.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0266','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0266 ********************/
+
+
+
+
+/******************** BEGIN TEST0267 ********************/
+
+    printf(" Update compound key, interim uniqueness conflict\n");
+    printf("Reference X3.135-1989 sections 6.6 GR2 and 8.12 GR2 \n");
+    printf("    ------------------------------------------ \n\n");
+    printf("                  TEST0267     \n");
+    printf("    Reference 5.9 General Rules )\n\n");
+    printf("    - - - - - - - - - - - - - - - - - - - - -  \n\n");
+printf("             UPDATE WORKS1\n");
+printf("             SET PNUM = EMPNUM, EMPNUM = PNUM;\n");
+    EXEC SQL DECLARE PANDA CURSOR 
+            FOR   SELECT DISTINCT PX.PNUM,PY.PNUM
+                  FROM WORKS PX, WORKS PY
+                  ORDER BY 2 DESC;
+
+    EXEC SQL DELETE FROM WORKS1;
+
+    EXEC SQL OPEN PANDA;    
+    for (ii = 1; ii < 37; ii++)
+    {
+    EXEC SQL FETCH PANDA INTO :PNO1,:PNO2;
+    EXEC SQL INSERT INTO WORKS1
+             VALUES(:PNO1,:PNO2,:ii);
+    }
+    EXEC SQL CLOSE PANDA;
+    i = -1;
+    EXEC SQL UPDATE WORKS1
+             SET PNUM = EMPNUM, EMPNUM = PNUM;
+    i = SQLCODE;
+    HOURS1 = 0;
+    EXEC SQL SELECT COUNT(*)  
+             INTO :HOURS1 FROM WORKS1
+             WHERE EMPNUM = 'P1' AND HOURS > 30;
+printf(" The correct answer is :\n");
+printf("        i = 0\n");
+printf("        count1 = 6\n");
+
+printf(" Your answer is :\n");
+
+printf("        i = %ld\n", i);
+
+printf("        count1 = %ld\n",HOURS1);
+
+    EXEC SQL CLOSE PANDA;
+    EXEC SQL ROLLBACK WORK;
+
+if (i == 0 && HOURS1 == 6)
+      {
+      printf("\n               *** pass *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0267','pass','PC');
+      }
+    else
+      {
+      printf("\n     dml060.pc  *** fail *** ");
+      EXEC SQL INSERT INTO TESTREPORT
+        VALUES('0267','fail','PC');
+          errcnt = errcnt + 1;
+      }
+    printf("\n===============================================\n\n");
+
+    EXEC SQL COMMIT WORK;
+
+/******************** END TEST0267 ********************/
+
+
+
+
+
+exit(errcnt);
+}

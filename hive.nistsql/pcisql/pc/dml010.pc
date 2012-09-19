@@ -1,0 +1,219 @@
+/*  EMBEDDED C (file "DML010.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML010.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*  THIS PROGRAM TESTS THE HANDLING OF CHARACTER STRING (SPACE   */
+/*  FILLING, TRUNCATING ETC.) INTO TEST COLUMNS. IT ALSO TESTS   */
+/*  THE USE OF NUMERIC DATATYPES IN INSERT STATEMENTS.           */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                        SECTION 8.3 <declare cursor>           */
+/*                        SECTION 8.6 <fetch statement>          */
+/*                        SECTION 8.7 <insert statement>         */
+/*                        SECTION 8.8 <open statement>           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+     short indic1;
+     short indic2;
+     char   t10[11];
+     char   t30[11];
+     char   t11[11];
+     long   t21;
+     char   t31[11];
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+     long ii;
+
+
+main()
+{
+
+strcpy(uid,"HU");
+AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml010.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0027 ********************/
+
+/*   CREATE TABLE TMP (T1 CHAR(10),T2 DECIMAL(2), T3 CHAR(10))  */
+
+printf("\n                       TEST0027     \n");
+printf("Insert short string into long column with space filling\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+strcpy(t10, "xxxx");
+strcpy(t30, "xxxx");
+t21 = 23;
+EXEC SQL INSERT INTO TMP (T1, T2, T3) 
+    VALUES (:t10, :t21, :t30); 
+printf("              SQLCODE = %ld \n ",SQLCODE);
+
+strcpy(t11,"    ");
+t21 = 0;
+
+EXEC SQL SELECT *
+         INTO :t11, :t21, :t31
+         FROM TMP
+         WHERE T2 = 23;
+
+printf(" t11=%s, t21=%ld, t31=%s \n",t11,t21,t31);
+
+EXEC SQL ROLLBACK WORK;
+
+if (strncmp(t11,"xxxx      ",10) == 0 )
+     {
+     printf("\n\n                     *** pass ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0027','pass','PC');
+     }
+else
+     {
+     printf("\n\n           dml010.pc  *** fail ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0027','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n\n");
+EXEC SQL COMMIT WORK;
+/******************** END TEST0027 ********************/
+/******************** BEGIN TEST0028 ********************/
+
+
+printf("\n                      TEST0028     \n");
+printf("Insert character string that exactly fits in the column\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+strcpy(t10, "xxxxxxxxxx");
+strcpy(t30, "xxxxxxxxxx");
+t21 = 23;
+EXEC SQL INSERT INTO TMP (T1, T2, T3) VALUES (:t10, :t21, :t30); 
+ii = SQLCODE;
+printf("  ii = %ld \n", ii);
+
+strcpy(t11,"          ");
+t21 = 0;
+
+EXEC SQL SELECT *
+         INTO :t11, :t21, :t31
+         FROM TMP
+         WHERE T2 = 23;
+printf("          SQLCODE = %ld \n",SQLCODE);
+
+printf(" t11=%s, t21=%ld, t31=%s \n\n",t11,t21,t31);
+
+printf("The correct answer should be ii=0 & t11=xxxxxxxxxx \n");
+EXEC SQL ROLLBACK WORK;
+
+if ( strcmp(t11,"xxxxxxxxxx") == 0 && ii == 0)
+     {
+     printf("\n\n                     *** pass ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0028','pass','PC');
+     }
+else
+     {
+     printf("\n\n           dml010.pc  *** fail ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0028','fail','PC');
+          errcnt = errcnt + 1;
+     }
+printf("\n\n\n");
+EXEC SQL COMMIT WORK;
+
+
+/******************** END TEST0028 ********************/
+
+/******************** BEGIN TEST0031 ********************/
+
+printf("\n                      TEST0031     \n");
+printf("  the orders of insert columns differ from definition\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - -\n\n");
+
+
+strcpy(t11, "z");
+strcpy(t31, "zz");
+EXEC SQL INSERT INTO TMP (T2, T3, T1) VALUES (NULL, :t31, :t11); 
+printf(" After INSERT, SQLCODE = %ld \n",SQLCODE);
+
+strcpy(t11, " ");
+
+EXEC SQL SELECT *
+          INTO   :t11, :t21:indic1, :t31
+          FROM   TMP
+          WHERE  T2 IS NULL;
+
+printf("       indic1 = %d \n",indic1);
+printf("        SQLCODE = %ld \n",SQLCODE);
+ii = SQLCODE;
+
+EXEC SQL ROLLBACK WORK;
+
+if (ii >= 0 && strncmp(t11, "z",1) == 0)
+     {
+     printf("\n\n                     *** pass ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0031','pass','PC');
+     }
+else
+     {
+     printf("\n\n           dml010.pc  *** fail ***");
+     printf("\n==================================================");
+     EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0031','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+printf("\n\n\n");
+EXEC SQL COMMIT WORK;
+
+/******************** END TEST0031 ********************/
+
+exit(errcnt);
+}

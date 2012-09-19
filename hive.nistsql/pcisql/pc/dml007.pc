@@ -1,0 +1,207 @@
+/*  EMBEDDED C (file "DML007.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1987/08/21 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML007.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE UPDATE STATEMENT IN THE LANGUAGE OF */
+/*  SQL.  THE FORMAT:                                            */
+/*          UPDATE <table name>                                  */
+/*          SET <set clause: positioned> [{,<set clause>}...]    */
+/*          WHERE CURRENT OF <cursor name>                       */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                   SECTION 8.3 <declare cursor>                */
+/*                   SECTION 8.7 <insert statement>              */
+/*                   SECTION 8.8 <open statement>                */
+/*                   SECTION 8.10 <select statement>             */
+/*                   SECTION 8.11 <update statement: positioned> */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+    char PNO1[4];
+    char EMPNO1[4];
+    long HOURS1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+    long i;
+    long ii;
+
+
+main()
+{
+  strcpy(uid,"HU");
+  AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml007.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0014 ********************/
+
+  printf("\n                  TEST0014                \n");
+  printf("          update statement: positioned     \n");
+  printf("reference X3.135-1989 section 8.11 General Rules 3)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+ 
+  EXEC SQL DECLARE X CURSOR
+    FOR SELECT EMPNUM,PNUM,HOURS
+        FROM   WORKS
+        WHERE  PNUM='P6'
+        AND    EMPNUM='E1';
+     /*    FOR UPDATE OF EMPNUM,PNUM,HOURS;     */
+  
+  EXEC SQL OPEN X;
+
+  EXEC SQL FETCH X INTO :EMPNO1,:PNO1,:HOURS1;
+
+
+  printf("Before: EMPNO1=%s, PNO1=%s and HOURS1=%ld \n",EMPNO1,PNO1,HOURS1);
+
+  EXEC SQL UPDATE WORKS
+    SET EMPNUM='E14',PNUM='P14',HOURS=HOURS+12
+    WHERE CURRENT OF X;
+
+  EXEC SQL CLOSE X;
+  EXEC SQL SELECT EMPNUM,PNUM,HOURS
+     INTO :EMPNO1,:PNO1,:HOURS1
+     FROM WORKS
+     WHERE EMPNUM='E14';
+
+  i = SQLCODE;
+
+  printf("After: EMPNO1=%s, PNO1=%s and HOURS1=%ld \n",EMPNO1,PNO1,HOURS1);
+
+  printf("      sqlcode=%ld \n\n",SQLCODE);
+  printf("The correct answer should be sqlcode = 0 and \n");
+  printf("  Before: EMPNO1=E1, After: EMPNO1=E14 ");
+
+  EXEC SQL ROLLBACK WORK;
+
+  if (i == 0 && HOURS1 == 24 && strncmp(EMPNO1,"E14",3) == 0)
+    {
+    printf("\n\n                   *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0014','pass','PC');
+    }
+  else
+    {
+    printf("\n\n         dml007.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0014','fail','PC');
+          errcnt = errcnt + 1;
+    }
+
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+/******************** END TEST0014 ********************/
+
+/******************** BEGIN TEST0015 ********************/
+
+  printf("\n                  TEST0015                \n");
+  printf("          update statement: positioned     \n");
+  printf("reference X3.135-1989 section 8.11 General Rules 5)\n");
+  printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+  i= -1;
+
+/* EXEC SQL CREATE VIEW SUBSP (EMPNUM,PNUM,HOURS)     */
+/*     AS SELECT EMPNUM,PNUM,HOURS                    */
+/*        FROM   WORKS                                */
+/*        WHERE  EMPNUM='E3'                          */
+/*     WITH CHECK OPTION;                             */
+
+  EXEC SQL DECLARE Y CURSOR
+    FOR SELECT EMPNUM,PNUM,HOURS
+        FROM   SUBSP
+        WHERE  PNUM='P2'
+        AND    EMPNUM='E3';
+     /*    FOR UPDATE OF EMPNUM,PNUM,HOURS;     */
+  
+  EXEC SQL OPEN Y;
+
+  EXEC SQL FETCH Y INTO :EMPNO1,:PNO1,:HOURS1;
+
+
+  printf("   EMPNO1=%s, PNO1=%s and HOURS1=%ld \n",EMPNO1,PNO1,HOURS1);
+
+  EXEC SQL UPDATE SUBSP
+    SET PNUM='P6'
+    WHERE CURRENT OF Y;
+
+printf(" Here sqlcode = %ld \n",SQLCODE);
+  i=SQLCODE;
+
+  EXEC SQL UPDATE SUBSP
+    SET EMPNUM='E1',PNUM='P6',HOURS=HOURS-12
+    WHERE CURRENT OF Y;
+
+  ii = SQLCODE;
+
+  EXEC SQL ROLLBACK WORK;
+
+  printf(" i = %ld  ii = %ld \n\n",i,ii);
+  printf("The answer should be i = 0 & ii < 0 & EMPNO1 = E3.");
+  if (i == 0 && ii < 0 && strncmp(EMPNO1,"E3",2) == 0)
+    {
+    printf("\n\n                   *** pass *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0015','pass','PC');
+    }
+  else
+    {
+    printf("\n\n         dml007.pc  *** fail *** \n");
+    EXEC SQL INSERT INTO TESTREPORT
+    VALUES('0015','fail','PC');
+          errcnt = errcnt + 1;
+    }
+  printf("===================================================");
+
+  printf("\n\n\n\n");
+
+  EXEC SQL COMMIT WORK;
+
+/******************** END TEST0015 ********************/
+
+  exit(errcnt);
+
+}

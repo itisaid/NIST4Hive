@@ -1,0 +1,771 @@
+/*  EMBEDDED C (file "DML082.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1992/07/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML082.PC                                                    */
+/*  WRITTEN BY: DAVID W. FLATER                                  */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE SQLSTATE STATUS CODE.               */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*      22.1  SQLSTATE                                           */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+     short indic1;
+     char huge1[2];
+     long tmpcnt;
+     short SMALL1;
+     long LONG1;
+     char esch1[2];
+     char esch2[3];
+     char patrn6[7];
+     char patrn7[8];
+     char colval[16];
+EXEC SQL END DECLARE SECTION;
+long SQLCD1;
+long ii;
+long i33000;
+long maxlon;
+long loopct;
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+char SQLST1[6];
+char testst[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+long     flag2;
+long     flag3;
+
+main()
+{
+     strcpy(uid,"SCHANZLE");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,8) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, dml082.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0491 ********************/
+flag = 0;
+
+     printf("                  TEST0491 \n");
+     printf("SQLSTATE = 22022: data exception (indicator overflow)\n");
+     printf("Reference ANSI SQL-1992 section 9.1 Retrieval assignment\n");
+     printf("   General Rule #2\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     /* This test is assumed passed if the database cannot create */
+     /* a CHAR column of size 33000 for table FLATER.TINY.  It is */
+     /* also passed by the program logic if the type of the       */
+     /* indicator variable gets changed to long int.              */
+
+     /* 42000, the SQLSTATE for syntax error or access rule       */
+     /* violation, reflects the fact that a nonexistent table     */
+     /* has been queried.  If the test will not compile because   */
+     /* TINY does not exist, save the error message and use TEd   */
+     /* to delete this test case: it is a pass.                   */
+
+     i33000 = 33000;
+     indic1 = -44;
+     tmpcnt = 0;
+     strcpy (huge1, "z");
+
+     EXEC SQL DELETE FROM FLATER.TINY;
+     EXEC SQL INSERT INTO FLATER.TINY VALUES ('Too long for its own good!');
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT COUNT(*) INTO :tmpcnt FROM FLATER.TINY;\n");
+     printf ("(SQLCD1=SQLCODE, SQLST1=SQLSTATE for this SELECT COUNT(*))\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt FROM FLATER.TINY;
+     SQLCD1 = SQLCODE;
+     SQLSTATE[5] = '\0';
+     strcpy (SQLST1, SQLSTATE);
+     NOSUBCLASS();
+     strcpy (testst, NORMSQ);
+
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("SELECT C1 INTO :huge1:indic1 FROM FLATER.TINY;\n");
+     EXEC SQL SELECT C1 INTO :huge1:indic1 FROM FLATER.TINY;
+     SQLSTATE[5] = '\0';
+     NOSUBCLASS();
+     huge1[1] = '\0';
+    
+     printf ("\n");
+     printf ("To pass, you need EITHER:\n");
+     printf ("No such table!\n");
+     printf ("     SQLCD1 < 0,        SQLST1 = '42000',\n");
+     printf ("    SQLCODE < 0,  and SQLSTATE = '42000'\n");
+     printf ("\n");
+     printf ("OR:\n");
+     printf ("Indicator overflow!\n");
+     printf ("     SQLCD1 = 0,        SQLST1 = '00000', tmpcnt = 1\n");
+     printf ("    SQLCODE < 0,  and SQLSTATE = '22022'\n");
+     printf ("\n");
+     printf ("OR:\n");
+     printf ("Successful completion!\n");
+     printf ("     SQLCD1 = 0,        SQLST1 = '00000', tmpcnt = 1\n");
+     printf ("    SQLCODE >= 0,      SQLSTATE = '01004'\n");
+     printf ("      indic1 = 33000,  and huge1 = 'T'\n");
+     printf ("\n");
+     printf ("SQLCD1 is %ld; SQLST1 is %s\n", SQLCD1, SQLST1);
+     printf ("tmpcnt is %ld\n",tmpcnt);
+     printf ("SQLCODE is %ld; SQLSTATE is %s\n", SQLCODE, SQLSTATE);
+     if (SQLCODE == 0)
+       printf ("indic1 is %d; huge1 is %s \n", indic1, huge1);
+
+     /* test for no such table */
+     flag2 = 0;
+     if (SQLCD1 < 0 && strncmp (testst, "42000", 5) == 0)
+       flag2 = 1;
+     if (flag2 == 1 && SQLCODE < 0 && strncmp (NORMSQ, "42000", 5) == 0)
+       flag = 1;
+
+     /* test for indicator overflow */
+     flag2 = 0;
+     if (SQLCD1 == 0 && strncmp (testst, "00000", 5) == 0 && tmpcnt == 1)
+       flag2 = 1;
+     if (flag2 == 1 && SQLCODE < 0 && strncmp (SQLSTATE, "22022", 5) == 0)
+       flag = 1;
+
+     /* test for successful completion */
+     flag2 = 0;
+     flag3 = 0;
+     if (SQLCD1 == 0 && strncmp (testst, "00000", 5) == 0 && tmpcnt == 1)
+       flag2 = 1;
+     if (flag2 == 1 && SQLCODE >= 0 && strncmp (NORMSQ, "01004", 5) == 0)
+       flag3 = 1;
+     if (flag3 == 1 && indic1 == i33000 && strncmp (huge1, "T", 1) == 0)
+       flag = 1;
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0491','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml082.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0491','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0491 *********************/
+
+/******************** BEGIN TEST0492 ********************/
+flag = 1;
+
+     printf("                  TEST0492 \n");
+     printf("SQLSTATE = 22019: data exception (invalid escape char)\n");
+     printf("Reference ANSI SQL-1992 section 8.5 <like predicate>\n");
+     printf("   General Rule #3\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     strcpy (colval, "Percent%Xunder_");
+     printf ("UPDATE HU.STAFF SET CITY = '%s'\n", colval);
+     printf ("  WHERE EMPNUM = 'E1';\n");
+     EXEC SQL UPDATE HU.STAFF SET CITY = :colval
+               WHERE EMPNUM = 'E1';
+     printf("\n");
+
+
+     /* Subtest 0492a begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* literal escape character  - 2-byte escape char*/
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (patrn7, "%XX%X_%");
+     printf ("SELECT COUNT(*) FROM HU.STAFF WHERE\n");
+     printf ("CITY LIKE '%s' ESCAPE 'XX';\n", patrn7);
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.STAFF WHERE CITY
+       LIKE '%XX%X_%' ESCAPE 'XX';
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22019'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22019", 5) != 0)
+       flag = 0;
+     /* Subtest 0492a ends */
+
+     /* literal escape character  - 1-byte escape char*/
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     tmpcnt = -1;
+     printf ("\n");
+     strcpy (patrn7, "%XX%X_%");
+     printf ("SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF WHERE\n");
+     printf ("CITY LIKE '%s' ESCAPE 'X';\n", patrn7);
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.STAFF WHERE CITY LIKE '%XX%X_%' ESCAPE 'X';
+     SQLSTATE[5] = '\0';
+     printf ("tmpcnt should be 1; its value is %ld\n", tmpcnt);
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (tmpcnt != 1 || SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     /* Subtest 0492c begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* parameter escape character - 2-byte escape char */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (esch2, "XX");
+     printf ("\n");
+     strcpy (patrn7, "%XX_%");
+     printf ("SELECT COUNT(*) INTO :tmpcnt FROM HU.STAFF WHERE\n");
+     printf ("CITY LIKE '%s' ESCAPE :esch2;\n", patrn7);
+     printf ("Note that esch2 = 'XX'\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.STAFF WHERE CITY
+       LIKE '%XX_%' ESCAPE :esch2;
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22019'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22019", 5) != 0)
+       flag = 0;
+     /* Subtest 0492c ends */
+
+     /* parameter escape character  - 1-byte escape char*/
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (esch1, "X");
+     tmpcnt = -1;
+     printf ("\n");
+     strcpy (patrn7, "%XX_%");
+     printf ("SELECT COUNT(*) FROM HU.STAFF WHERE\n");
+     printf ("CITY LIKE '%s' ESCAPE :esch1;\n", patrn7);
+     printf ("Note that esch1 = 'X'\n");
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM HU.STAFF WHERE CITY
+       LIKE '%XX_%' ESCAPE :esch1;
+     SQLSTATE[5] = '\0';
+     printf ("tmpcnt should be 1; its value is %ld\n", tmpcnt);
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (tmpcnt != 1 || SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0492','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml082.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0492','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0492 *********************/
+
+/******************** BEGIN TEST0493 ********************/
+flag = 1;
+
+     printf("                  TEST0493 \n");
+     printf("SQLSTATE = 22025: data exception (invalid escape sequence)\n");
+     printf("Reference ANSI SQL-1992 section 8.5 <like predicate>\n");
+     printf("   General Rule #3\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     strcpy (colval, "Per%X&und_");
+     EXEC SQL DELETE FROM CPBASE;
+     printf( "INSERT INTO CPBASE VALUES (82,'%s')\n", colval);
+     EXEC SQL INSERT INTO CPBASE VALUES (82,'Per%X&und_');
+
+     /* Subtest 0493a begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* SELECT...LIKE, literal escape char, literal pattern - */
+     /* pattern ends with escape char */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("\n");
+     strcpy (patrn7, "P%X%%X");
+     printf ("SELECT COUNT(*) FROM CPBASE WHERE\n");
+     printf ("JUNK1 LIKE '%s' ESCAPE 'X';\n", patrn7);
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM CPBASE WHERE JUNK1
+       LIKE 'P%X%%X' ESCAPE 'X';
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22025'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22025", 5) != 0)
+       flag = 0;
+     /* Subtest 0493a ends */
+
+     /* variation that should work - remove last X in pattern */
+     tmpcnt = -1;
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (patrn7, "P%X%%");
+     printf ("\n");
+     printf ("SELECT COUNT(*) INTO :tmpcnt FROM CPBASE\n");
+     printf ("  WHERE JUNK1 LIKE '%s' ESCAPE 'X';\n", patrn7);
+     EXEC SQL SELECT COUNT(*) INTO :tmpcnt
+       FROM CPBASE WHERE JUNK1
+       LIKE 'P%X%%' ESCAPE 'X';
+     SQLSTATE[5] = '\0';
+     printf ("After removing the last X in the pattern:\n");
+     printf ("tmpcnt should be 1; its value is %ld\n", tmpcnt);
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (tmpcnt != 1 || SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     /* Subtest 0493c begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* INSERT...LIKE, literal escape char, parameter pattern - */
+     /* escape char in pattern not followed by */
+     /* percent, underscore, escape char */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("\n");
+     strcpy (patrn7, "%X%%Xd_");
+     printf ("INSERT INTO HU.STAFF\n"); 
+     printf ("SELECT 'E12','ff',KC,'gg' FROM CPBASE\n");
+     printf ("WHERE JUNK1 LIKE :patrn7 ESCAPE 'X';\n");
+     EXEC SQL INSERT INTO HU.STAFF 
+              SELECT 'E12','ff',KC,'gg' FROM CPBASE
+              WHERE JUNK1 LIKE :patrn7 ESCAPE 'X';
+     printf ("Note that patrn7 = '%s'\n", patrn7);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22025'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22025", 5) != 0)
+       flag = 0;
+     /* Subtest 0493c ends */
+
+     /* variation that should work - remove the "d" in pattern */
+     strcpy (patrn6, "%X%%X_");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("\n");
+     printf ("INSERT INTO HU.STAFF SELECT 'E13','ff',KC,'gg'\n");
+     printf ("FROM CPBASE WHERE JUNK1 LIKE :patrn6 ESCAPE 'X';\n");
+     EXEC SQL INSERT INTO HU.STAFF 
+              SELECT 'E13','ff',KC,'gg' FROM CPBASE
+              WHERE JUNK1 LIKE :patrn6 ESCAPE 'X';
+     SQLSTATE[5] = '\0';
+     printf ("After removing the 'd' in the pattern:\n");
+     printf ("Note that patrn6 = '%s'\n", patrn6);
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     /* Subtest 0493e begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* UPDATE...LIKE, parameter escape char, literal pattern - */
+     /* escape char in pattern not followed by */
+     /* percent, underscore, escape char */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("\n");
+     strcpy (esch1, "?");
+     strcpy (patrn7, "%?X%");
+     printf ("UPDATE CPBASE SET KC = -1 \n"); 
+     printf ("WHERE JUNK1 LIKE '%s' ESCAPE :esch1;\n", patrn7);
+     EXEC SQL UPDATE CPBASE SET KC = -1
+              WHERE JUNK1 LIKE '%?X%' ESCAPE :esch1;
+     printf ("Note that esch1 = '%s'\n", esch1);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22025'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22025", 5) != 0)
+       flag = 0;
+     /* Subtest 0493e ends */
+
+     /* variation that should work - add a % after escape char in pattern */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (esch1, "?");
+     strcpy (patrn7, "%?%X%");
+     printf ("\n");
+     printf ("UPDATE CPBASE SET KC = -1\n");
+     printf ("WHERE JUNK1 LIKE '%s' ESCAPE :esch1;\n", patrn7);
+     EXEC SQL UPDATE CPBASE SET KC = -1
+              WHERE JUNK1 LIKE '%?%X%' ESCAPE :esch1;
+     SQLSTATE[5] = '\0';
+     printf ("After adding a percent in the middle of the pattern:\n");
+     printf ("Note that esch1 = '%s'\n", esch1);
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     /* Subtest 0493g begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* DELETE... LIKE, parameter escape char, parameter pattern - */
+     /* escape char in pattern not followed by */
+     /* percent, underscore, escape char */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("\n");
+     strcpy (esch1, "&");
+     strcpy (patrn6, "_e%&u%");
+     printf ("DELETE FROM CPBASE\n"); 
+     printf ("WHERE JUNK1 LIKE :patrn6 ESCAPE :esch1;\n");
+     EXEC SQL DELETE FROM CPBASE 
+              WHERE JUNK1 LIKE :patrn6 ESCAPE :esch1;
+     printf ("Note that patrn6 = '%s' and escape char = '%s'\n", patrn6, esch1);
+     SQLSTATE[5] = '\0';
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22025'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22025", 5) != 0)
+       flag = 0;
+     /* Subtest 0493g ends */
+
+     /* variation that should work - add an & in pattern */
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     strcpy (esch1, "&");
+     strcpy (patrn7, "_e%&&u%");
+     printf ("\n");
+     printf ("DELETE FROM CPBASE\n"); 
+     printf ("WHERE JUNK1 LIKE :patrn7 ESCAPE :esch1;\n");
+     EXEC SQL DELETE FROM CPBASE
+              WHERE JUNK1 LIKE :patrn7 ESCAPE :esch1;
+     SQLSTATE[5] = '\0';
+     printf ("After adding an ampersand in the middle of the pattern:\n");
+     printf ("Note that patrn7 = '%s' and escape char = '%s'\n", patrn7, esch1);
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0493','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml082.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0493','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0493 *********************/
+
+/******************** BEGIN TEST0494 ********************/
+flag = 1;
+
+     printf("                  TEST0494 \n");
+     printf("SQLSTATE = 22003: data exception \n");
+     printf("(numeric value out of range)\n");
+     printf("Reference ANSI SQL-1992 section 9.1 GR 3k \n");
+     printf("   and section 9.2 GR 3k\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     /* Subtest 0494a begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* insert larger and larger long parameter */
+     printf ("\n");
+     EXEC SQL DELETE FROM HU.HH;
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     maxlon = 0;
+     LONG1 = 10;
+     for (ii = 1; ii < 51; ii++)
+       {
+          EXEC SQL INSERT INTO HU.HH VALUES (:LONG1);
+          if (SQLCODE < 0)
+             goto P173;
+          loopct = ii;
+          if (LONG1 > maxlon)
+             maxlon = LONG1;
+          LONG1 = LONG1 * 10;
+       }
+   
+P173:
+     printf ("INSERT INTO HU.HH VALUES (:LONG1) done %ld times\n", loopct);
+     printf ("For values 10, 100, 1000, 10000, etc.\n");
+     printf ("The maximum value inserted was %ld\n",maxlon);
+     if (SQLCODE >= 0)
+       goto P174;
+     SQLSTATE[5] = '\0';
+     printf ("  before a negative SQLCODE was returned\n");
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     if (strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+P174:
+     if (SQLCODE >= 0)
+       printf ("Exception not encountered.  Pass by default.\n");
+     EXEC SQL ROLLBACK WORK;
+     /* Subtest 0494a ends */
+
+
+     /* Subtest 0494b begins. */
+     /* If it will not compile, save error message */
+     /* and then delete the subtest with TEd "hooks". */
+
+     /* enlarge value in table FF to the max */
+     printf ("\n");
+     EXEC SQL DELETE FROM HU.FF;
+     EXEC SQL INSERT INTO HU.FF VALUES (99999);
+     printf ("Starting at value 99999, UPDATE to multiply by 10\n");
+     for (ii = 1; ii < 51; ii++)
+       {
+          EXEC SQL UPDATE HU.FF SET INTTEST = 10 * INTTEST;
+          if (SQLCODE < 0)
+             goto P175;
+          loopct = ii;
+       }
+P175:
+     printf ("Column INTTEST was multiplied by 10 %ld times\n", loopct);
+     /* We are now ready to select it back. */
+
+
+     /* select back that large value into a short */
+     printf ("\n");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     SMALL1 = -1;
+     printf ("SELECT INTTEST INTO :SMALL1 FROM HU.FF;\n");
+     EXEC SQL SELECT INTTEST INTO :SMALL1 FROM HU.FF;
+     SQLSTATE[5] = '\0';
+     if (SQLCODE == 0)
+       printf("The large value from HU.FF was selected as a SMALLINT\n");
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '22003'; its value is %s\n", SQLSTATE);
+     if (SQLCODE >= 0 || strncmp (SQLSTATE, "22003", 5) != 0)
+       flag = 0;
+     EXEC SQL ROLLBACK WORK;
+     /* Subtest 0494b ends */
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0494','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml082.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0494','fail','PC');
+          errcnt = errcnt + 1;
+       }
+
+P100:     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0494 *********************/
+
+/******************** BEGIN TEST0505 ********************/
+flag = 1;
+
+     printf("                  TEST0505 \n");
+     printf("SQLSTATE = 44000: with check option violation\n");
+     printf ("Note: VALID implementation-defined subclass will be\n");
+     printf ("      accepted instead of no-subclass value of 000 \n");
+     printf("Reference ANSI SQL-1992,\n");
+     printf("  section 11.19  <view definition> General Rule #11a\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO FLATER.WCOV VALUES (0);\n");
+     printf ("  the CHECK clause is CHECK FLATER.WCOV.C1 > 0 \n");
+     EXEC SQL INSERT INTO FLATER.WCOV VALUES (0);
+     SQLSTATE[5] = '\0';
+
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '44000'; its value is %s\n", SQLSTATE);
+
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "44000", 5) != 0)
+       flag = 0;
+
+     printf ("\n");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("INSERT INTO FLATER.WCOV VALUES (75);\n");
+     EXEC SQL INSERT INTO FLATER.WCOV VALUES (75);
+     SQLSTATE[5] = '\0';
+
+     printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '00000'; its value is %s\n", SQLSTATE);
+
+     NOSUBCLASS();
+     if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+       flag = 0;
+
+     printf ("\n");
+     SQLCODE = 44;
+     strcpy (SQLSTATE, "x");
+     printf ("UPDATE FLATER.WCOV SET C1 = -C1 WHERE C1 = 75;\n");
+     EXEC SQL UPDATE FLATER.WCOV SET C1 = -C1 WHERE C1 = 75;
+     SQLSTATE[5] = '\0';
+
+     printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+     printf ("SQLSTATE should be '44000'; its value is %s\n", SQLSTATE);
+
+     NOSUBCLASS();
+     if (SQLCODE >= 0 || strncmp (NORMSQ, "44000", 5) != 0)
+       flag = 0;
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( flag == 1 )
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0505','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       dml082.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO HU.TESTREPORT
+          VALUES('0505','fail','PC');
+          errcnt = errcnt + 1;
+       }
+     
+     printf("===============================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+/******************** END TEST0505 *********************/
+
+     exit(errcnt);
+}
+
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}

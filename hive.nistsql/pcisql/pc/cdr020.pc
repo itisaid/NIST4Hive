@@ -1,0 +1,301 @@
+/*  EMBEDDED C (file "CDR020.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR020.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE REFERENTIAL INTEGRITY CONSTRAINT FOR*/
+/*  SQL.                                                         */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.7 <referential constraint definition>   */
+/*                <referential constraint definition>::=         */
+/*                      FOREIGN KEY (<referencing columns>)      */
+/*                      <references specification>               */
+/*                <references specification>::=                  */
+/*                      REFERENCES <referenced table and columns>*/
+/*                <referencing columns>::=                       */
+/*                        <reference column list>                */
+/*                <refereced table and columns>::=               */
+/*                        <table name>[(<reference column list>  */
+/*                <reference column list>::=                     */
+/*                        <column name>[{,<column name>}...]     */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long max1;
+long max2;
+long min2;
+long min1;
+long count1;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+
+long code1;
+
+main()
+
+{
+        strcpy(uid,"SUN");
+        AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr020.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0369 ********************/
+/*  This test try to update PRIMARY KEY TABLE, only     */
+/*  temporary conflict                                  */
+printf("\n                     TEST0369             \n");
+printf("                   TEMPORARY CONFLICT    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         INSERT INTO SIZ3_P3\n");
+printf("         VALUES (0,'CC');\n");
+printf("\n");
+printf("         UPDATE SIZ3_P3\n");
+printf("         SET F1 = F1 + 1;\n");
+printf("\n");
+printf("         SELECT MAX(F1),MIN(F1) INTO :min1,:max1 ");
+printf("FROM SIZ3_P3;\n");
+printf("\n");
+EXEC SQL INSERT INTO SIZ3_P3
+         VALUES (0,'CC');
+EXEC SQL UPDATE SIZ3_P3
+         SET F1 = F1 + 1;
+code1 = SQLCODE;
+EXEC SQL SELECT MAX(F1),MIN(F1) INTO :max1,:min1 FROM SIZ3_P3;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 is equal to 0.\n");
+ printf("           max1 = 5, min1 = 1.\n");
+ printf(" Your answer is :\n");
+ printf("           code1 is %ld\n",code1);
+ printf("           max1 = %ld,min1 = %ld\n",max1,min1);
+        if (code1 == 0 && max1 == 5 && min1 == 1)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0369','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0369','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr020.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0369 *************************/
+
+
+
+
+
+/******************** BEGIN TEST0370 ********************/
+/*  This test try to update FOREIGN KEY TABLE, only     */
+/*  temporary conflict                                  */
+printf("\n                     TEST0370             \n");
+printf("                   TEMPORARY CONFLICT    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         UPDATE SIZ2_F3\n");
+printf("         SET F1 = F1 + 1;\n");
+printf("\n");
+printf("         SELECT MAX(F1),MIN(F1) INTO :min1,:max1 ");
+printf("FROM SIZ2_F3;\n");
+printf("\n");
+EXEC SQL UPDATE SIZ2_F3
+         SET F1 = F1 + 1;
+code1 = SQLCODE;
+EXEC SQL SELECT MAX(F1),MIN(F1) INTO :max1,:min1 FROM SIZ2_F3;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 is equal to 0.\n");
+ printf("           max1 is 4, min1 is 2.\n");
+ printf(" Your answer is :\n");
+ printf("           code1 is %ld\n",code1);
+ printf("           max1 is %ld,min1 is %ld\n",max1,min1);
+        if (code1 == 0 && max1 == 4 && min1 == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0370','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0370','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr020.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0370 *************************/
+
+
+
+
+/******************** BEGIN TEST0371 ********************/
+/*  This test updates both PRIMARY KEY TABLE & FOREIGN  */
+/*  KEY TABLE, only temporary conflict                  */
+printf("\n                     TEST0371             \n");
+printf("                   TEMPORARY CONFLICT    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         INSERT INTO MID1\n");
+printf("         VALUES(1,1);\n");
+printf("         INSERT INTO MID1\n");
+printf("         VALUES(2,1);\n");
+printf("         INSERT INTO MID1\n");
+printf("         VALUES(3,2);\n");
+printf("         INSERT INTO MID1\n");
+printf("         VALUES(4,3);\n");
+printf("         INSERT INTO MID1\n");
+printf("         VALUES(5,1);\n");
+printf("         UPDATE MID1\n");
+printf("         SET P_KEY = P_KEY + 1,\n");
+printf("             F_KEY = F_KEY + 1;\n");
+
+EXEC SQL INSERT INTO MID1
+         VALUES(1,1);
+EXEC SQL INSERT INTO MID1
+         VALUES(2,1);
+EXEC SQL INSERT INTO MID1
+         VALUES(3,2);
+EXEC SQL INSERT INTO MID1
+         VALUES(4,3);
+EXEC SQL INSERT INTO MID1
+         VALUES(5,1);
+EXEC SQL UPDATE MID1
+         SET P_KEY = P_KEY + 1,
+             F_KEY = F_KEY + 1;
+code1 = SQLCODE;
+EXEC SQL SELECT MAX(F_KEY),MIN(F_KEY),MAX(P_KEY),MIN(P_KEY)
+         INTO :max1,:min1,:max2,:min2 FROM MID1;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 is equal to 0.\n");
+ printf("           max1 is 4, min1 is 2.\n");
+ printf("           max2 is 6, min2 is 2.\n");
+ printf(" Your answer is :\n");
+ printf("           code1 is %ld\n",code1);
+ printf("           max1 is %ld,min1 is %ld\n",max1,min1);
+ printf("           max2 is %ld,min2 is %ld\n",max2,min2);
+ if (code1 == 0 && max1 == 4 && min1 == 2 && max2 == 6 && min2 == 2)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0371','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0371','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr020.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0371 *************************/
+
+
+
+
+
+/******************** BEGIN TEST0372 ********************/
+/* delete from self_reference table, temporary conflict */
+printf("\n                     TEST0372             \n");
+printf("                   TEMPORARY CONFLICT    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         DELETE FROM STAFF_C\n");
+printf("         WHERE EMPNUM = 'E2' OR MGR = 'E2';\n");
+printf("\n");
+printf("         SELECT COUNT(*)\n");
+printf("         INTO :count1 FROM STAFF_C;\n");
+printf("\n");
+EXEC SQL DELETE FROM STAFF_C
+         WHERE EMPNUM = 'E2' OR MGR = 'E2';
+code1 = SQLCODE;
+EXEC SQL SELECT COUNT(*)
+         INTO :count1 FROM STAFF_C;
+EXEC SQL ROLLBACK WORK;
+ printf(" The correct answer is :\n");
+ printf("           code1 is equal to 0.\n");
+ printf("           count1 is 4.\n");
+ printf(" Your answer is :\n");
+ printf("           code1 is %ld\n",code1);
+ printf("           count1 is %ld\n",count1);
+ if (code1 == 0 && count1 == 4)
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0372','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0372','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr020.pc  *** fail ***     ");
+       }
+     printf("\n================================================");
+
+     printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+/************************ END TEST0372 *************************/
+
+
+     exit(errcnt);
+}
+

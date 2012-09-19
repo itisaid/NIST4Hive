@@ -1,0 +1,282 @@
+/*  EMBEDDED C (file "CDR001.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1989/04/07 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR001.PC                                                    */
+/*  WRITTEN BY: SUN DAJUN                                        */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE <DEFAULT CLAUSE> IN COLUMN DEFINI-  */
+/*  TION.                                                        */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                           with Integrity Enhancement          */
+/*                                                               */
+/*             SECTION 6.3                                       */
+/*                <column definition>::=                         */
+/*                          <column name><data type>             */
+/*                          [<default clause>]                   */
+/*                          [<column constrait>...]              */
+/*             SECTION 6.4                                       */
+/*                <default clause>::=                            */
+/*                          DEFAULT {<literal>|USER|NULL}        */ 
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+
+EXEC SQL BEGIN DECLARE SECTION;
+long count1;
+char ename[21];
+long egrd;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+
+long code1;
+
+main()
+
+{
+     strcpy(uid,"SUN");
+     AUTHID(uid); 
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,3) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, cdr001.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+/******************** BEGIN TEST0300 ********************/
+/* This program tests if the default values of a column in */
+/* table can be properly set. The default value of column  */
+/* EMPNAME is NULL, GRADE 0, CITY '     '                  */
+
+printf("\n                     TEST0300             \n");
+printf("                   DEFAULT CLAUSE    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("        INSERT INTO STAFF4 (EMPNUM,GRADE)\n");
+printf("        VALUES ('E1',40);\n");
+printf("\n");
+printf("        INSERT INTO STAFF4 (EMPNUM,EMPNAME)\n");
+printf("        VALUES ('E2','HUFFMAN');\n");
+printf("\n");
+printf("        SELECT EMPNAME INTO :ename FROM STAFF4\n");
+printf("        WHERE GRADE=0;\n");
+printf("\n");
+printf("        SELECT GRADE INTO :egrd FROM STAFF4\n");
+printf("        WHERE (EMPNAME IS NULL)\n");
+printf("        AND CITY = '               ';\n");
+
+EXEC SQL DELETE FROM STAFF4;
+
+EXEC SQL INSERT INTO STAFF4 (EMPNUM,GRADE)
+        VALUES ('E1',40);
+                
+EXEC SQL INSERT INTO STAFF4 (EMPNUM,EMPNAME)
+        VALUES ('E2','HUFFMAN');
+        
+EXEC SQL SELECT EMPNAME INTO :ename FROM STAFF4
+        WHERE GRADE=0;
+
+EXEC SQL SELECT GRADE INTO :egrd FROM STAFF4
+        WHERE (EMPNAME IS NULL)
+        AND CITY = '               ';
+printf("The correct result is :\n");
+printf("           EMPNUM=HUFFMAN   GRADE=40    \n");
+printf("Your answer is :\n");
+printf("           EMPNUM=%s   GRADE=%ld \n",ename,egrd);
+if ( (strncmp(ename,"HUFFMAN",7) == 0) && (egrd == 40))
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0300','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0300','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr001.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /********** END TEST0300 ***************/
+
+
+
+
+
+
+/******************** BEGIN TEST0301 ********************/
+/* This program tests if the default values of a column in */
+/* table are properly set.General rule 1.c                 */
+
+printf("\n                     TEST0301             \n");
+printf("                   DEFAULT CLAUSE    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("        INSERT INTO STAFF14 (EMPNUM,GRADE)\n");
+printf("        VALUES ('E1',40);\n");
+printf("        \n");
+printf("        SELECT EMPNAME INTO :ename FROM STAFF14\n");
+printf("        WHERE EMPNAME = 'SUN';\n");
+printf("\n");
+
+EXEC SQL DELETE FROM STAFF14;
+
+EXEC SQL INSERT INTO STAFF14 (EMPNUM,GRADE)
+        VALUES ('E1',40);
+                
+        
+EXEC SQL SELECT EMPNAME INTO :ename FROM STAFF14
+        WHERE EMPNAME = 'SUN';
+
+printf("The correct result is :\n");
+printf("           EMPNUM=SUN       \n");
+printf("Your answer is :\n");
+printf("           EMPNUM=%s    \n",ename);
+        if ( (strncmp(ename,"SUN",3) == 0)) 
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0301','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0301','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr001.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /********** END TEST0301 ***************/
+
+
+
+/******************** BEGIN TEST0377 ********************/
+/* This program tests if the default values of a column in */
+/* table are properly set.General rule 1.c                 */
+
+printf("\n                     TEST0377             \n");
+printf("                   DEFAULT CLAUSE    \n");
+printf("      SQL with Integrity Enhancement section 6.3,6.4\n");
+printf("     - - - - - - - - - - - - - - - - - - - - - \n\n");
+printf("\n");
+printf("         INSERT INTO STAFF16 (EMPNUM,GRADE)\n");
+printf("         VALUES ('E1',150);\n");
+printf("        \n");
+printf("         INSERT INTO STAFF16 (EMPNUM,GRADE)\n");
+printf("         VALUES ('E1',150);\n");
+printf("        \n");
+printf("         SELECT COUNT(*) INTO :count1 FROM STAFF16\n");
+printf("         WHERE EMPNAME IS NULL;\n");
+printf("\n");
+printf("         INSERT INTO STAFF16 (EMPNUM,EMPNAME,GRADE)\n");
+printf("         VALUES ('E2','Tom',100);\n");
+printf("        \n");
+printf("         SELECT EMPNAME INTO :ename FROM STAFF16\n");
+printf("         WHERE EMPNUM = 'E2';\n");
+printf("\n");
+printf("         INSERT INTO STAFF16 (EMPNUM,EMPNAME,GRADE)\n");
+printf("         VALUES ('E3','Bill',151);\n");
+printf("        \n");
+printf("         SELECT GRADE INTO :egrd FROM STAFF16\n");
+printf("         WHERE EMPNUM = 'E3';\n");
+printf("\n");
+count1 = -1;
+egrd = 0;
+
+EXEC SQL DELETE FROM STAFF16;
+
+EXEC SQL INSERT INTO STAFF16 (EMPNUM,GRADE)
+         VALUES ('E1',150);
+        
+EXEC SQL INSERT INTO STAFF16 (EMPNUM,GRADE)
+         VALUES ('E1',150);
+        
+EXEC SQL SELECT COUNT(*) INTO :count1 FROM STAFF16
+         WHERE EMPNAME IS NULL;
+
+
+EXEC SQL INSERT INTO STAFF16 (EMPNUM,EMPNAME,GRADE)
+         VALUES ('E2','Tom',100);
+        
+EXEC SQL SELECT EMPNAME INTO :ename FROM STAFF16
+         WHERE EMPNUM = 'E2';
+
+EXEC SQL INSERT INTO STAFF16 (EMPNUM,EMPNAME,GRADE)
+         VALUES ('E3','Bill',151);
+        
+code1 = SQLCODE;
+
+EXEC SQL SELECT GRADE INTO :egrd FROM STAFF16
+         WHERE EMPNUM = 'E3';
+
+printf("The correct result is :\n");
+printf("           count1=1       \n");
+printf("           ename = Tom    \n");
+printf("           egrd = 0\n");
+printf("           code1 < 0 \n");
+printf("Your answer is :\n");
+printf("           count1=%ld    \n",count1);
+printf("           ename = %s \n",ename);
+printf("           egrd = %ld \n",egrd);
+printf("           code1 = %ld \n",code1);
+if (count1 == 1 && strncmp(ename,"Tom",3) == 0 && code1 < 0) 
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+       VALUES('0377','pass','PC');
+       printf("\n\n                 *** pass ***     ");
+       }
+     else
+       {
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0377','fail','PC');
+          errcnt = errcnt + 1;
+       printf("\n\n       cdr001.pc  *** fail ***     ");
+       }
+printf("\n================================================");
+
+printf("\n\n\n\n");
+     EXEC SQL COMMIT WORK;
+  /********** END TEST0377 ***************/
+
+
+
+     exit(errcnt);
+
+}
+

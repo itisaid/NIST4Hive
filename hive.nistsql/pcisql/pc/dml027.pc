@@ -1,0 +1,187 @@
+/*  EMBEDDED C (file "DML027.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1988/04/28 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  DML027.PC                                                    */
+/*  WRITTEN BY: HU YANPING                                       */
+/*                                                               */
+/*    THIS ROUTINE TESTS THE UPDATE STATEMENT IN THE LANGUAGE OF */
+/*  SQL.  THE FORMAT:                                            */
+/*                UPDATE <table name>                            */
+/*                SET  <set clause:searched>[{,<set clause>}...] */
+/*                [WHERE <search condition>]                     */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*        AMERICAN NATIONAL STANDARD database language - SQL     */
+/*                          X3.135-1989                          */
+/*                                                               */
+/*                   SECTION 6.6 <unique constraint definition>  */
+/*                   SECTION 8.7  <insert statement>             */
+/*                   SECTION 8.10 <select statement>             */
+/*                   SECTION 8.12 <update statement: searched>   */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+EXEC SQL BEGIN DECLARE SECTION;
+          long i;
+          long ii;
+char uid[19];
+char uidx[19];
+EXEC SQL END DECLARE SECTION;
+long SQLCODE;
+int errcnt;
+/* date_time declaration */
+time_t cal;
+          long iii;
+
+
+main()
+{
+     strcpy(uid,"HU");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM HU.ECCO;
+if (strncmp(uid,uidx,2) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+printf("SQL Test Suite, V6.0, Embedded C, dml027.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/*   EXEC SQL CREATE TABLE UPUNIQ (NUMKEY DECIMAL(3) UNIQUE,   */
+/*                                 COL2   CHAR(2));            */
+
+/*   See INSERTs in program BASETAB.PC           */
+/*      INSERT INTO UPUNIQ VALUES(1,'A')         */
+/*      INSERT INTO UPUNIQ VALUES(2,'B')         */
+/*      INSERT INTO UPUNIQ VALUES(3,'C')         */
+/*      INSERT INTO UPUNIQ VALUES(4,'D')         */
+/*      INSERT INTO UPUNIQ VALUES(6,'F')         */
+/*      INSERT INTO UPUNIQ VALUES(8,'H')         */
+
+/******************** BEGIN TEST0124 ********************/
+
+     printf("\n                  TEST0124             \n");
+     printf("           update statement: searched     \n");
+     printf("reference X3.135-1987 section 8.12 General Rules 1)\n");     
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+/* Comment -- This test requires deferred integrity constraint  */
+/*            checking. Some implementations check as they go   */
+/*            along and will likely fail.                       */
+
+     printf("   *** NUMKEY = {1,2,3,4,6,8}   \n");
+     printf("   *** UPDATE UPUNIQ            \n");
+     printf("   *** SET    NUMKEY = NUMKEY+1 \n");
+
+     SQLCODE = -1;
+
+     EXEC SQL UPDATE UPUNIQ
+           SET NUMKEY = NUMKEY+1;
+
+     printf("        sqlcode = %ld \n",SQLCODE);
+     iii = SQLCODE;
+
+     EXEC SQL SELECT COUNT(*),SUM(NUMKEY)
+           INTO   :i,:ii
+           FROM   UPUNIQ;
+     printf(" There are %ld records in table UPUNIQ. \n",i);
+     printf("  Sum of the colunm NUMKEY is %ld \n",ii);
+
+     EXEC SQL ROLLBACK WORK;
+
+     if (i == 6 && ii == 30 && iii == 0)
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0124','pass','PC');
+     }
+     else
+     {
+       printf("\n\n     dml027.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0124','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+     printf("====================================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0124 ********************/
+/******************** BEGIN TEST0125 ********************/
+ 
+     printf("\n                   TEST0125             \n");
+     printf("           update statement: searched     \n");
+     printf("reference X3.135-1987 section 8.12 General Rules 1)\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+     SQLCODE = -1;
+     i = 0;
+     ii = 0;
+     iii = 0;
+
+     printf("   *** NUMKEY = {1,2,3,4,6,8}   \n");
+     printf("   *** UPDATE UPUNIQ            \n");
+     printf("   *** SET    NUMKEY = NUMKEY+1 \n");
+     printf("   *** WHERE  NUMKEY >= 4       \n");
+
+     EXEC SQL UPDATE UPUNIQ
+           SET NUMKEY = NUMKEY+1
+           WHERE NUMKEY >= 4;
+
+     printf("        sqlcode = %ld \n",SQLCODE);
+     iii = SQLCODE;
+
+     EXEC SQL SELECT COUNT(*),SUM(NUMKEY)
+           INTO   :i,:ii
+           FROM   UPUNIQ;
+     printf(" There are %ld records in table UPUNIQ. \n",i);
+     printf("  Sum of the colunm NUMKEY is %ld \n",ii);
+
+     EXEC SQL ROLLBACK WORK;
+
+     if ( i == 6 && ii == 27 && iii == 0 )
+     {
+       printf("\n\n               *** pass *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0125','pass','PC');
+     }
+     else
+     {
+       printf("\n\n     dml027.pc  *** fail *** \n\n");
+       EXEC SQL INSERT INTO TESTREPORT
+          VALUES('0125','fail','PC');
+          errcnt = errcnt + 1;
+     }
+
+     printf("====================================================\n\n");
+
+     EXEC SQL COMMIT WORK;
+
+/******************** END TEST0125 ********************/
+
+exit(errcnt);
+
+}

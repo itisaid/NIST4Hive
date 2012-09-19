@@ -1,0 +1,252 @@
+/*  EMBEDDED C (file "CDR031.PC")  */
+
+/*****************************************************************/
+/*                                                               */
+/*                  COMMENT SECTION                              */
+/*                                                               */
+/*  DATE 1994/10/26 EMBEDDED C LANGUAGE                          */
+/*  NIST SQL VALIDATION TEST SUITE V6.0                          */
+/*  DISCLAIMER:                                                  */
+/*  This program was written by employees of NIST to test SQL    */
+/*  implementations for conformance to the SQL standards.        */
+/*  NIST assumes no responsibility for any party's use of        */
+/*  this program.                                                */
+/*                                                               */
+/*  CDR031.PC                                                    */
+/*  WRITTEN BY: David Flater                                     */
+/*                                                               */
+/*  This routine tests FIPS sizing.                              */
+/*                                                               */
+/*  REFERENCES                                                   */
+/*    ANSI SQL-1992                                              */
+/*                                                               */
+/*****************************************************************/
+
+
+#include <stdio.h>
+#include <time.h>
+#include <string.h>
+#include <stdlib.h>
+
+void
+NOSUBCLASS();
+void
+CHCKOK();
+
+EXEC SQL BEGIN DECLARE SECTION;
+long SQLCODE;
+char SQLSTATE[6];
+     char uid[19];
+     char uidx[19];
+  char vtr119[119];
+EXEC SQL END DECLARE SECTION;
+  char part2[60];
+long norm1;
+long norm2;
+char ALPNUM[37];
+char NORMSQ[6];
+int errcnt;
+/* date_time declaration */
+time_t cal;
+long     flag;
+
+main()
+{
+     strcpy(uid,"FLATER            ");
+     AUTHID(uid);
+strcpy(uidx,"not logged in, not");
+EXEC SQL SELECT USER INTO :uidx FROM SUN.ECCO;
+if (strncmp(uid,uidx,6) != 0)
+   {
+    printf("ERROR: User %s expected.  User %s connected\n",uid,uidx);
+    exit(99);
+   }
+errcnt = 0;
+strcpy(ALPNUM,"01234ABCDEFGH56789IJKLMNOPQRSTUVWXYZ");
+
+printf("SQL Test Suite, V6.0, Embedded C, cdr031.pc\n");
+printf("59-byte ID\n");
+printf("TEd Version #\n");
+/* date_time print */
+time (&cal);
+printf ("\n Time Run:  %s\n", ctime (&cal));
+
+/******************** BEGIN TEST0526 ********************/
+flag = 1;
+
+     printf("                  TEST0526 \n");
+     printf("FIPS sizing:  Length of FOREIGN KEY column list = 120\n");
+     printf("References:\n");
+     printf("    FIPS 16.6 #.35 -- Sizing for database constructs\n");
+     printf("     - - - - - - - - - - - - - - - - - - -\n\n");
+
+     SQLCODE = -1;
+     strcpy (SQLSTATE, "xxxxx");
+
+/* This syntax is copied from dml044, if it worked there it should work here */
+
+ strcpy(vtr119,"This test is trying to test the limit on the total length of");
+ strcpy(part2," a foreign key column list, which is supposed to be 120...");
+ strcat(vtr119,part2);
+
+  printf(" vtr119 = %s\n",vtr119);
+
+printf("INSERT INTO SUN.T6118REF VALUES\n");
+printf("  ('AAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBB',\n");
+printf("   'CCCCCCCCCCCCCCCCCCCC', 'DDDDDDDDDDDDDDDDDDDD',\n");
+printf("   'EEEEEEEEEEEEEEEEEEEEEEE', 9999, :vtr119);\n");
+EXEC SQL INSERT INTO SUN.T6118REF VALUES
+  ('AAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBB',
+   'CCCCCCCCCCCCCCCCCCCC', 'DDDDDDDDDDDDDDDDDDDD',
+   'EEEEEEEEEEEEEEEEEEEEEEE', 9999, :vtr119);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SUN.T6 VALUES\n");
+printf("  ('AAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBB',\n");
+printf("   'CCCCCCCCCCCCCCCCCCCC', 'DDDDDDDDDDDDDDDDDDDD',\n");
+printf("   'EEEEEEEEEEEEEEEEEEEEEEE', 9999);\n");
+EXEC SQL INSERT INTO SUN.T6 VALUES
+  ('AAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBB',
+   'CCCCCCCCCCCCCCCCCCCC', 'DDDDDDDDDDDDDDDDDDDD',
+   'EEEEEEEEEEEEEEEEEEEEEEE', 9999);
+CHCKOK ();
+printf("\n");
+
+printf("INSERT INTO SUN.T118 VALUES (:vtr119);\n");
+EXEC SQL INSERT INTO SUN.T118 VALUES (:vtr119);
+CHCKOK ();
+printf("\n");
+
+/* The following should fail. */
+
+printf("INSERT INTO SUN.T6 VALUES\n");
+printf("  ('AAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBB',\n");
+printf("   'CCCCCCCCCCCCCCCCCCCC', 'DDDDDDDDDDDDDDDDDDDD',\n");
+printf("   'EEEEEEEEEEEEEEEEEEEEEEE', 0);\n");
+EXEC SQL INSERT INTO SUN.T6 VALUES
+  ('AAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBB',
+   'CCCCCCCCCCCCCCCCCCCC', 'DDDDDDDDDDDDDDDDDDDD',
+   'EEEEEEEEEEEEEEEEEEEEEEE', 0);
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("INSERT INTO SUN.T118 VALUES ('Hamlet');\n");
+EXEC SQL INSERT INTO SUN.T118 VALUES ('Hamlet');
+printf ("SQLCODE should be < 0; its value is %ld\n", SQLCODE);
+if (SQLCODE >= 0)
+  flag = 0;
+SQLSTATE[5] = '\0';
+printf ("SQLSTATE should be 23000; its value is %s\n", SQLSTATE);
+NOSUBCLASS();
+if (strncmp (NORMSQ, "23000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "23000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+printf ("\n");
+
+printf("ROLLBACK WORK;\n");
+EXEC SQL ROLLBACK WORK;
+CHCKOK ();
+printf("\n");
+
+     if (flag == 1)
+       {
+          printf("\n\n                *** pass *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0526','pass','PC');
+       }
+     else
+       {
+          printf("\n\n       cdr031.pc  *** fail *** \n");
+          EXEC SQL INSERT INTO SUN.TESTREPORT
+          VALUES('0526','fail','PC');
+          errcnt = errcnt + 1;
+       }
+  EXEC SQL COMMIT WORK;
+printf("\n================================================\n");
+
+/******************** END TEST0526 *********************/
+     exit(errcnt);
+}
+
+void
+NOSUBCLASS()
+{
+/* This routine replaces valid implementation-defined       */
+/* subclasses with 000.  This replacement equates valid     */
+/* implementation-defined subclasses with the 000 value     */
+/* expected by the test case; otherwise the test will fail. */
+/* After calling NOSUBCLASS, NORMSQ will be tested          */
+/*                           SQLSTATE will be printed.      */
+
+strcpy (NORMSQ,SQLSTATE);
+
+norm1 = 2;
+     /* subclass begins in position 3 of char array NORMSQ */
+for (norm2 = 13; norm2 < 37; norm2++)
+     /* valid subclass begins with 5-9, I-Z, end of ALPNUM table */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+if (strncmp (NORMSQ, SQLSTATE, 5) == 0)
+     goto P213;
+/* Quit if NORMSQ is unchanged.  Subclass is not impl.-def. */
+/* Changed NORMSQ means implementation-defined subclass,    */
+/* so proceed to zero it out, if valid (0-9,A-Z)            */
+
+norm1 = 3;
+     /* examining position 4 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+norm1 = 4;
+     /* examining position 5 of char array NORMSQ */
+for (norm2 = 0; norm2 < 37; norm2++)
+     /* valid characters are 0-9, A-Z */
+   {
+     if (NORMSQ[norm1] == ALPNUM[norm2])
+         NORMSQ[norm1] = '0';
+   }
+
+/* implementation-defined subclasses are allowed for warnings */
+/* (class = 01).  These equate to successful completion */
+/* SQLSTATE values of 00000. */
+/* Reference SQL-92 4.28 SQL-transactions, paragraph 2 */
+
+if (NORMSQ[0] == '0' && NORMSQ[1] == '1')
+     NORMSQ[1] = '0';
+P213:
+    return;
+
+}
+
+/* Test SQLCODE and SQLSTATE for normal completion. */
+
+void
+CHCKOK ()
+{
+  printf ("SQLCODE should be 0; its value is %ld\n", SQLCODE);
+  SQLSTATE[5] = '\0';
+  printf ("SQLSTATE should be 00000; its value is %s\n", SQLSTATE);
+
+  NOSUBCLASS();
+if (SQLCODE != 0 || strncmp (NORMSQ, "00000", 5) != 0)
+  flag = 0;
+if (strncmp (NORMSQ, "00000", 5) == 0 && strncmp (NORMSQ, SQLSTATE, 5) != 0)
+  printf ("Valid implementation-defined SQLSTATE accepted.\n");
+}
