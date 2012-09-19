@@ -1,0 +1,65 @@
+PREHOOK: query: create table t1 (a STRING,b STRING,c INT,d INT,e INT) row format delimited fields terminated by ',' stored as textfile
+PREHOOK: type: CREATETABLE
+POSTHOOK: query: create table t1 (a STRING,b STRING,c INT,d INT,e INT) row format delimited fields terminated by ',' stored as textfile
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: default@t1
+PREHOOK: query: load data local inpath '../data/files/sql/sql_t1.txt' into table t1
+PREHOOK: type: LOAD
+PREHOOK: Output: default@t1
+POSTHOOK: query: load data local inpath '../data/files/sql/sql_t1.txt' into table t1
+POSTHOOK: type: LOAD
+POSTHOOK: Output: default@t1
+PREHOOK: query: create table t2 (x STRING,y STRING) row format delimited fields terminated by ',' stored as textfile
+PREHOOK: type: CREATETABLE
+POSTHOOK: query: create table t2 (x STRING,y STRING) row format delimited fields terminated by ',' stored as textfile
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: default@t2
+PREHOOK: query: load data local inpath '../data/files/sql/sql_t2.txt' into table t2
+PREHOOK: type: LOAD
+PREHOOK: Output: default@t2
+POSTHOOK: query: load data local inpath '../data/files/sql/sql_t2.txt' into table t2
+POSTHOOK: type: LOAD
+POSTHOOK: Output: default@t2
+PREHOOK: query: create table t3 (x STRING,y STRING,z INT) row format delimited fields terminated by ',' stored as textfile
+PREHOOK: type: CREATETABLE
+POSTHOOK: query: create table t3 (x STRING,y STRING,z INT) row format delimited fields terminated by ',' stored as textfile
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: default@t3
+PREHOOK: query: load data local inpath '../data/files/sql/sql_t3.txt' into table t3
+PREHOOK: type: LOAD
+PREHOOK: Output: default@t3
+POSTHOOK: query: load data local inpath '../data/files/sql/sql_t3.txt' into table t3
+POSTHOOK: type: LOAD
+POSTHOOK: Output: default@t3
+PREHOOK: query: select a,b from t1 union all select x,y from t2 union all select x,y from t3 order by 1,2
+PREHOOK: type: QUERY
+PREHOOK: Input: default@t1
+PREHOOK: Input: default@t2
+PREHOOK: Input: default@t3
+#### A masked pattern was here ####
+POSTHOOK: query: select a,b from t1 union all select x,y from t2 union all select x,y from t3 order by 1,2
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@t1
+POSTHOOK: Input: default@t2
+POSTHOOK: Input: default@t3
+#### A masked pattern was here ####
+hello	world
+hello	world1
+hello	world1
+hello	world2
+hello	world2
+hello	world3
+hello	world3
+hello	world4
+hello	world4
+hello	world5
+hello	world6
+hello	world7
+hello1	world1
+hello1	world1
+hello1	world2
+hello1	world3
+hello2	world1
+hello2	world2
+hello2	world2
+hello2	world3

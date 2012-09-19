@@ -1,0 +1,32 @@
+PREHOOK: query: create table t1 (a STRING,b STRING,c INT,d INT,e INT) row format delimited fields terminated by ',' stored as textfile
+PREHOOK: type: CREATETABLE
+POSTHOOK: query: create table t1 (a STRING,b STRING,c INT,d INT,e INT) row format delimited fields terminated by ',' stored as textfile
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: default@t1
+PREHOOK: query: load data local inpath '../data/files/sql/sql_t1.txt' into table t1
+PREHOOK: type: LOAD
+PREHOOK: Output: default@t1
+POSTHOOK: query: load data local inpath '../data/files/sql/sql_t1.txt' into table t1
+POSTHOOK: type: LOAD
+POSTHOOK: Output: default@t1
+PREHOOK: query: create table t3 (x STRING,y STRING,z INT) row format delimited fields terminated by ',' stored as textfile
+PREHOOK: type: CREATETABLE
+POSTHOOK: query: create table t3 (x STRING,y STRING,z INT) row format delimited fields terminated by ',' stored as textfile
+POSTHOOK: type: CREATETABLE
+POSTHOOK: Output: default@t3
+PREHOOK: query: load data local inpath '../data/files/sql/sql_t3.txt' into table t3
+PREHOOK: type: LOAD
+PREHOOK: Output: default@t3
+POSTHOOK: query: load data local inpath '../data/files/sql/sql_t3.txt' into table t3
+POSTHOOK: type: LOAD
+POSTHOOK: Output: default@t3
+PREHOOK: query: select a,b,c,d,e from t1 where d = all (select z from t3 where y = 'world1' or y = 'world2' or y = 'world3')
+PREHOOK: type: QUERY
+PREHOOK: Input: default@t1
+PREHOOK: Input: default@t3
+#### A masked pattern was here ####
+POSTHOOK: query: select a,b,c,d,e from t1 where d = all (select z from t3 where y = 'world1' or y = 'world2' or y = 'world3')
+POSTHOOK: type: QUERY
+POSTHOOK: Input: default@t1
+POSTHOOK: Input: default@t3
+#### A masked pattern was here ####
