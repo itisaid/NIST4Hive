@@ -1,1 +1,1 @@
-TEST MD
+NIST test framework for hive.
